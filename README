@@ -1,0 +1,60 @@
+GENIVI_AudioManager
+===================
+:Author: Christian Linke <christian.linke@bmw.de>
+:doctitle: GENIVI_AudioManager_SamplePlugins
+ 
+Copyright
+---------
+Copyright (C) 2012, GENIVI Alliance, Inc.
+Copyright (C) 2012, BMW AG
+
+
+This file is part of GENIVI Project AudioManager.
+
+Author Christian Linke = Christian Linke christian.linke@bmw.de BMW 2011-2015
+
+For further information see http://projects.genivi.org/audio-manager/.
+
+This repository holds sample plugins for the AudioManager Project
+
+== Repositories
+The main repository is http://git.projects.genivi.org-AudioManager.git
+ 
+Contributions are licensed to the GENIVI Alliance under MIT License
+ 
+(C) Copyright
+This Source Code Form is subject to the terms of the
+MIT Licence
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
+THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+=== Compiling 
+
+Compiling the plugins can be done in 2 ways:
+
+1) Clone the Plugin repository into the folder Plugins of the AudioManager. Start the build. The plugins will be build automatically, you can configure what plugins are actually build with cmake options.
+
+2) Install the audiomanager on your build system
+
+=== Build targets
+
+just install the plugins (only available if plugins are compiled)
+----
+sudo make plugins-install
+----
+
+just install the test for the plugins (only available if plugins are compiled)
+----
+sudo make plugin-test-install
+----
+
+
+=== History
+
+The git history can be found in the AudioManager repo. There all the commits of the Plugins until the split of the repos can be found.
