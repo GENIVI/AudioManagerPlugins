@@ -3,6 +3,7 @@ find_path(AUDIOMANAGER_CMAKE_CONFIG_PATH
                  PATH_SUFFIXES audiomanager/cmake
                  PATHS
                  ${CMAKE_INSTALL_PATH}
+                 "${CMAKE_INSTALL_PREFIX}/lib"
                  "/usr/lib"
                  "/usr/local/lib"
                  )
@@ -12,6 +13,7 @@ find_path(AUDIOMANAGER_INCLUDE_FOLDER
                  PATH_SUFFIXES audiomanager
                  PATHS
                  ${CMAKE_INSTALL_PATH}
+                 "${CMAKE_INSTALL_PREFIX}/include"
                  "/usr/include"
                  "/usr/local/include"
                  )
