@@ -26,7 +26,7 @@ option (WITH_COMMAND_INTERFACE_COMMON_CAPI
 
 if (WITH_COMMAND_INTERFACE_COMMON_CAPI AND ${WITH_ENABLED_IPC} STREQUAL "CAPI")
 
-    set(LIBRARY_OUTPUT_PATH ${PLUGINS_OUTPUT_PATH}/control)
+    set(LIBRARY_OUTPUT_PATH ${PLUGINS_OUTPUT_PATH}/command)
 
     set (AM_LINK_LIBS 
         ${CMAKE_DL_LIBS}
@@ -43,7 +43,7 @@ if (WITH_COMMAND_INTERFACE_COMMON_CAPI AND ${WITH_ENABLED_IPC} STREQUAL "CAPI")
     COMMON_API_GENERATE_SOUCRES(TARGET COMMON_API_COMMAND_INTERFACE 
                                 FIDLS fidl/CommandInterface.fidl # a list with fidls
                                 DESTINATION src-gen  # a relative path to the build directory or an absolute path
-                                ALT_DESTINATION src-gen # an alternative relative/absolute path with common-api sources, usually in the source tree
+                                ALT_DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/src-gen # an alternative relative/absolute path with common-api sources, usually in the source tree
                                 DBUS)
     
     INCLUDE_DIRECTORIES(
