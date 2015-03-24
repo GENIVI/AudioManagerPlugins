@@ -19,7 +19,7 @@
 #include <cassert>
 #include <algorithm>
 #include "CAmDltWrapper.h"
-#include "control/IAmControlReceive.h"
+#include "IAmControl.h"
 
 using namespace am;
 
@@ -588,7 +588,7 @@ am_Error_e CAmControlSenderBase::getConnectionFormatChoice(const am_sourceID_t s
 
 void CAmControlSenderBase::getInterfaceVersion(std::string & version) const
 {
-    version = ControlSendVersion;
+    version = ControlVersion;
 }
 
 
@@ -954,5 +954,8 @@ void CAmControlSenderBase::callTAHandler()
        }
 }
 
-
-
+void CAmControlSenderBase::hookSystemSingleTimingInformationChanged(const am_connectionID_t connectionID, const am_timeSync_t time)
+{
+	(void)connectionID;
+	(void)time;
+}

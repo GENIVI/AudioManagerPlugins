@@ -18,7 +18,7 @@
 #ifndef MOCKCOMMANDRECEIVENTERFACE_H_
 #define MOCKCOMMANDRECEIVENTERFACE_H_
 
-#include "command/IAmCommandReceive.h"
+#include "IAmCommand.h"
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 

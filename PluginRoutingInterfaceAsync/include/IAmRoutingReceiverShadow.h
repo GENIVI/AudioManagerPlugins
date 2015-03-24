@@ -18,7 +18,7 @@
 #ifndef ROUTINGRECEIVERASYNCSHADOW_H_
 #define ROUTINGRECEIVERASYNCSHADOW_H_
 
-#include "routing/IAmRoutingReceive.h"
+#include "IAmRouting.h"
 #include "CAmSerializer.h"
 #include "CAmSocketHandler.h"
 

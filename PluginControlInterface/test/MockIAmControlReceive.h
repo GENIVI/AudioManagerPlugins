@@ -18,7 +18,7 @@
 #ifndef MOCKCONTROLINTERFACE_H_
 #define MOCKCONTROLINTERFACE_H_
 
-#include "control/IAmControlReceive.h"
+#include "IAmControl.h"
 
 
 namespace am {

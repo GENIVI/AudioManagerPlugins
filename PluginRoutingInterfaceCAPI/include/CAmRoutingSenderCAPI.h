@@ -18,7 +18,7 @@
 #ifndef CAPIROUTINGSENDER_H_
 #define CAPIROUTINGSENDER_H_
 
-#include "routing/IAmRoutingSend.h"
+#include "IAmRouting.h"
 #include "CAmCommonAPIWrapper.h"
 #include "CAmRoutingService.h"
 #include "CAmLookupData.h"

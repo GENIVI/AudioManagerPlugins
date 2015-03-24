@@ -16,7 +16,7 @@
  */
 
 #include "IAmControlReceiverShadow.h"
-#include "control/IAmControlReceive.h"
+#include "IAmControl.h"
 
 namespace am
 {

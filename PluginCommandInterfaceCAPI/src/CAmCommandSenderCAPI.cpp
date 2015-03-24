@@ -294,7 +294,7 @@ void CAmCommandSenderCAPI::cbTimingInformationChanged(const am_mainConnectionID_
 
 void CAmCommandSenderCAPI::getInterfaceVersion(std::string & version) const
 {
-    version = CommandSendVersion;
+    version = CommandVersion;
 }
 
 void CAmCommandSenderCAPI::cbSinkUpdated(const am_sinkID_t sinkID, const am_sinkClass_t sinkClassID, const std::vector<am_MainSoundProperty_s>& listMainSoundProperties)

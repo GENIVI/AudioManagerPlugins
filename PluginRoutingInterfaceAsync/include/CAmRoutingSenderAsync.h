@@ -18,7 +18,7 @@
 #ifndef ROUTINGSENDER_H_
 #define ROUTINGSENDER_H_
 
-#include "routing/IAmRoutingSend.h"
+#include "IAmRouting.h"
 #include "IAmRoutingReceiverShadow.h"
 #include <semaphore.h>
 #include <memory.h>

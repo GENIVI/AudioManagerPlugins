@@ -18,7 +18,7 @@
 #ifndef MOCKROUTINGINTERFACE_H_
 #define MOCKROUTINGINTERFACE_H_
 
-#include "routing/IAmRoutingReceive.h"
+#include "IAmRouting.h"
 
 namespace am {
 

@@ -24,7 +24,7 @@
 #include "MockIAmRoutingReceive.h"
 #include "CAmSocketHandler.h"
 #include "CAmSerializer.h"
-#include "routing/IAmRoutingSend.h"
+#include "IAmRouting.h"
 
 #define UNIT_TEST 1
 

@@ -867,7 +867,7 @@ void am::CAmRoutingSenderAsync::updateSinkListSafe(std::vector<am_Sink_s> listSi
 
 void CAmRoutingSenderAsync::getInterfaceVersion(std::string & version) const
 {
-    version = RoutingSendVersion;
+    version = RoutingVersion;
 }
 
 am_Error_e CAmRoutingSenderAsync::asyncSetSourceSoundProperties(const am_Handle_s handle, const am_sourceID_t sourceID, const std::vector<am_SoundProperty_s> & listSoundProperties)

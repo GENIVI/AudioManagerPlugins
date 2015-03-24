@@ -19,7 +19,7 @@
 #define CAMCOMMANDSENDERSERVICE_H_
 
 #include <org/genivi/am/CommandControlStubDefault.h>
-#include "command/IAmCommandReceive.h"
+#include "IAmCommand.h"
 
 namespace am {
 

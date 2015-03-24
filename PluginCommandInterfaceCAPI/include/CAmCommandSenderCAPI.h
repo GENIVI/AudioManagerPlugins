@@ -20,8 +20,7 @@
 
 #include <map>
 #include "CAmCommonAPIWrapper.h"
-#include "command/IAmCommandSend.h"
-#include "command/IAmCommandReceive.h"
+#include "IAmCommand.h"
 #include "CAmCommandSenderService.h"
 
 

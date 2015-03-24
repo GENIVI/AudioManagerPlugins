@@ -23,7 +23,7 @@
 #include "CAmDbusWrapper.h"
 #include "CAmDbusMessageHandler.h"
 #include "IAmCommandReceiverShadow.h"
-#include "command/IAmCommandSend.h"
+#include "IAmCommand.h"
 
 #ifdef UNIT_TEST
 #include  "../test/CAmCommandSenderDbusBackdoor.h"

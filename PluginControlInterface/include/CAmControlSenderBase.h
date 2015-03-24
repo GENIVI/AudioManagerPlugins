@@ -18,7 +18,7 @@
 #ifndef CONTROLSENDER_H_
 #define CONTROLSENDER_H_
 
-#include "control/IAmControlSend.h"
+#include "IAmControl.h"
 #include <list>
 
 using namespace am;
@@ -92,6 +92,7 @@ public:
     void hookSystemNodeApplicationModeChanged(const NsmApplicationMode_e ApplicationModeId) ;
     void hookSystemSessionStateChanged(const std::string& sessionName, const NsmSeat_e seatID, const NsmSessionState_e sessionStateID) ;
     NsmErrorStatus_e hookSystemLifecycleRequest(const uint32_t Request, const uint32_t RequestId) ;
+    void hookSystemSingleTimingInformationChanged(const am_connectionID_t connectionID, const am_timeSync_t time);
 
 private:
     IAmControlReceive * mControlReceiveInterface;

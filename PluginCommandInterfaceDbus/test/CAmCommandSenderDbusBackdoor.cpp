@@ -16,7 +16,7 @@
  */
 
 #include "CAmCommandSenderDbusBackdoor.h"
-#include "command/IAmCommandReceive.h"
+#include "IAmCommand.h"
 
 
 using namespace am;

@@ -18,7 +18,7 @@
 #ifndef MOCKROUTINGRECEIVENTERFACE_H_
 #define MOCKROUTINGRECEIVENTERFACE_H_
 
-#include "routing/IAmRoutingReceive.h"
+#include "IAmRouting.h"
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 

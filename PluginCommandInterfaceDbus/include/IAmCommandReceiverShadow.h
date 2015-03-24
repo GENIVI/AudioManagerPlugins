@@ -23,7 +23,7 @@
 #include <dbus/dbus.h>
 #include <map>
 #include "config.h"
-#include "command/IAmCommandReceive.h"
+#include "IAmCommand.h"
 #include "CAmDbusMessageHandler.h"
 #include "CAmDbusWrapper.h"
 

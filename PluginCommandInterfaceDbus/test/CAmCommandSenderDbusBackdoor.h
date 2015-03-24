@@ -22,7 +22,7 @@
 #include <vector>
 #include <dbus/dbus.h>
 #include "audiomanagertypes.h"
-#include "command/IAmCommandReceive.h"
+#include "IAmCommand.h"
 
 namespace am {
 

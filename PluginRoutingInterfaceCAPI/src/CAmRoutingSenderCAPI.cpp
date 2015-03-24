@@ -117,7 +117,7 @@ am_Error_e CAmRoutingSenderCAPI::tearDownInterface(IAmRoutingReceive*)
 
 void CAmRoutingSenderCAPI::getInterfaceVersion(std::string & version) const
 {
-    version = RoutingSendVersion;
+    version = RoutingVersion;
 }
 
 void CAmRoutingSenderCAPI::setRoutingReady(const uint16_t handle)
