@@ -21,6 +21,7 @@
 #include "CAmDltWrapper.h"
 #include "IAmControl.h"
 
+
 using namespace am;
 
 extern "C" IAmControlSend* PluginControlInterfaceFactory()
@@ -42,8 +43,10 @@ CAmControlSenderBase::CAmControlSenderBase() :
         mNaviSf(NAVC_RAMP_DOWN), //
         mTrafficSf(TA_RAMP_DOWN),//
         mConnectData(), //
-        mStateflow(SF_NONE)
+        mStateflow(SF_NONE),
+		mCommandLineArg("K","controllerPluginArg","a test argument for the controller",false,"bla","string")
 {
+	CAmCommandLineSingleton::instance()->add(mCommandLineArg);
 }
 
 CAmControlSenderBase::~CAmControlSenderBase()
@@ -52,6 +55,7 @@ CAmControlSenderBase::~CAmControlSenderBase()
 
 am_Error_e CAmControlSenderBase::startupController(IAmControlReceive *controlreceiveinterface)
 {
+	logInfo("The commandline Arg for controller is ",mCommandLineArg.getValue());
     assert(controlreceiveinterface);
     mControlReceiveInterface = controlreceiveinterface;
     am_sourceClass_t sourceClassID;

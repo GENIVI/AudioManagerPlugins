@@ -38,6 +38,7 @@ IF (WITH_TEST_CONTROLLER)
      	${AUDIOMANAGER_UTILITIES_INCLUDE}
      	${INCLUDE_FOLDER}
         ${NSM_INCLUDE_DIR}
+        ${TCLAP_INCLUDE_DIR}
     )
     
     # all source files go here

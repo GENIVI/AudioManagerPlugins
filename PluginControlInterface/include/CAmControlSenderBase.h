@@ -20,6 +20,7 @@
 
 #include "IAmControl.h"
 #include <list>
+#include "CAmCommandLineSingleton.h"
 
 using namespace am;
 
@@ -96,6 +97,7 @@ public:
 
 private:
     IAmControlReceive * mControlReceiveInterface;
+    TCLAP::ValueArg<std::string> mCommandLineArg;
 
     void disconnect(am_mainConnectionID_t connectionID);
     void connect(am_sourceID_t sourceID, am_sinkID_t sinkID, am_mainConnectionID_t mainConnectionID);
