@@ -36,9 +36,8 @@ using namespace CommonAPI;
  */
 class CAmCommandSenderCAPI: public IAmCommandSend
 {
-	CAmCommandSenderCAPI();
 public:
-    CAmCommandSenderCAPI(CAmCommonAPIWrapper *aWrapper);
+	CAmCommandSenderCAPI();
     virtual ~CAmCommandSenderCAPI();
     am_Error_e startService(IAmCommandReceive* commandreceiveinterface);
     am_Error_e startupInterface(IAmCommandReceive* commandreceiveinterface);

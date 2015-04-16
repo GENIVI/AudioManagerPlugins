@@ -36,7 +36,7 @@ DLT_DECLARE_CONTEXT(ctxCommandCAPI)
 extern "C" IAmRoutingSend* PluginRoutingInterfaceCAPIFactory()
 {
     CAmDltWrapper::instance()->registerContext(ctxCommandCAPI, "DRS", "Common-API Plugin");
-    return (new CAmRoutingSenderCAPI(Am_CAPI));
+    return (new CAmRoutingSenderCAPI());
 }
 
 extern "C" void destroyPluginRoutingInterfaceCAPI(IAmRoutingSend* routingSendInterface)
@@ -56,17 +56,6 @@ CAmRoutingSenderCAPI::CAmRoutingSenderCAPI() :
     log(&ctxCommandCAPI, DLT_LOG_INFO, "RoutingSender constructed");
 }
 
-CAmRoutingSenderCAPI::CAmRoutingSenderCAPI(CAmCommonAPIWrapper *aWrapper) :
-                mIsServiceStarted(false),
-                mLookupData(),
-                mpCAmCAPIWrapper(aWrapper), //
-                mpIAmRoutingReceive(NULL),
-                mService()
-{
-    log(&ctxCommandCAPI, DLT_LOG_INFO, "CommandSenderCAPI constructor called");
-    assert(mpCAmCAPIWrapper!=NULL);
-}
-
 CAmRoutingSenderCAPI::~CAmRoutingSenderCAPI()
 {
     log(&ctxCommandCAPI, DLT_LOG_INFO, "RoutingSender deallocate");
@@ -76,6 +65,8 @@ CAmRoutingSenderCAPI::~CAmRoutingSenderCAPI()
 
 am_Error_e CAmRoutingSenderCAPI::startService(IAmRoutingReceive* pIAmRoutingReceive)
 {
+	mpCAmCAPIWrapper=Am_CAPI;
+    assert(mpCAmCAPIWrapper!=NULL);
 	log(&ctxCommandCAPI, DLT_LOG_INFO, __PRETTY_FUNCTION__);
 	if(!mIsServiceStarted)
 	{

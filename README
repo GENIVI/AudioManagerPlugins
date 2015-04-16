@@ -36,11 +36,13 @@ THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 === Compiling 
 
-Compiling the plugins can be done in 2 ways:
+Compiling the plugins can be done in 3 ways:
 
 1) Clone the Plugin repository into the folder Plugins of the AudioManager. Start the build. The plugins will be build automatically, you can configure what plugins are actually build with cmake options.
 
-2) Install the audiomanager on your build system
+2) Install the audiomanager on your build system and build all plugins together
+
+3) Install the audiomanager on your build system and build each plugin by itself (just create a build folder in the plugin directory and start cmake.
 
 === Build targets
 

@@ -33,7 +33,7 @@ DLT_DECLARE_CONTEXT(ctxCommandCAPI)
 extern "C" IAmCommandSend* PluginCommandInterfaceCAPIFactory()
 {
     CAmDltWrapper::instance()->registerContext(ctxCommandCAPI, "CAPIP", "Common-API Plugin");
-    return (new CAmCommandSenderCAPI(Am_CAPI));
+    return (new CAmCommandSenderCAPI());
 }
 
 /**
@@ -59,17 +59,6 @@ CAmCommandSenderCAPI::CAmCommandSenderCAPI() :
     log(&ctxCommandCAPI, DLT_LOG_INFO, "CommandSenderCAPI constructor called");
 }
 
-CAmCommandSenderCAPI::CAmCommandSenderCAPI(CAmCommonAPIWrapper *aWrapper) :
-        mService(), //
-        mpCAmCAPIWrapper(aWrapper), //
-        mpIAmCommandReceive(NULL), //
-        mReady(false),
-        mIsServiceStarted(false)
-{
-    log(&ctxCommandCAPI, DLT_LOG_INFO, "CommandSenderCAPI constructor called");
-    assert(mpCAmCAPIWrapper!=NULL);
-}
-
 CAmCommandSenderCAPI::~CAmCommandSenderCAPI()
 {
     log(&ctxCommandCAPI, DLT_LOG_INFO, "CAPICommandSender destructed");
@@ -82,6 +71,8 @@ CAmCommandSenderCAPI::~CAmCommandSenderCAPI()
  */
 am_Error_e CAmCommandSenderCAPI::startService(IAmCommandReceive* commandreceiveinterface)
 {
+	mpCAmCAPIWrapper=Am_CAPI;
+	assert(mpCAmCAPIWrapper!=NULL);
 	if(!mIsServiceStarted)
 	{
 		assert(commandreceiveinterface);
