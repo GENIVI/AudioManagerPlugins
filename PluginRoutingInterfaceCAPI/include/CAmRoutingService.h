@@ -1,7 +1,7 @@
 /**
  *  Copyright (c) 2012 BMW
  *
- *  \author Aleksandar Donchev, aleksander.donchev@partner.bmw.de BMW 2013
+ *  \author Aleksandar Donchev, aleksander.donchev@partner.bmw.de BMW 2013-2015
  *
  *  \copyright
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction,
@@ -18,128 +18,113 @@
 #ifndef CAMROUTINGSERVICE_H_
 #define CAMROUTINGSERVICE_H_
 
-#include <org/genivi/am/RoutingControlObserverStubDefault.h>
+
+#include <v0_1/org/genivi/am/routinginterface/RoutingControlObserverStubDefault.hpp>
 #include "IAmRouting.h"
+#include "CAmCommonAPIWrapper.h"
 #include "CAmLookupData.h"
+#include "CAmRoutingSenderCommon.h"
 
 namespace am {
 
-class CAmCommonAPIWrapper;
-
-using namespace CommonAPI;
 
 /** Routing interface stub implementation.
  * This class is the routing interface service for the Audio Manager.
  */
-class CAmRoutingService: public org::genivi::am::RoutingControlObserverStubDefault {
+class CAmRoutingService: public am_routing_interface::RoutingControlObserverStubDefault {
 	CAmCommonAPIWrapper *mpCAmCAPIWrapper; ///< pointer to common-api wrapper
 	IAmRoutingReceive* mpIAmRoutingReceive; ///< pointer to the routing receive interface
 	CAmLookupData*   mpLookpData;			///< pointer to the plugin's lookup mechanism implementation
     int16_t mNumberDomains;	///< int number of registred domains
     uint16_t mHandle;		///< unsigned current handle
     bool mReady;			///< bool whether the service is in ready state or not
+
     CAmRoutingService();
 public:
 
 	CAmRoutingService(IAmRoutingReceive *aReceiver, CAmLookupData*   aLookpData, CAmCommonAPIWrapper *aCAPIWrapper);
 	virtual ~CAmRoutingService();
 
+	void ackConnect(am_Handle_s handle, am_connectionID_t connectionID, am_Error_e error);
+	void ackDisconnect(am_Handle_s handle, am_connectionID_t connectionID, am_Error_e error);
+	void ackSetSinkVolumeChange(am_Handle_s handle, am_volume_t volume, am_Error_e error);
+	void ackSetSourceVolumeChange(am_Handle_s handle, am_volume_t volume, am_Error_e error);
+	void ackSetSourceState(am_Handle_s handle, am_Error_e error);
+	void ackSetSinkSoundProperties(am_Handle_s handle, am_Error_e error);
+	void ackSetSinkSoundProperty(am_Handle_s handle, am_Error_e error);
+	void ackSetSourceSoundProperties(am_Handle_s handle, am_Error_e error);
+	void ackSetSourceSoundProperty(am_Handle_s handle, am_Error_e error);
+	void ackCrossFading(am_Handle_s handle, am_HotSink_e hotSink, am_Error_e error);
+	void ackSourceVolumeTick(am_Handle_s handle, am_sourceID_t source, am_volume_t volume);
+	void ackSinkVolumeTick(am_Handle_s handle, am_sinkID_t sink, am_volume_t volume);
+	void ackSetVolumes(am_Handle_s handle , const std::vector<am_Volumes_s> & listVolumes, am_Error_e error);
+	void ackSinkNotificationConfiguration (am_Handle_s handle, am_Error_e error);
+	void ackSourceNotificationConfiguration(am_Handle_s handle, am_Error_e error);
 
 	/** Stub overwritten methods.
 	 *
 	 */
+	void peekDomain(const std::shared_ptr<CommonAPI::ClientId>, std::string _name, peekDomainReply_t _reply);
 
-	void ackConnect(org::genivi::am::am_Handle_s handle, org::genivi::am::am_connectionID_t connectionID, org::genivi::am::am_Error_e error);
+	void registerDomain(const std::shared_ptr<CommonAPI::ClientId>, am_types::am_Domain_s _domainData, std::string _returnBusname, std::string _returnInterface, registerDomainReply_t _reply);
 
-	void ackDisconnect(org::genivi::am::am_Handle_s handle, org::genivi::am::am_connectionID_t connectionID, org::genivi::am::am_Error_e error);
+	void deregisterDomain(const std::shared_ptr<CommonAPI::ClientId>, am_types::am_domainID_t _domainID, deregisterDomainReply_t _reply);
 
-	void ackSetSinkVolumeChange(org::genivi::am::am_Handle_s handle, org::genivi::am::am_volume_t volume, org::genivi::am::am_Error_e error);
+	void registerGateway(const std::shared_ptr<CommonAPI::ClientId>, am_types::am_Gateway_s _gatewayData, registerGatewayReply_t _reply);
 
-	void ackSetSourceVolumeChange(org::genivi::am::am_Handle_s handle, org::genivi::am::am_volume_t volume, org::genivi::am::am_Error_e error);
+	void deregisterGateway(const std::shared_ptr<CommonAPI::ClientId>, am_types::am_gatewayID_t _gatewayID, deregisterGatewayReply_t _reply);
 
-	void ackSetSourceState(org::genivi::am::am_Handle_s handle, org::genivi::am::am_Error_e error);
+	void registerConverter(const std::shared_ptr<CommonAPI::ClientId>, am_types::am_Converter_s _converterData, registerConverterReply_t _reply);
 
-	void ackSetSinkSoundProperties(org::genivi::am::am_Handle_s handle, org::genivi::am::am_Error_e error);
+	void deregisterConverter(const std::shared_ptr<CommonAPI::ClientId>, am_types::am_converterID_t _converterID, deregisterConverterReply_t _reply);
 
-	void ackSetSinkSoundProperty(org::genivi::am::am_Handle_s handle, org::genivi::am::am_Error_e error);
+	void peekSink(const std::shared_ptr<CommonAPI::ClientId>, std::string _name, peekSinkReply_t _reply);
 
-	void ackSetSourceSoundProperties(org::genivi::am::am_Handle_s handle, org::genivi::am::am_Error_e error);
+	void registerSink(const std::shared_ptr<CommonAPI::ClientId>, am_types::am_Sink_s _sinkData, registerSinkReply_t _reply);
 
-	void ackSetSourceSoundProperty(org::genivi::am::am_Handle_s handle, org::genivi::am::am_Error_e error);
+	void deregisterSink(const std::shared_ptr<CommonAPI::ClientId>, am_types::am_sinkID_t _sinkID, deregisterSinkReply_t _reply);
 
-	void ackCrossFading(org::genivi::am::am_Handle_s handle, org::genivi::am::am_HotSink_e hotSink, org::genivi::am::am_Error_e error);
+	void peekSource(const std::shared_ptr<CommonAPI::ClientId>, std::string _name, peekSourceReply_t _reply);
 
-	void ackSourceVolumeTick(org::genivi::am::am_Handle_s handle, org::genivi::am::am_sourceID_t source, org::genivi::am::am_volume_t volume);
+	void registerSource(const std::shared_ptr<CommonAPI::ClientId>, am_types::am_Source_s _sourceData, registerSourceReply_t _reply);
 
-	void ackSinkVolumeTick(org::genivi::am::am_Handle_s handle, org::genivi::am::am_sinkID_t sink, org::genivi::am::am_volume_t volume);
+	void deregisterSource(const std::shared_ptr<CommonAPI::ClientId>, am_types::am_sourceID_t _sourceID, deregisterSourceReply_t _reply);
 
-	void peekDomain(std::string name, org::genivi::am::am_domainID_t& domainID, org::genivi::am::am_Error_e& error);
+	void registerCrossfader(const std::shared_ptr<CommonAPI::ClientId>, am_types::am_Crossfader_s _crossfaderData, registerCrossfaderReply_t _reply);
 
-	void registerDomain(org::genivi::am::am_Domain_s domainData, std::string returnBusname, std::string returnInterface, org::genivi::am::am_domainID_t& domainID, org::genivi::am::am_Error_e& error);
+	void deregisterCrossfader(const std::shared_ptr<CommonAPI::ClientId>, am_types::am_crossfaderID_t _crossfaderID, deregisterCrossfaderReply_t _reply);
 
-	void deregisterDomain(org::genivi::am::am_domainID_t domainID, org::genivi::am::am_Error_e& returnError);
+	void peekSourceClassID(const std::shared_ptr<CommonAPI::ClientId>, std::string _name, peekSourceClassIDReply_t _reply);
 
-	void registerGateway(org::genivi::am::am_Gateway_s gatewayData, org::genivi::am::am_gatewayID_t& gatewayID, org::genivi::am::am_Error_e& error);
+	void peekSinkClassID(const std::shared_ptr<CommonAPI::ClientId>, std::string _name, peekSinkClassIDReply_t _reply);
 
-	void registerConverter(org::genivi::am::am_Converter_s aData, org::genivi::am::am_converterID_t& converterID, org::genivi::am::am_Error_e& error);
+	void hookInterruptStatusChange(const std::shared_ptr<CommonAPI::ClientId>, am_types::am_sourceID_t _sourceID, am_types::am_InterruptState_e _interruptState, hookInterruptStatusChangeReply_t _reply);
 
-	void deregisterGateway(org::genivi::am::am_gatewayID_t gatewayID, org::genivi::am::am_Error_e& returnError);
+	void hookDomainRegistrationComplete(const std::shared_ptr<CommonAPI::ClientId>, am_types::am_domainID_t _domainID, hookDomainRegistrationCompleteReply_t _reply);
 
-	void deregisterConverter(org::genivi::am::am_converterID_t converterID, org::genivi::am::am_Error_e& returnError);
+	void hookSinkAvailablityStatusChange(const std::shared_ptr<CommonAPI::ClientId>, am_types::am_sinkID_t _sinkID, am_types::am_Availability_s _availability, hookSinkAvailablityStatusChangeReply_t _reply);
 
-	void peekSink(std::string name, org::genivi::am::am_sinkID_t& sinkID, org::genivi::am::am_Error_e& error);
+	void hookSourceAvailablityStatusChange(const std::shared_ptr<CommonAPI::ClientId>, am_types::am_sourceID_t _sourceID, am_types::am_Availability_s _availability, hookSourceAvailablityStatusChangeReply_t _reply);
 
-	void registerSink(org::genivi::am::am_Sink_s sinkData, org::genivi::am::am_sinkID_t& sinkID, org::genivi::am::am_Error_e& error);
+	void hookDomainStateChange(const std::shared_ptr<CommonAPI::ClientId>, am_types::am_domainID_t _domainID, am_types::am_DomainState_e _domainState, hookDomainStateChangeReply_t _reply);
 
-	void deregisterSink(org::genivi::am::am_sinkID_t sinkID, org::genivi::am::am_Error_e& returnError);
+	void hookTimingInformationChanged(const std::shared_ptr<CommonAPI::ClientId>, am_types::am_connectionID_t _connectionID, am_types::am_timeSync_t _delay, hookTimingInformationChangedReply_t _reply);
 
-	void peekSource(std::string name, org::genivi::am::am_sourceID_t& sourceID, org::genivi::am::am_Error_e& error);
+	void sendChangedData(const std::shared_ptr<CommonAPI::ClientId>, am_types::am_EarlyData_L _earlyData, sendChangedDataReply_t _reply);
 
-	void registerSource(org::genivi::am::am_Source_s sourceData, org::genivi::am::am_sourceID_t& sourceID, org::genivi::am::am_Error_e& error);
+	void updateGateway(const std::shared_ptr<CommonAPI::ClientId>, am_types::am_gatewayID_t _gatewayID, am_types::am_ConnectionFormat_L _listSourceFormats, am_types::am_ConnectionFormat_L _listSinkFormats, am_types::am_Convertion_L _convertionMatrix, updateGatewayReply_t _reply);
 
-	void deregisterSource(org::genivi::am::am_sourceID_t sourceID, org::genivi::am::am_Error_e& returnError);
+	void updateConverter(const std::shared_ptr<CommonAPI::ClientId>, am_types::am_converterID_t _converterID, am_types::am_ConnectionFormat_L _listSourceFormats, am_types::am_ConnectionFormat_L _listSinkFormats, am_types::am_Convertion_L _convertionMatrix, updateConverterReply_t _reply);
 
-	void registerCrossfader(org::genivi::am::am_Crossfader_s crossfaderData, org::genivi::am::am_crossfaderID_t& crossfaderID, org::genivi::am::am_Error_e& error);
+	void updateSink(const std::shared_ptr<CommonAPI::ClientId>, am_types::am_sinkID_t _sinkID, am_types::am_sinkClass_t _sinkClassID, am_types::am_SoundProperty_L _listSoundProperties, am_types::am_ConnectionFormat_L _listConnectionFormats, am_types::am_MainSoundProperty_L _listMainSoundProperties, updateSinkReply_t _reply);
 
-	void deregisterCrossfader(org::genivi::am::am_crossfaderID_t crossfaderID, org::genivi::am::am_Error_e& returnError);
+	void updateSource(const std::shared_ptr<CommonAPI::ClientId>, am_types::am_sourceID_t _sourceID, am_types::am_sourceClass_t _sourceClassID, am_types::am_SoundProperty_L _listSoundProperties, am_types::am_ConnectionFormat_L _listConnectionFormats, am_types::am_MainSoundProperty_L _listMainSoundProperties, updateSourceReply_t _reply);
 
-	void peekSourceClassID(std::string name, org::genivi::am::am_sourceClass_t& sourceClassID, org::genivi::am::am_Error_e& error);
+	void hookSinkNotificationDataChange(const std::shared_ptr<CommonAPI::ClientId>, am_types::am_sinkID_t _sinkID, am_types::am_NotificationPayload_s _payload, hookSinkNotificationDataChangeReply_t _reply);
 
-	void peekSinkClassID(std::string name, org::genivi::am::am_sinkClass_t& sinkClassID, org::genivi::am::am_Error_e& error);
+	void hookSourceNotificationDataChange(const std::shared_ptr<CommonAPI::ClientId>, am_types::am_sourceID_t _sourceID, am_types::am_NotificationPayload_s _payload, hookSourceNotificationDataChangeReply_t _reply);
 
-	void hookInterruptStatusChange(org::genivi::am::am_sourceID_t sourceID, org::genivi::am::am_InterruptState_e InterruptState);
-
-	void hookDomainRegistrationComplete(org::genivi::am::am_domainID_t domainID);
-
-	void hookSinkAvailablityStatusChange(org::genivi::am::am_sinkID_t sinkID, org::genivi::am::am_Availability_s availability);
-
-	void hookSourceAvailablityStatusChange(org::genivi::am::am_sourceID_t sourceID, org::genivi::am::am_Availability_s availability);
-
-	void hookDomainStateChange(org::genivi::am::am_domainID_t domainID, org::genivi::am::am_DomainState_e domainState);
-
-	void hookTimingInformationChanged(org::genivi::am::am_connectionID_t connectionID, int16_t delay);
-
-	void sendChangedData(org::genivi::am::am_EarlyData_L earlyData);
-
-	void updateGateway(org::genivi::am::am_gatewayID_t gatewayID, org::genivi::am::am_ConnectionFormat_L listSourceFormats, org::genivi::am::am_ConnectionFormat_L listSinkFormats, org::genivi::am::am_Convertion_L convertionMatrix, org::genivi::am::am_Error_e& error);
-
-	void updateConverter(org::genivi::am::am_converterID_t converterID, org::genivi::am::am_ConnectionFormat_L listSourceFormats, org::genivi::am::am_ConnectionFormat_L listSinkFormats, org::genivi::am::am_Convertion_L convertionMatrix, org::genivi::am::am_Error_e& error);
-
-	void updateSink(org::genivi::am::am_sinkID_t sinkID, org::genivi::am::am_sinkClass_t sinkClassID, org::genivi::am::am_SoundProperty_L listSoundProperties, org::genivi::am::am_ConnectionFormat_L listConnectionFormats, org::genivi::am::am_MainSoundProperty_L listMainSoundProperties, org::genivi::am::am_Error_e& error);
-
-	void updateSource(org::genivi::am::am_sourceID_t sourceID, org::genivi::am::am_sourceClass_t sourceClassID, org::genivi::am::am_SoundProperty_L listSoundProperties, org::genivi::am::am_ConnectionFormat_L listConnectionFormats, org::genivi::am::am_MainSoundProperty_L listMainSoundProperties, org::genivi::am::am_Error_e& error);
-
-	void ackSetVolumes(org::genivi::am::am_Handle_s handle , org::genivi::am::am_Volumes_L listVolumes, org::genivi::am::am_Error_e error);
-
-	void ackSinkNotificationConfiguration (org::genivi::am::am_Handle_s handle, org::genivi::am::am_Error_e error);
-
-	void ackSourceNotificationConfiguration(org::genivi::am::am_Handle_s handle, org::genivi::am::am_Error_e error);
-
-	void hookSinkNotificationDataChange(org::genivi::am::am_sinkID_t sinkID, org::genivi::am::am_NotificationPayload_s payload);
-
-	void hookSourceNotificationDataChange(org::genivi::am::am_sourceID_t sourceID, org::genivi::am::am_NotificationPayload_s payload);
-
-	void confirmRoutingRundown(std::string domainName);
+	void confirmRoutingRundown(const std::shared_ptr<CommonAPI::ClientId>, std::string _domainName, confirmRoutingRundownReply_t _reply);
 
 	void gotRundown(int16_t numberDomains, uint16_t handle);
 

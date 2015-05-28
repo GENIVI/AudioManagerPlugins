@@ -27,12 +27,10 @@
 
 namespace am
 {
-using namespace CommonAPI;
-
 
 /**
  * Common-api implementation of CommandSendInterface.
- * This class publish a service
+ * This class publish a common-api service.
  */
 class CAmCommandSenderCAPI: public IAmCommandSend
 {
@@ -71,9 +69,18 @@ public:
 
     static const char * COMMAND_SENDER_SERVICE;
 
+#ifdef UNIT_TEST
+     static CAmCommandSenderCAPI * newCommandSenderCAPI(CAmCommonAPIWrapper *wrapper)
+     {
+    	 CAmCommandSenderCAPI *pCommandSenderCAPI = new CAmCommandSenderCAPI();
+    	 pCommandSenderCAPI->mpCAmCAPIWrapper = wrapper;
+    	 return pCommandSenderCAPI;
+     };
+#endif
+
 private:
-    std::shared_ptr<CAmCommandSenderService> mService;
-    CAmCommonAPIWrapper* mpCAmCAPIWrapper; ///< ! pointer to dbus wrapper
+    std::shared_ptr<CAmCommandSenderService> mService; ///< ! shared pointer to the command sender stub object
+    CAmCommonAPIWrapper* mpCAmCAPIWrapper; ///< ! pointer to common-api runtime wrapper
     IAmCommandReceive* mpIAmCommandReceive; ///< ! pointer to commandReceive Interface
     bool mReady; ///< ! if false, calls shall be ignored.
     bool mIsServiceStarted;

@@ -1,7 +1,7 @@
 /**
  *  Copyright (c) 2012 BMW
  *
- *  \author Aleksandar Donchev, aleksander.donchev@partner.bmw.de BMW 2013
+ *  \author Aleksandar Donchev, aleksander.donchev@partner.bmw.de BMW 2013-2015
  *
  *  \copyright
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction,
@@ -22,9 +22,10 @@
 #include <iostream>
 #include <cassert>
 #include <memory>
-#include <CommonAPI/CommonAPI.h>
 #include "audiomanagertypes.h"
-#include <org/genivi/am/RoutingControlProxy.h>
+#include "IAmRouting.h"
+#include "CAmRoutingSenderCommon.h"
+#include <v0_1/org/genivi/am/routinginterface/RoutingControlProxy.hpp>
 
 #ifdef UNIT_TEST
 #include "../test/IAmRoutingSenderBackdoor.h" //we need this for the unit test
@@ -32,58 +33,56 @@
 
 namespace am {
 
-using namespace CommonAPI;
-
-/** A structure holding info for given domain.
- * For every domain a single instance is created which is used by the lookup methods.
- */
-
-struct rs_lookupData_s
-{
-private:
-    bool mIsConnected; //!< bool indicating whether the domain is reachable or not
-    std::shared_ptr<org::genivi::am::RoutingControlProxy<> > mSenderProxy; //!< a pointer to the proxy object, which implements the connection out from AudioManager
-    CommonAPI::ProxyStatusEvent::Subscription mSubscription;	//!< subscription for the proxy system events
-    void onServiceStatusEvent(const CommonAPI::AvailabilityStatus& serviceStatus); //!< proxy status event callback
-public:
-    rs_lookupData_s(const std::shared_ptr<org::genivi::am::RoutingControlProxy<> > & aProxy);
-    ~rs_lookupData_s();
-
-    /**
-     * returns the proxy object.
-     */
-    std::shared_ptr<org::genivi::am::RoutingControlProxy<>> & getProxy();
-    /**
-     * returns whether the proxy object is connected or not.
-     */
-    bool isConnected();
-    /**
-     * proxy wrapping methods.
-     */
-    am_Error_e asyncAbort(const am_Handle_s handle, org::genivi::am::RoutingControlProxyBase::AsyncAbortAsyncCallback);
-    am_Error_e asyncConnect(const am_Handle_s handle, const am_connectionID_t, const am_sourceID_t, const am_sinkID_t, const am_CustomConnectionFormat_t, org::genivi::am::RoutingControlProxyBase::AsyncConnectAsyncCallback);
-    am_Error_e asyncDisconnect(const am_Handle_s handle, const am_connectionID_t, org::genivi::am::RoutingControlProxyBase::AsyncDisconnectAsyncCallback);
-    am_Error_e asyncSetSinkVolume(const am_Handle_s handle, const am_sinkID_t, const am_volume_t, const am_CustomRampType_t, const am_time_t, org::genivi::am::RoutingControlProxyBase::AsyncSetSinkVolumeAsyncCallback);
-    am_Error_e asyncSetSourceVolume(const am_Handle_s handle, const am_sourceID_t , const am_volume_t, const am_CustomRampType_t, const am_time_t, org::genivi::am::RoutingControlProxyBase::AsyncSetSourceVolumeAsyncCallback);
-    am_Error_e asyncSetSourceState(const am_Handle_s handle, const am_sourceID_t, const am_SourceState_e, org::genivi::am::RoutingControlProxyBase::AsyncSetSourceStateAsyncCallback);
-    am_Error_e asyncSetSinkSoundProperties(const am_Handle_s handle, const am_sinkID_t, const std::vector<am_SoundProperty_s>&, org::genivi::am::RoutingControlProxyBase::AsyncSetSinkSoundPropertiesAsyncCallback);
-    am_Error_e asyncSetSinkSoundProperty(const am_Handle_s handle, const am_sinkID_t, const am_SoundProperty_s&, org::genivi::am::RoutingControlProxyBase::AsyncSetSinkSoundPropertyAsyncCallback);
-    am_Error_e asyncSetSourceSoundProperties(const am_Handle_s handle, const am_sourceID_t, const std::vector<am_SoundProperty_s>&, org::genivi::am::RoutingControlProxyBase::AsyncSetSourceSoundPropertiesAsyncCallback);
-    am_Error_e asyncSetSourceSoundProperty(const am_Handle_s handle, const am_sourceID_t, const am_SoundProperty_s&, org::genivi::am::RoutingControlProxyBase::AsyncSetSourceSoundPropertyAsyncCallback);
-    am_Error_e asyncCrossFade(const am_Handle_s handle, const am_crossfaderID_t, const am_HotSink_e, const am_CustomRampType_t, const am_time_t, org::genivi::am::RoutingControlProxyBase::AsyncCrossFadeAsyncCallback);
-    am_Error_e setDomainState(const am_domainID_t, const am_DomainState_e, org::genivi::am::RoutingControlProxyBase::SetDomainStateAsyncCallback);
-    am_Error_e asyncSetVolumes(const am_Handle_s handle, const std::vector<am_Volumes_s>&, org::genivi::am::RoutingControlProxyBase::AsyncSetVolumesAsyncCallback);
-    am_Error_e asyncSetSinkNotificationConfiguration(const am_Handle_s handle, const am_sinkID_t, const am_NotificationConfiguration_s&, org::genivi::am::RoutingControlProxyBase::AsyncSetSinkNotificationConfigurationAsyncCallback);
-    am_Error_e asyncSetSourceNotificationConfiguration(const am_Handle_s handle, const am_sourceID_t, const am_NotificationConfiguration_s&, org::genivi::am::RoutingControlProxyBase::AsyncSetSourceNotificationConfigurationAsyncCallback);
-};
-
-
 /**
- * The class encapsulate the lookup mechanism and forwards the invocations to the appropriate lookup objects ( proxies ).
+ * The class encapsulates the lookup mechanism and forwards the invocations to the appropriate lookup objects ( proxies ).
  */
 class CAmLookupData {
 
-	typedef std::shared_ptr<rs_lookupData_s> RSLookupDataPtr;
+	/** Class wrapping a routing control proxy object, which is connected to the routing control service of given domain.
+	 */
+	class RSLookupData
+	{
+		CAmLookupData *mpLookupDataOwner;
+	    bool mIsConnected; //!< bool indicating whether the domain is reachable or not
+	    std::shared_ptr<am_routing_interface::RoutingControlProxy<> > mSenderProxy; //!< a pointer to the proxy object, which implements the connection out from AudioManager
+	    void onServiceStatusEvent(const CommonAPI::AvailabilityStatus& serviceStatus); //!< proxy status event callback
+	public:
+	    RSLookupData(CAmLookupData *pLookupDataOwner, const std::shared_ptr<am_routing_interface::RoutingControlProxy<> > & aProxy);
+	    ~RSLookupData();
+
+	    /**
+	     * Return the proxy object.
+	     */
+	    std::shared_ptr<am_routing_interface::RoutingControlProxy<>> & getProxy();
+	    /**
+	     * Return whether the proxy object is connected or not.
+	     */
+	    bool isConnected();
+	    /**
+	     * proxy wrapping methods.
+	     */
+	    am_Error_e doAbort(const am_Handle_s handle, am_routing_interface::RoutingControlProxyBase::AsyncAbortAsyncCallback);
+	    am_Error_e doConnect(const am_Handle_s handle, const am_connectionID_t, const am_sourceID_t, const am_sinkID_t, const am_CustomConnectionFormat_t, am_routing_interface::RoutingControlProxyBase::AsyncConnectAsyncCallback);
+	    am_Error_e doDisconnect(const am_Handle_s handle, const am_connectionID_t, am_routing_interface::RoutingControlProxyBase::AsyncDisconnectAsyncCallback);
+	    am_Error_e doSetSinkVolume(const am_Handle_s handle, const am_sinkID_t, const am_volume_t, const am_CustomRampType_t, const am_time_t, am_routing_interface::RoutingControlProxyBase::AsyncSetSinkVolumeAsyncCallback);
+	    am_Error_e doSetSourceVolume(const am_Handle_s handle, const am_sourceID_t , const am_volume_t, const am_CustomRampType_t, const am_time_t, am_routing_interface::RoutingControlProxyBase::AsyncSetSourceVolumeAsyncCallback);
+	    am_Error_e doSetSourceState(const am_Handle_s handle, const am_sourceID_t, const am_SourceState_e, am_routing_interface::RoutingControlProxyBase::AsyncSetSourceStateAsyncCallback);
+	    am_Error_e doSetSinkSoundProperties(const am_Handle_s handle, const am_sinkID_t, const std::vector<am_SoundProperty_s>&, am_routing_interface::RoutingControlProxyBase::AsyncSetSinkSoundPropertiesAsyncCallback);
+	    am_Error_e doSetSinkSoundProperty(const am_Handle_s handle, const am_sinkID_t, const am_SoundProperty_s&, am_routing_interface::RoutingControlProxyBase::AsyncSetSinkSoundPropertyAsyncCallback);
+	    am_Error_e doSetSourceSoundProperties(const am_Handle_s handle, const am_sourceID_t, const std::vector<am_SoundProperty_s>&, am_routing_interface::RoutingControlProxyBase::AsyncSetSourceSoundPropertiesAsyncCallback);
+	    am_Error_e doSetSourceSoundProperty(const am_Handle_s handle, const am_sourceID_t, const am_SoundProperty_s&, am_routing_interface::RoutingControlProxyBase::AsyncSetSourceSoundPropertyAsyncCallback);
+	    am_Error_e doCrossFade(const am_Handle_s handle, const am_crossfaderID_t, const am_HotSink_e, const am_CustomRampType_t, const am_time_t, am_routing_interface::RoutingControlProxyBase::AsyncCrossFadeAsyncCallback);
+	    am_Error_e doSetDomainState(const am_domainID_t, const am_DomainState_e, am_routing_interface::RoutingControlProxyBase::SetDomainStateAsyncCallback);
+	    am_Error_e doSetVolumes(const am_Handle_s handle, const std::vector<am_Volumes_s>&, am_routing_interface::RoutingControlProxyBase::AsyncSetVolumesAsyncCallback);
+	    am_Error_e doSetSinkNotificationConfiguration(const am_Handle_s handle, const am_sinkID_t, const am_NotificationConfiguration_s&, am_routing_interface::RoutingControlProxyBase::AsyncSetSinkNotificationConfigurationAsyncCallback);
+	    am_Error_e doSetSourceNotificationConfiguration(const am_Handle_s handle, const am_sourceID_t, const am_NotificationConfiguration_s&, am_routing_interface::RoutingControlProxyBase::AsyncSetSourceNotificationConfigurationAsyncCallback);
+
+	};
+
+	typedef std::shared_ptr<RSLookupData> RSLookupDataPtr;
+
+	IAmRoutingReceive *mpIAmRoutingReceive;
+
 	/**
 	 * Lookup maps.
 	 */
@@ -94,12 +93,12 @@ class CAmLookupData {
 	typedef std::map<uint16_t,RSLookupDataPtr> mapHandles_t;
 	typedef std::map<am_crossfaderID_t,RSLookupDataPtr> mapCrossfaders_t;
 
-	mapDomain_t mMapDomains;
-	mapSinks_t mMapSinks;
-	mapSources_t mMapSources;
-	mapConnections_t mMapConnections;
-	mapHandles_t mMapHandles;
-	mapCrossfaders_t mMapCrossfaders;
+	mapDomain_t mMapDomains; //!< mapDomain_t domains lookup map
+	mapSinks_t mMapSinks; //!< mapSinks_t sinks lookup map
+	mapSources_t mMapSources; //!< mapSources_t sources lookup map
+	mapConnections_t mMapConnections; //!< mapConnections_t connections lookup map
+	mapHandles_t mMapHandles; //!< mapHandles_t handles lookup map
+	mapCrossfaders_t mMapCrossfaders; //!< mapCrossfaders_t crossfaders lookup map
 
 	/** \brief returns the value for given key if exists.
 	 *
@@ -116,15 +115,19 @@ class CAmLookupData {
 	template <typename TKey> static void removeEntriesForValue(const RSLookupDataPtr & value, std::map<TKey,RSLookupDataPtr> & map);
 
 public:
-	CAmLookupData();
+	CAmLookupData(IAmRoutingReceive * pRoutingReceive = NULL);
 	virtual ~CAmLookupData();
+
+	IAmRoutingReceive *getIAmRoutingReceive(){ return mpIAmRoutingReceive; }
+	void setIAmRoutingReceive(IAmRoutingReceive * pRoutingReceive){ mpIAmRoutingReceive=pRoutingReceive; }
+
 	/** \brief adds a lookup for given domain.
 	 *
 	 * @param  domainID is a valid domain id.
 	 * @param  aProxy is a proxy object constructed by registerDomain
 	 */
 	void addDomainLookup(am_domainID_t & domainID,
-							std::shared_ptr<org::genivi::am::RoutingControlProxy<>> & aProxy);
+							std::shared_ptr<am_routing_interface::RoutingControlProxy<>> & aProxy);
 
 	/** \brief removes given handle from the list.
 	 *
@@ -179,21 +182,41 @@ public:
     /**
      * Wrapping methods.
      */
-    am_Error_e asyncAbort(const am_Handle_s, org::genivi::am::RoutingControlProxyBase::AsyncAbortAsyncCallback);
-    am_Error_e asyncConnect(const am_Handle_s , const am_connectionID_t, const am_sourceID_t, const am_sinkID_t, const am_CustomConnectionFormat_t, org::genivi::am::RoutingControlProxyBase::AsyncConnectAsyncCallback);
-    am_Error_e asyncDisconnect(const am_Handle_s , const am_connectionID_t, org::genivi::am::RoutingControlProxyBase::AsyncDisconnectAsyncCallback);
-    am_Error_e asyncSetSinkVolume(const am_Handle_s , const am_sinkID_t, const am_volume_t, const am_CustomRampType_t, const am_time_t, org::genivi::am::RoutingControlProxyBase::AsyncSetSinkVolumeAsyncCallback);
-    am_Error_e asyncSetSourceVolume(const am_Handle_s , const am_sourceID_t , const am_volume_t, const am_CustomRampType_t, const am_time_t, org::genivi::am::RoutingControlProxyBase::AsyncSetSourceVolumeAsyncCallback);
-    am_Error_e asyncSetSourceState(const am_Handle_s , const am_sourceID_t, const am_SourceState_e, org::genivi::am::RoutingControlProxyBase::AsyncSetSourceStateAsyncCallback);
-    am_Error_e asyncSetSinkSoundProperties(const am_Handle_s , const am_sinkID_t, const std::vector<am_SoundProperty_s>&, org::genivi::am::RoutingControlProxyBase::AsyncSetSinkSoundPropertiesAsyncCallback);
-    am_Error_e asyncSetSinkSoundProperty(const am_Handle_s , const am_sinkID_t, const am_SoundProperty_s&, org::genivi::am::RoutingControlProxyBase::AsyncSetSinkSoundPropertyAsyncCallback);
-    am_Error_e asyncSetSourceSoundProperties(const am_Handle_s , const am_sourceID_t, const std::vector<am_SoundProperty_s>&, org::genivi::am::RoutingControlProxyBase::AsyncSetSourceSoundPropertiesAsyncCallback);
-    am_Error_e asyncSetSourceSoundProperty(const am_Handle_s , const am_sourceID_t, const am_SoundProperty_s&, org::genivi::am::RoutingControlProxyBase::AsyncSetSourceSoundPropertyAsyncCallback);
-    am_Error_e asyncCrossFade(const am_Handle_s , const am_crossfaderID_t, const am_HotSink_e, const am_CustomRampType_t, const am_time_t, org::genivi::am::RoutingControlProxyBase::AsyncCrossFadeAsyncCallback);
-    am_Error_e setDomainState(const am_domainID_t, const am_DomainState_e, org::genivi::am::RoutingControlProxyBase::SetDomainStateAsyncCallback);
-    am_Error_e asyncSetVolumes(const am_Handle_s , const std::vector<am_Volumes_s>&, org::genivi::am::RoutingControlProxyBase::AsyncSetVolumesAsyncCallback);
-    am_Error_e asyncSetSinkNotificationConfiguration(const am_Handle_s , const am_sinkID_t, const am_NotificationConfiguration_s&, org::genivi::am::RoutingControlProxyBase::AsyncSetSinkNotificationConfigurationAsyncCallback);
-    am_Error_e asyncSetSourceNotificationConfiguration(const am_Handle_s , const am_sourceID_t, const am_NotificationConfiguration_s&, org::genivi::am::RoutingControlProxyBase::AsyncSetSourceNotificationConfigurationAsyncCallback);
+    am_Error_e asyncAbort(const am_Handle_s, am_routing_interface::RoutingControlProxyBase::AsyncAbortAsyncCallback);
+    am_Error_e asyncConnect(const am_Handle_s , const am_connectionID_t, const am_sourceID_t, const am_sinkID_t, const am_CustomConnectionFormat_t, am_routing_interface::RoutingControlProxyBase::AsyncConnectAsyncCallback);
+    am_Error_e asyncDisconnect(const am_Handle_s , const am_connectionID_t, am_routing_interface::RoutingControlProxyBase::AsyncDisconnectAsyncCallback);
+    am_Error_e asyncSetSinkVolume(const am_Handle_s , const am_sinkID_t, const am_volume_t, const am_CustomRampType_t, const am_time_t, am_routing_interface::RoutingControlProxyBase::AsyncSetSinkVolumeAsyncCallback);
+    am_Error_e asyncSetSourceVolume(const am_Handle_s , const am_sourceID_t , const am_volume_t, const am_CustomRampType_t, const am_time_t, am_routing_interface::RoutingControlProxyBase::AsyncSetSourceVolumeAsyncCallback);
+    am_Error_e asyncSetSourceState(const am_Handle_s , const am_sourceID_t, const am_SourceState_e, am_routing_interface::RoutingControlProxyBase::AsyncSetSourceStateAsyncCallback);
+    am_Error_e asyncSetSinkSoundProperties(const am_Handle_s , const am_sinkID_t, const std::vector<am_SoundProperty_s>&, am_routing_interface::RoutingControlProxyBase::AsyncSetSinkSoundPropertiesAsyncCallback);
+    am_Error_e asyncSetSinkSoundProperty(const am_Handle_s , const am_sinkID_t, const am_SoundProperty_s&, am_routing_interface::RoutingControlProxyBase::AsyncSetSinkSoundPropertyAsyncCallback);
+    am_Error_e asyncSetSourceSoundProperties(const am_Handle_s , const am_sourceID_t, const std::vector<am_SoundProperty_s>&, am_routing_interface::RoutingControlProxyBase::AsyncSetSourceSoundPropertiesAsyncCallback);
+    am_Error_e asyncSetSourceSoundProperty(const am_Handle_s , const am_sourceID_t, const am_SoundProperty_s&, am_routing_interface::RoutingControlProxyBase::AsyncSetSourceSoundPropertyAsyncCallback);
+    am_Error_e asyncCrossFade(const am_Handle_s , const am_crossfaderID_t, const am_HotSink_e, const am_CustomRampType_t, const am_time_t, am_routing_interface::RoutingControlProxyBase::AsyncCrossFadeAsyncCallback);
+    am_Error_e setDomainState(const am_domainID_t, const am_DomainState_e, am_routing_interface::RoutingControlProxyBase::SetDomainStateAsyncCallback);
+    am_Error_e asyncSetVolumes(const am_Handle_s , const std::vector<am_Volumes_s>&, am_routing_interface::RoutingControlProxyBase::AsyncSetVolumesAsyncCallback);
+    am_Error_e asyncSetSinkNotificationConfiguration(const am_Handle_s , const am_sinkID_t, const am_NotificationConfiguration_s&, am_routing_interface::RoutingControlProxyBase::AsyncSetSinkNotificationConfigurationAsyncCallback);
+    am_Error_e asyncSetSourceNotificationConfiguration(const am_Handle_s , const am_sourceID_t, const am_NotificationConfiguration_s&, am_routing_interface::RoutingControlProxyBase::AsyncSetSourceNotificationConfigurationAsyncCallback);
+
+    /**
+     * Event callbacks
+     */
+    void ackConnect(am_types::am_Handle_s handle, am_types::am_connectionID_t connectionID, am_types::am_Error_e error);
+	void ackDisconnect(am_types::am_Handle_s handle, am_types::am_connectionID_t connectionID, am_types::am_Error_e error);
+	void ackSetSinkVolumeChange(am_types::am_Handle_s handle, am_types::am_volume_t volume, am_types::am_Error_e error);
+	void ackSetSourceVolumeChange(am_types::am_Handle_s handle, am_types::am_volume_t volume, am_types::am_Error_e error);
+	void ackSetSourceState(am_types::am_Handle_s handle, am_types::am_Error_e error);
+	void ackSetSinkSoundProperties(am_types::am_Handle_s handle, am_types::am_Error_e error);
+	void ackSetSinkSoundProperty(am_types::am_Handle_s handle, am_types::am_Error_e error);
+	void ackSetSourceSoundProperties(am_types::am_Handle_s handle, am_types::am_Error_e error);
+	void ackSetSourceSoundProperty(am_types::am_Handle_s handle, am_types::am_Error_e error);
+	void ackCrossFading(am_types::am_Handle_s handle, am_types::am_HotSink_e hotSink, am_types::am_Error_e error);
+	void ackSourceVolumeTick(am_types::am_Handle_s handle, am_types::am_sourceID_t source, am_types::am_volume_t volume);
+	void ackSinkVolumeTick(am_types::am_Handle_s handle, am_types::am_sinkID_t sink, am_types::am_volume_t volume);
+	void ackSetVolumes(am_types::am_Handle_s handle , am_types::am_Volumes_L listVolumes, am_types::am_Error_e error);
+	void ackSinkNotificationConfiguration (am_types::am_Handle_s handle, am_types::am_Error_e error);
+	void ackSourceNotificationConfiguration(am_types::am_Handle_s handle, am_types::am_Error_e error);
+
 #ifdef UNIT_TEST
     friend class IAmRoutingSenderBackdoor;
 #endif

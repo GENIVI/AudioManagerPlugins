@@ -22,6 +22,7 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 
+
 namespace am {
 
 class MockIAmRoutingReceive : public IAmRoutingReceive {

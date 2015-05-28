@@ -18,54 +18,67 @@
 #ifndef CAMCOMMANDSENDERSERVICE_H_
 #define CAMCOMMANDSENDERSERVICE_H_
 
-#include <org/genivi/am/CommandControlStubDefault.h>
+#include <v1_0/org/genivi/am/commandinterface/CommandControlStubDefault.hpp>
+#include "CAmCommandSenderCommon.h"
 #include "IAmCommand.h"
+
+
+
 
 namespace am {
 
 /**
  * A concrete stub implementation used by the command sender plug-in.
  */
-class CAmCommandSenderService: public org::genivi::am::CommandControlStubDefault {
+class CAmCommandSenderService: public v1_0::org::genivi::am::commandinterface::CommandControlStubDefault {
 	IAmCommandReceive* mpIAmCommandReceive;
 public:
 	CAmCommandSenderService();
 	CAmCommandSenderService(IAmCommandReceive *aReceiver);
 	virtual ~CAmCommandSenderService();
 
-		virtual void connect(org::genivi::am::am_sourceID_t sourceID, org::genivi::am::am_sinkID_t sinkID, org::genivi::am::am_mainConnectionID_t& mainConnectionID, org::genivi::am::am_Error_e& result);
+		void connect(const std::shared_ptr<CommonAPI::ClientId> _client, am_types::am_sourceID_t _sourceID, am_types::am_sinkID_t _sinkID, connectReply_t _reply);
 
-	    virtual void disconnect(org::genivi::am::am_mainConnectionID_t mainConnectionID, org::genivi::am::am_Error_e& result);
+	    void disconnect(const std::shared_ptr<CommonAPI::ClientId> _client, am_types::am_mainConnectionID_t _mainConnectionID, disconnectReply_t _reply);
 
-	    virtual void setVolume(org::genivi::am::am_sinkID_t sinkID, org::genivi::am::am_mainVolume_t volume, org::genivi::am::am_Error_e& result);
+	    void setVolume(const std::shared_ptr<CommonAPI::ClientId> _client, am_types::am_sinkID_t _sinkID, am_types::am_mainVolume_t _volume, setVolumeReply_t _reply);
 
-	    virtual void volumeStep(org::genivi::am::am_sinkID_t sinkID, org::genivi::am::am_mainVolume_t volumeStep, org::genivi::am::am_Error_e& result);
+	    void volumeStep(const std::shared_ptr<CommonAPI::ClientId> _client, am_types::am_sinkID_t _sinkID, int16_t _step, volumeStepReply_t _reply);
 
-	    virtual void setSinkMuteState(org::genivi::am::am_sinkID_t sinkID, org::genivi::am::am_MuteState_e muteState, org::genivi::am::am_Error_e& result);
+	    void setSinkMuteState(const std::shared_ptr<CommonAPI::ClientId> _client, am_types::am_sinkID_t _sinkID, am_types::am_MuteState_e _muteState, setSinkMuteStateReply_t _reply);
 
-	    virtual void setMainSinkSoundProperty(org::genivi::am::am_sinkID_t sinkID, org::genivi::am::am_MainSoundProperty_s soundProperty, org::genivi::am::am_Error_e& result);
+	    void setMainSinkSoundProperty(const std::shared_ptr<CommonAPI::ClientId> _client, am_types::am_sinkID_t _sinkID, am_types::am_MainSoundProperty_s _soundProperty, setMainSinkSoundPropertyReply_t _reply);
 
-	    virtual void setMainSourceSoundProperty(org::genivi::am::am_sourceID_t sourceID, org::genivi::am::am_MainSoundProperty_s soundProperty, org::genivi::am::am_Error_e& result);
+	    void setMainSourceSoundProperty(const std::shared_ptr<CommonAPI::ClientId> _client, am_types::am_sourceID_t _sourceID, am_types::am_MainSoundProperty_s _soundProperty, setMainSourceSoundPropertyReply_t _reply);
 
-	    virtual void setSystemProperty(org::genivi::am::am_SystemProperty_s soundProperty, org::genivi::am::am_Error_e& result);
+	    void setSystemProperty(const std::shared_ptr<CommonAPI::ClientId> _client, am_types::am_SystemProperty_s _property, setSystemPropertyReply_t _reply);
 
-	    virtual void getListMainConnections(org::genivi::am::am_MainConnection_L& listConnections,org::genivi::am::am_Error_e& result);
+	    void getListMainConnections(const std::shared_ptr<CommonAPI::ClientId> _client, getListMainConnectionsReply_t _reply);
 
-	    virtual void getListMainSinks(org::genivi::am::am_SinkType_L& listMainSinks, org::genivi::am::am_Error_e& result);
+	    void getListMainSinks(const std::shared_ptr<CommonAPI::ClientId> _client, getListMainSinksReply_t _reply);
 
-	    virtual void getListMainSources(org::genivi::am::am_SourceType_L& listMainSources, org::genivi::am::am_Error_e& result);
+	    void getListMainSources(const std::shared_ptr<CommonAPI::ClientId> _client, getListMainSourcesReply_t _reply);
 
-	    virtual void getListMainSinkSoundProperties(org::genivi::am::am_sinkID_t sinkID, org::genivi::am::am_MainSoundProperty_L& listSoundProperties, org::genivi::am::am_Error_e& result);
+	    void getListMainSinkSoundProperties(const std::shared_ptr<CommonAPI::ClientId> _client, am_types::am_sinkID_t _sinkID, getListMainSinkSoundPropertiesReply_t _reply);
 
-	    virtual void getListMainSourceSoundProperties(org::genivi::am::am_sourceID_t sourceID, org::genivi::am::am_MainSoundProperty_L& listSourceProperties, org::genivi::am::am_Error_e& result);
+	    void getListMainSourceSoundProperties(const std::shared_ptr<CommonAPI::ClientId> _client, am_types::am_sourceID_t _sourceID, getListMainSourceSoundPropertiesReply_t _reply);
 
-	    virtual void getListSourceClasses( org::genivi::am::am_SourceClass_L& listSourceClasses,org::genivi::am::am_Error_e& result);
+	    void getListSinkClasses(const std::shared_ptr<CommonAPI::ClientId> _client, getListSinkClassesReply_t _reply);
 
-	    virtual void getListSinkClasses( org::genivi::am::am_SinkClass_L& listSinkClasses,org::genivi::am::am_Error_e& result);
+	    void getListSourceClasses(const std::shared_ptr<CommonAPI::ClientId> _client, getListSourceClassesReply_t _reply);
 
-	    virtual void getListSystemProperties(org::genivi::am::am_SystemProperty_L& listSystemProperties,org::genivi::am::am_Error_e& result);
+	    void getListSystemProperties(const std::shared_ptr<CommonAPI::ClientId> _client, getListSystemPropertiesReply_t _reply);
 
-	    virtual void getTimingInformation(org::genivi::am::am_mainConnectionID_t mainConnectionID, org::genivi::am::am_timeSync_t& delay,org::genivi::am::am_Error_e& result);
+	    void getTimingInformation(const std::shared_ptr<CommonAPI::ClientId> _client, am_types::am_mainConnectionID_t _mainConnectionID, getTimingInformationReply_t _reply);
+
+	    void getListMainSinkNotificationConfigurations(const std::shared_ptr<CommonAPI::ClientId> _client, am_types::am_sinkID_t _sinkID, getListMainSinkNotificationConfigurationsReply_t _reply);
+
+	    void getListMainSourceNotificationConfigurations(const std::shared_ptr<CommonAPI::ClientId> _client, am_types::am_sourceID_t _sourceID, getListMainSourceNotificationConfigurationsReply_t _reply);
+
+	    void setMainSinkNotificationConfiguration(const std::shared_ptr<CommonAPI::ClientId> _client, am_types::am_sinkID_t _sinkID, am_types::am_NotificationConfiguration_s _mainNotificationConfiguration, setMainSinkNotificationConfigurationReply_t _reply);
+
+	    void setMainSourceNotificationConfiguration(const std::shared_ptr<CommonAPI::ClientId> _client, am_types::am_sourceID_t _sourceID, am_types::am_NotificationConfiguration_s _mainNotificationConfiguration, setMainSourceNotificationConfigurationReply_t _reply);
+
 };
 
 } /* namespace am */

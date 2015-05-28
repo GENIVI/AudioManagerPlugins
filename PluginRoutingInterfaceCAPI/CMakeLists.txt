@@ -31,7 +31,9 @@ if (NOT DAEMONVERSION)
         set(PLUGINS_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}) 
         set(TEST_EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}) 
         if(WITH_TESTS)
-            add_subdirectory(${GOOGLE_MOCK_PROJECT_FOLDER} ${CMAKE_CURRENT_BINARY_DIR}/gmock)
+            if(NOT TARGET gtest)
+                add_subdirectory(${GOOGLE_MOCK_PROJECT_FOLDER} ${CMAKE_CURRENT_BINARY_DIR}/gmock)
+            endif()
         endif(WITH_TESTS)
         
         set(COMMONAPI_DBUS_CONFIGURATIONS "") 
@@ -40,11 +42,14 @@ if (NOT DAEMONVERSION)
     endif(AUDIOMANAGER_FOUND)
 endif (NOT DAEMONVERSION)        
 
+find_package(DBUS REQUIRED)
+
 IF(${WITH_ENABLED_IPC} STREQUAL "CAPI")
 
     set(INCLUDE_FOLDER "include")
        
-    FIND_PACKAGE(CommonAPI REQUIRED)
+    INCLUDE (CommonAPI)
+    LOAD_COMMONAPI(DBUS)
     
     set(LIBRARY_OUTPUT_PATH ${PLUGINS_OUTPUT_PATH}/routing)
     
@@ -58,12 +63,12 @@ IF(${WITH_ENABLED_IPC} STREQUAL "CAPI")
     # Find the common-api sources. 
     # The sources can be placed in the build directory (DESTINATION) or in the source tree (ALT_DESTINATION). 
     # The ALT_DESTINATION is used as fall back if the DESTINATION directory dosen't contain the sources or you just don't want to use the generator.
-    INCLUDE(CommonAPIGenerator)
+  
     COMMON_API_GENERATE_SOUCRES(TARGET COMMON_API_ROUTING_INTERFACE 
                                 FIDLS fidl/RoutingInterface.fidl # a list with fidls
                                 DESTINATION src-gen  # a relative path to the build directory or an absolute path
                                 ALT_DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/src-gen # an alternative relative/absolute path with common-api sources, usually in the source tree
-                                DBUS)
+                                )
     
     INCLUDE_DIRECTORIES(
     	${CMAKE_SOURCE_DIR} 
@@ -71,9 +76,11 @@ IF(${WITH_ENABLED_IPC} STREQUAL "CAPI")
     	${AUDIO_INCLUDE_FOLDER}
     	${AUDIOMANAGER_INCLUDE_FOLDER}
     	${AUDIOMANAGER_UTILITIES_INCLUDE}
-    	${COMMON_API_INCLUDE_DIRS}
-    	${COMMON_API_DBUS_INCLUDE_DIRS}
+    	${COMMONAPI_DBUS_INCLUDE_DIRS}
+        ${COMMONAPI_INCLUDE_DIRS}
     	${COMMON_API_ROUTING_INTERFACE_GEN_INCLUDE_DIR}
+    	${DBUS_ARCH_INCLUDE_DIR}
+        ${DBUS_INCLUDE_DIR}
     	${INCLUDE_FOLDER}
     )
     
@@ -84,8 +91,9 @@ IF(${WITH_ENABLED_IPC} STREQUAL "CAPI")
     
     TARGET_LINK_LIBRARIES(PluginRoutingInterfaceCAPI 
         ${DLT_LIBRARIES}
-        ${COMMON_API_LIBRARIES}
-        ${COMMON_API_DBUS_LIBRARIES}
+        ${CommonAPI-DBus_LIBRARY}
+        ${CommonAPI_LIBRARY}
+        ${DBUS_LIBRARY}
     )
     
     IF(WITH_TESTS)

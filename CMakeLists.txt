@@ -23,7 +23,7 @@ find_package(PkgConfig)
 OPTION (WITH_COMMAND_INTERFACE_COMMON_CAPI
         "build with commandinterface common-api plugin" ON )
 OPTION (WITH_COMMAND_INTERFACE_DBUS
-        "build with commandinterface dbus plugin" ON )
+        "build with commandinterface dbus plugin" OFF )
 OPTION (WITH_TEST_CONTROLLER 
         "Build with the test controller" ON)     
 OPTION (WITH_ROUTING_INTERFACE_ASYNC
@@ -31,7 +31,7 @@ OPTION (WITH_ROUTING_INTERFACE_ASYNC
 OPTION(WITH_ROUTING_INTERFACE_CAPI
        "build with routing iterface common-api plugin" ON)   
 OPTION(WITH_ROUTING_INTERFACE_DBUS
-       "build with routing iterface dbus plugin" ON)                    
+       "build with routing iterface dbus plugin" OFF)                    
 
 IF (WITH_COMMAND_INTERFACE_COMMON_CAPI)
 	add_subdirectory(PluginCommandInterfaceCAPI)

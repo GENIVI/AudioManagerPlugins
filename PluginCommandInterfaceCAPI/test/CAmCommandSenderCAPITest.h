@@ -24,12 +24,13 @@
 #include "CAmTestCAPIWrapper.h"
 #include "../include/CAmCommandSenderCAPI.h"
 #include "MockIAmCommandReceive.h"
-#include <../src-gen/org/genivi/am/CommandControlProxy.h>
+#include <v1_0/org/genivi/am/commandinterface/CommandControlProxy.hpp>
 
 #define UNIT_TEST 1
+#define am_commandcontrol v1_0::org::genivi::am::commandinterface
 
 using namespace testing;
-using namespace CommonAPI;
+
 namespace am {
 
 class CAmCommandSenderDbusBackdoor;
@@ -49,7 +50,7 @@ public:
 	MockIAmCommandReceive *mpCommandReceive;
 	CAmCommandSenderCAPI *mpPlugin;
 
-	std::shared_ptr<org::genivi::am::CommandControlProxy<> >  mProxy;
+	std::shared_ptr<am_commandcontrol::CommandControlProxy<> >  mProxy;
 
 	CAmTestsEnvironment();
     ~CAmTestsEnvironment();

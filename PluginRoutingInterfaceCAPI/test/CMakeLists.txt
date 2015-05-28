@@ -27,7 +27,6 @@ set(EXECUTABLE_OUTPUT_PATH ${TEST_EXECUTABLE_OUTPUT_PATH})
 FIND_PACKAGE(Threads)
 FIND_PACKAGE(PkgConfig)
 FIND_PACKAGE(PythonLibs REQUIRED)
-FIND_PACKAGE(CommonAPI REQUIRED)
 
 
 IF(WITH_DLT)    
@@ -54,8 +53,6 @@ INCLUDE_DIRECTORIES(
 
 link_directories(
         ${LINK_DIRECTORIES}
-        ${COMMON_API_LIBRARY_DIRS}
-		${COMMON_API_DBUS_LIBRARY_DIRS}
 )
    
 file(GLOB CAPI_PLUGIN_INTERFACE_SRCS_CXX 
@@ -67,7 +64,7 @@ file(GLOB CAPI_PLUGIN_INTERFACE_SRCS_CXX
      "CAmRoutingInterfaceCAPITests.cpp"
      "CAmTestCAPIWrapper.cpp"
      "CAmCommandSenderCommon.cpp"
-     "CAmRoutingSenderService.cpp"
+     "CAmTestRoutingSenderService.cpp"
      "IAmRoutingSenderBackdoor.cpp"
 )
 
@@ -79,8 +76,9 @@ TARGET_LINK_LIBRARIES(AmRoutingInterfaceCAPITests
     ${CMAKE_THREAD_LIBS_INIT}
     ${PYTHON_LIBRARY}
     ${PC_GSTREAMER_LIBRARIES}
-    ${COMMON_API_LIBRARIES}
-    ${COMMON_API_DBUS_LIBRARIES}
+    ${CommonAPI-DBus_LIBRARY}
+    ${CommonAPI_LIBRARY}
+    ${DBUS_LIBRARY}
     gtest
     gmock
 )

@@ -19,26 +19,29 @@
 #ifndef ROUTINGINTERFACETEST_H_
 #define ROUTINGINTERFACETEST_H_
 
+#define UNIT_TEST 1
+
+#include <CommonAPI/CommonAPI.hpp>
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 #include "CAmSocketHandler.h"
 #include "CAmTestCAPIWrapper.h"
+#include "../include/CAmRoutingSenderCommon.h"
 #include "../include/CAmRoutingSenderCAPI.h"
 #include "MockIAmRoutingReceive.h"
-#include <../src-gen/org/genivi/am/RoutingControlObserverProxy.h>
-
-#define UNIT_TEST 1
+#include <v0_1/org/genivi/am/routinginterface/RoutingControlObserverProxy.hpp>
+#include <v0_1/org/genivi/am/routinginterface/RoutingControlProxy.hpp>
 
 using namespace testing;
-using namespace CommonAPI;
+
 namespace am {
 
 class CAmCommandSenderDbusBackdoor;
 class IAmCommandSend;
-class CAmRoutingSenderService;
+class CAmTestRoutingSenderService;
 
 /** Global test environment which sets the routing interface service and test domain service for all tests.
- * The tests are executed after the connection have been successful established.
+ * The tests are executed after the connection has been successful established.
  * If the connection is not available for some reason all tests will fail.
  */
 class CAmTestsEnvironment : public ::testing::Environment
@@ -56,15 +59,16 @@ public:
 	MockIAmRoutingReceive *mpRoutingReceive;
 	CAmRoutingSenderCAPI *mpPlugin;
 
-	std::shared_ptr<org::genivi::am::RoutingControlObserverProxy<> >  mProxy; ///< pointer to routing interface proxy
-	std::shared_ptr<CAmRoutingSenderService>  mDomainService; ///< pointer to the test domain service
+	std::shared_ptr<am_routing_interface::RoutingControlObserverProxy<> >  mProxy; ///< pointer to routing interface proxy
+	std::shared_ptr<CAmTestRoutingSenderService>  mDomainService; ///< pointer to the test domain service
 
 	CAmTestsEnvironment();
     ~CAmTestsEnvironment();
     void SetUp();
     // Override this to define how to tear down the environment.
     void TearDown();
-    void onServiceStatusEvent(const CommonAPI::AvailabilityStatus& serviceStatus);
+    void onServiceStatusEventProxy(const CommonAPI::AvailabilityStatus& serviceStatus);
+    bool isServiceAvailable() { return mIsServiceAvailable; };
 };
 
 /**
@@ -76,21 +80,6 @@ class CAmRoutingInterfaceCAPITests :public ::testing::Test
 public:
 	CAmRoutingInterfaceCAPITests();
 	~CAmRoutingInterfaceCAPITests();
-
-	void SetUp();
-	void TearDown();
-
-};
-
-/**
- * Domain tests - connection to domain, registrations, deregistrations, lookups.
- */
-class CAmRoutingSenderCAPITests :public ::testing::Test
-{
-
-public:
-	CAmRoutingSenderCAPITests();
-	~CAmRoutingSenderCAPITests();
 
 	void SetUp();
 	void TearDown();

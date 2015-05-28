@@ -1,7 +1,7 @@
 /**
  *  Copyright (c) 2012 BMW
  *
- *  \author Aleksandar Donchev, aleksander.donchev@partner.bmw.de BMW 2013
+ *  \author Aleksandar Donchev, aleksander.donchev@partner.bmw.de BMW 2013-2015
  *
  *  \copyright
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction,
@@ -29,7 +29,6 @@
 
 namespace am
 {
-using namespace CommonAPI;
 
 #define ROUTING_NODE "routinginterface"
 
@@ -91,9 +90,20 @@ public:
     am_Error_e asyncSetSinkNotificationConfiguration(const am_Handle_s handle, const am_sinkID_t sinkID, const am_NotificationConfiguration_s& notificationConfiguration) ;
     am_Error_e asyncSetSourceNotificationConfiguration(const am_Handle_s handle, const am_sourceID_t sourceID, const am_NotificationConfiguration_s& notificationConfiguration) ;
 
-    static const char * ROUTING_INTERFACE_SERVICE;
+    static const char * ROUTING_INTERFACE;
+    static const char * ROUTING_INSTANCE;
+    static const char * DEFAULT_DOMAIN;
+    static const char * ROUTING_SERVICE_ADDRESS;
+
 #ifdef UNIT_TEST
     friend class IAmRoutingSenderBackdoor;
+     static CAmRoutingSenderCAPI * newRoutingSenderCAPI(CAmCommonAPIWrapper *wrapper)
+     {
+    	 CAmRoutingSenderCAPI *pRoutingSenderCAPI = new CAmRoutingSenderCAPI();
+    	 pRoutingSenderCAPI->mpCAmCAPIWrapper = wrapper;
+    	 return pRoutingSenderCAPI;
+     };
+
 #endif
 
 };

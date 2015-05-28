@@ -71,7 +71,8 @@ CAmCommandSenderCAPI::~CAmCommandSenderCAPI()
  */
 am_Error_e CAmCommandSenderCAPI::startService(IAmCommandReceive* commandreceiveinterface)
 {
-	mpCAmCAPIWrapper=Am_CAPI;
+	if(!mpCAmCAPIWrapper)
+		mpCAmCAPIWrapper=CAPI;
 	assert(mpCAmCAPIWrapper!=NULL);
 	if(!mIsServiceStarted)
 	{
@@ -134,7 +135,7 @@ void CAmCommandSenderCAPI::cbNewMainConnection(const am_MainConnectionType_s& ma
 	RETURN_IF_NOT_READY()
 	assert((bool)mService);
     log(&ctxCommandCAPI, DLT_LOG_INFO, "cbNumberOfMainConnectionsChanged called");
-    org::genivi::am::am_MainConnectionType_s mainConnection(mainConnectionType.mainConnectionID,mainConnectionType.sourceID,mainConnectionType.sinkID,mainConnectionType.delay,CAmConvert2CAPIType(mainConnectionType.connectionState));
+    am_types::am_MainConnectionType_s mainConnection(mainConnectionType.mainConnectionID,mainConnectionType.sourceID,mainConnectionType.sinkID,mainConnectionType.delay,CAmConvert2CAPIType(mainConnectionType.connectionState));
     mService->fireNewMainConnectionEvent(mainConnection);
 }
 
@@ -151,9 +152,9 @@ void CAmCommandSenderCAPI::cbNewSink(const am_SinkType_s& sink)
 	RETURN_IF_NOT_READY()
 	assert((bool)mService);
     log(&ctxCommandCAPI, DLT_LOG_INFO, "cbNewSink called");
-    org::genivi::am::am_Availability_s convAvailability;
+    am_types::am_Availability_s convAvailability;
     CAmConvertAvailablility(sink.availability, convAvailability);
-    org::genivi::am::am_SinkType_s ciSink(sink.sinkID, sink.name, convAvailability, sink.volume, CAmConvert2CAPIType(sink.muteState), sink.sinkClassID);
+    am_types::am_SinkType_s ciSink(sink.sinkID, sink.name, convAvailability, sink.volume, CAmConvert2CAPIType(sink.muteState), sink.sinkClassID);
     mService->fireNewSinkEvent(ciSink);
 }
 
@@ -170,9 +171,9 @@ void CAmCommandSenderCAPI::cbNewSource(const am_SourceType_s& source)
 	RETURN_IF_NOT_READY()
 	assert((bool)mService);
     log(&ctxCommandCAPI, DLT_LOG_INFO, "cbNewSource called");
-    org::genivi::am::am_Availability_s convAvailability;
+    am_types::am_Availability_s convAvailability;
     CAmConvertAvailablility(source.availability, convAvailability);
-    org::genivi::am::am_SourceType_s ciSource(source.sourceID, source.name, convAvailability, source.sourceClassID);
+    am_types::am_SourceType_s ciSource(source.sourceID, source.name, convAvailability, source.sourceClassID);
     mService->fireNewSourceEvent(ciSource);
 }
 
@@ -213,7 +214,7 @@ void CAmCommandSenderCAPI::cbMainSinkSoundPropertyChanged(const am_sinkID_t sink
 	RETURN_IF_NOT_READY()
 	assert((bool)mService);
     log(&ctxCommandCAPI, DLT_LOG_INFO, "cbMainSinkSoundPropertyChanged called, sinkID", sinkID, "SoundProperty.type", soundProperty.type, "SoundProperty.value", soundProperty.value);
-    org::genivi::am::am_MainSoundProperty_s mainSoundProp(soundProperty.type, soundProperty.value);
+    am_types::am_MainSoundProperty_s mainSoundProp(soundProperty.type, soundProperty.value);
 	mService->fireMainSinkSoundPropertyChangedEvent(sinkID, mainSoundProp);
 }
 
@@ -222,7 +223,7 @@ void CAmCommandSenderCAPI::cbMainSourceSoundPropertyChanged(const am_sourceID_t 
 	RETURN_IF_NOT_READY()
 	assert((bool)mService);
     log(&ctxCommandCAPI, DLT_LOG_INFO, "cbMainSourceSoundPropertyChanged called, sourceID", sourceID, "SoundProperty.type", SoundProperty.type, "SoundProperty.value", SoundProperty.value);
-    org::genivi::am::am_MainSoundProperty_s convValue;
+    am_types::am_MainSoundProperty_s convValue;
     CAmConvertMainSoundProperty(SoundProperty, convValue);
     mService->fireMainSourceSoundPropertyChangedEvent(sourceID, convValue);
 }
@@ -232,7 +233,7 @@ void CAmCommandSenderCAPI::cbSinkAvailabilityChanged(const am_sinkID_t sinkID, c
 	RETURN_IF_NOT_READY()
 	assert((bool)mService);
     log(&ctxCommandCAPI, DLT_LOG_INFO, "cbSinkAvailabilityChanged called, sinkID", sinkID, "availability.availability", availability.availability, "SoundProperty.reason", availability.availabilityReason);
-    org::genivi::am::am_Availability_s convAvailability;
+    am_types::am_Availability_s convAvailability;
     CAmConvertAvailablility(availability, convAvailability);
     mService->fireSinkAvailabilityChangedEvent(sinkID, convAvailability);
 }
@@ -242,7 +243,7 @@ void CAmCommandSenderCAPI::cbSourceAvailabilityChanged(const am_sourceID_t sourc
 	RETURN_IF_NOT_READY()
 	assert((bool)mService);
     log(&ctxCommandCAPI, DLT_LOG_INFO, "cbSourceAvailabilityChanged called, sourceID", sourceID, "availability.availability", availability.availability, "SoundProperty.reason", availability.availabilityReason);
-    org::genivi::am::am_Availability_s convAvailability;
+    am_types::am_Availability_s convAvailability;
     CAmConvertAvailablility(availability, convAvailability);
     mService->fireSourceAvailabilityChangedEvent(sourceID, convAvailability);
 }
@@ -260,7 +261,7 @@ void CAmCommandSenderCAPI::cbSinkMuteStateChanged(const am_sinkID_t sinkID, cons
 	RETURN_IF_NOT_READY()
 	assert((bool)mService);
     log(&ctxCommandCAPI, DLT_LOG_INFO, "cbSinkMuteStateChanged called, sinkID", sinkID, "muteState", muteState);
-    org::genivi::am::am_MuteState_e ciMuteState = CAmConvert2CAPIType(muteState);
+    am_types::am_MuteState_e ciMuteState = CAmConvert2CAPIType(muteState);
     mService->fireSinkMuteStateChangedEvent(sinkID, ciMuteState);
 }
 
@@ -269,7 +270,7 @@ void CAmCommandSenderCAPI::cbSystemPropertyChanged(const am_SystemProperty_s & S
 	RETURN_IF_NOT_READY()
 	assert((bool)mService);
     log(&ctxCommandCAPI, DLT_LOG_INFO, "cbSystemPropertyChanged called, SystemProperty.type", SystemProperty.type, "SystemProperty.value", SystemProperty.value);
-    org::genivi::am::am_SystemProperty_s convValue;
+    am_types::am_SystemProperty_s convValue;
     CAmConvertSystemProperty(SystemProperty, convValue);
     mService->fireSystemPropertyChangedEvent(convValue);
 }
@@ -279,7 +280,7 @@ void CAmCommandSenderCAPI::cbTimingInformationChanged(const am_mainConnectionID_
 	RETURN_IF_NOT_READY()
 	assert((bool)mService);
     log(&ctxCommandCAPI, DLT_LOG_INFO, "cbTimingInformationChanged called, mainConnectionID=", mainConnectionID, "time=", time);
-    org::genivi::am::am_mainConnectionID_t ciMainConnection = mainConnectionID;
+    am_types::am_mainConnectionID_t ciMainConnection = mainConnectionID;
     mService->fireTimingInformationChangedEvent(ciMainConnection, time);
 }
 
@@ -293,9 +294,9 @@ void CAmCommandSenderCAPI::cbSinkUpdated(const am_sinkID_t sinkID, const am_sink
 	RETURN_IF_NOT_READY()
 	assert((bool)mService);
     log(&ctxCommandCAPI, DLT_LOG_INFO, "cbSinkUpdated called, sinkID", sinkID);
-    org::genivi::am::am_MainSoundProperty_L list;
+    am_types::am_MainSoundProperty_L list;
     std::for_each(listMainSoundProperties.begin(), listMainSoundProperties.end(), [&](const am_MainSoundProperty_s & ref) {
-				org::genivi::am::am_MainSoundProperty_s prop(ref.type, ref.value);
+				am_types::am_MainSoundProperty_s prop(ref.type, ref.value);
 				list.push_back(prop);
     });
     mService->fireSinkUpdatedEvent(sinkID, sinkClassID, list);
@@ -306,9 +307,9 @@ void CAmCommandSenderCAPI::cbSourceUpdated(const am_sourceID_t sourceID, const a
 	RETURN_IF_NOT_READY()
 	assert((bool)mService);
     log(&ctxCommandCAPI, DLT_LOG_INFO, "cbSourceUpdated called, sourceID", sourceID);
-    org::genivi::am::am_MainSoundProperty_L list;
+    am_types::am_MainSoundProperty_L list;
     std::for_each(listMainSoundProperties.begin(), listMainSoundProperties.end(), [&](const am_MainSoundProperty_s & ref) {
-    			org::genivi::am::am_MainSoundProperty_s prop(ref.type, ref.value);
+    			am_types::am_MainSoundProperty_s prop(ref.type, ref.value);
 				list.push_back(prop);
     });
     mService->fireSourceUpdatedEvent(sourceID, sourceClassID, list);
@@ -319,7 +320,7 @@ void CAmCommandSenderCAPI::cbSinkNotification(const am_sinkID_t sinkID, const am
 	RETURN_IF_NOT_READY()
 	assert((bool)mService);
     log(&ctxCommandCAPI, DLT_LOG_INFO, "cbSinkNotification called, sinkID", sinkID);
-    org::genivi::am::am_NotificationPayload_s ciNnotif(notification.type, notification.value);
+    am_types::am_NotificationPayload_s ciNnotif(notification.type, notification.value);
     mService->fireSinkNotificationEvent(sinkID, ciNnotif);
 }
 
@@ -328,7 +329,7 @@ void CAmCommandSenderCAPI::cbSourceNotification(const am_sourceID_t sourceID, co
 	RETURN_IF_NOT_READY()
 	assert((bool)mService);
     log(&ctxCommandCAPI, DLT_LOG_INFO, "cbSourceNotification called, sourceID", sourceID);
-    org::genivi::am::am_NotificationPayload_s ciNnotif(notification.type, notification.value);
+    am_types::am_NotificationPayload_s ciNnotif(notification.type, notification.value);
     mService->fireSourceNotificationEvent(sourceID, ciNnotif);
 }
 
@@ -337,8 +338,8 @@ void CAmCommandSenderCAPI::cbMainSinkNotificationConfigurationChanged(const am_s
 	RETURN_IF_NOT_READY()
 	assert((bool)mService);
     log(&ctxCommandCAPI, DLT_LOG_INFO, "cbSinkMainNotificationConfigurationChanged called, sinkID", sinkID);
-    org::genivi::am::am_NotificationConfiguration_s ciNotifConfig(mainNotificationConfiguration.type,
-    															  static_cast<org::genivi::am::am_NotificationStatus_e>(mainNotificationConfiguration.status),
+    am_types::am_NotificationConfiguration_s ciNotifConfig(mainNotificationConfiguration.type,
+    															  static_cast<am_types::am_NotificationStatus_e>(mainNotificationConfiguration.status),
 																				mainNotificationConfiguration.parameter);
     mService->fireMainSinkNotificationConfigurationChangedEvent(sinkID, ciNotifConfig);
 }
@@ -348,8 +349,8 @@ void CAmCommandSenderCAPI::cbMainSourceNotificationConfigurationChanged(const am
 	RETURN_IF_NOT_READY()
 	assert((bool)mService);
     log(&ctxCommandCAPI, DLT_LOG_INFO, "cbSourceMainNotificationConfigurationChanged called, sourceID", sourceID);
-    org::genivi::am::am_NotificationConfiguration_s ciNotifConfig(mainNotificationConfiguration.type,
-    															  static_cast<org::genivi::am::am_NotificationStatus_e>(mainNotificationConfiguration.status),
+    am_types::am_NotificationConfiguration_s ciNotifConfig(mainNotificationConfiguration.type,
+    															  static_cast<am_types::am_NotificationStatus_e>(mainNotificationConfiguration.status),
 																				mainNotificationConfiguration.parameter);
     mService->fireMainSourceNotificationConfigurationChangedEvent(sourceID, ciNotifConfig);
 }

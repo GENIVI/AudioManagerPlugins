@@ -1,7 +1,7 @@
 /**
  *  Copyright (c) 2012 BMW
  *
- *  \author Aleksandar Donchev, aleksander.donchev@partner.bmw.de BMW 2013
+ *  \author Aleksandar Donchev, aleksander.donchev@partner.bmw.de BMW 2013-2015
  *
  *  \copyright
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction,
@@ -44,7 +44,15 @@ extern "C" void destroyPluginRoutingInterfaceCAPI(IAmRoutingSend* routingSendInt
     delete routingSendInterface;
 }
 
-const char * CAmRoutingSenderCAPI::ROUTING_INTERFACE_SERVICE = "local:org.genivi.audiomanager.routinginterface:org.genivi.audiomanager";
+#define CAPI_DEFAULT_DOMAIN "local"
+#define CAPI_ROUTING_SERVICE_INTERFACE DBUS_SERVICE_PREFIX ".routinginterface"
+#define CAPI_ROUTING_ADDRESS_STRING CAPI_DEFAULT_DOMAIN ":" CAPI_ROUTING_SERVICE_INTERFACE ":" DBUS_SERVICE_PREFIX
+
+const char * CAmRoutingSenderCAPI::ROUTING_INTERFACE = CAPI_ROUTING_SERVICE_INTERFACE;
+const char * CAmRoutingSenderCAPI::ROUTING_INSTANCE = DBUS_SERVICE_PREFIX;
+const char * CAmRoutingSenderCAPI::DEFAULT_DOMAIN = CAPI_DEFAULT_DOMAIN;
+
+const char * CAmRoutingSenderCAPI::ROUTING_SERVICE_ADDRESS = CAPI_ROUTING_ADDRESS_STRING;
 
 CAmRoutingSenderCAPI::CAmRoutingSenderCAPI() :
                 mIsServiceStarted(false),
@@ -53,7 +61,7 @@ CAmRoutingSenderCAPI::CAmRoutingSenderCAPI() :
 				mpIAmRoutingReceive(NULL),
 				mService()
 {
-    log(&ctxCommandCAPI, DLT_LOG_INFO, "RoutingSender constructed");
+	log(&ctxCommandCAPI, DLT_LOG_INFO,"RoutingSender constructed");
 }
 
 CAmRoutingSenderCAPI::~CAmRoutingSenderCAPI()
@@ -65,16 +73,18 @@ CAmRoutingSenderCAPI::~CAmRoutingSenderCAPI()
 
 am_Error_e CAmRoutingSenderCAPI::startService(IAmRoutingReceive* pIAmRoutingReceive)
 {
-	mpCAmCAPIWrapper=Am_CAPI;
+	if(!mpCAmCAPIWrapper)
+		mpCAmCAPIWrapper=CAPI;
     assert(mpCAmCAPIWrapper!=NULL);
 	log(&ctxCommandCAPI, DLT_LOG_INFO, __PRETTY_FUNCTION__);
 	if(!mIsServiceStarted)
 	{
 		assert(pIAmRoutingReceive);
+		mLookupData.setIAmRoutingReceive(pIAmRoutingReceive);
 		mService = std::make_shared<CAmRoutingService>(pIAmRoutingReceive, &mLookupData, mpCAmCAPIWrapper);
-	    mService->setRoutingReadyAttribute(org::genivi::am::am_RoutingReady_e::RR_UNKNOWN);
+	    mService->setRoutingReadyAttribute(am_types::am_RoutingReady_e::RR_UNKNOWN);
 		//Registers the service
-		if( false == mpCAmCAPIWrapper->registerStub(mService, CAmRoutingSenderCAPI::ROUTING_INTERFACE_SERVICE) )
+		if( false == mpCAmCAPIWrapper->registerService(mService, CAmRoutingSenderCAPI::DEFAULT_DOMAIN, CAmRoutingSenderCAPI::ROUTING_INSTANCE) )
 		{
 			return (E_NOT_POSSIBLE);
 		}
@@ -98,7 +108,7 @@ am_Error_e CAmRoutingSenderCAPI::tearDownInterface(IAmRoutingReceive*)
     	if(mIsServiceStarted)
     	{
     		mIsServiceStarted = false;
-			mpCAmCAPIWrapper->unregisterStub(CAmRoutingSenderCAPI::ROUTING_INTERFACE_SERVICE);
+			mpCAmCAPIWrapper->unregisterService(CAmRoutingSenderCAPI::DEFAULT_DOMAIN, CAmRoutingSenderCAPI::ROUTING_INTERFACE, CAmRoutingSenderCAPI::ROUTING_INSTANCE);
 			mService.reset();
     	}
    		return (E_OK);
@@ -117,14 +127,14 @@ void CAmRoutingSenderCAPI::setRoutingReady(const uint16_t handle)
 	mService->setHandle(handle);
 
     log(&ctxCommandCAPI, DLT_LOG_INFO, "sending routingReady signal");
-    mService->setRoutingReadyAttribute(org::genivi::am::am_RoutingReady_e::RR_READY);
+    mService->setRoutingReadyAttribute(am_types::am_RoutingReady_e::RR_READY);
 }
 
 void CAmRoutingSenderCAPI::setRoutingRundown(const uint16_t handle)
 {
 	log(&ctxCommandCAPI, DLT_LOG_INFO, __PRETTY_FUNCTION__);
 	assert(mpIAmRoutingReceive);
-	mService->setRoutingReadyAttribute(org::genivi::am::am_RoutingReady_e::RR_RUNDOWN);
+	mService->setRoutingReadyAttribute(am_types::am_RoutingReady_e::RR_RUNDOWN);
 	mService->gotRundown(mLookupData.numberOfDomains(),handle);
 }
 
@@ -153,7 +163,7 @@ am_Error_e CAmRoutingSenderCAPI::asyncAbort(const am_Handle_s handle)
     log(&ctxCommandCAPI, DLT_LOG_INFO, "CAmRoutingSenderCAPI::asyncAbort called");
 
    	return mLookupData.asyncAbort(handle,[](const CommonAPI::CallStatus& callStatus){
-		log(&ctxCommandCAPI, DLT_LOG_INFO, __PRETTY_FUNCTION__, "Response with call status:", static_cast<int16_t>(callStatus));
+		log(&ctxCommandCAPI, DLT_LOG_INFO, __PRETTY_FUNCTION__, "Response with call status:", (int16_t)callStatus);
 	});
 }
 
@@ -163,12 +173,10 @@ am_Error_e CAmRoutingSenderCAPI::asyncConnect(const am_Handle_s handle, const am
     checkSourceLookup(sourceID);
     checkSinkLookup(sinkID);
    	return mLookupData.asyncConnect(handle,connectionID, sourceID, sinkID, connectionFormat, [&,handle,connectionID](const CommonAPI::CallStatus& callStatus){
-		log(&ctxCommandCAPI, DLT_LOG_INFO, __PRETTY_FUNCTION__, "Response with call status:", static_cast<int16_t>(callStatus));
+		log(&ctxCommandCAPI, DLT_LOG_INFO, __PRETTY_FUNCTION__, "Response with call status:", (int16_t)callStatus);
 		if (callStatus != CommonAPI::CallStatus::SUCCESS)
 		{
-			org::genivi::am::am_Handle_s dst;
-			CAmConvertAM2CAPI(handle, dst);
-			mService->ackConnect(dst, connectionID, org::genivi::am::am_Error_e::E_NON_EXISTENT);
+			mService->ackConnect(handle, connectionID, am_Error_e::E_NON_EXISTENT);
 		}
 	});
 }
@@ -177,12 +185,10 @@ am_Error_e CAmRoutingSenderCAPI::asyncDisconnect(const am_Handle_s handle, const
 {
 	log(&ctxCommandCAPI, DLT_LOG_INFO, "CAmRoutingSenderCAPI::asyncDisconnect called");
 	return mLookupData.asyncDisconnect(handle,connectionID, [&, handle, connectionID](const CommonAPI::CallStatus& callStatus){
-		log(&ctxCommandCAPI, DLT_LOG_INFO, __PRETTY_FUNCTION__, "Response with call status:", static_cast<int16_t>(callStatus));
+		log(&ctxCommandCAPI, DLT_LOG_INFO, __PRETTY_FUNCTION__, "Response with call status:", (int16_t)callStatus);
 		if (callStatus != CommonAPI::CallStatus::SUCCESS)
 		{
-			org::genivi::am::am_Handle_s dst;
-			CAmConvertAM2CAPI(handle, dst);
-			mService->ackDisconnect(dst, connectionID, org::genivi::am::am_Error_e::E_NON_EXISTENT);
+			mService->ackDisconnect(handle, connectionID, am_Error_e::E_NON_EXISTENT);
 		}
 	});
 }
@@ -192,12 +198,10 @@ am_Error_e CAmRoutingSenderCAPI::asyncSetSinkVolume(const am_Handle_s handle, co
     log(&ctxCommandCAPI, DLT_LOG_INFO, "CAmRoutingSenderCAPI::asyncSetSinkVolume called");
 	checkSinkLookup(sinkID);
 	return mLookupData.asyncSetSinkVolume(handle,sinkID, volume, ramp, time, [&, handle, volume](const CommonAPI::CallStatus& callStatus){
-		log(&ctxCommandCAPI, DLT_LOG_INFO, __PRETTY_FUNCTION__, "Response with call status:", static_cast<int16_t>(callStatus));
+		log(&ctxCommandCAPI, DLT_LOG_INFO, __PRETTY_FUNCTION__, "Response with call status:", (int16_t)callStatus);
 		if (callStatus != CommonAPI::CallStatus::SUCCESS)
 		{
-			org::genivi::am::am_Handle_s dst;
-			CAmConvertAM2CAPI(handle, dst);
-			mService->ackSetSinkVolumeChange(dst, volume, org::genivi::am::am_Error_e::E_NON_EXISTENT);
+			mService->ackSetSinkVolumeChange(handle, volume, am_Error_e::E_NON_EXISTENT);
 		}
 	});
 }
@@ -207,12 +211,10 @@ am_Error_e CAmRoutingSenderCAPI::asyncSetSourceVolume(const am_Handle_s handle, 
     log(&ctxCommandCAPI, DLT_LOG_INFO, "CAmRoutingSenderCAPI::asyncSetSourceVolume called");
 	checkSourceLookup(sourceID);
 	return mLookupData.asyncSetSourceVolume(handle,sourceID, volume, ramp, time, [&, handle, volume](const CommonAPI::CallStatus& callStatus){
-		log(&ctxCommandCAPI, DLT_LOG_INFO, __PRETTY_FUNCTION__, "Response with call status:", static_cast<int16_t>(callStatus));
+		log(&ctxCommandCAPI, DLT_LOG_INFO, __PRETTY_FUNCTION__, "Response with call status:", (int16_t)callStatus);
 		if (callStatus != CommonAPI::CallStatus::SUCCESS)
 		{
-			org::genivi::am::am_Handle_s dst;
-			CAmConvertAM2CAPI(handle, dst);
-			mService->ackSetSourceVolumeChange(dst, volume, org::genivi::am::am_Error_e::E_NON_EXISTENT);
+			mService->ackSetSourceVolumeChange(handle, volume, am_Error_e::E_NON_EXISTENT);
 		}
 	});
 }
@@ -222,12 +224,10 @@ am_Error_e CAmRoutingSenderCAPI::asyncSetSourceState(const am_Handle_s handle, c
     log(&ctxCommandCAPI, DLT_LOG_INFO, "CAmRoutingSenderCAPI::asyncSetSourceState called");
 	checkSourceLookup(sourceID);
 	return mLookupData.asyncSetSourceState(handle,sourceID, state,[&, handle](const CommonAPI::CallStatus& callStatus){
-		log(&ctxCommandCAPI, DLT_LOG_INFO, __PRETTY_FUNCTION__, "Response with call status:", static_cast<int16_t>(callStatus));
+		log(&ctxCommandCAPI, DLT_LOG_INFO, __PRETTY_FUNCTION__, "Response with call status:", (int16_t)callStatus);
 		if (callStatus != CommonAPI::CallStatus::SUCCESS)
 		{
-			org::genivi::am::am_Handle_s dst;
-			CAmConvertAM2CAPI(handle, dst);
-			mService->ackSetSourceState(dst, org::genivi::am::am_Error_e::E_NON_EXISTENT);
+			mService->ackSetSourceState(handle, am_Error_e::E_NON_EXISTENT);
 		}
 	});
 }
@@ -237,12 +237,10 @@ am_Error_e CAmRoutingSenderCAPI::asyncSetSinkSoundProperties(const am_Handle_s h
     log(&ctxCommandCAPI, DLT_LOG_INFO, "CAmRoutingSenderCAPI::asyncSetSinkSoundProperties called");
 	checkSinkLookup(sinkID);
 	return mLookupData.asyncSetSinkSoundProperties(handle,sinkID, listSoundProperties, [&, handle](const CommonAPI::CallStatus& callStatus){
-		log(&ctxCommandCAPI, DLT_LOG_INFO, __PRETTY_FUNCTION__, "Response with call status:", static_cast<int16_t>(callStatus));
+		log(&ctxCommandCAPI, DLT_LOG_INFO, __PRETTY_FUNCTION__, "Response with call status:", (int16_t)callStatus);
 		if (callStatus != CommonAPI::CallStatus::SUCCESS)
 		{
-			org::genivi::am::am_Handle_s dst;
-			CAmConvertAM2CAPI(handle, dst);
-			mService->ackSetSinkSoundProperties(dst, org::genivi::am::am_Error_e::E_NON_EXISTENT);
+			mService->ackSetSinkSoundProperties(handle, am_Error_e::E_NON_EXISTENT);
 		}
 	});
 }
@@ -252,12 +250,10 @@ am_Error_e CAmRoutingSenderCAPI::asyncSetSinkSoundProperty(const am_Handle_s han
     log(&ctxCommandCAPI, DLT_LOG_INFO, "CAmRoutingSenderCAPI::asyncSetSinkSoundProperty called");
 	checkSinkLookup(sinkID);
 	return mLookupData.asyncSetSinkSoundProperty(handle, sinkID, soundProperty, [&, handle](const CommonAPI::CallStatus& callStatus){
-		log(&ctxCommandCAPI, DLT_LOG_INFO, __PRETTY_FUNCTION__, "Response with call status:", static_cast<int16_t>(callStatus));
+		log(&ctxCommandCAPI, DLT_LOG_INFO, __PRETTY_FUNCTION__, "Response with call status:", (int16_t)callStatus);
 		if (callStatus != CommonAPI::CallStatus::SUCCESS)
 		{
-			org::genivi::am::am_Handle_s dst;
-			CAmConvertAM2CAPI(handle, dst);
-			mService->ackSetSinkSoundProperty(dst, org::genivi::am::am_Error_e::E_NON_EXISTENT);
+			mService->ackSetSinkSoundProperty(handle, am_Error_e::E_NON_EXISTENT);
 		}
 	});
 }
@@ -267,12 +263,10 @@ am_Error_e CAmRoutingSenderCAPI::asyncSetSourceSoundProperties(const am_Handle_s
     log(&ctxCommandCAPI, DLT_LOG_INFO, "CAmRoutingSenderCAPI::asyncSetSourceSoundProperties called");
 	checkSourceLookup(sourceID);
 	return mLookupData.asyncSetSourceSoundProperties(handle, sourceID, listSoundProperties, [&, handle](const CommonAPI::CallStatus& callStatus){
-		log(&ctxCommandCAPI, DLT_LOG_INFO, __PRETTY_FUNCTION__, "Response with call status:", static_cast<int16_t>(callStatus));
+		log(&ctxCommandCAPI, DLT_LOG_INFO, __PRETTY_FUNCTION__, "Response with call status:", (int16_t)callStatus);
 		if (callStatus != CommonAPI::CallStatus::SUCCESS)
 		{
-			org::genivi::am::am_Handle_s dst;
-			CAmConvertAM2CAPI(handle, dst);
-			mService->ackSetSourceSoundProperties(dst, org::genivi::am::am_Error_e::E_NON_EXISTENT);
+			mService->ackSetSourceSoundProperties(handle, am_Error_e::E_NON_EXISTENT);
 		}
 	});
 }
@@ -282,12 +276,10 @@ am_Error_e CAmRoutingSenderCAPI::asyncSetSourceSoundProperty(const am_Handle_s h
     log(&ctxCommandCAPI, DLT_LOG_INFO, "CAmRoutingSenderCAPI::asyncSetSourceSoundProperty called");
 	checkSourceLookup(sourceID);
 	return mLookupData.asyncSetSourceSoundProperty(handle, sourceID, soundProperty, [&, handle](const CommonAPI::CallStatus& callStatus){
-		log(&ctxCommandCAPI, DLT_LOG_INFO, __PRETTY_FUNCTION__, "Response with call status:", static_cast<int16_t>(callStatus));
+		log(&ctxCommandCAPI, DLT_LOG_INFO, __PRETTY_FUNCTION__, "Response with call status:", (int16_t)callStatus);
 		if (callStatus != CommonAPI::CallStatus::SUCCESS)
 		{
-			org::genivi::am::am_Handle_s dst;
-			CAmConvertAM2CAPI(handle, dst);
-			mService->ackSetSourceSoundProperty(dst, org::genivi::am::am_Error_e::E_NON_EXISTENT);
+			mService->ackSetSourceSoundProperty(handle, am_Error_e::E_NON_EXISTENT);
 		}
 	});
 }
@@ -295,12 +287,10 @@ am_Error_e CAmRoutingSenderCAPI::asyncSetSourceSoundProperty(const am_Handle_s h
 am_Error_e CAmRoutingSenderCAPI::asyncCrossFade(const am_Handle_s handle, const am_crossfaderID_t crossfaderID, const am_HotSink_e hotSink, const am_CustomRampType_t rampType, const am_time_t time)
 {
 	return mLookupData.asyncCrossFade(handle, crossfaderID, hotSink, rampType, time, [&, handle, hotSink](const CommonAPI::CallStatus& callStatus){
-		log(&ctxCommandCAPI, DLT_LOG_INFO, __PRETTY_FUNCTION__, "Response with call status:", static_cast<int16_t>(callStatus));
+		log(&ctxCommandCAPI, DLT_LOG_INFO, __PRETTY_FUNCTION__, "Response with call status:", (int16_t)callStatus);
 		if (callStatus != CommonAPI::CallStatus::SUCCESS)
 		{
-			org::genivi::am::am_Handle_s dst;
-			CAmConvertAM2CAPI(handle, dst);
-			mService->ackCrossFading(dst, (org::genivi::am::am_HotSink_e)hotSink, org::genivi::am::am_Error_e::E_NON_EXISTENT);
+			mService->ackCrossFading(handle, hotSink, am_Error_e::E_NON_EXISTENT);
 		}
 	});
 }
@@ -308,8 +298,8 @@ am_Error_e CAmRoutingSenderCAPI::asyncCrossFade(const am_Handle_s handle, const 
 am_Error_e CAmRoutingSenderCAPI::setDomainState(const am_domainID_t domainID, const am_DomainState_e domainState)
 {
     log(&ctxCommandCAPI, DLT_LOG_INFO, "CAmRoutingSenderCAPI::setDomainState called");
-	return mLookupData.setDomainState(domainID, domainState, [](const CommonAPI::CallStatus& callStatus, org::genivi::am::am_Error_e error){
-		log(&ctxCommandCAPI, DLT_LOG_INFO, __PRETTY_FUNCTION__, "Response with call status:", static_cast<int16_t>(callStatus),"Error",static_cast<am_Error_e>(error));
+	return mLookupData.setDomainState(domainID, domainState, [](const CommonAPI::CallStatus& callStatus, am_types::am_Error_e error){
+		log(&ctxCommandCAPI, DLT_LOG_INFO, __PRETTY_FUNCTION__, "Response with call status:", (int16_t)callStatus,"Error",static_cast<am_Error_e>((int)error));
 	});
 }
 
@@ -323,14 +313,10 @@ am_Error_e CAmRoutingSenderCAPI::asyncSetVolumes(const am_Handle_s handle, const
 {
 	log(&ctxCommandCAPI, DLT_LOG_INFO, "CAmRoutingSenderCAPI::asyncSetVolumes called");
 	return mLookupData.asyncSetVolumes(handle, volumes, [&, handle, volumes](const CommonAPI::CallStatus& callStatus){
-		log(&ctxCommandCAPI, DLT_LOG_INFO, __PRETTY_FUNCTION__, "Response with call status:", static_cast<int16_t>(callStatus));
+		log(&ctxCommandCAPI, DLT_LOG_INFO, __PRETTY_FUNCTION__, "Response with call status:", (int16_t)callStatus);
 		if (callStatus != CommonAPI::CallStatus::SUCCESS)
 		{
-			org::genivi::am::am_Handle_s dst;
-			CAmConvertAM2CAPI(handle, dst);
-			org::genivi::am::am_Volumes_L list;
-			CAmConvertAMVector2CAPI(volumes, list);
-			mService->ackSetVolumes(dst, list, org::genivi::am::am_Error_e::E_NON_EXISTENT);
+			mService->ackSetVolumes(handle, volumes, am_Error_e::E_NON_EXISTENT);
 		}
 	});
 }
@@ -340,12 +326,10 @@ am_Error_e CAmRoutingSenderCAPI::asyncSetSinkNotificationConfiguration(const am_
 	log(&ctxCommandCAPI, DLT_LOG_INFO, "CAmRoutingSenderCAPI::asyncSetSinkNotificationConfiguration called");
 	checkSinkLookup(sinkID);
 	return mLookupData.asyncSetSinkNotificationConfiguration(handle, sinkID, nc, [&, handle](const CommonAPI::CallStatus& callStatus){
-		log(&ctxCommandCAPI, DLT_LOG_INFO, __PRETTY_FUNCTION__, "Response with call status:", static_cast<int16_t>(callStatus));
+		log(&ctxCommandCAPI, DLT_LOG_INFO, __PRETTY_FUNCTION__, "Response with call status:", (int16_t)callStatus);
 		if (callStatus != CommonAPI::CallStatus::SUCCESS)
 		{
-			org::genivi::am::am_Handle_s dst;
-			CAmConvertAM2CAPI(handle, dst);
-			mService->ackSinkNotificationConfiguration(dst, org::genivi::am::am_Error_e::E_NON_EXISTENT);
+			mService->ackSinkNotificationConfiguration(handle, am_Error_e::E_NON_EXISTENT);
 		}
 	});
 }
@@ -355,12 +339,10 @@ am_Error_e CAmRoutingSenderCAPI::asyncSetSourceNotificationConfiguration(const a
 	log(&ctxCommandCAPI, DLT_LOG_INFO, "CAmRoutingSenderCAPI::asyncSetSourceNotificationConfiguration called");
 	checkSourceLookup(sourceID);
 	return mLookupData.asyncSetSourceNotificationConfiguration(handle, sourceID, nc, [&, handle](const CommonAPI::CallStatus& callStatus){
-		log(&ctxCommandCAPI, DLT_LOG_INFO, __PRETTY_FUNCTION__, "Response with call status:", static_cast<int16_t>(callStatus));
+		log(&ctxCommandCAPI, DLT_LOG_INFO, __PRETTY_FUNCTION__, "Response with call status:", (int16_t)callStatus);
 		if (callStatus != CommonAPI::CallStatus::SUCCESS)
 		{
-			org::genivi::am::am_Handle_s dst;
-			CAmConvertAM2CAPI(handle, dst);
-			mService->ackSourceNotificationConfiguration(dst, org::genivi::am::am_Error_e::E_NON_EXISTENT);
+			mService->ackSourceNotificationConfiguration(handle, am_Error_e::E_NON_EXISTENT);
 		}
 	});
 }

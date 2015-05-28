@@ -37,200 +37,289 @@ CAmCommandSenderService::~CAmCommandSenderService() {
 	// TODO Auto-generated destructor stub
 }
 
-void CAmCommandSenderService::connect(org::genivi::am::am_sourceID_t sourceID, org::genivi::am::am_sinkID_t sinkID, org::genivi::am::am_mainConnectionID_t& mainConnectionID,org::genivi::am::am_Error_e& result) {
+void CAmCommandSenderService::connect(const std::shared_ptr<CommonAPI::ClientId> _client, am_types::am_sourceID_t _sourceID, am_types::am_sinkID_t _sinkID, connectReply_t _reply) {
 	assert(mpIAmCommandReceive);
-	result = CAmConvert2CAPIType(mpIAmCommandReceive->connect(sourceID, sinkID, mainConnectionID));
+	am_types::am_mainConnectionID_t mainConnectionID;
+	am_types::am_Error_e result = CAmConvert2CAPIType(mpIAmCommandReceive->connect(_sourceID, _sinkID, mainConnectionID));
+	_reply(mainConnectionID, result);
 }
 
-void CAmCommandSenderService::disconnect(org::genivi::am::am_mainConnectionID_t mainConnectionID, org::genivi::am::am_Error_e& result) {
+void CAmCommandSenderService::disconnect(const std::shared_ptr<CommonAPI::ClientId> _client, am_types::am_mainConnectionID_t _mainConnectionID, disconnectReply_t _reply){
 	assert(mpIAmCommandReceive);
-	result = CAmConvert2CAPIType(mpIAmCommandReceive->disconnect(mainConnectionID));
+	am_types::am_Error_e result = CAmConvert2CAPIType(mpIAmCommandReceive->disconnect(_mainConnectionID));
+	_reply(result);
 }
 
-void CAmCommandSenderService::setVolume(org::genivi::am::am_sinkID_t sinkID, org::genivi::am::am_mainVolume_t volume, org::genivi::am::am_Error_e& result) {
+void CAmCommandSenderService::setVolume(const std::shared_ptr<CommonAPI::ClientId> _client, am_types::am_sinkID_t _sinkID, am_types::am_mainVolume_t _volume, setVolumeReply_t _reply) {
 
 	assert(mpIAmCommandReceive);
-	result = CAmConvert2CAPIType(mpIAmCommandReceive->setVolume(sinkID, volume));
+	am_types::am_Error_e result = CAmConvert2CAPIType(mpIAmCommandReceive->setVolume(_sinkID, _volume));
+	_reply(result);
 }
 
-void CAmCommandSenderService::volumeStep(org::genivi::am::am_sinkID_t sinkID, org::genivi::am::am_mainVolume_t volumeStep, org::genivi::am::am_Error_e& result) {
+void CAmCommandSenderService::volumeStep(const std::shared_ptr<CommonAPI::ClientId> _client, am_types::am_sinkID_t _sinkID, int16_t _step, volumeStepReply_t _reply) {
 	assert(mpIAmCommandReceive);
-	result = CAmConvert2CAPIType(mpIAmCommandReceive->volumeStep(sinkID, volumeStep));
+	am_types::am_Error_e result = CAmConvert2CAPIType(mpIAmCommandReceive->volumeStep(_sinkID, _step));
+	_reply(result);
 }
 
-void CAmCommandSenderService::setSinkMuteState(org::genivi::am::am_sinkID_t sinkID, org::genivi::am::am_MuteState_e muteState, org::genivi::am::am_Error_e& result) {
+void CAmCommandSenderService::setSinkMuteState(const std::shared_ptr<CommonAPI::ClientId> _client, am_types::am_sinkID_t _sinkID, am_types::am_MuteState_e _muteState, setSinkMuteStateReply_t _reply){
 	assert(mpIAmCommandReceive);
-	result = CAmConvert2CAPIType(mpIAmCommandReceive->setSinkMuteState(sinkID, CAmConvertFromCAPIType(muteState)));
+	am_types::am_Error_e result = CAmConvert2CAPIType(mpIAmCommandReceive->setSinkMuteState(_sinkID, CAmConvertFromCAPIType(_muteState)));
+	_reply(result);
 }
 
-void CAmCommandSenderService::setMainSinkSoundProperty(org::genivi::am::am_sinkID_t sinkID, org::genivi::am::am_MainSoundProperty_s soundProperty, org::genivi::am::am_Error_e& result) {
+void CAmCommandSenderService::setMainSinkSoundProperty(const std::shared_ptr<CommonAPI::ClientId> _client, am_types::am_sinkID_t _sinkID, am_types::am_MainSoundProperty_s _soundProperty, setMainSinkSoundPropertyReply_t _reply){
 	assert(mpIAmCommandReceive);
-	am_MainSoundProperty_s property = {static_cast<am_CustomMainSoundPropertyType_t>(soundProperty.type), soundProperty.value};
-	result = CAmConvert2CAPIType(mpIAmCommandReceive->setMainSinkSoundProperty(property, sinkID));
+	am_MainSoundProperty_s property = {static_cast<am_CustomMainSoundPropertyType_t>(_soundProperty.getType()), _soundProperty.getValue()};
+	am_types::am_Error_e result = CAmConvert2CAPIType(mpIAmCommandReceive->setMainSinkSoundProperty(property, _sinkID));
+	_reply(result);
 }
 
-void CAmCommandSenderService::setMainSourceSoundProperty(org::genivi::am::am_sourceID_t sourceID, org::genivi::am::am_MainSoundProperty_s soundProperty, org::genivi::am::am_Error_e& result) {
+void CAmCommandSenderService::setMainSourceSoundProperty(const std::shared_ptr<CommonAPI::ClientId> _client, am_types::am_sourceID_t _sourceID, am_types::am_MainSoundProperty_s _soundProperty, setMainSourceSoundPropertyReply_t _reply){
     assert(mpIAmCommandReceive);
-    am_MainSoundProperty_s property = {static_cast<am_CustomMainSoundPropertyType_t>(soundProperty.type), soundProperty.value};
-    result = CAmConvert2CAPIType(mpIAmCommandReceive->setMainSourceSoundProperty(property, sourceID));
+	am_MainSoundProperty_s property = {static_cast<am_CustomMainSoundPropertyType_t>(_soundProperty.getType()), _soundProperty.getValue()};
+    am_types::am_Error_e result = CAmConvert2CAPIType(mpIAmCommandReceive->setMainSourceSoundProperty(property, _sourceID));
+    _reply(result);
 }
 
-void CAmCommandSenderService::setSystemProperty(org::genivi::am::am_SystemProperty_s soundProperty, org::genivi::am::am_Error_e& result) {
+void CAmCommandSenderService::setSystemProperty(const std::shared_ptr<CommonAPI::ClientId> _client, am_types::am_SystemProperty_s _property, setSystemPropertyReply_t _reply) {
     assert(mpIAmCommandReceive);
-    am_SystemProperty_s property = {static_cast<am_CustomSystemPropertyType_t>(soundProperty.type), soundProperty.value};
-    result = CAmConvert2CAPIType(mpIAmCommandReceive->setSystemProperty(property));
+    am_SystemProperty_s property = {static_cast<am_CustomSystemPropertyType_t>(_property.getType()), _property.getValue()};
+    am_types::am_Error_e result = CAmConvert2CAPIType(mpIAmCommandReceive->setSystemProperty(property));
+    _reply(result);
 }
 
-void CAmCommandSenderService::getListMainConnections(org::genivi::am::am_MainConnection_L& listConnections,org::genivi::am::am_Error_e& result) {
+void CAmCommandSenderService::getListMainConnections(const std::shared_ptr<CommonAPI::ClientId> _client, getListMainConnectionsReply_t _reply) {
     assert(mpIAmCommandReceive);
     std::vector<am_MainConnectionType_s> list;
-    result = CAmConvert2CAPIType(mpIAmCommandReceive->getListMainConnections(list));
-    if(result==org::genivi::am::am_Error_e::E_OK)
+    am_types::am_MainConnection_L listConnections;
+    am_types::am_Error_e result = CAmConvert2CAPIType(mpIAmCommandReceive->getListMainConnections(list));
+    if((int)result==E_OK)
     {
-    	org::genivi::am::am_MainConnectionType_s item;
+    	am_types::am_MainConnectionType_s item;
 		for(std::vector<am_MainConnectionType_s>::const_iterator iter = list.begin(); iter!=list.end(); iter++)
 		{
-			item.mainConnectionID = iter->mainConnectionID;
-			item.sourceID = iter->sourceID;
-			item.sinkID = iter->sinkID;
-			item.delay = iter->delay;
-			item.connectionState = CAmConvert2CAPIType(iter->connectionState);
+			item.setMainConnectionID(iter->mainConnectionID);
+			item.setSourceID (iter->sourceID);
+			item.setSinkID(iter->sinkID);
+			item.setDelay(iter->delay);
+			item.setConnectionState(CAmConvert2CAPIType(iter->connectionState));
 			listConnections.push_back (item);
 		}
     }
+    _reply(listConnections, result);
 }
 
-void CAmCommandSenderService::getListMainSinks(org::genivi::am::am_SinkType_L& listMainSinks,org::genivi::am::am_Error_e& result) {
+void CAmCommandSenderService::getListMainSinks(const std::shared_ptr<CommonAPI::ClientId> _client, getListMainSinksReply_t _reply) {
     assert(mpIAmCommandReceive);
     std::vector<am_SinkType_s> list;
-    result = CAmConvert2CAPIType(mpIAmCommandReceive->getListMainSinks(list));
-    if(result==org::genivi::am::am_Error_e::E_OK)
+    am_types::am_SinkType_L listMainSinks;
+    am_types::am_Error_e result = CAmConvert2CAPIType(mpIAmCommandReceive->getListMainSinks(list));
+    if((int)result==E_OK)
     {
-    	org::genivi::am::am_SinkType_s item;
+    	am_types::am_SinkType_s item;
 		for(std::vector<am_SinkType_s>::const_iterator iter = list.begin(); iter!=list.end(); iter++)
 		{
-			item.sinkID = iter->sinkID;
-			item.name = iter->name;
-			item.sinkClassID = iter->sinkClassID;
-			item.volume = iter->volume;
-			item.muteState = CAmConvert2CAPIType(iter->muteState);
-		    CAmConvertAvailablility(iter->availability, item.availability);
+			item.setSinkID(iter->sinkID);
+			item.setName(iter->name);
+			item.setSinkClassID(iter->sinkClassID);
+			item.setVolume(iter->volume);
+			item.setMuteState(CAmConvert2CAPIType(iter->muteState));
+			am_types::am_Availability_s av;
+		    CAmConvertAvailablility(iter->availability, av);
+		    item.setAvailability(av);
 			listMainSinks.push_back (item);
 		}
     }
+    _reply(listMainSinks, result);
 }
 
-void CAmCommandSenderService::getListMainSources(org::genivi::am::am_SourceType_L& listMainSources,org::genivi::am::am_Error_e& result) {
+void CAmCommandSenderService::getListMainSources(const std::shared_ptr<CommonAPI::ClientId> _client, getListMainSourcesReply_t _reply) {
     assert(mpIAmCommandReceive);
     std::vector<am_SourceType_s> list;
-	result = CAmConvert2CAPIType(mpIAmCommandReceive->getListMainSources(list));
-	if(result==org::genivi::am::am_Error_e::E_OK)
+    am_types::am_SourceType_L listMainSources;
+	am_types::am_Error_e result = CAmConvert2CAPIType(mpIAmCommandReceive->getListMainSources(list));
+	if((int)result==E_OK)
 	{
-		org::genivi::am::am_SourceType_s item;
+		am_types::am_SourceType_s item;
 		for(std::vector<am_SourceType_s>::const_iterator iter = list.begin(); iter!=list.end(); iter++)
 		{
-			item.sourceID = iter->sourceID;
-			item.name = iter->name;
-			item.sourceClassID = iter->sourceClassID;
-			CAmConvertAvailablility(iter->availability, item.availability);
+			item.setSourceID(iter->sourceID);
+			item.setName(iter->name);
+			item.setSourceClassID(iter->sourceClassID);
+			am_types::am_Availability_s av;
+			CAmConvertAvailablility(iter->availability, av);
+			item.setAvailability(av);
 			listMainSources.push_back (item);
 		}
 	}
+	_reply(listMainSources, result);
 }
 
-void CAmCommandSenderService::getListMainSinkSoundProperties(org::genivi::am::am_sinkID_t sinkID, org::genivi::am::am_MainSoundProperty_L& listSoundProperties,org::genivi::am::am_Error_e& result) {
+void CAmCommandSenderService::getListMainSinkSoundProperties(const std::shared_ptr<CommonAPI::ClientId> _client, am_types::am_sinkID_t _sinkID, getListMainSinkSoundPropertiesReply_t _reply) {
     assert(mpIAmCommandReceive);
     std::vector<am_MainSoundProperty_s> list;
-    result = CAmConvert2CAPIType(mpIAmCommandReceive->getListMainSinkSoundProperties(sinkID, list));
-	if(result==org::genivi::am::am_Error_e::E_OK)
+    am_types::am_MainSoundProperty_L listSoundProperties;
+    am_types::am_Error_e result = CAmConvert2CAPIType(mpIAmCommandReceive->getListMainSinkSoundProperties(_sinkID, list));
+    if((int)result==E_OK)
 	{
-		org::genivi::am::am_MainSoundProperty_s item;
+		am_types::am_MainSoundProperty_s item;
 		for(std::vector<am_MainSoundProperty_s>::const_iterator iter = list.begin(); iter!=list.end(); iter++)
 		{
-			item.type = iter->type;
-			item.value = iter->value;
+			item.setType(iter->type);
+			item.setValue(iter->value);
 			listSoundProperties.push_back (item);
 		}
 	}
+    _reply(listSoundProperties, result);
 }
 
-void CAmCommandSenderService::getListMainSourceSoundProperties(org::genivi::am::am_sourceID_t sourceID, org::genivi::am::am_MainSoundProperty_L& listSourceProperties,org::genivi::am::am_Error_e& result) {
+void CAmCommandSenderService::getListMainSourceSoundProperties(const std::shared_ptr<CommonAPI::ClientId> _client, am_types::am_sourceID_t _sourceID, getListMainSourceSoundPropertiesReply_t _reply) {
     assert(mpIAmCommandReceive);
     std::vector<am_MainSoundProperty_s> list;
-    result = CAmConvert2CAPIType(mpIAmCommandReceive->getListMainSourceSoundProperties(sourceID, list));
-	if(result==org::genivi::am::am_Error_e::E_OK)
+    am_types::am_MainSoundProperty_L listSoundProperties;
+    am_types::am_Error_e result = CAmConvert2CAPIType(mpIAmCommandReceive->getListMainSourceSoundProperties(_sourceID, list));
+    if((int)result==E_OK)
 	{
-		org::genivi::am::am_MainSoundProperty_s item;
+		am_types::am_MainSoundProperty_s item;
 		for(std::vector<am_MainSoundProperty_s>::const_iterator iter = list.begin(); iter!=list.end(); iter++)
 		{
-			item.type = iter->type;
-			item.value = iter->value;
-			listSourceProperties.push_back (item);
+			item.setType(iter->type);
+			item.setValue(iter->value);
+			listSoundProperties.push_back (item);
 		}
 	}
+    _reply(listSoundProperties, result);
 }
 
-void CAmCommandSenderService::getListSourceClasses(org::genivi::am::am_SourceClass_L& listSourceClasses,org::genivi::am::am_Error_e& result) {
+void CAmCommandSenderService::getListSourceClasses(const std::shared_ptr<CommonAPI::ClientId> _client, getListSourceClassesReply_t _reply) {
     assert(mpIAmCommandReceive);
     std::vector<am_SourceClass_s> list;
-    result = CAmConvert2CAPIType(mpIAmCommandReceive->getListSourceClasses(list));
-	if(result==org::genivi::am::am_Error_e::E_OK)
+    am_types::am_SourceClass_L listSourceClasses;
+    am_types::am_Error_e result = CAmConvert2CAPIType(mpIAmCommandReceive->getListSourceClasses(list));
+    if((int)result==E_OK)
 	{
-		org::genivi::am::am_SourceClass_s item;
+		am_types::am_SourceClass_s item;
 		for(std::vector<am_SourceClass_s>::const_iterator iter = list.begin(); iter!=list.end(); iter++)
 		{
-			item.sourceClassID = iter->sourceClassID;
-			item.name = iter->name;
-			item.listClassProperties.clear();
+			item.setSourceClassID(iter->sourceClassID);
+			item.setName(iter->name);
+			am_types::am_ClassProperty_L listClassProperties;
 			std::for_each(iter->listClassProperties.begin(), iter->listClassProperties.end(), [&](const am_ClassProperty_s & ref) {
-				org::genivi::am::am_ClassProperty_s classProp(ref.classProperty, ref.value);
-				item.listClassProperties.push_back(classProp);
+				am_types::am_ClassProperty_s classProp(ref.classProperty, ref.value);
+				listClassProperties.push_back(classProp);
 			});
+			item.setListClassProperties(listClassProperties);
 			listSourceClasses.push_back (item);
 		}
 	}
+    _reply(listSourceClasses, result);
 }
 
-void CAmCommandSenderService::getListSinkClasses(org::genivi::am::am_SinkClass_L& listSinkClasses,org::genivi::am::am_Error_e& result) {
+void CAmCommandSenderService::getListSinkClasses(const std::shared_ptr<CommonAPI::ClientId> _client, getListSinkClassesReply_t _reply) {
     assert(mpIAmCommandReceive);
     std::vector<am_SinkClass_s> list;
-    result = CAmConvert2CAPIType(mpIAmCommandReceive->getListSinkClasses(list));
-	if(result==org::genivi::am::am_Error_e::E_OK)
+    am_types::am_SinkClass_L listSinkClasses;
+    am_types::am_Error_e result = CAmConvert2CAPIType(mpIAmCommandReceive->getListSinkClasses(list));
+    if((int)result==E_OK)
 	{
-		org::genivi::am::am_SinkClass_s item;
+		am_types::am_SinkClass_s item;
 		for(std::vector<am_SinkClass_s>::const_iterator iter = list.begin(); iter!=list.end(); iter++)
 		{
-			item.sinkClassID = iter->sinkClassID;
-			item.name = iter->name;
-			item.listClassProperties.clear();
+			item.setSinkClassID(iter->sinkClassID);
+			item.setName(iter->name);
+			am_types::am_ClassProperty_L listClassProperties;
 			std::for_each(iter->listClassProperties.begin(), iter->listClassProperties.end(), [&](const am_ClassProperty_s & ref) {
-				org::genivi::am::am_ClassProperty_s classProp(ref.classProperty, ref.value);
-				item.listClassProperties.push_back(classProp);
+				am_types::am_ClassProperty_s classProp(ref.classProperty, ref.value);
+				listClassProperties.push_back(classProp);
 			});
+			item.setListClassProperties(listClassProperties);
 			listSinkClasses.push_back (item);
 		}
 	}
+    _reply(listSinkClasses, result);
 }
 
-void CAmCommandSenderService::getListSystemProperties(org::genivi::am::am_SystemProperty_L& listSystemProperties,org::genivi::am::am_Error_e& result) {
+void CAmCommandSenderService::getListSystemProperties(const std::shared_ptr<CommonAPI::ClientId> _client, getListSystemPropertiesReply_t _reply) {
     assert(mpIAmCommandReceive);
     std::vector<am_SystemProperty_s> list;
-    result = CAmConvert2CAPIType(mpIAmCommandReceive->getListSystemProperties(list));
-    if(result==org::genivi::am::am_Error_e::E_OK)
-    	{
-    		org::genivi::am::am_SystemProperty_s item;
-    		for(std::vector<am_SystemProperty_s>::const_iterator iter = list.begin(); iter!=list.end(); iter++)
-    		{
-    			item.type = iter->type;
-    			item.value = iter->value;
-    			listSystemProperties.push_back (item);
-    		}
-    	}
+    am_types::am_SystemProperty_L listSystemProperties;
+    am_types::am_Error_e result = CAmConvert2CAPIType(mpIAmCommandReceive->getListSystemProperties(list));
+    if((int)result==E_OK)
+	{
+		am_types::am_SystemProperty_s item;
+		for(std::vector<am_SystemProperty_s>::const_iterator iter = list.begin(); iter!=list.end(); iter++)
+		{
+			item.setType(iter->type);
+			item.setValue(iter->value);
+			listSystemProperties.push_back (item);
+		}
+	}
+    _reply(listSystemProperties, result);
 }
 
-void CAmCommandSenderService::getTimingInformation(org::genivi::am::am_mainConnectionID_t mainConnectionID, org::genivi::am::am_timeSync_t& delay,org::genivi::am::am_Error_e& result) {
+void CAmCommandSenderService::getTimingInformation(const std::shared_ptr<CommonAPI::ClientId> _client, am_types::am_mainConnectionID_t _mainConnectionID, getTimingInformationReply_t _reply){
     assert(mpIAmCommandReceive);
-    result = CAmConvert2CAPIType(mpIAmCommandReceive->getTimingInformation(mainConnectionID, delay));
+    am_timeSync_t delay;
+    am_types::am_Error_e result = CAmConvert2CAPIType(mpIAmCommandReceive->getTimingInformation(_mainConnectionID, delay));
+    _reply(delay, result);
+}
+
+void CAmCommandSenderService::getListMainSinkNotificationConfigurations(const std::shared_ptr<CommonAPI::ClientId> _client, am_types::am_sinkID_t _sinkID, getListMainSinkNotificationConfigurationsReply_t _reply)
+{
+	assert(mpIAmCommandReceive);
+	std::vector<am_NotificationConfiguration_s> list;
+	am_types::am_NotificationConfiguration_L listNotificationConfigurations;
+	am_types::am_Error_e result = CAmConvert2CAPIType(mpIAmCommandReceive->getListMainSinkNotificationConfigurations(_sinkID, list));
+    if((int)result==E_OK)
+	{
+		am_types::am_NotificationConfiguration_s item;
+		for(std::vector<am_NotificationConfiguration_s>::const_iterator iter = list.begin(); iter!=list.end(); iter++)
+		{
+			item.setType(iter->type);
+			item.setStatus(iter->status);
+			item.setParameter(iter->parameter);
+			listNotificationConfigurations.push_back (item);
+		}
+	}
+    _reply(listNotificationConfigurations, result);
+}
+
+void CAmCommandSenderService::getListMainSourceNotificationConfigurations(const std::shared_ptr<CommonAPI::ClientId> _client, am_types::am_sourceID_t _sourceID, getListMainSourceNotificationConfigurationsReply_t _reply)
+{
+	assert(mpIAmCommandReceive);
+	std::vector<am_NotificationConfiguration_s> list;
+	am_types::am_NotificationConfiguration_L listNotificationConfigurations;
+	am_types::am_Error_e result = CAmConvert2CAPIType(mpIAmCommandReceive->getListMainSourceNotificationConfigurations(_sourceID, list));
+    if((int)result==E_OK)
+	{
+		am_types::am_NotificationConfiguration_s item;
+		for(std::vector<am_NotificationConfiguration_s>::const_iterator iter = list.begin(); iter!=list.end(); iter++)
+		{
+			item.setType(iter->type);
+			item.setStatus(iter->status);
+			item.setParameter(iter->parameter);
+			listNotificationConfigurations.push_back (item);
+		}
+	}
+    _reply(listNotificationConfigurations, result);
+}
+
+void CAmCommandSenderService::setMainSinkNotificationConfiguration(const std::shared_ptr<CommonAPI::ClientId> _client, am_types::am_sinkID_t _sinkID, am_types::am_NotificationConfiguration_s _mainNotificationConfiguration, setMainSinkNotificationConfigurationReply_t _reply)
+{
+	assert(mpIAmCommandReceive);
+	am_NotificationConfiguration_s config = {(int)_mainNotificationConfiguration.getType(),(am_NotificationStatus_e)((int)_mainNotificationConfiguration.getStatus()), _mainNotificationConfiguration.getParameter()};
+	am_types::am_Error_e result = CAmConvert2CAPIType(mpIAmCommandReceive->setMainSinkNotificationConfiguration(_sinkID, config));
+	_reply(result);
+}
+
+void CAmCommandSenderService::setMainSourceNotificationConfiguration(const std::shared_ptr<CommonAPI::ClientId> _client, am_types::am_sourceID_t _sourceID, am_types::am_NotificationConfiguration_s _mainNotificationConfiguration, setMainSourceNotificationConfigurationReply_t _reply)
+{
+	assert(mpIAmCommandReceive);
+	am_NotificationConfiguration_s config = {(int)_mainNotificationConfiguration.getType(),(am_NotificationStatus_e)((int)_mainNotificationConfiguration.getStatus()), _mainNotificationConfiguration.getParameter()};
+	am_types::am_Error_e result = CAmConvert2CAPIType(mpIAmCommandReceive->setMainSourceNotificationConfiguration(_sourceID, config));
+	_reply(result);
 }
 
 } /* namespace am */
