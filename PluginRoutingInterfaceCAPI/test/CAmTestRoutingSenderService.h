@@ -24,9 +24,6 @@
 #include <v0_1/org/genivi/am/routinginterface/RoutingControlObserverProxy.hpp>
 #include <v0_1/org/genivi/am/routinginterface/RoutingControlProxy.hpp>
 
-/** 
- * GENERATED FROM CMAKE. PLEASE USE cmake/CAmRoutingSenderService.h.in IF YOU WANT TO MAKE CHANGES.
- */
 
 namespace am {
 

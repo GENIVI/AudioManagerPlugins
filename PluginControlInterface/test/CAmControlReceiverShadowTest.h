@@ -40,6 +40,7 @@ public:
     ~CAmControlReceiverShadowTest();
     void SetUp();
     void TearDown();
+    void addTimer();
 };
 
 } /* namespace am */

@@ -35,15 +35,20 @@ CAmControlReceiverShadowTest::~CAmControlReceiverShadowTest()
 
 void CAmControlReceiverShadowTest::SetUp()
 {
-    timespec t;
-    t.tv_nsec = 1000000;
-    t.tv_sec = 0;
+	addTimer();
+}
 
-    sh_timerHandle_t handle;
+void CAmControlReceiverShadowTest::addTimer()
+{
+	timespec t;
+	t.tv_nsec = 100000000;
+	t.tv_sec = 0;
 
-    IAmShTimerCallBack *buf = &ptimerCallback;
-    //lets use a timeout so the test will finish
-    psocketHandler.addTimer(t, buf, handle, (void*) NULL);
+	sh_timerHandle_t handle;
+
+	IAmShTimerCallBack *buf = &ptimerCallback;
+	//lets use a timeout so the test will finish
+	psocketHandler.addTimer(t, buf, handle, (void*) NULL);
 }
 
 void CAmControlReceiverShadowTest::timerCallback(sh_timerHandle_t handle, void* userData)
