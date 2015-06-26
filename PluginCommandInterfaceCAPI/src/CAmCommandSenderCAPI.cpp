@@ -339,7 +339,7 @@ void CAmCommandSenderCAPI::cbMainSinkNotificationConfigurationChanged(const am_s
 	assert((bool)mService);
     log(&ctxCommandCAPI, DLT_LOG_INFO, "cbSinkMainNotificationConfigurationChanged called, sinkID", sinkID);
     am_types::am_NotificationConfiguration_s ciNotifConfig(mainNotificationConfiguration.type,
-    															  static_cast<am_types::am_NotificationStatus_e>(mainNotificationConfiguration.status),
+    															  static_cast<am_types::am_NotificationStatus_e::Literal>(mainNotificationConfiguration.status),
 																				mainNotificationConfiguration.parameter);
     mService->fireMainSinkNotificationConfigurationChangedEvent(sinkID, ciNotifConfig);
 }
@@ -350,7 +350,7 @@ void CAmCommandSenderCAPI::cbMainSourceNotificationConfigurationChanged(const am
 	assert((bool)mService);
     log(&ctxCommandCAPI, DLT_LOG_INFO, "cbSourceMainNotificationConfigurationChanged called, sourceID", sourceID);
     am_types::am_NotificationConfiguration_s ciNotifConfig(mainNotificationConfiguration.type,
-    															  static_cast<am_types::am_NotificationStatus_e>(mainNotificationConfiguration.status),
+    															  static_cast<am_types::am_NotificationStatus_e::Literal>(mainNotificationConfiguration.status),
 																				mainNotificationConfiguration.parameter);
     mService->fireMainSourceNotificationConfigurationChangedEvent(sourceID, ciNotifConfig);
 }

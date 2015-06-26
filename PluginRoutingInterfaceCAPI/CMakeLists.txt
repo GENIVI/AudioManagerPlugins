@@ -42,14 +42,16 @@ if (NOT DAEMONVERSION)
     endif(AUDIOMANAGER_FOUND)
 endif (NOT DAEMONVERSION)        
 
-find_package(DBUS REQUIRED)
-
 IF(${WITH_ENABLED_IPC} STREQUAL "CAPI")
 
     set(INCLUDE_FOLDER "include")
-       
+    # Include CommonAPI ... 
     INCLUDE (CommonAPI)
-    LOAD_COMMONAPI(DBUS)
+    
+    # and load all the necessary libraries 
+    # LOAD_COMMONAPI() without arguments uses the variable COMMONAPI_USED_BINDING (0-Dbus, 1-SomeIP).
+    # Otherwise it can be called with DBUS or SOMEIP as parameter: LOAD_COMMONAPI(DBUS) , LOAD_COMMONAPI(SOMEIP) which overrites COMMONAPI_USED_BINDING.
+    LOAD_COMMONAPI()
     
     set(LIBRARY_OUTPUT_PATH ${PLUGINS_OUTPUT_PATH}/routing)
     
@@ -64,11 +66,26 @@ IF(${WITH_ENABLED_IPC} STREQUAL "CAPI")
     # The sources can be placed in the build directory (DESTINATION) or in the source tree (ALT_DESTINATION). 
     # The ALT_DESTINATION is used as fall back if the DESTINATION directory dosen't contain the sources or you just don't want to use the generator.
   
-    COMMON_API_GENERATE_SOUCRES(TARGET COMMON_API_ROUTING_INTERFACE 
-                                FIDLS fidl/RoutingInterface.fidl # a list with fidls
-                                DESTINATION src-gen  # a relative path to the build directory or an absolute path
-                                ALT_DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/src-gen # an alternative relative/absolute path with common-api sources, usually in the source tree
+	IF(${COMMONAPI_USED_BINDING} EQUAL 1)
+	  	#SomeIP
+		SET(CAPI_BINDING_FIDLS fidl/RoutingInterface.fdepl fidl/AudioManagerTypes.fdepl)	
+	ELSE()
+	    #Dbus
+	    SET(CAPI_BINDING_FIDLS fidl/RoutingInterface.fidl)	
+	ENDIF()
+    COMMON_API_GENERATE_SOUCRES(
+                                # Prefix.
+                                TARGET COMMON_API_ROUTING_INTERFACE 
+                                # A list with fidls for the generic generator.
+                                FIDLS_GENERIC fidl/RoutingInterface.fidl 
+                                # A list with fidls for the binding generator.
+                                FIDLS_BINDING ${CAPI_BINDING_FIDLS}
+                                # A relative path to the build directory or an absolute path.
+                                DESTINATION src-gen 
+                                # An alternative relative/absolute path with common-api sources, usually in the source tree.
+                                ALT_DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/src-gen 
                                 )
+	                                
     
     INCLUDE_DIRECTORIES(
     	${CMAKE_SOURCE_DIR} 
@@ -76,13 +93,21 @@ IF(${WITH_ENABLED_IPC} STREQUAL "CAPI")
     	${AUDIO_INCLUDE_FOLDER}
     	${AUDIOMANAGER_INCLUDE_FOLDER}
     	${AUDIOMANAGER_UTILITIES_INCLUDE}
-    	${COMMONAPI_DBUS_INCLUDE_DIRS}
-        ${COMMONAPI_INCLUDE_DIRS}
+    	${COMMONAPI_INCLUDE_DIRS}
     	${COMMON_API_ROUTING_INTERFACE_GEN_INCLUDE_DIR}
-    	${DBUS_ARCH_INCLUDE_DIR}
-        ${DBUS_INCLUDE_DIR}
     	${INCLUDE_FOLDER}
     )
+    
+    if(${COMMONAPI_USED_BINDING} EQUAL 0)
+        INCLUDE_DIRECTORIES(${INCLUDE_DIRECTORIES}
+                ${COMMONAPI_DBUS_INCLUDE_DIRS}
+                ${DBUS_ARCH_INCLUDE_DIR}
+                ${DBUS_INCLUDE_DIR})	
+   else()
+       INCLUDE_DIRECTORIES(${INCLUDE_DIRECTORIES}
+                ${VSOMEIP_INCLUDE_DIRS}
+                ${COMMONAPI_SOMEIP_INCLUDE_DIRS})
+   endif()
     
     # all source files go here
     file(GLOB PLUGINCAPI_SRCS_CXX "src/*.cpp" ${COMMON_API_ROUTING_INTERFACE_GEN_SOURCES})
@@ -94,6 +119,7 @@ IF(${WITH_ENABLED_IPC} STREQUAL "CAPI")
         ${CommonAPI-DBus_LIBRARY}
         ${CommonAPI_LIBRARY}
         ${DBUS_LIBRARY}
+        ${CommonAPI-SomeIP_LIBRARY}
     )
     
     IF(WITH_TESTS)

@@ -515,10 +515,10 @@ TEST_F(CAmRoutingInterfaceCAPITests, ackConnect)
 		am_types::am_connectionID_t connectionID = TEST_ID_1;
 		am_Error_e error = E_OK;
 		am_Handle_s handle = {H_CONNECT, 20};
-		am_types::am_Handle_s CAPIHandle(H_CONNECT, 20);
-		CAmConvertAM2CAPI(handle,CAPIHandle);
+		am_types::am_Handle_s retHandle(am_types::am_Handle_e::H_CONNECT, 20);
+		CAmConvertAM2CAPI(handle,retHandle);
 		EXPECT_CALL(*env->mpRoutingReceive, ackConnect(IsHandleEqual(handle), connectionID, error)).Times(1);
-		env->mDomainService->fireAckConnectSelective(CAPIHandle, connectionID, am_types::am_Error_e(am_types::am_Error_e::E_OK));
+		env->mDomainService->fireAckConnectSelective(retHandle, connectionID, am_types::am_Error_e::E_OK);
 	}
 
 }
@@ -531,10 +531,10 @@ TEST_F(CAmRoutingInterfaceCAPITests, ackDisconnect)
 		am_types::am_connectionID_t connectionID = TEST_ID_1;
 		am_Error_e error = E_OK;
 		am_Handle_s handle = {H_DISCONNECT, 20};
-		am_types::am_Handle_s CAPIHandle;
-		CAmConvertAM2CAPI(handle,CAPIHandle);
+		am_types::am_Handle_s retHandle;
+		CAmConvertAM2CAPI(handle,retHandle);
 		EXPECT_CALL(*env->mpRoutingReceive, ackDisconnect(IsHandleEqual(handle), connectionID, error)).Times(1);
-		env->mDomainService->fireAckDisconnectSelective(CAPIHandle, connectionID, am_types::am_Error_e(am_types::am_Error_e::E_OK));
+		env->mDomainService->fireAckDisconnectSelective(retHandle, connectionID, am_types::am_Error_e::E_OK);
 	}
 
 }
@@ -547,10 +547,10 @@ TEST_F(CAmRoutingInterfaceCAPITests, ackSetSinkVolumeChange)
 		am_Error_e error = E_OK;
 		am_volume_t volume = 50;
 		am_Handle_s handle = {H_SETSINKVOLUME, 20};
-		am_types::am_Handle_s CAPIHandle;
-		CAmConvertAM2CAPI(handle,CAPIHandle);
+		am_types::am_Handle_s retHandle;
+		CAmConvertAM2CAPI(handle,retHandle);
 		EXPECT_CALL(*env->mpRoutingReceive, ackSetSinkVolumeChange(IsHandleEqual(handle), volume, error)).Times(1);
-		env->mDomainService->fireAckSetSinkVolumeChangeSelective(CAPIHandle, volume, am_types::am_Error_e(am_types::am_Error_e::E_OK));
+		env->mDomainService->fireAckSetSinkVolumeChangeSelective(retHandle, volume, am_types::am_Error_e::E_OK);
 	}
 }
 
@@ -562,10 +562,10 @@ TEST_F(CAmRoutingInterfaceCAPITests, ackSetSourceVolumeChange)
 		am_Error_e error = E_OK;
 		am_volume_t volume = 50;
 		am_Handle_s handle = {H_SETSOURCEVOLUME, 20};
-		am_types::am_Handle_s CAPIHandle;
-		CAmConvertAM2CAPI(handle,CAPIHandle);
+		am_types::am_Handle_s retHandle;
+		CAmConvertAM2CAPI(handle,retHandle);
 		EXPECT_CALL(*env->mpRoutingReceive, ackSetSourceVolumeChange(IsHandleEqual(handle), volume, error)).Times(1);
-		env->mDomainService->fireAckSetSourceVolumeChangeSelective(CAPIHandle, volume, am_types::am_Error_e(am_types::am_Error_e::E_OK));
+		env->mDomainService->fireAckSetSourceVolumeChangeSelective(retHandle, volume, am_types::am_Error_e::E_OK);
 	}
 }
 
@@ -577,10 +577,10 @@ TEST_F(CAmRoutingInterfaceCAPITests, ackSetSourceState)
 		am_Error_e error = E_OK;
 		am_volume_t volume = 50;
 		am_Handle_s handle = {H_SETSOURCESTATE, 20};
-		am_types::am_Handle_s CAPIHandle;
-		CAmConvertAM2CAPI(handle,CAPIHandle);
+		am_types::am_Handle_s retHandle;
+		CAmConvertAM2CAPI(handle,retHandle);
 		EXPECT_CALL(*env->mpRoutingReceive, ackSetSourceState(IsHandleEqual(handle), error)).Times(1);
-		env->mDomainService->fireAckSetSourceStateSelective(CAPIHandle, am_types::am_Error_e(am_types::am_Error_e::E_OK));
+		env->mDomainService->fireAckSetSourceStateSelective(retHandle, am_types::am_Error_e::E_OK);
 	}
 }
 
@@ -592,10 +592,10 @@ TEST_F(CAmRoutingInterfaceCAPITests, ackSetSinkSoundProperties)
 		am_Error_e error = E_OK;
 		am_volume_t volume = 50;
 		am_Handle_s handle = {H_SETSINKSOUNDPROPERTIES, 20};
-		am_types::am_Handle_s CAPIHandle;
-		CAmConvertAM2CAPI(handle,CAPIHandle);
+		am_types::am_Handle_s retHandle;
+		CAmConvertAM2CAPI(handle,retHandle);
 		EXPECT_CALL(*env->mpRoutingReceive, ackSetSinkSoundProperties(IsHandleEqual(handle), error)).Times(1);
-		env->mDomainService->fireAckSetSinkSoundPropertiesSelective(CAPIHandle, am_types::am_Error_e(am_types::am_Error_e::E_OK));
+		env->mDomainService->fireAckSetSinkSoundPropertiesSelective(retHandle, am_types::am_Error_e::E_OK);
 	}
 }
 
@@ -607,10 +607,10 @@ TEST_F(CAmRoutingInterfaceCAPITests, ackSetSinkSoundProperty)
 		am_Error_e error = E_OK;
 		am_volume_t volume = 50;
 		am_Handle_s handle = {H_SETSINKSOUNDPROPERTY, 20};
-		am_types::am_Handle_s CAPIHandle;
-		CAmConvertAM2CAPI(handle,CAPIHandle);
+		am_types::am_Handle_s retHandle;
+		CAmConvertAM2CAPI(handle,retHandle);
 		EXPECT_CALL(*env->mpRoutingReceive, ackSetSinkSoundProperty(IsHandleEqual(handle), error)).Times(1);
-		env->mDomainService->fireAckSetSinkSoundPropertySelective(CAPIHandle, am_types::am_Error_e(am_types::am_Error_e::E_OK));
+		env->mDomainService->fireAckSetSinkSoundPropertySelective(retHandle, am_types::am_Error_e::E_OK);
 	}
 }
 
@@ -622,10 +622,10 @@ TEST_F(CAmRoutingInterfaceCAPITests, ackSetSourceSoundProperties)
 		am_Error_e error = E_OK;
 		am_volume_t volume = 50;
 		am_Handle_s handle = {H_SETSOURCESOUNDPROPERTIES, 20};
-		am_types::am_Handle_s CAPIHandle;
-		CAmConvertAM2CAPI(handle,CAPIHandle);
+		am_types::am_Handle_s retHandle;
+		CAmConvertAM2CAPI(handle,retHandle);
 		EXPECT_CALL(*env->mpRoutingReceive, ackSetSourceSoundProperties(IsHandleEqual(handle), error)).Times(1);
-		env->mDomainService->fireAckSetSourceSoundPropertiesSelective(CAPIHandle, am_types::am_Error_e(am_types::am_Error_e::E_OK));
+		env->mDomainService->fireAckSetSourceSoundPropertiesSelective(retHandle, am_types::am_Error_e::E_OK);
 	}
 }
 
@@ -637,10 +637,10 @@ TEST_F(CAmRoutingInterfaceCAPITests, ackSetSourceSoundProperty)
 		am_Error_e error = E_OK;
 		am_volume_t volume = 50;
 		am_Handle_s handle = {H_SETSOURCESOUNDPROPERTY, 20};
-		am_types::am_Handle_s CAPIHandle;
-		CAmConvertAM2CAPI(handle,CAPIHandle);
+		am_types::am_Handle_s retHandle;
+		CAmConvertAM2CAPI(handle,retHandle);
 		EXPECT_CALL(*env->mpRoutingReceive, ackSetSourceSoundProperty(IsHandleEqual(handle), error)).Times(1);
-		env->mDomainService->fireAckSetSourceSoundPropertySelective(CAPIHandle, am_types::am_Error_e(am_types::am_Error_e::E_OK));
+		env->mDomainService->fireAckSetSourceSoundPropertySelective(retHandle, am_types::am_Error_e::E_OK);
 	}
 }
 
@@ -652,10 +652,10 @@ TEST_F(CAmRoutingInterfaceCAPITests, ackCrossFading)
 		am_Error_e error = E_OK;
 		am_HotSink_e hotSink = HS_UNKNOWN;
 		am_Handle_s handle = {H_CROSSFADE, 20};
-		am_types::am_Handle_s CAPIHandle;
-		CAmConvertAM2CAPI(handle,CAPIHandle);
+		am_types::am_Handle_s retHandle;
+		CAmConvertAM2CAPI(handle,retHandle);
 		EXPECT_CALL(*env->mpRoutingReceive, ackCrossFading(IsHandleEqual(handle), hotSink, error)).Times(1);
-		env->mDomainService->fireAckCrossFadingSelective(CAPIHandle, hotSink, am_types::am_Error_e(am_types::am_Error_e::E_OK));
+		env->mDomainService->fireAckCrossFadingSelective(retHandle, (am_types::am_HotSink_e::Literal)hotSink, am_types::am_Error_e::E_OK);
 	}
 }
 
@@ -667,10 +667,10 @@ TEST_F(CAmRoutingInterfaceCAPITests, ackSourceVolumeTick)
 		am_types::am_sourceID_t sourceID = TEST_ID_1;
 		am_Handle_s handle = {H_SETSOURCEVOLUME, 20};
 		am_types::am_volume_t volume (20);
-		am_types::am_Handle_s CAPIHandle;
-		CAmConvertAM2CAPI(handle,CAPIHandle);
+		am_types::am_Handle_s retHandle;
+		CAmConvertAM2CAPI(handle,retHandle);
 		EXPECT_CALL(*env->mpRoutingReceive, ackSourceVolumeTick(IsHandleEqual(handle), sourceID, volume)).Times(1);
-		env->mDomainService->fireAckSourceVolumeTickSelective(CAPIHandle, sourceID, volume);
+		env->mDomainService->fireAckSourceVolumeTickSelective(retHandle, sourceID, volume);
 	}
 }
 
@@ -681,11 +681,11 @@ TEST_F(CAmRoutingInterfaceCAPITests, ackSinkVolumeTick)
 	{
 		am_sinkID_t sID = TEST_ID_1;
 		am_Handle_s handle = {H_SETSINKVOLUME, 20};
-		am_types::am_Handle_s CAPIHandle;
-		CAmConvertAM2CAPI(handle,CAPIHandle);
+		am_types::am_Handle_s retHandle;
+		CAmConvertAM2CAPI(handle,retHandle);
 		am_volume_t volume (20);
 		EXPECT_CALL(*env->mpRoutingReceive, ackSinkVolumeTick(IsHandleEqual(handle), sID, volume)).Times(1);
-		env->mDomainService->fireAckSinkVolumeTickSelective(CAPIHandle, sID, volume);
+		env->mDomainService->fireAckSinkVolumeTickSelective(retHandle, sID, volume);
 	}
 }
 
@@ -719,10 +719,10 @@ TEST_F(CAmRoutingInterfaceCAPITests, ackSetVolumes)
 		am_types::am_Handle_s handle;
 		CAmConvertAM2CAPI(handle_s,handle);
 		am_types::am_Error_e genError(am_types::am_Error_e::E_OK);
-		am_types::am_Handle_s CAPIHandle;
-		CAmConvertAM2CAPI(handle_s,CAPIHandle);
+		am_types::am_Handle_s retHandle;
+		CAmConvertAM2CAPI(handle_s,retHandle);
 		EXPECT_CALL(*env->mpRoutingReceive, ackSetVolumes(IsHandleStructEqualTo(handle_s), IsSinkVolumeArrayEqualTo(am_listVolumes, true), E_OK)).Times(1);
-		env->mDomainService->fireAckSetVolumesSelective(CAPIHandle, listVolumes, genError);
+		env->mDomainService->fireAckSetVolumesSelective(retHandle, listVolumes, genError);
 	}
 }
 
@@ -736,11 +736,11 @@ TEST_F(CAmRoutingInterfaceCAPITests, ackSinkNotificationConfiguration)
 		am_Handle_s handle_s;
 		handle_s.handle = testID;
 		handle_s.handleType = H_CONNECT;
-		am_types::am_Handle_s CAPIHandle;
-		CAmConvertAM2CAPI(handle_s,CAPIHandle);
+		am_types::am_Handle_s retHandle;
+		CAmConvertAM2CAPI(handle_s,retHandle);
 		am_types::am_Error_e genError(am_types::am_Error_e::E_OK);
 		EXPECT_CALL(*env->mpRoutingReceive, ackSinkNotificationConfiguration(IsHandleStructEqualTo(handle_s), (am_Error_e)((int)error))).Times(1);
-		env->mDomainService->fireAckSinkNotificationConfigurationSelective(CAPIHandle, genError);
+		env->mDomainService->fireAckSinkNotificationConfigurationSelective(retHandle, genError);
 	}
 }
 
@@ -754,11 +754,11 @@ TEST_F(CAmRoutingInterfaceCAPITests, ackSourceNotificationConfiguration)
 		am_Handle_s handle_s;
 		handle_s.handle = testID;
 		handle_s.handleType = H_CONNECT;
-		am_types::am_Handle_s CAPIHandle;
-		CAmConvertAM2CAPI(handle_s,CAPIHandle);
+		am_types::am_Handle_s retHandle;
+		CAmConvertAM2CAPI(handle_s,retHandle);
 		am_types::am_Error_e genError(am_types::am_Error_e::E_OK);
 		EXPECT_CALL(*env->mpRoutingReceive, ackSourceNotificationConfiguration(IsHandleStructEqualTo(handle_s), (am_Error_e)((int)error))).Times(1);
-		env->mDomainService->fireAckSourceNotificationConfigurationSelective(CAPIHandle, genError);
+		env->mDomainService->fireAckSourceNotificationConfigurationSelective(retHandle, genError);
 	}
 }
 
@@ -1175,7 +1175,7 @@ TEST_F(CAmRoutingInterfaceCAPITests, hookInterruptStatusChange)
 		am_Error_e error = E_OK;
 		am_types::am_sourceID_t sourceID = TEST_ID_1;
 		am_InterruptState_e interruptState = am_InterruptState_e::IS_MAX;
-		am_types::am_InterruptState_e CAPIInterruptState=static_cast<am_types::am_InterruptState_e>(interruptState);
+		am_types::am_InterruptState_e CAPIInterruptState=static_cast<am_types::am_InterruptState_e::Literal>(interruptState);
 		EXPECT_CALL(*env->mpRoutingReceive, hookInterruptStatusChange(sourceID, interruptState)).Times(1);
 		env->mProxy->hookInterruptStatusChange(sourceID, CAPIInterruptState, callStatus);
 		ASSERT_EQ( callStatus, CommonAPI::CallStatus::SUCCESS );
@@ -1834,13 +1834,13 @@ TEST_F(CAmRoutingInterfaceCAPITests, TestDomain_asyncAbort)
 
 		am_volume_t volume = 50;
 		am_Handle_s handle = {H_SETSOURCESTATE, 200};
-		am_types::am_Handle_s CAPIHandle;
-		CAPIHandle.setHandle(200);
-		CAPIHandle.setHandleType(am_types::am_Handle_e(am_types::am_Handle_e::H_SETSOURCESTATE));
+		am_types::am_Handle_s retHandle;
+		retHandle.setHandle(200);
+		retHandle.setHandleType(am_types::am_Handle_e(am_types::am_Handle_e::H_SETSOURCESTATE));
 		am_SourceState_e state = am_SourceState_e::SS_MAX;
 
 		//we set an abort handle in order to test the return status
-		env->mDomainService->setAbortHandle(CAPIHandle);
+		env->mDomainService->setAbortHandle(retHandle);
 		EXPECT_CALL(*env->mpRoutingReceive, getDomainOfSource(TEST_ID_1, _)).WillOnce(Return(E_OK));
 		EXPECT_CALL(*env->mpRoutingReceive, ackSetSourceState(IsHandleEqual(handle), E_ABORTED)).Times(1);
 		am_Error_e error = env->mpPlugin->asyncSetSourceState(handle, sID, state);

@@ -41,13 +41,13 @@ void CAmConvertSystemProperty(const am_SystemProperty_s & amSystemProperty, am_t
 
 am_types::am_Availability_e CAmConvert2CAPIType(const am_Availability_e & availability)
 {
-	am_types::am_Availability_e result((A_MAX==availability)?am_types::am_Availability_e::A_MAX:availability);
+	am_types::am_Availability_e result((A_MAX==availability)?am_types::am_Availability_e::A_MAX:(am_types::am_Availability_e::Literal)availability);
 	return result;
 }
 
 am_types::am_MuteState_e CAmConvert2CAPIType(const am_MuteState_e & muteState)
 {
-	am_types::am_MuteState_e result((MS_MAX==muteState)?am_types::am_MuteState_e::MS_MAX:muteState);
+	am_types::am_MuteState_e result((MS_MAX==muteState)?am_types::am_MuteState_e::MS_MAX:(am_types::am_MuteState_e::Literal)muteState);
 	return result;
 }
 
@@ -59,7 +59,7 @@ am_MuteState_e CAmConvertFromCAPIType(const am_types::am_MuteState_e & muteState
 
 am_types::am_ConnectionState_e CAmConvert2CAPIType(const am_ConnectionState_e & connectionState)
 {
-	am_types::am_ConnectionState_e result((CS_MAX==connectionState)?am_types::am_ConnectionState_e::CS_MAX:connectionState);
+	am_types::am_ConnectionState_e result((CS_MAX==connectionState)?am_types::am_ConnectionState_e::CS_MAX:(am_types::am_ConnectionState_e::Literal)connectionState);
 	return result;
 }
 
@@ -71,7 +71,7 @@ am_ConnectionState_e CAmConvertFromCAPIType(const am_types::am_ConnectionState_e
 
 am_types::am_NotificationStatus_e CAmConvert2CAPIType(const am_NotificationStatus_e & notificationStatus)
 {
-	am_types::am_NotificationStatus_e result((NS_MAX==notificationStatus)?am_types::am_NotificationStatus_e::NS_MAX:notificationStatus);
+	am_types::am_NotificationStatus_e result((NS_MAX==notificationStatus)?am_types::am_NotificationStatus_e::NS_MAX:(am_types::am_NotificationStatus_e::Literal)notificationStatus);
 	return result;
 }
 
@@ -83,7 +83,7 @@ am_NotificationStatus_e CAmConvertFromCAPIType(const am_types::am_NotificationSt
 
 am_types::am_Error_e CAmConvert2CAPIType(const am_Error_e & error)
 {
-	am_types::am_Error_e result((E_MAX==error)?am_types::am_Error_e::E_MAX:error);
+	am_types::am_Error_e result((E_MAX==error)?am_types::am_Error_e::E_MAX:(am_types::am_Error_e::Literal)error);
 	return result;
 }
 

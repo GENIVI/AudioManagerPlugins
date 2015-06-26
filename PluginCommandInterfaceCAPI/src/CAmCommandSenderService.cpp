@@ -278,7 +278,7 @@ void CAmCommandSenderService::getListMainSinkNotificationConfigurations(const st
 		for(std::vector<am_NotificationConfiguration_s>::const_iterator iter = list.begin(); iter!=list.end(); iter++)
 		{
 			item.setType(iter->type);
-			item.setStatus(iter->status);
+			item.setStatus((am_types::am_NotificationStatus_e::Literal)iter->status);
 			item.setParameter(iter->parameter);
 			listNotificationConfigurations.push_back (item);
 		}
@@ -298,7 +298,7 @@ void CAmCommandSenderService::getListMainSourceNotificationConfigurations(const 
 		for(std::vector<am_NotificationConfiguration_s>::const_iterator iter = list.begin(); iter!=list.end(); iter++)
 		{
 			item.setType(iter->type);
-			item.setStatus(iter->status);
+			item.setStatus((am_types::am_NotificationStatus_e::Literal)iter->status);
 			item.setParameter(iter->parameter);
 			listNotificationConfigurations.push_back (item);
 		}

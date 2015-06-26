@@ -43,8 +43,6 @@ if (NOT DAEMONVERSION)
     endif(AUDIOMANAGER_FOUND)
 endif (NOT DAEMONVERSION)    
 
-find_package(DBUS REQUIRED)
-
 if (${WITH_ENABLED_IPC} STREQUAL "CAPI")
 
 	if(WITH_DLT)    
@@ -61,16 +59,31 @@ if (${WITH_ENABLED_IPC} STREQUAL "CAPI")
         rt)
         
     INCLUDE (CommonAPI)
-    LOAD_COMMONAPI(DBUS)
+    LOAD_COMMONAPI()
     set(INCLUDE_FOLDER "include")
-     
+    
+    IF(${COMMONAPI_USED_BINDING} EQUAL 1)
+	  	#SomeIP
+		SET(CAPI_BINDING_FIDLS fidl/CommandInterface.fdepl fidl/AudioManagerTypes.fdepl)	
+	ELSE()
+	    #Dbus
+	    SET(CAPI_BINDING_FIDLS fidl/CommandInterface.fidl)	
+	ENDIF()
+    
     # Find the common-api sources. 
     # The sources can be placed in the build directory (DESTINATION) or in the source tree (ALT_DESTINATION). 
     # The ALT_DESTINATION is used as fall back if the DESTINATION directory dosen't contain the sources or you just don't want to use the generator.
-    COMMON_API_GENERATE_SOUCRES(TARGET COMMON_API_COMMAND_INTERFACE 
-                                FIDLS fidl/CommandInterface.fidl # a list with fidls
-                                DESTINATION src-gen  # a relative path to the build directory or an absolute path
-                                ALT_DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/src-gen # an alternative relative/absolute path with common-api sources, usually in the source tree
+    COMMON_API_GENERATE_SOUCRES(
+                                # Prefix.
+                                TARGET COMMON_API_COMMAND_INTERFACE 
+                                # A list with fidls for the generic generator.
+                                FIDLS_GENERIC fidl/CommandInterface.fidl
+                                # A list with fidls for the binding generator.
+                                FIDLS_BINDING ${CAPI_BINDING_FIDLS}
+                                # A relative path to the build directory or an absolute path.
+                                DESTINATION src-gen 
+                                # An alternative relative/absolute path with common-api sources, usually in the source tree.
+                                ALT_DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/src-gen
                                 )
     
     INCLUDE_DIRECTORIES(
@@ -79,39 +92,49 @@ if (${WITH_ENABLED_IPC} STREQUAL "CAPI")
     	${AUDIO_INCLUDE_FOLDER}
     	${AUDIOMANAGER_INCLUDE_FOLDER}
     	${AUDIOMANAGER_UTILITIES_INCLUDE}
-    	${COMMONAPI_DBUS_INCLUDE_DIRS}
-        ${COMMONAPI_INCLUDE_DIRS}
+    	${COMMONAPI_INCLUDE_DIRS}
     	${COMMON_API_COMMAND_INTERFACE_GEN_INCLUDE_DIR}
-    	${DBUS_ARCH_INCLUDE_DIR}
-        ${DBUS_INCLUDE_DIR}
     	${INCLUDE_FOLDER}
     )
     
+    if(${COMMONAPI_USED_BINDING} EQUAL 0)
+        INCLUDE_DIRECTORIES(${INCLUDE_DIRECTORIES}
+                ${COMMONAPI_DBUS_INCLUDE_DIRS}
+                ${DBUS_ARCH_INCLUDE_DIR}
+                ${DBUS_INCLUDE_DIR})	
+   else()
+       INCLUDE_DIRECTORIES(${INCLUDE_DIRECTORIES}
+                ${VSOMEIP_INCLUDE_DIRS}
+                ${COMMONAPI_SOMEIP_INCLUDE_DIRS})
+   endif()
+    
     if(WITH_DLT)
-    INCLUDE_DIRECTORIES(${INCLUDE_DIRECTORIES}
-        ${DLT_INCLUDE_DIRS})
-    set (AM_LINK_LIBS
-        ${AM_LINK_LIBS}
-        ${DLT_LIBRARIES})
+        INCLUDE_DIRECTORIES(${INCLUDE_DIRECTORIES} ${DLT_INCLUDE_DIRS})
+        set (AM_LINK_LIBS ${AM_LINK_LIBS} ${DLT_LIBRARIES})
     endif(WITH_DLT)    
     
     # all source files go here
     file(GLOB PLUGINCAPI_SRCS_CXX "src/*.cpp" ${COMMON_API_COMMAND_INTERFACE_GEN_SOURCES})
     
     add_library(PluginCommandInterfaceCAPI MODULE ${PLUGINCAPI_SRCS_CXX})
+    set (AM_LINK_LIBS ${AM_LINK_LIBS} ${CommonAPI_LIBRARY})
+    if(${COMMONAPI_USED_BINDING} EQUAL 0)
+       set (AM_LINK_LIBS ${AM_LINK_LIBS} 
+                        ${CommonAPI-DBus_LIBRARY}
+                        ${DBUS_LIBRARY}
+                        ${CommonAPI_LIBRARY})
+   else()
+       set (AM_LINK_LIBS ${AM_LINK_LIBS} 
+                        ${CommonAPI-SomeIP_LIBRARY}
+                        ${CommonAPI_LIBRARY})
+   endif()
     
-    TARGET_LINK_LIBRARIES(PluginCommandInterfaceCAPI 
-        ${AM_LINK_LIBS}
-        ${CommonAPI-DBus_LIBRARY}
-        ${CommonAPI_LIBRARY}
-        ${DBUS_LIBRARY}
-    )
+    TARGET_LINK_LIBRARIES(PluginCommandInterfaceCAPI ${AM_LINK_LIBS})
     
     IF(WITH_TESTS)
     	add_subdirectory (test)
     ENDIF(WITH_TESTS)
              
-  
     install(TARGETS PluginCommandInterfaceCAPI          
             DESTINATION lib/${LIB_INSTALL_SUFFIX}/command
             PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ

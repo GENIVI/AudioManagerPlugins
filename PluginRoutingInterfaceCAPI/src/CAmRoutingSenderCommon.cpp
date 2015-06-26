@@ -247,8 +247,8 @@ void CAmConvertCAPI2AM(const am_types::am_Handle_s& source, am_Handle_s& destina
 
 void CAmConvertAM2CAPI(const am_Availability_s & source,  am_types::am_Availability_s & destination)
 {
-	destination.setAvailability(source.availability);
-	destination.setAvailabilityReason(source.availabilityReason);
+	destination.setAvailability((am_types::am_Availability_e::Literal)source.availability);
+	destination.setAvailabilityReason((am_types::am_AvailabilityReason_pe)source.availabilityReason);
 }
 
 void CAmConvertAM2CAPI(const am::am_SoundProperty_s & source, am_types::am_SoundProperty_s & destination)
@@ -260,14 +260,14 @@ void CAmConvertAM2CAPI(const am::am_SoundProperty_s & source, am_types::am_Sound
 extern void CAmConvertAM2CAPI(const am::am_Handle_s& source,am_types::am_Handle_s& destination)
 {
 	destination.setHandle(source.handle);
-	destination.setHandleType(source.handleType);
+	destination.setHandleType((am_types::am_Handle_e::Literal)source.handleType);
 }
 
 
 void CAmConvertAM2CAPI(const am::am_NotificationConfiguration_s & source, am_types::am_NotificationConfiguration_s & destination)
 {
 	destination.setType(source.type);
-	destination.setStatus(source.status);
+	destination.setStatus((am_types::am_NotificationStatus_e::Literal)source.status);
 	destination.setParameter(source.parameter);
 }
 
@@ -277,7 +277,7 @@ void CAmConvertAM2CAPI(const am::am_Volumes_s & source, am_types::am_Volumes_s &
 		destination.setVolumeID(am_types::am_DataType_u(static_cast<am_types::am_sinkID_t>(source.volumeID.sink)));
 	else if(source.volumeType == VT_SOURCE)
 		destination.setVolumeID(am_types::am_DataType_u(static_cast<am_types::am_sourceID_t>(source.volumeID.source)));
-	destination.setVolumeType(source.volumeType);
+	destination.setVolumeType((am_types::am_VolumeType_e::Literal)source.volumeType);
 	destination.setVolume(source.volume);
 	destination.setRamp(source.ramp);
 	destination.setTime(source.time);

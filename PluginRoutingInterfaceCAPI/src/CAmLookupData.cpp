@@ -194,7 +194,7 @@ am_Error_e CAmLookupData::RSLookupData::doSetSourceState(	const am_Handle_s hand
 		CAmConvertAM2CAPI(handle,myHandle);
 		mSenderProxy->asyncSetSourceStateAsync(myHandle,
 												static_cast<am_types::am_sourceID_t>(sourceID),
-												static_cast<am_types::am_SourceState_e>(state),
+												static_cast<am_types::am_SourceState_e::Literal>(state),
 												cb);
 		return (E_OK);
 	}
@@ -300,7 +300,7 @@ am_Error_e CAmLookupData::RSLookupData::doCrossFade(const am_Handle_s handle,
 		CAmConvertAM2CAPI(handle,myHandle);
 		mSenderProxy->asyncCrossFadeAsync(myHandle,
 										  static_cast<am_types::am_crossfaderID_t>(crossfaderID),
-										  static_cast<am_types::am_HotSink_e>(hotSink),
+										  static_cast<am_types::am_HotSink_e::Literal>(hotSink),
 										  static_cast<am_types::am_RampType_pe>(rampType),
 										  static_cast<am_types::am_time_t>(time),
 										  cb);
@@ -315,7 +315,7 @@ am_Error_e CAmLookupData::RSLookupData::doSetDomainState(const am_domainID_t dom
 	if(mIsConnected)
 	{
 		mSenderProxy->setDomainStateAsync(static_cast<am_types::am_domainID_t>(domainID),
-										  static_cast<am_types::am_DomainState_e>(domainState),
+										  static_cast<am_types::am_DomainState_e::Literal>(domainState),
 										  cb);
 		return (E_OK);
 	}
