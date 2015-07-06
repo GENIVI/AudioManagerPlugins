@@ -95,6 +95,11 @@ void CAmCommandSenderService::getListMainConnections(const std::shared_ptr<Commo
     std::vector<am_MainConnectionType_s> list;
     am_types::am_MainConnection_L listConnections;
     am_types::am_Error_e result = CAmConvert2CAPIType(mpIAmCommandReceive->getListMainConnections(list));
+    std::sort(list.begin(), list.end(),
+		[](const am_MainConnectionType_s& a, const am_MainConnectionType_s& b)
+		{
+			return (a.mainConnectionID < b.mainConnectionID);
+		});
     if((int)result==E_OK)
     {
     	am_types::am_MainConnectionType_s item;
@@ -116,6 +121,12 @@ void CAmCommandSenderService::getListMainSinks(const std::shared_ptr<CommonAPI::
     std::vector<am_SinkType_s> list;
     am_types::am_SinkType_L listMainSinks;
     am_types::am_Error_e result = CAmConvert2CAPIType(mpIAmCommandReceive->getListMainSinks(list));
+    std::sort(list.begin(), list.end(),
+		[](const am_SinkType_s& a, const am_SinkType_s& b)
+		{
+			return (a.sinkID < b.sinkID);
+		});
+
     if((int)result==E_OK)
     {
     	am_types::am_SinkType_s item;
@@ -140,6 +151,11 @@ void CAmCommandSenderService::getListMainSources(const std::shared_ptr<CommonAPI
     std::vector<am_SourceType_s> list;
     am_types::am_SourceType_L listMainSources;
 	am_types::am_Error_e result = CAmConvert2CAPIType(mpIAmCommandReceive->getListMainSources(list));
+    std::sort(list.begin(), list.end(),
+		[](const am_SourceType_s& a, const am_SourceType_s& b)
+		{
+			return (a.sourceID < b.sourceID);
+		});
 	if((int)result==E_OK)
 	{
 		am_types::am_SourceType_s item;
