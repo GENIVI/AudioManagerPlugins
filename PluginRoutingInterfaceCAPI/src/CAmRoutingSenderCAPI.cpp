@@ -128,6 +128,7 @@ void CAmRoutingSenderCAPI::setRoutingReady(const uint16_t handle)
 
     log(&ctxCommandCAPI, DLT_LOG_INFO, "sending routingReady signal");
     mService->setRoutingReadyAttribute(am_types::am_RoutingReady_e::RR_READY);
+    mpIAmRoutingReceive->confirmRoutingReady(handle,am_Error_e::E_OK);
 }
 
 void CAmRoutingSenderCAPI::setRoutingRundown(const uint16_t handle)
@@ -136,6 +137,7 @@ void CAmRoutingSenderCAPI::setRoutingRundown(const uint16_t handle)
 	assert(mpIAmRoutingReceive);
 	mService->setRoutingReadyAttribute(am_types::am_RoutingReady_e::RR_RUNDOWN);
 	mService->gotRundown(mLookupData.numberOfDomains(),handle);
+	mpIAmRoutingReceive->confirmRoutingRundown(handle,am_Error_e::E_OK);
 }
 
 void CAmRoutingSenderCAPI::checkSourceLookup(const am_sourceID_t id)
