@@ -19,7 +19,7 @@ cmake_minimum_required(VERSION 2.8.8)
 
 PROJECT(CAmCommandSenderCAPITests)
 
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w -g -DUNIT_TEST=1 -DDLT_CONTEXT=AudioManager")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-local-typedefs -DUNIT_TEST=1 -DDLT_CONTEXT=AudioManager")
 
 set(EXECUTABLE_OUTPUT_PATH ${TEST_EXECUTABLE_OUTPUT_PATH})
 

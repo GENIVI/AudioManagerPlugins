@@ -33,7 +33,7 @@ const char * CAmTestRoutingSenderService::ROUTING_INTERFACE_SERVICE = CAPI_ROUTI
 CAmTestRoutingSenderService::CAmTestRoutingSenderService(CAmCommonAPIWrapper * aWrapper):
 		mDomainData(), mAbortedHandle(), mIsDomainRegistred(false), mIsServiceAvailable(0), mIsReady(0), mpWrapper(aWrapper), mRoutingInterfaceProxy(NULL)
 {
-	mAbortedHandle.setHandle(UINT_MAX);
+	mAbortedHandle.setHandle(0xFFFF);
 }
 
 CAmTestRoutingSenderService::CAmTestRoutingSenderService():
@@ -60,7 +60,7 @@ CAmTestRoutingSenderService::CAmTestRoutingSenderService(CAmCommonAPIWrapper * a
     mDomainData.setNodename("TestDomain");
     mDomainData.setState(am_types::am_DomainState_e(am_types::am_DomainState_e::DS_CONTROLLED));
 
-	mAbortedHandle.setHandle(UINT_MAX);
+	mAbortedHandle.setHandle(0xFFFF);
 	mRoutingInterfaceProxy->getProxyStatusEvent().subscribe(std::bind(&CAmTestRoutingSenderService::onServiceStatusEvent,this,std::placeholders::_1));
 }
 
@@ -149,10 +149,10 @@ bool CAmTestRoutingSenderService::deregisterDomain()
 am_types::am_Error_e CAmTestRoutingSenderService::errorForHandle(const am_types::am_Handle_s & handle)
 {
 	am_types::am_Error_e error(am_types::am_Error_e::E_OK);
-	if(handle==mAbortedHandle && (int)mAbortedHandle.getHandle()!=UINT_MAX)
+	if(handle==mAbortedHandle && (int)mAbortedHandle.getHandle()!=0xFFFF)
 	{
 		error = am_types::am_Error_e::E_ABORTED;
-		mAbortedHandle.setHandle(UINT_MAX);
+		mAbortedHandle.setHandle(0xFFFF);
 	}
 	return error;
 }

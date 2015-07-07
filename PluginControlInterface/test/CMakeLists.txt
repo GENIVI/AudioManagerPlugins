@@ -23,6 +23,8 @@ set(EXECUTABLE_OUTPUT_PATH ${TEST_EXECUTABLE_OUTPUT_PATH})
 FIND_PACKAGE (Threads)
 FIND_PACKAGE(PkgConfig)
 
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-local-typedefs -DUNIT_TEST=1 -DDLT_CONTEXT=AudioManager")
+
 
 IF(WITH_DLT)    
     pkg_check_modules(DLT REQUIRED automotive-dlt>=2.2.0)   
