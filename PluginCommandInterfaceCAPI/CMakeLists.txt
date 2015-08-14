@@ -67,7 +67,6 @@ if (${WITH_ENABLED_IPC} STREQUAL "CAPI")
     # LOAD_COMMONAPI() without argument will use the CACHE variable COMMONAPI_USED_BINDING (0-DBus, 1-SomeIP).
     # It can be called with DBUS or SOMEIP as parameter: LOAD_COMMONAPI(DBUS) , LOAD_COMMONAPI(SOMEIP) which will overwrite COMMONAPI_USED_BINDING.
     LOAD_COMMONAPI()
-    
         
     IF(${COMMONAPI_USED_BINDING} EQUAL 1)#SomeIP
 	SET(SRC_GEN src-gen/v${COMMONAPI_SOMEIP_VERSION_NUMBER}/someip)
@@ -76,7 +75,7 @@ if (${WITH_ENABLED_IPC} STREQUAL "CAPI")
 	   SET(SRC_GEN src-gen/v${COMMONAPI_DBUS_VERSION_NUMBER}/dbus)
 	   SET(CAPI_BINDING_FIDLS fidl/CommandInterface.fidl fidl/AudioManagerTypes.fidl)	
     ENDIF()
-    
+
     # Find the common-api sources. 
     # The sources can be placed in the build directory (DESTINATION) or in the source tree (ALT_DESTINATION). 
     # The ALT_DESTINATION is used as fall back if the DESTINATION directory dosen't contain the sources or you just don't want to use the generator.
@@ -90,7 +89,7 @@ if (${WITH_ENABLED_IPC} STREQUAL "CAPI")
                                 # A relative path to the build directory or an absolute path.
                                 DESTINATION ${SRC_GEN} 
                                 # An alternative relative/absolute path with common-api sources, usually in the source tree.
-                                ALT_DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/src-gen
+                                ALT_DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/${SRC_GEN}
                                 )
     
     INCLUDE_DIRECTORIES(
