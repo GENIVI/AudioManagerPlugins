@@ -68,12 +68,14 @@ IF(${WITH_ENABLED_IPC} STREQUAL "CAPI")
   
 	IF(${COMMONAPI_USED_BINDING} EQUAL 1)
 	  	#SomeIP
+	  	SET(SRC_GEN src-gen-someip)
 		SET(CAPI_BINDING_FIDLS fidl/RoutingInterface.fdepl fidl/AudioManagerTypes.fdepl)	
 	ELSE()
 	    #Dbus
-	    SET(CAPI_BINDING_FIDLS fidl/RoutingInterface.fidl fidl/AudioManagerTypes.fidl)	
+	    SET(SRC_GEN src-gen-dbus)
+	    SET(CAPI_BINDING_FIDLS fidl/RoutingInterface.fidl)	 
 	ENDIF()
-    COMMON_API_GENERATE_SOUCRES(
+    COMMON_API_GENERATE_SOURCES(
                                 # Prefix.
                                 TARGET COMMON_API_ROUTING_INTERFACE 
                                 # A list with fidls for the generic generator.
@@ -81,9 +83,9 @@ IF(${WITH_ENABLED_IPC} STREQUAL "CAPI")
                                 # A list with fidls for the binding generator.
                                 FIDLS_BINDING ${CAPI_BINDING_FIDLS}
                                 # A relative path to the build directory or an absolute path.
-                                DESTINATION src-gen 
+                                DESTINATION ${SRC_GEN} 
                                 # An alternative relative/absolute path with common-api sources, usually in the source tree.
-                                ALT_DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/src-gen 
+                                ALT_DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/${SRC_GEN} 
                                 )
 	              
 	message (status "dfdfdb ${COMMON_API_ROUTING_INTERFACE_GEN_INCLUDE_DIR}")                  

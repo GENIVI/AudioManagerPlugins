@@ -61,19 +61,21 @@ if (${WITH_ENABLED_IPC} STREQUAL "CAPI")
     INCLUDE (CommonAPI)
     LOAD_COMMONAPI()
     set(INCLUDE_FOLDER "include")
-    
+        
     IF(${COMMONAPI_USED_BINDING} EQUAL 1)
 	  	#SomeIP
+	  	SET(SRC_GEN src-gen-someip)
 		SET(CAPI_BINDING_FIDLS fidl/CommandInterface.fdepl fidl/AudioManagerTypes.fdepl)	
 	ELSE()
 	    #Dbus
-	    SET(CAPI_BINDING_FIDLS fidl/CommandInterface.fidl fidl/AudioManagerTypes.fidl)	
+	    SET(SRC_GEN src-gen-dbus)
+	    SET(CAPI_BINDING_FIDLS fidl/CommandInterface.fidl)	  
 	ENDIF()
     
     # Find the common-api sources. 
     # The sources can be placed in the build directory (DESTINATION) or in the source tree (ALT_DESTINATION). 
     # The ALT_DESTINATION is used as fall back if the DESTINATION directory dosen't contain the sources or you just don't want to use the generator.
-    COMMON_API_GENERATE_SOUCRES(
+    COMMON_API_GENERATE_SOURCES(
                                 # Prefix.
                                 TARGET COMMON_API_COMMAND_INTERFACE 
                                 # A list with fidls for the generic generator.
@@ -81,9 +83,9 @@ if (${WITH_ENABLED_IPC} STREQUAL "CAPI")
                                 # A list with fidls for the binding generator.
                                 FIDLS_BINDING ${CAPI_BINDING_FIDLS}
                                 # A relative path to the build directory or an absolute path.
-                                DESTINATION src-gen 
+                                DESTINATION ${SRC_GEN} 
                                 # An alternative relative/absolute path with common-api sources, usually in the source tree.
-                                ALT_DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/src-gen
+                                ALT_DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/${SRC_GEN}
                                 )
     
     INCLUDE_DIRECTORIES(

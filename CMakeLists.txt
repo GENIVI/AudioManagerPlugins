@@ -33,6 +33,10 @@ OPTION(WITH_ROUTING_INTERFACE_CAPI
 OPTION(WITH_ROUTING_INTERFACE_DBUS
        "build with routing iterface dbus plugin" OFF)                    
 
+if(USE_BUILD_LIBS) 
+	file(MAKE_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}/plugins")
+endif(USE_BUILD_LIBS)
+
 IF (WITH_COMMAND_INTERFACE_COMMON_CAPI)
 	add_subdirectory(PluginCommandInterfaceCAPI)
 ENDIF(WITH_COMMAND_INTERFACE_COMMON_CAPI)
