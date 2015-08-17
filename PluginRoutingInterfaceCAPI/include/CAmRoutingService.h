@@ -19,7 +19,7 @@
 #define CAMROUTINGSERVICE_H_
 
 
-#include <v0_1/org/genivi/am/routinginterface/RoutingControlObserverStubDefault.hpp>
+#include <v1_0/org/genivi/am/routinginterface/RoutingControlObserverStubDefault.hpp>
 #include "IAmRouting.h"
 #include "CAmCommonAPIWrapper.h"
 #include "CAmLookupData.h"

@@ -25,7 +25,7 @@
 using namespace am;
 
 #define am_types v1_0::org::genivi::am::audiomanagertypes::__Anonymous__
-#define am_routing_interface v0_1::org::genivi::am::routinginterface
+#define am_routing_interface v1_0::org::genivi::am::routinginterface
 
 /**
  * Utility functions
@@ -42,7 +42,6 @@ void CAmConvertCAPI2AM(const am_types::am_Converter_s & , am::am_Converter_s & )
 void CAmConvertCAPI2AM(const am_types::am_Crossfader_s & , am::am_Crossfader_s & );
 void CAmConvertCAPI2AM(const am_types::am_EarlyData_s & , am::am_EarlyData_s & );
 void CAmConvertCAPI2AM(const am_types::am_EarlyData_u &, am::am_EarlyData_u & );
-void CAmConvertCAPI2AM(const am_types::am_DataType_u & , am::am_DataType_u & );
 void CAmConvertCAPI2AM(const am_types::am_Volumes_s &, am::am_Volumes_s &);
 void CAmConvertCAPI2AM(const am_types::am_Handle_s &, am::am_Handle_s &);
 void CAmConvertCAPI2AM(const am_types::am_NotificationPayload_s & , am::am_NotificationPayload_s & );

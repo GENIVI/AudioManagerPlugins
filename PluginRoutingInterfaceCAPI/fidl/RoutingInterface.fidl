@@ -8,8 +8,8 @@ import org.genivi.am.audiomanagertypes.* from "AudioManagerTypes.fidl"
 
 interface RoutingControl {
     version {
-        major 0
-        minor 1
+        major 1
+        minor 0
     }
 
     <**
@@ -71,7 +71,7 @@ interface RoutingControl {
             <**
                 @description : This is the current hot sink. HS_INTERMEDIATE is here when a crossfading action did not reach the end.
             **>
-            Am_HotSink_e hotSink
+            am_HotSink_e hotSink
 
             <**
                 @description : E_OK on success, E_ABORTED if action was aborted, E_UNKNOWN on error
@@ -268,6 +268,11 @@ interface RoutingControl {
             am_connectionID_t connectionID
         }
     }
+
+    <**
+    @description : This method is used to set several volumes at the same time. This function is used to drive ramps, to mute or unmute or directly set the value. The difference is made through the ramp type.
+(at)return E_OK on success, E_UNKNOWN on error, E_OUT_OF_RANGE if new volume is out of range
+    **>
     method asyncSetVolumes {
         in {
             am_Handle_s handle
@@ -283,7 +288,7 @@ interface RoutingControl {
         in {
             am_Handle_s handle
             am_crossfaderID_t crossfaderID
-            Am_HotSink_e hotSink
+            am_HotSink_e hotSink
             am_RampType_pe rampType
             am_time_t time
         }
@@ -374,9 +379,14 @@ Triggers the acknowledge ackSourceVolumeChange
         in {
             am_Handle_s handle
             am_sourceID_t sourceID
-            Am_SourceState_e ^state
+            am_SourceState_e ^state
         }
     }
+
+    <**
+    @description : This function is used to set the notification configuration a sink notification.
+(at)return E_OK on success, E_UNKNOWN on error
+    **>
     method asyncSetSinkNotificationConfiguration {
         in {
             am_Handle_s handle
@@ -384,6 +394,11 @@ Triggers the acknowledge ackSourceVolumeChange
             am_NotificationConfiguration_s notificationConfiguration
         }
     }
+
+    <**
+    @description : This function is used to set the notification configuration a source notification.
+(at)return E_OK on success, E_UNKNOWN on error
+    **>
     method asyncSetSourceNotificationConfiguration {
         in {
             am_Handle_s handle
@@ -399,7 +414,7 @@ Triggers the acknowledge ackSourceVolumeChange
     method setDomainState {
         in {
             am_domainID_t domainID
-            Am_DomainState_e domainState
+            am_DomainState_e domainState
         }
         out {
             am_Error_e amError
@@ -415,8 +430,8 @@ Triggers the acknowledge ackSourceVolumeChange
 
 interface RoutingControlObserver {
     version {
-        major 0
-        minor 1
+        major 1
+        minor 0
     }
 
     <**
@@ -727,7 +742,7 @@ listMainSoundProperties
     method hookInterruptStatusChange {
         in {
             am_sourceID_t sourceID
-            Am_InterruptState_e interruptState
+            am_InterruptState_e interruptState
         }
     }
 
@@ -767,7 +782,7 @@ Is used by the Controller to know when all expected domains are finally register
     method hookDomainStateChange {
         in {
             am_domainID_t domainID
-            Am_DomainState_e domainState
+            am_DomainState_e domainState
         }
     }
 
@@ -825,6 +840,10 @@ Is used by the Controller to know when all expected domains are finally register
             am_EarlyData_L earlyData
         }
     }
+
+    <**
+        @description : The routing rundown is confirmed. Must be called after set routing rundown was called and everything important to be done before rundown was done.
+    **>
     method confirmRoutingRundown {
         in {
             String domainName
@@ -889,6 +908,6 @@ Is used by the Controller to know when all expected domains are finally register
     @description : This attribute signals the current routing state to the clients.
 A client should notify himself to this attribute in order to know the current state and act accordingly.
     **>
-    attribute Am_RoutingReady_e routingReady readonly
+    attribute am_RoutingReady_e routingReady readonly
 
 }

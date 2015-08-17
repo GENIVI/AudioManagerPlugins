@@ -15,55 +15,55 @@ import "AudioManagerTypes.fidl"
 define org.genivi.commonapi.someip.deployment for typeCollection
 org.genivi.am.audiomanagertypes as AudioManagerTypes_v1 {
 
-    enumeration Am_Availability_e {
+    enumeration am_Availability_e {
         SomeIpEnumWidth = 1
     }
 
-    enumeration Am_ConnectionState_e {
+    enumeration am_ConnectionState_e {
         SomeIpEnumWidth = 1
     }
 
-    enumeration Am_DomainState_e {
+    enumeration am_DomainState_e {
         SomeIpEnumWidth = 1
     }
 
-    enumeration Am_EarlyDataType_e {
+    enumeration am_EarlyDataType_e {
         SomeIpEnumWidth = 1
     }
 
-    enumeration Am_Error_e {
+    enumeration am_Error_e {
         SomeIpEnumWidth = 1
     }
 
-    enumeration Am_Handle_e {
+    enumeration am_Handle_e {
         SomeIpEnumWidth = 1
     }
 
-    enumeration Am_HotSink_e {
+    enumeration am_HotSink_e {
         SomeIpEnumWidth = 1
     }
 
-    enumeration Am_InterruptState_e {
+    enumeration am_InterruptState_e {
         SomeIpEnumWidth = 1
     }
 
-    enumeration Am_MuteState_e {
+    enumeration am_MuteState_e {
         SomeIpEnumWidth = 1
     }
 
-    enumeration Am_NotificationStatus_e {
+    enumeration am_NotificationStatus_e {
         SomeIpEnumWidth = 1
     }
 
-    enumeration Am_RoutingReady_e {
+    enumeration am_RoutingReady_e {
         SomeIpEnumWidth = 1
     }
 
-    enumeration Am_SourceState_e {
+    enumeration am_SourceState_e {
         SomeIpEnumWidth = 1
     }
 
-    enumeration Am_VolumeType_e {
+    enumeration am_VolumeType_e {
         SomeIpEnumWidth = 1
     }
 
@@ -176,9 +176,6 @@ org.genivi.am.audiomanagertypes as AudioManagerTypes_v1 {
     }
 
     struct am_Volumes_s {
-    }
-
-    union am_DataType_u {
     }
 
 

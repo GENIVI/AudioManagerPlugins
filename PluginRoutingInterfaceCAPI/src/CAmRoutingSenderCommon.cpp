@@ -150,7 +150,7 @@ void CAmConvertCAPI2AM(const am_types::am_Sink_s & source, am::am_Sink_s & desti
 
 void CAmConvertCAPI2AM(const am_types::am_Volumes_s & source, am::am_Volumes_s & destination)
 {
-	CAmConvertCAPI2AM(source.getVolumeID(), destination.volumeID);
+	CAmConvertCAPI2AM(source, destination);
 	destination.volume = source.getVolume();
 	destination.time = source.getTime();
 	destination.volumeType = static_cast<am::am_VolumeType_e>((int)source.getVolumeType());
@@ -211,25 +211,12 @@ void CAmConvertCAPI2AM(const am_types::am_EarlyData_u & source, am::am_EarlyData
 	}
 }
 
-void CAmConvertCAPI2AM(const am_types::am_DataType_u & source, am::am_DataType_u & destination)
-{
-	if(source.isType<am_types::am_sinkID_t>())
-	{
-		am_sinkID_t value = static_cast<am_sinkID_t>(source.get<am_types::am_sinkID_t>());
-		destination.sink = value;
-	}
-	else if(source.isType<am_types::am_sourceID_t>())
-	{
-		am_sourceID_t value = static_cast<am_sourceID_t>(source.get<am_types::am_sourceID_t>());
-		destination.source = value;
-	}
-}
-
 void CAmConvertCAPI2AM(const am_types::am_EarlyData_s & source, am::am_EarlyData_s & destination)
 {
 	CAmConvertCAPI2AM(source.getData(), destination.data);
-	CAmConvertCAPI2AM(source.getSinksource(), destination.sinksource);
 	destination.type = static_cast<am_EarlyDataType_e>((int)source.getType());
+	if (destination.type==am_EarlyDataType_e::ED_SOURCE_VOLUME)
+		destination.sinksource.source = static_cast<am::am_sourceID_t>(source.getSinksource());
 }
 
 
@@ -274,9 +261,9 @@ void CAmConvertAM2CAPI(const am::am_NotificationConfiguration_s & source, am_typ
 void CAmConvertAM2CAPI(const am::am_Volumes_s & source, am_types::am_Volumes_s & destination)
 {
 	if(source.volumeType == VT_SINK)
-		destination.setVolumeID(am_types::am_DataType_u(static_cast<am_types::am_sinkID_t>(source.volumeID.sink)));
+		destination.setVolumeID(am_types::am_SinkSourceID_t(static_cast<am_types::am_sinkID_t>(source.volumeID.sink)));
 	else if(source.volumeType == VT_SOURCE)
-		destination.setVolumeID(am_types::am_DataType_u(static_cast<am_types::am_sourceID_t>(source.volumeID.source)));
+		destination.setVolumeID(am_types::am_SinkSourceID_t(static_cast<am_types::am_sourceID_t>(source.volumeID.source)));
 	destination.setVolumeType((am_types::am_VolumeType_e::Literal)source.volumeType);
 	destination.setVolume(source.volume);
 	destination.setRamp(source.ramp);

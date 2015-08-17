@@ -8,34 +8,80 @@ typeCollection {
         major 1
         minor 0
     }
+
+    <**
+        @description : List of mainconnections.
+    **>
     array am_MainConnection_L of am_MainConnectionType_s
 
+    <**
+        @description : List of SinkClasses.
+    **>
     array am_SinkClass_L of am_SinkClass_s
 
+    <**
+        @description : List of SinkTypes.
+    **>
     array am_SinkType_L of am_SinkType_s
 
+    <**
+        @description : List of SourceClasses.
+    **>
     array am_SourceClass_L of am_SourceClass_s
 
+    <**
+        @description : List of source types.
+    **>
     array am_SourceType_L of am_SourceType_s
 
+    <**
+        @description : List of systemproperties.
+    **>
     array am_SystemProperty_L of am_SystemProperty_s
 
+    <**
+        @description : List of class properties.
+    **>
     array am_ClassProperty_L of am_ClassProperty_s
 
+    <**
+        @description : List of connection IDs.
+    **>
     array am_ConnectionID_L of am_connectionID_t
 
+    <**
+        @description : Early Data list type.
+    **>
     array am_EarlyData_L of am_EarlyData_s
 
+    <**
+        @description : List of mainsoundproperties.
+    **>
     array am_MainSoundProperty_L of am_MainSoundProperty_s
 
+    <**
+        @description : List of notification configurations.
+    **>
     array am_NotificationConfiguration_L of am_NotificationConfiguration_s
 
+    <**
+        @description : List of soundproperties.
+    **>
     array am_SoundProperty_L of am_SoundProperty_s
 
+    <**
+        @description : List of volumes.
+    **>
     array am_Volumes_L of am_Volumes_s
 
+    <**
+        @description : List of connectionformats.
+    **>
     array am_ConnectionFormat_L of am_ConnectionFormat_pe
 
+    <**
+        @description : list of convertion matrixes.
+    **>
     array am_Convertion_L of Boolean
 
     <**
@@ -80,7 +126,7 @@ The range of this type is customer specific.
     typedef am_mainVolume_t is Int16
 
     <**
-        @description : The unit is 0.1 db steps. The smallest value -3000 (=am_MUTE). The minimum and maximum can be limited by actual project.
+        @description : The unit is 0.1 db steps. The smallest value -3000 (=AM_MUTE). The minimum and maximum can be limited by actual project.
     **>
     typedef am_volume_t is Int16
 
@@ -93,12 +139,20 @@ The range of this type is customer specific.
         @description : Offset time that is introduced in milliseconds.
     **>
     typedef am_timeSync_t is Int16
+
+    <**
+        @description : A Source class. 
+    **>
     typedef am_sourceClass_t is UInt16
 
     <**
         @description : Speed.
     **>
     typedef am_speed_t is UInt16
+
+    <**
+        @description : A sink class.
+    **>
     typedef am_sinkClass_t is UInt16
 
     <**
@@ -148,14 +202,15 @@ It is in the responsibility of the product to make sure that the routing plugins
     typedef am_NotificationType_pe is UInt16
 
     <**
-    @description : Data type depends of am_EarlyDataType_e:
+    @description : Content of am_sinkSourceID_t depends of am_EarlyDataType_e in struct am_EarlyData_s:
 sourceID in case of ED_SOURCE_VOLUME, ED_SOURCE_PROPERTY
-sinkID in case of ED_SINK_VOLUME, ED_SINK_PROPERTY 
+sinkID in case of ED_SINK_VOLUME, ED_SINK_PROPERTY
+
+Content of am_sinkSourceID_t depends of am_VolumeType_e in struct am_Volumes_s:
+sourceID in case of VT_SOURCE
+sinkID in case of VT_SINK
     **>
-    union am_DataType_u {
-        am_sinkID_t sink
-        am_sourceID_t source
-    }
+    typedef am_SinkSourceID_t is UInt16
 
     <**
     @description : Data type depends of am_EarlyDataType_e:
@@ -180,7 +235,7 @@ am_soundProperty_t in case of ED_SOURCE_PROPERTY, ED_SINK_PROPERTY
         <**
             @description : Either source ID or sink ID.
         **>
-        am_DataType_u volumeID
+        am_SinkSourceID_t volumeID
 
         <**
             @description : The volume.
@@ -769,10 +824,13 @@ NS_CHANGE - the resolution of the change value
         am_DomainState_e ^state
     }
 
+    <**
+        @description : this struct holds early data.
+    **>
     struct am_EarlyData_s {
-        am_EarlyDataType_e type
-        am_DataType_u sinksource
         am_EarlyData_u data
+        am_SinkSourceID_t sinksource
+        am_EarlyDataType_e type
     }
 
     <**
@@ -819,7 +877,6 @@ NS_CHANGE - the resolution of the change value
         @description : This is matrix holding information about the conversion capability of the converter, it's length is defined by the length(listSinkFormats) x length(listSourceFormats).
 If a sink format can be converted into a source format, the vector will hold a 1, if no conversion is possible, a 0.
 The data is stored row orientated, where the rows are related to the sink formats and the columns to the source formats. The first value will hold the conversion information from the first source format to the first sink format for example and the seventh value the information about the 3rd sink format to the 1st source format in case we would have 3 source formats.
-
         **>
         am_Convertion_L convertionMatrix
     }
@@ -906,6 +963,9 @@ The data is stored row orientated, where the rows are related to the sink format
         CS_MAX
     }
 
+    <**
+        @description : The domain state.
+    **>
     enumeration am_DomainState_e {
 
         <**
@@ -1024,6 +1084,9 @@ The data is stored row orientated, where the rows are related to the sink format
         E_MAX
     }
 
+    <**
+        @description : The Mute State.
+    **>
     enumeration am_MuteState_e {
 
         <**
@@ -1043,6 +1106,9 @@ The data is stored row orientated, where the rows are related to the sink format
         MS_MAX
     }
 
+    <**
+        @description : The interrupt state.
+    **>
     enumeration am_InterruptState_e {
 
         <**
@@ -1080,6 +1146,9 @@ The data is stored row orientated, where the rows are related to the sink format
         VT_MAX
     }
 
+    <**
+        @description : The notification status of a notification.
+    **>
     enumeration am_NotificationStatus_e {
         NS_UNKNOWN = 0
 

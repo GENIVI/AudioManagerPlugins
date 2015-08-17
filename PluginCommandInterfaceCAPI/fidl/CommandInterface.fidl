@@ -85,7 +85,7 @@ interface CommandControl {
     broadcast mainConnectionStateChanged {
         out {
             am_mainConnectionID_t connectionID
-            Am_ConnectionState_e connectionState
+            am_ConnectionState_e connectionState
         }
     }
 
@@ -145,7 +145,7 @@ interface CommandControl {
     broadcast sinkMuteStateChanged {
         out {
             am_sinkID_t sinkID
-            Am_MuteState_e muteState
+            am_MuteState_e muteState
         }
     }
 
@@ -353,7 +353,7 @@ interface CommandControl {
     method setSinkMuteState {
         in {
             am_sinkID_t sinkID
-            Am_MuteState_e muteState
+            am_MuteState_e muteState
         }
         out {
             am_Error_e amError
@@ -607,6 +607,6 @@ interface CommandControl {
     @description : This attribute reflects the current State of all existing main connections. 
 You can notify on this attribute in order to get always a consistent update of all main connections in case of a change.
     **>
-    attribute am_MainConnection_L listOfMainConnetions readonly
+    attribute am_MainConnection_L listOfMainConnections readonly
 
 }
