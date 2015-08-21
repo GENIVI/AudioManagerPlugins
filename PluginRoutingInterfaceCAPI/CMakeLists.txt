@@ -73,6 +73,7 @@ IF(${WITH_ENABLED_IPC} STREQUAL "CAPI")
 	    SET(SRC_GEN src-gen/v${COMMONAPI_DBUS_VERSION_NUMBER}/dbus)
 	    SET(CAPI_BINDING_FIDLS fidl/RoutingInterface.fidl fidl/AudioManagerTypes.fidl)	
     ENDIF()
+
     COMMON_API_GENERATE_SOURCES(
                                 # Prefix.
                                 TARGET COMMON_API_ROUTING_INTERFACE 
@@ -83,7 +84,7 @@ IF(${WITH_ENABLED_IPC} STREQUAL "CAPI")
                                 # A relative path to the build directory or an absolute path.
                                 DESTINATION ${SRC_GEN} 
                                 # An alternative relative/absolute path with common-api sources, usually in the source tree.
-                                ALT_DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/${SRC_GEN} 
+                                ALT_DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/src-gen 
                                 )
 	              
 	message (status "dfdfdb ${COMMON_API_ROUTING_INTERFACE_GEN_INCLUDE_DIR}")                  
