@@ -57,20 +57,25 @@ if (${WITH_ENABLED_IPC} STREQUAL "CAPI")
     set (AM_LINK_LIBS 
         ${CMAKE_DL_LIBS}
         rt)
-        
-    INCLUDE (CommonAPI)
-    LOAD_COMMONAPI()
+    
     set(INCLUDE_FOLDER "include")
         
-    IF(${COMMONAPI_USED_BINDING} EQUAL 1)
-	  	#SomeIP
-	  	SET(SRC_GEN src-gen-someip)
-		SET(CAPI_BINDING_FIDLS fidl/CommandInterface.fdepl fidl/AudioManagerTypes.fdepl)	
-	ELSE()
-	    #Dbus
-	    SET(SRC_GEN src-gen-dbus)
-	    SET(CAPI_BINDING_FIDLS fidl/CommandInterface.fidl)	  
-	ENDIF()
+    # Include CommonAPI ... 
+    INCLUDE (CommonAPI)
+    
+    # load all the necessary libraries 
+    # LOAD_COMMONAPI() without argument will use the CACHE variable COMMONAPI_USED_BINDING (0-DBus, 1-SomeIP).
+    # It can be called with DBUS or SOMEIP as parameter: LOAD_COMMONAPI(DBUS) , LOAD_COMMONAPI(SOMEIP) which will overwrite COMMONAPI_USED_BINDING.
+    LOAD_COMMONAPI()
+    
+        
+    IF(${COMMONAPI_USED_BINDING} EQUAL 1)#SomeIP
+	SET(SRC_GEN src-gen/v${COMMONAPI_SOMEIP_VERSION_NUMBER}/someip)
+	SET(CAPI_BINDING_FIDLS fidl/CommandInterface.fdepl fidl/AudioManagerTypes.fdepl)	
+    ELSE()#Dbus
+	   SET(SRC_GEN src-gen/v${COMMONAPI_DBUS_VERSION_NUMBER}/dbus)
+	   SET(CAPI_BINDING_FIDLS fidl/CommandInterface.fidl)	
+    ENDIF()
     
     # Find the common-api sources. 
     # The sources can be placed in the build directory (DESTINATION) or in the source tree (ALT_DESTINATION). 
@@ -85,7 +90,7 @@ if (${WITH_ENABLED_IPC} STREQUAL "CAPI")
                                 # A relative path to the build directory or an absolute path.
                                 DESTINATION ${SRC_GEN} 
                                 # An alternative relative/absolute path with common-api sources, usually in the source tree.
-                                ALT_DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/${SRC_GEN}
+                                ALT_DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/src-gen
                                 )
     
     INCLUDE_DIRECTORIES(
@@ -99,31 +104,31 @@ if (${WITH_ENABLED_IPC} STREQUAL "CAPI")
     	${INCLUDE_FOLDER}
     )
     
-    if(${COMMONAPI_USED_BINDING} EQUAL 0)
+        # all source files go here
+    file(GLOB PLUGINCAPI_SRCS_CXX "src/*.cpp" )
+    SET(PLUGINCAPI_SRCS_CXX ${PLUGINCAPI_SRCS_CXX} ${COMMON_API_COMMAND_INTERFACE_GEN_SOURCES})
+    IF(${COMMONAPI_USED_BINDING} EQUAL 0)# CommonAPI-DBus
         INCLUDE_DIRECTORIES(${INCLUDE_DIRECTORIES}
                 ${COMMONAPI_DBUS_INCLUDE_DIRS}
-                ${DBUS_ARCH_INCLUDE_DIR}
-                ${DBUS_INCLUDE_DIR})	
-   else()
-       INCLUDE_DIRECTORIES(${INCLUDE_DIRECTORIES}
+                ${DBUS_INCLUDE_DIRS})	   
+   ELSE()# CommonAPI-SomeIP
+       	INCLUDE_DIRECTORIES(${INCLUDE_DIRECTORIES}
                 ${VSOMEIP_INCLUDE_DIRS}
                 ${COMMONAPI_SOMEIP_INCLUDE_DIRS})
-   endif()
+   ENDIF()
     
-    if(WITH_DLT)
+    
+    IF(WITH_DLT)
         INCLUDE_DIRECTORIES(${INCLUDE_DIRECTORIES} ${DLT_INCLUDE_DIRS})
         set (AM_LINK_LIBS ${AM_LINK_LIBS} ${DLT_LIBRARIES})
-    endif(WITH_DLT)    
-    
-    # all source files go here
-    file(GLOB PLUGINCAPI_SRCS_CXX "src/*.cpp" ${COMMON_API_COMMAND_INTERFACE_GEN_SOURCES})
-    
+    ENDIF(WITH_DLT)    
+        
     add_library(PluginCommandInterfaceCAPI MODULE ${PLUGINCAPI_SRCS_CXX})
     set (AM_LINK_LIBS ${AM_LINK_LIBS} ${CommonAPI_LIBRARY})
     if(${COMMONAPI_USED_BINDING} EQUAL 0)
        set (AM_LINK_LIBS ${AM_LINK_LIBS} 
                         ${CommonAPI-DBus_LIBRARY}
-                        ${DBUS_LIBRARY}
+                        ${DBUS_LIBRARIES}
                         ${CommonAPI_LIBRARY})
    else()
        set (AM_LINK_LIBS ${AM_LINK_LIBS} 

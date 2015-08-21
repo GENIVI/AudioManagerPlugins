@@ -450,10 +450,10 @@ TEST_F(CAmCommandSenderCAPITest, GetListMainSourcesTest)
 		ASSERT_EQ((int)result, am_types::am_Error_e::E_OK);
 		ASSERT_EQ(2, list.size());
 		ASSERT_EQ(12, list.at(0).getSourceClassID());
-		ASSERT_EQ(224, list.at(0).getSourceID());
+		ASSERT_TRUE(224==list.at(0).getSourceID()||224==list.at(1).getSourceID());
 		ASSERT_EQ(am_types::am_Availability_e::A_MAX, list.at(0).getAvailability().getAvailability());
 		ASSERT_EQ(AR_GENIVI_SAMEMEDIA, list.at(0).getAvailability().getAvailabilityReason());
-		ASSERT_EQ(22, list.at(1).getSourceID());
+		ASSERT_TRUE(22==list.at(0).getSourceID()||22==list.at(1).getSourceID());
 	}
 	EXPECT_TRUE(Mock::VerifyAndClearExpectations(env->mpCommandReceive));
 }

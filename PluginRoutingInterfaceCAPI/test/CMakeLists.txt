@@ -53,8 +53,7 @@ INCLUDE_DIRECTORIES(
     if(${COMMONAPI_USED_BINDING} EQUAL 0)
         INCLUDE_DIRECTORIES(${INCLUDE_DIRECTORIES}
                 ${COMMONAPI_DBUS_INCLUDE_DIRS}
-                ${DBUS_ARCH_INCLUDE_DIR}
-                ${DBUS_INCLUDE_DIR})	
+                ${DBUS_INCLUDE_DIRS})	
    else()
        INCLUDE_DIRECTORIES(${INCLUDE_DIRECTORIES}
                 ${VSOMEIP_INCLUDE_DIRS}
@@ -89,7 +88,7 @@ TARGET_LINK_LIBRARIES(AmRoutingInterfaceCAPITests
     ${CommonAPI-DBus_LIBRARY}
     ${CommonAPI_LIBRARY}
     ${CommonAPI-SomeIP_LIBRARY}
-    ${DBUS_LIBRARY}
+    ${DBUS_LIBRARIES}
     gtest
     gmock
 )

@@ -48,9 +48,9 @@ IF(${WITH_ENABLED_IPC} STREQUAL "CAPI")
     # Include CommonAPI ... 
     INCLUDE (CommonAPI)
     
-    # and load all the necessary libraries 
-    # LOAD_COMMONAPI() without arguments uses the variable COMMONAPI_USED_BINDING (0-Dbus, 1-SomeIP).
-    # Otherwise it can be called with DBUS or SOMEIP as parameter: LOAD_COMMONAPI(DBUS) , LOAD_COMMONAPI(SOMEIP) which overrites COMMONAPI_USED_BINDING.
+    # load all the necessary libraries 
+    # LOAD_COMMONAPI() without argument will use the CACHE variable COMMONAPI_USED_BINDING (0-DBus, 1-SomeIP).
+    # It can be called with DBUS or SOMEIP as parameter: LOAD_COMMONAPI(DBUS) , LOAD_COMMONAPI(SOMEIP) which will overwrite COMMONAPI_USED_BINDING.
     LOAD_COMMONAPI()
     
     set(LIBRARY_OUTPUT_PATH ${PLUGINS_OUTPUT_PATH}/routing)
@@ -66,14 +66,12 @@ IF(${WITH_ENABLED_IPC} STREQUAL "CAPI")
     # The sources can be placed in the build directory (DESTINATION) or in the source tree (ALT_DESTINATION). 
     # The ALT_DESTINATION is used as fall back if the DESTINATION directory dosen't contain the sources or you just don't want to use the generator.
   
-	IF(${COMMONAPI_USED_BINDING} EQUAL 1)
-	  	#SomeIP
-	  	SET(SRC_GEN src-gen-someip)
-		SET(CAPI_BINDING_FIDLS fidl/RoutingInterface.fdepl fidl/AudioManagerTypes.fdepl)	
-	ELSE()
-	    #Dbus
-	    SET(SRC_GEN src-gen-dbus)
-	    SET(CAPI_BINDING_FIDLS fidl/RoutingInterface.fidl)	 
+	IF(${COMMONAPI_USED_BINDING} EQUAL 1)#SomeIP
+	   SET(SRC_GEN src-gen/v${COMMONAPI_SOMEIP_VERSION_NUMBER}/someip)
+	   SET(CAPI_BINDING_FIDLS fidl/RoutingInterface.fdepl fidl/AudioManagerTypes.fdepl)	
+	ELSE()#Dbus
+	    SET(SRC_GEN src-gen/v${COMMONAPI_DBUS_VERSION_NUMBER}/dbus)
+	    SET(CAPI_BINDING_FIDLS fidl/RoutingInterface.fidl)	
 	ENDIF()
     COMMON_API_GENERATE_SOURCES(
                                 # Prefix.
@@ -85,7 +83,7 @@ IF(${WITH_ENABLED_IPC} STREQUAL "CAPI")
                                 # A relative path to the build directory or an absolute path.
                                 DESTINATION ${SRC_GEN} 
                                 # An alternative relative/absolute path with common-api sources, usually in the source tree.
-                                ALT_DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/${SRC_GEN} 
+                                ALT_DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/src-gen 
                                 )
 	              
 	message (status "dfdfdb ${COMMON_API_ROUTING_INTERFACE_GEN_INCLUDE_DIR}")                  
@@ -101,27 +99,27 @@ IF(${WITH_ENABLED_IPC} STREQUAL "CAPI")
     	${INCLUDE_FOLDER}
     )
     
-    if(${COMMONAPI_USED_BINDING} EQUAL 0)
+     # all source files go here
+    file(GLOB PLUGINCAPI_SRCS_CXX "src/*.cpp" )
+	SET(PLUGINCAPI_SRCS_CXX ${PLUGINCAPI_SRCS_CXX} ${COMMON_API_ROUTING_INTERFACE_GEN_SOURCES})
+    IF(${COMMONAPI_USED_BINDING} EQUAL 0)
         INCLUDE_DIRECTORIES(${INCLUDE_DIRECTORIES}
                 ${COMMONAPI_DBUS_INCLUDE_DIRS}
-                ${DBUS_ARCH_INCLUDE_DIR}
-                ${DBUS_INCLUDE_DIR})	
-   else()
-       INCLUDE_DIRECTORIES(${INCLUDE_DIRECTORIES}
-                ${VSOMEIP_INCLUDE_DIRS}
-                ${COMMONAPI_SOMEIP_INCLUDE_DIRS})
-   endif()
-    
-    # all source files go here
-    file(GLOB PLUGINCAPI_SRCS_CXX "src/*.cpp" ${COMMON_API_ROUTING_INTERFACE_GEN_SOURCES})
-    
+                ${DBUS_INCLUDE_DIRS})	
+        
+   ELSE()
+       	INCLUDE_DIRECTORIES(${INCLUDE_DIRECTORIES}
+        	    		    ${VSOMEIP_INCLUDE_DIRS}
+            	    		${COMMONAPI_SOMEIP_INCLUDE_DIRS})		     
+   ENDIF()
+     
     add_library(PluginRoutingInterfaceCAPI MODULE ${PLUGINCAPI_SRCS_CXX})
     
     TARGET_LINK_LIBRARIES(PluginRoutingInterfaceCAPI 
         ${DLT_LIBRARIES}
         ${CommonAPI-DBus_LIBRARY}
         ${CommonAPI_LIBRARY}
-        ${DBUS_LIBRARY}
+        ${DBUS_LIBRARIES}
         ${CommonAPI-SomeIP_LIBRARY}
     )
     
