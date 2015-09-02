@@ -16,7 +16,7 @@
  */
 
 #include "CAmRoutingReceiverAsync.h"
-#include "config.h"
+#include "audiomanagerconfig.h"
 #include "CAmRoutingReceiver.h"
 #include "TAmPluginTemplate.h"
 #include "MockIAmRoutingReceive.h"

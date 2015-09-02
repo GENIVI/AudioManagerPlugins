@@ -18,7 +18,7 @@
  */
 
 #include "CAmDbusMessageHandler.h"
-#include "config.h"
+#include "audiomanagerconfig.h"
 #include <cstdlib>
 #include <cassert>
 #include <vector>

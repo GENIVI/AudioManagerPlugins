@@ -22,7 +22,7 @@
 
 #include <dbus/dbus.h>
 #include <map>
-#include "config.h"
+#include "audiomanagerconfig.h"
 #include "IAmCommand.h"
 #include "CAmDbusMessageHandler.h"
 #include "CAmDbusWrapper.h"
