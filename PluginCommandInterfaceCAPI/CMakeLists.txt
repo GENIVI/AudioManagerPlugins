@@ -74,7 +74,7 @@ if (${WITH_ENABLED_IPC} STREQUAL "CAPI")
 	SET(CAPI_BINDING_FIDLS fidl/CommandInterface.fdepl fidl/AudioManagerTypes.fdepl)	
     ELSE()#Dbus
 	   SET(SRC_GEN src-gen/v${COMMONAPI_DBUS_VERSION_NUMBER}/dbus)
-	   SET(CAPI_BINDING_FIDLS fidl/CommandInterface.fidl)	
+	   SET(CAPI_BINDING_FIDLS fidl/CommandInterface.fidl fidl/AudioManagerTypes.fidl)	
     ENDIF()
     
     # Find the common-api sources. 

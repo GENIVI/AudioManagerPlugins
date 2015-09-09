@@ -71,7 +71,7 @@ IF(${WITH_ENABLED_IPC} STREQUAL "CAPI")
 	   SET(CAPI_BINDING_FIDLS fidl/RoutingInterface.fdepl fidl/AudioManagerTypes.fdepl)	
 	ELSE()#Dbus
 	    SET(SRC_GEN src-gen/v${COMMONAPI_DBUS_VERSION_NUMBER}/dbus)
-	    SET(CAPI_BINDING_FIDLS fidl/RoutingInterface.fidl)	
+	    SET(CAPI_BINDING_FIDLS fidl/RoutingInterface.fidl fidl/AudioManagerTypes.fidl)	
 	ENDIF()
     COMMON_API_GENERATE_SOURCES(
                                 # Prefix.
