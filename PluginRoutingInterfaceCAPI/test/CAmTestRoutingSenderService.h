@@ -20,9 +20,9 @@
 
 #include "audiomanagertypes.h"
 #include "../include/CAmRoutingSenderCommon.h"
-#include <v0_1/org/genivi/am/routinginterface/RoutingControlStubDefault.hpp>
-#include <v0_1/org/genivi/am/routinginterface/RoutingControlObserverProxy.hpp>
-#include <v0_1/org/genivi/am/routinginterface/RoutingControlProxy.hpp>
+#include <v1_0/org/genivi/am/routinginterface/RoutingControlStubDefault.hpp>
+#include <v1_0/org/genivi/am/routinginterface/RoutingControlObserverProxy.hpp>
+#include <v1_0/org/genivi/am/routinginterface/RoutingControlProxy.hpp>
 
 
 namespace am {
