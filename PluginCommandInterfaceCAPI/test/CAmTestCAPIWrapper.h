@@ -24,7 +24,7 @@ namespace am {
 
 class CAmTestCAPIWrapper: public am::CAmCommonAPIWrapper {
 public:
-	CAmTestCAPIWrapper(CAmSocketHandler* socketHandler);
+	CAmTestCAPIWrapper(CAmSocketHandler* socketHandler, const std::string & applicationName = "");
 	virtual ~CAmTestCAPIWrapper();
 };
 

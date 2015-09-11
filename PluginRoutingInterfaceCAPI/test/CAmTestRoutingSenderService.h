@@ -30,11 +30,9 @@ namespace am {
 
 class CAmCommonAPIWrapper;
 
-#define CAPI_SENDER_INTERFACE  "org.genivi.audiomanager.routingsender"
-#define CAPI_SENDER_INSTANCE  	"org.genivi.routingsender"
+#define CAPI_SENDER_INSTANCE  	"RoutingControlInstance2"
 #define CAPI_SENDER_PATH 		"/org/genivi/audiomanager/routingsender"
 
-#define CAPI_ROUTING_INTERFACE  "org.genivi.audiomanager.routinginterface"
 #define CAPI_ROUTING_INSTANCE   "org.genivi.audiomanager"
 #define CAPI_ROUTING_PATH 		 "/org/genivi/audiomanager/routinginterface"
 
@@ -88,8 +86,6 @@ public:
 	void asyncSetSourceNotificationConfiguration(const std::shared_ptr<CommonAPI::ClientId> , am_types::am_Handle_s _handle, am_types::am_sourceID_t _sourceID, am_types::am_NotificationConfiguration_s _notificationConfiguration, asyncSetSourceNotificationConfigurationReply_t _reply);
 	void setDomainState(const std::shared_ptr<CommonAPI::ClientId> , am_types::am_domainID_t _domainID, am_types::am_DomainState_e _domainState, setDomainStateReply_t _reply);
 
-	static const char * ROUTING_SENDER_SERVICE;
-	static const char * ROUTING_INTERFACE_SERVICE;
 };
 
 

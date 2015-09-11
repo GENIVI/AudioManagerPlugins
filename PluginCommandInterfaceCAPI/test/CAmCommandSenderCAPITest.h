@@ -21,9 +21,11 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 #include "CAmSocketHandler.h"
+#include "CAmSerializer.h"
 #include "CAmTestCAPIWrapper.h"
 #include "../include/CAmCommandSenderCAPI.h"
 #include "MockIAmCommandReceive.h"
+#include "MockNotificationsClient.h"
 #include <v1_0/org/genivi/am/commandinterface/CommandControlProxy.hpp>
 
 #define UNIT_TEST 1
@@ -41,14 +43,17 @@ class CAmTestsEnvironment : public ::testing::Environment
 	pthread_t mListenerThread;
 	pthread_t mServicePThread;
 	pthread_t mClientPThread;
-
 public:
 	CAmSocketHandler *mSocketHandlerService;
 	CAmSocketHandler *mSocketHandlerClient;
 	bool mIsProxyInitilized;
 	bool mIsServiceAvailable;
 	MockIAmCommandReceive *mpCommandReceive;
+	MockNotificationsClient *mpMockClient;
 	CAmCommandSenderCAPI *mpPlugin;
+	CAmSerializer *mpSerializer;
+	CAmSocketHandler *mpSocketHandlerClient;
+	CAmSocketHandler *mpSocketHandlerService;
 
 	std::shared_ptr<am_commandcontrol::CommandControlProxy<> >  mProxy;
 

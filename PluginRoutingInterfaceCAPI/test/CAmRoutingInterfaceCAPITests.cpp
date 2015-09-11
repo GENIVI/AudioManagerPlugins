@@ -127,18 +127,19 @@ void initCrossfader(am_types::am_Crossfader_s & newCrossfader, am_Crossfader_s &
 void* run_client(void*)
 {
 	CAmSocketHandler socketHandler;
-	CAmTestCAPIWrapper wrapper(&socketHandler);
+	CAmTestCAPIWrapper wrapper(&socketHandler, "AudioManager-client");
 	env->mSocketHandlerClient = &socketHandler;
 
 	env->mProxy = wrapper.buildProxy<am_routing_interface::RoutingControlObserverProxy>(CAmRoutingSenderCAPI::DEFAULT_DOMAIN, CAmRoutingSenderCAPI::ROUTING_INSTANCE);
+	assert(env->mProxy);
 	env->mProxy->getProxyStatusEvent().subscribe(std::bind(&CAmTestsEnvironment::onServiceStatusEventProxy,env,std::placeholders::_1));
 
 	env->mDomainService = std::make_shared<CAmTestRoutingSenderService>(&wrapper, env->mProxy);
 
-	if( false == wrapper.registerStub(env->mDomainService, CAmTestRoutingSenderService::ROUTING_SENDER_SERVICE) )
+	if( false == wrapper.registerService(env->mDomainService, CAmRoutingSenderCAPI::DEFAULT_DOMAIN, CAPI_SENDER_INSTANCE) )
 	{
-		printf("\n Can't register service -> %s \n", CAmTestRoutingSenderService::ROUTING_SENDER_SERVICE);
-		logInfo("Can't register service -> ", CAmTestRoutingSenderService::ROUTING_SENDER_SERVICE);
+		printf("\n Can't register service -> %s \n", CAPI_SENDER_INSTANCE);
+		logInfo("Can't register service -> ", CAPI_SENDER_INSTANCE);
 	}
 
 	pthread_mutex_lock(&mutexSer);
@@ -161,7 +162,7 @@ void* run_client(void*)
 void* run_service(void*)
 {
 	CAmSocketHandler socketHandler;
-	CAmTestCAPIWrapper wrapper(&socketHandler);
+	CAmTestCAPIWrapper wrapper(&socketHandler, "AudioManager");
 	CAmRoutingSenderCAPI *pPlugin = CAmRoutingSenderCAPI::newRoutingSenderCAPI(&wrapper);
 	env->mpPlugin = pPlugin;
 	env->mSocketHandlerService = &socketHandler;

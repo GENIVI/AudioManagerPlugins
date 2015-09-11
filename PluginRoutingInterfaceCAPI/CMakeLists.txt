@@ -67,13 +67,12 @@ IF(${WITH_ENABLED_IPC} STREQUAL "CAPI")
     # The ALT_DESTINATION is used as fall back if the DESTINATION directory dosen't contain the sources or you just don't want to use the generator.
   
 	IF(${COMMONAPI_USED_BINDING} EQUAL 1)#SomeIP
-	   SET(SRC_GEN src-gen/v${COMMONAPI_SOMEIP_VERSION_NUMBER}/someip)
-	   SET(CAPI_BINDING_FIDLS fidl/RoutingInterface.fdepl fidl/AudioManagerTypes.fdepl)	
+	  	SET(SRC_GEN src-gen/v${COMMONAPI_SOMEIP_VERSION_NUMBER}/someip)
+		SET(CAPI_BINDING_FIDLS fidl/RoutingInterface.fdepl fidl/AudioManagerTypes.fdepl)	
 	ELSE()#Dbus
-	    SET(SRC_GEN src-gen/v${COMMONAPI_DBUS_VERSION_NUMBER}/dbus)
-	    SET(CAPI_BINDING_FIDLS fidl/RoutingInterface.fidl fidl/AudioManagerTypes.fidl)	
-    ENDIF()
-
+	   	SET(SRC_GEN src-gen/v${COMMONAPI_DBUS_VERSION_NUMBER}/dbus)
+	    SET(CAPI_BINDING_FIDLS fidl/RoutingInterface.fidl fidl/AudioManagerTypes.fdepl)	
+	ENDIF()
     COMMON_API_GENERATE_SOURCES(
                                 # Prefix.
                                 TARGET COMMON_API_ROUTING_INTERFACE 
@@ -111,18 +110,35 @@ IF(${WITH_ENABLED_IPC} STREQUAL "CAPI")
    ELSE()
        	INCLUDE_DIRECTORIES(${INCLUDE_DIRECTORIES}
         	    		    ${VSOMEIP_INCLUDE_DIRS}
-            	    		${COMMONAPI_SOMEIP_INCLUDE_DIRS})		     
+            	    		${COMMONAPI_SOMEIP_INCLUDE_DIRS})
+    	SET(DEFAULT_SOMEIP_BINDING_LIB1 local__org_genivi_am_routinginterface_RoutingControlObserver__sd)    
+    	SET(DEFAULT_SOMEIP_BINDING_LIB2 local__org_genivi_am_routinginterface_RoutingControl__sd)
+    
+     	#SET(DEFAULT_SOMEIP_BINDING_LIB1 Routing-SomeIP)    
+       	     
+       	add_library (${DEFAULT_SOMEIP_BINDING_LIB1} SHARED ${COMMON_API_ROUTING_INTERFACE_GEN_SOURCES})
+	  	target_link_libraries(${DEFAULT_SOMEIP_BINDING_LIB1} ${CommonAPI-SomeIP_LIBRARY})
+		set_target_properties(${DEFAULT_SOMEIP_BINDING_LIB1} PROPERTIES LINKER_LANGUAGE CXX)    
+		
+		add_library (${DEFAULT_SOMEIP_BINDING_LIB2} SHARED ${COMMON_API_ROUTING_INTERFACE_GEN_SOURCES})
+	  	target_link_libraries(${DEFAULT_SOMEIP_BINDING_LIB2} ${CommonAPI-SomeIP_LIBRARY})
+		set_target_properties(${DEFAULT_SOMEIP_BINDING_LIB2} PROPERTIES LINKER_LANGUAGE CXX)     
+				     
    ENDIF()
      
     add_library(PluginRoutingInterfaceCAPI MODULE ${PLUGINCAPI_SRCS_CXX})
     
     TARGET_LINK_LIBRARIES(PluginRoutingInterfaceCAPI 
         ${DLT_LIBRARIES}
-        ${CommonAPI-DBus_LIBRARY}
         ${CommonAPI_LIBRARY}
         ${DBUS_LIBRARIES}
-        ${CommonAPI-SomeIP_LIBRARY}
     )
+    
+   if(${COMMONAPI_USED_BINDING} EQUAL 0)
+		TARGET_LINK_LIBRARIES(PluginRoutingInterfaceCAPI  ${CommonAPI-DBus_LIBRARY} )
+   else()
+		TARGET_LINK_LIBRARIES(PluginRoutingInterfaceCAPI  ${CommonAPI-SomeIP_LIBRARY} )
+   endif()
     
     IF(WITH_TESTS)
     	add_subdirectory (test)

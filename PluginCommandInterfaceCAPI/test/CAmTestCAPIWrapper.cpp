@@ -19,7 +19,7 @@
 
 namespace am {
 
-CAmTestCAPIWrapper::CAmTestCAPIWrapper(CAmSocketHandler* socketHandler):CAmCommonAPIWrapper(socketHandler)
+CAmTestCAPIWrapper::CAmTestCAPIWrapper(CAmSocketHandler* socketHandler, const std::string & applicationName):CAmCommonAPIWrapper(socketHandler, applicationName)
 {
 
 }

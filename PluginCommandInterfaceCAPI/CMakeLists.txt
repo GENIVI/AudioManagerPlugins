@@ -70,13 +70,13 @@ if (${WITH_ENABLED_IPC} STREQUAL "CAPI")
     
         
     IF(${COMMONAPI_USED_BINDING} EQUAL 1)#SomeIP
-	SET(SRC_GEN src-gen/v${COMMONAPI_SOMEIP_VERSION_NUMBER}/someip)
-	SET(CAPI_BINDING_FIDLS fidl/CommandInterface.fdepl fidl/AudioManagerTypes.fdepl)	
-    ELSE()#Dbus
-	   SET(SRC_GEN src-gen/v${COMMONAPI_DBUS_VERSION_NUMBER}/dbus)
-	   SET(CAPI_BINDING_FIDLS fidl/CommandInterface.fidl fidl/AudioManagerTypes.fidl)	
-    ENDIF()
-
+	  	SET(SRC_GEN src-gen/v${COMMONAPI_SOMEIP_VERSION_NUMBER}/someip)
+		SET(CAPI_BINDING_FIDLS fidl/CommandInterface.fdepl fidl/AudioManagerTypes.fdepl)	
+	ELSE()#Dbus
+	   	SET(SRC_GEN src-gen/v${COMMONAPI_DBUS_VERSION_NUMBER}/dbus)
+	    SET(CAPI_BINDING_FIDLS fidl/CommandInterface.fidl fidl/AudioManagerTypes.fdepl)	
+	ENDIF()
+    
     # Find the common-api sources. 
     # The sources can be placed in the build directory (DESTINATION) or in the source tree (ALT_DESTINATION). 
     # The ALT_DESTINATION is used as fall back if the DESTINATION directory dosen't contain the sources or you just don't want to use the generator.
@@ -115,6 +115,13 @@ if (${WITH_ENABLED_IPC} STREQUAL "CAPI")
        	INCLUDE_DIRECTORIES(${INCLUDE_DIRECTORIES}
                 ${VSOMEIP_INCLUDE_DIRS}
                 ${COMMONAPI_SOMEIP_INCLUDE_DIRS})
+
+        SET(DEFAULT_SOMEIP_BINDING_LIB local__org_genivi_am_commandinterface_CommandControl__org_genivi_audiomanager)  
+		#SET(DEFAULT_SOMEIP_BINDING_LIB Command-SomeIP)         
+
+		add_library (${DEFAULT_SOMEIP_BINDING_LIB} SHARED ${COMMON_API_COMMAND_INTERFACE_GEN_SOURCES})
+		target_link_libraries(${DEFAULT_SOMEIP_BINDING_LIB} ${CommonAPI-SomeIP_LIBRARY})
+		set_target_properties(${DEFAULT_SOMEIP_BINDING_LIB} PROPERTIES LINKER_LANGUAGE CXX)
    ENDIF()
     
     

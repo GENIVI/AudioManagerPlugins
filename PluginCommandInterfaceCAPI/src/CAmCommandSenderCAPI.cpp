@@ -61,7 +61,7 @@ CAmCommandSenderCAPI::CAmCommandSenderCAPI() :
 
 CAmCommandSenderCAPI::~CAmCommandSenderCAPI()
 {
-    log(&ctxCommandCAPI, DLT_LOG_INFO, "CAPICommandSender destructed");
+    log(&ctxCommandCAPI, DLT_LOG_INFO, "CAPICommandSender freed");
     CAmDltWrapper::instance()->unregisterContext(ctxCommandCAPI);
     tearDownInterface(mpIAmCommandReceive);
 }
@@ -79,10 +79,11 @@ am_Error_e CAmCommandSenderCAPI::startService(IAmCommandReceive* commandreceivei
 		assert(commandreceiveinterface);
 		mService = std::make_shared<CAmCommandSenderService>(commandreceiveinterface);
 		//Registers the service
-		if( false == mpCAmCAPIWrapper->registerStub(mService, CAmCommandSenderCAPI::COMMAND_SENDER_SERVICE) )
+		if( false == mpCAmCAPIWrapper->registerService(mService, CAmCommandSenderCAPI::DEFAULT_DOMAIN, CAmCommandSenderCAPI::COMMAND_SENDER_INSTANCE) )
 		{
 			return (E_NOT_POSSIBLE);
 		}
+		log(&ctxCommandCAPI, DLT_LOG_INFO, "Stub has been successful registered!", CAmCommandSenderCAPI::DEFAULT_DOMAIN, v1_0::org::genivi::am::commandinterface::CommandControl::getInterface(), CAmCommandSenderCAPI::COMMAND_SENDER_INSTANCE);
 		mIsServiceStarted = true;
 	}
     return (E_OK);

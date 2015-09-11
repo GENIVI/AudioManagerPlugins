@@ -84,10 +84,11 @@ am_Error_e CAmRoutingSenderCAPI::startService(IAmRoutingReceive* pIAmRoutingRece
 		mService = std::make_shared<CAmRoutingService>(pIAmRoutingReceive, &mLookupData, mpCAmCAPIWrapper);
 	    mService->setRoutingReadyAttribute(am_types::am_RoutingReady_e::RR_UNKNOWN);
 		//Registers the service
-		if( false == mpCAmCAPIWrapper->registerService(mService, CAmRoutingSenderCAPI::DEFAULT_DOMAIN, CAmRoutingSenderCAPI::ROUTING_INSTANCE) )
+		if( false == mpCAmCAPIWrapper->registerService(mService, CAmRoutingSenderCAPI::DEFAULT_DOMAIN, CAmRoutingSenderCAPI::ROUTING_INSTANCE) )//"AudioManager"
 		{
 			return (E_NOT_POSSIBLE);
 		}
+		log(&ctxCommandCAPI, DLT_LOG_INFO, "Stub has been successful registered!", CAmRoutingSenderCAPI::DEFAULT_DOMAIN, am_routing_interface::RoutingControlObserver::getInterface(), CAmRoutingSenderCAPI::ROUTING_INSTANCE);
 		mIsServiceStarted = true;
 	}
     return (E_OK);

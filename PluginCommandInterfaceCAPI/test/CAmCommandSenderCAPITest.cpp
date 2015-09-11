@@ -49,11 +49,19 @@ pthread_mutex_t     mutexSer    = PTHREAD_MUTEX_INITIALIZER;
 void* run_client(void*)
 {
 	CAmSocketHandler socketHandler;
-	CAmTestCAPIWrapper wrapper(&socketHandler);
+	env->mpSocketHandlerClient = &socketHandler;
+	CAmTestCAPIWrapper wrapper(&socketHandler, "AudioManager-client");
 	env->mSocketHandlerClient = &socketHandler;
 
-	env->mProxy = wrapper.buildProxy<am_commandcontrol::CommandControlProxy>(CAmCommandSenderCAPI::COMMAND_SENDER_SERVICE);
+	env->mProxy = wrapper.buildProxy<am_commandcontrol::CommandControlProxy>(CAmCommandSenderCAPI::DEFAULT_DOMAIN, CAmCommandSenderCAPI::COMMAND_SENDER_INSTANCE);//"AudioManager-client"
+	assert(env->mProxy);
 	env->mProxy->getProxyStatusEvent().subscribe(std::bind(&CAmTestsEnvironment::onServiceStatusEvent,env,std::placeholders::_1));
+	MockNotificationsClient mock;
+	env->mpMockClient = &mock;
+	env->mProxy->getNumberOfSourceClassesChangedEvent().subscribe(
+											std::bind(&MockNotificationsClient::onNumberOfSourceClassesChangedEvent, std::ref(mock)));
+
+	env->mProxy->getNewMainConnectionEvent().subscribe(std::bind(&MockNotificationsClient::onNewMainConnection, std::ref(mock), std::placeholders::_1));
 
 	pthread_mutex_lock(&mutexSer);
 	env->mIsProxyInitilized = true;
@@ -72,7 +80,8 @@ void* run_client(void*)
 void* run_service(void*)
 {
 	CAmSocketHandler socketHandler;
-	CAmTestCAPIWrapper wrapper(&socketHandler);
+	env->mpSocketHandlerService = &socketHandler;
+	CAmTestCAPIWrapper wrapper(&socketHandler, "AudioManager");
 	CAmCommandSenderCAPI *pPlugin = CAmCommandSenderCAPI::newCommandSenderCAPI(&wrapper);
 	env->mpPlugin = pPlugin;
 	env->mSocketHandlerService = &socketHandler;
@@ -160,6 +169,7 @@ CAmTestsEnvironment::~CAmTestsEnvironment()
 void CAmTestsEnvironment::SetUp()
 {
 	pthread_cond_wait(&cond, &mutex);
+	mpSerializer = new CAmSerializer(env->mpSocketHandlerService);
 }
 
 void CAmTestsEnvironment::TearDown()
@@ -646,15 +656,40 @@ TEST_F(CAmCommandSenderCAPITest, GetListSystemPropertiesTest)
  * Signal tests
  */
 
-#define SIMPLE_THREADS_SYNC_MICROSEC() usleep(50000)
+#define SIMPLE_THREADS_SYNC_MICROSEC() usleep(500000)
+
+#define THREAD_SYNC_VARS()\
+std::mutex mutex;\
+std::condition_variable cond_var;\
+bool done(false);
+
+#define THREAD_NOTIFY_ALL()\
+WillOnce(InvokeWithoutArgs([&]() {std::lock_guard<std::mutex> lock(mutex);done = true;cond_var.notify_one();}))
+
+#define THREAD_WAIT()\
+{\
+   std::unique_lock<std::mutex> lock(mutex);\
+   auto now = std::chrono::system_clock::now();\
+   EXPECT_TRUE(cond_var.wait_until(lock, now + std::chrono::milliseconds(1000), [&done] { return done; }));\
+}
+
+
+MATCHER_P(connectionEqualTo, value, "") {
+	am_types::am_MainConnectionType_s lh = arg;
+	return lh.getConnectionState() == value.getConnectionState() &&
+		   lh.getDelay() == value.getDelay() &&
+		   lh.getMainConnectionID() == value.getMainConnectionID()&&
+		   lh.getSinkID() == value.getSinkID()&&
+		   lh.getSourceID() == value.getSourceID();
+}
 
 TEST_F(CAmCommandSenderCAPITest, onNewMainConnection)
 {
 	ASSERT_TRUE(env->mIsServiceAvailable);
 	if(env->mIsServiceAvailable)
 	{
-		MockNotificationsClient mock;
-		auto subscription = env->mProxy->getNewMainConnectionEvent().subscribe(std::bind(&MockNotificationsClient::onNewMainConnection, std::ref(mock), std::placeholders::_1));
+		THREAD_SYNC_VARS()
+
 		am_MainConnectionType_s mainConnection;
 		mainConnection.connectionState=am_ConnectionState_e::CS_CONNECTING;
 		mainConnection.delay=400;
@@ -667,12 +702,15 @@ TEST_F(CAmCommandSenderCAPITest, onNewMainConnection)
 		mainConnectionCAPI.setMainConnectionID(mainConnection.mainConnectionID);
 		mainConnectionCAPI.setSinkID(mainConnection.sinkID);
 		mainConnectionCAPI.setSourceID(mainConnection.sourceID);
-		EXPECT_CALL(mock, onNewMainConnection(mainConnectionCAPI));
-		env->mpPlugin->cbNewMainConnection(mainConnection);
-		SIMPLE_THREADS_SYNC_MICROSEC();
-		env->mProxy->getNewMainConnectionEvent().unsubscribe(subscription);
+		EXPECT_CALL(*env->mpMockClient, onNewMainConnection(mainConnectionCAPI)).THREAD_NOTIFY_ALL();
+
+		auto t = std::make_tuple(mainConnection);
+		env->mpSerializer->doAsyncCall(env->mpPlugin, &CAmCommandSenderCAPI::cbNewMainConnection, t);
+		THREAD_WAIT()
 	}
 	EXPECT_TRUE(Mock::VerifyAndClearExpectations(env->mpCommandReceive));
+	EXPECT_TRUE(Mock::VerifyAndClearExpectations(env->mpMockClient));
+
 }
 
 TEST_F(CAmCommandSenderCAPITest, removedMainConnection)
@@ -697,15 +735,14 @@ TEST_F(CAmCommandSenderCAPITest, onNumberOfSourceClassesChangedEventTest)
 	ASSERT_TRUE(env->mIsServiceAvailable);
 	if(env->mIsServiceAvailable)
 	{
-		MockNotificationsClient mock;
-		auto subscription = env->mProxy->getNumberOfSourceClassesChangedEvent().subscribe(
-												std::bind(&MockNotificationsClient::onNumberOfSourceClassesChangedEvent, std::ref(mock)));
-		EXPECT_CALL(mock, onNumberOfSourceClassesChangedEvent());
-		env->mpPlugin->cbNumberOfSourceClassesChanged();
-		SIMPLE_THREADS_SYNC_MICROSEC();
-		env->mProxy->getNumberOfSourceClassesChangedEvent().unsubscribe(subscription);
+		THREAD_SYNC_VARS()
+		EXPECT_CALL(*env->mpMockClient, onNumberOfSourceClassesChangedEvent()).THREAD_NOTIFY_ALL();
+		auto t = std::make_tuple();
+		env->mpSerializer->doAsyncCall(env->mpPlugin, &CAmCommandSenderCAPI::cbNumberOfSourceClassesChanged, t);
+		THREAD_WAIT()
 	}
 	EXPECT_TRUE(Mock::VerifyAndClearExpectations(env->mpCommandReceive));
+	EXPECT_TRUE(Mock::VerifyAndClearExpectations(env->mpMockClient));
 }
 
 TEST_F(CAmCommandSenderCAPITest, onMainConnectionStateChangedEventTest)

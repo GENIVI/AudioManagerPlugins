@@ -85,13 +85,17 @@ TARGET_LINK_LIBRARIES(AmRoutingInterfaceCAPITests
     ${CMAKE_THREAD_LIBS_INIT}
     ${PYTHON_LIBRARY}
     ${PC_GSTREAMER_LIBRARIES}
-    ${CommonAPI-DBus_LIBRARY}
     ${CommonAPI_LIBRARY}
-    ${CommonAPI-SomeIP_LIBRARY}
     ${DBUS_LIBRARIES}
     gtest
     gmock
 )
+
+    if(${COMMONAPI_USED_BINDING} EQUAL 0)
+		TARGET_LINK_LIBRARIES(AmRoutingInterfaceCAPITests  ${CommonAPI-DBus_LIBRARY} )
+   else()
+		TARGET_LINK_LIBRARIES(AmRoutingInterfaceCAPITests  ${CommonAPI-SomeIP_LIBRARY} )
+   endif()
 
 INSTALL(TARGETS AmRoutingInterfaceCAPITests 
         DESTINATION ${TEST_EXECUTABLE_INSTALL_PATH}

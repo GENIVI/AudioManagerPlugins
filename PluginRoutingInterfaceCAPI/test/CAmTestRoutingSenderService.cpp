@@ -24,11 +24,6 @@
 
 namespace am {
 
-#define CAPI_SENDER_ADDRESS 	"local:" CAPI_SENDER_INTERFACE ":" CAPI_SENDER_INSTANCE
-#define CAPI_ROUTING_ADDRESS 	"local:" CAPI_ROUTING_INTERFACE ":" CAPI_ROUTING_INSTANCE
-
-const char * CAmTestRoutingSenderService::ROUTING_SENDER_SERVICE = CAPI_SENDER_ADDRESS;
-const char * CAmTestRoutingSenderService::ROUTING_INTERFACE_SERVICE = CAPI_ROUTING_ADDRESS;
 
 CAmTestRoutingSenderService::CAmTestRoutingSenderService(CAmCommonAPIWrapper * aWrapper):
 		mDomainData(), mAbortedHandle(), mIsDomainRegistred(false), mIsServiceAvailable(0), mIsReady(0), mpWrapper(aWrapper), mRoutingInterfaceProxy(NULL)
@@ -113,14 +108,15 @@ void CAmTestRoutingSenderService::setAbortHandle(am_types::am_Handle_s handle)
 bool CAmTestRoutingSenderService::registerDomain()
 {
 	logInfo(__PRETTY_FUNCTION__,"start registering domain ", mDomainData.getName(), mIsDomainRegistred, mIsServiceAvailable, mIsReady);
-	if( mIsDomainRegistred || !mIsServiceAvailable || !mIsReady )
+//	if( mIsDomainRegistred || !mIsServiceAvailable || !mIsReady )
+	if( mIsDomainRegistred || !mIsServiceAvailable  )
 		return false;
     am_types::am_Error_e error;
     am_types::am_domainID_t dID(0);
     CommonAPI::CallStatus callStatus;
     mRoutingInterfaceProxy->registerDomain(mDomainData,
     									   CAPI_SENDER_INSTANCE,
-    									   CAPI_SENDER_INTERFACE,
+    									   "",
     									   callStatus,
 										   dID,
     									   error);
