@@ -53,6 +53,8 @@ public:
 
 	    void setSystemProperty(const std::shared_ptr<CommonAPI::ClientId> _client, am_types::am_SystemProperty_s _property, setSystemPropertyReply_t _reply);
 
+	    void getVolume(const std::shared_ptr<CommonAPI::ClientId> _client, am_types::am_sinkID_t _sinkID, getVolumeReply_t _reply);
+
 	    void getListMainConnections(const std::shared_ptr<CommonAPI::ClientId> _client, getListMainConnectionsReply_t _reply);
 
 	    void getListMainSinks(const std::shared_ptr<CommonAPI::ClientId> _client, getListMainSinksReply_t _reply);

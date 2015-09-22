@@ -406,6 +406,28 @@ interface CommandControl {
     }
 
     <**
+    @description : Returns the current volume for the sink directly out of the database.
+    **>
+    method getVolume {
+        in {
+
+            <**
+                @description : The sink.
+            **>
+            am_sinkID_t sinkID
+
+        }
+        out {
+            <**
+                @description : The volume.
+            **>
+            am_mainVolume_t volume
+            am_Error_e amError
+
+        }
+    }
+
+    <**
     @description : Returns the current list of main connections.
 (at)return E_OK on success, E_DATABASE_ERROR on error
     **>
