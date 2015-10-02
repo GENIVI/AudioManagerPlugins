@@ -201,26 +201,6 @@ class MockIAmControlReceive : public IAmControlReceive {
       am_Error_e(const am_sinkID_t sinkID, const am_NotificationConfiguration_s& mainNotificationConfiguration));
   MOCK_METHOD2(changeMainSourceNotificationConfigurationDB,
       am_Error_e(const am_sourceID_t sourceID, const am_NotificationConfiguration_s& mainNotificationConfiguration));
-  MOCK_METHOD1(getRestartReasonPropertyNSM,
-      am_Error_e(NsmRestartReason_e& restartReason));
-  MOCK_METHOD1(getShutdownReasonPropertyNSM,
-      am_Error_e(NsmShutdownReason_e& ShutdownReason));
-  MOCK_METHOD1(getRunningReasonPropertyNSM,
-      am_Error_e(NsmRunningReason_e& nsmRunningReason));
-  MOCK_METHOD1(getNodeStateNSM,
-      NsmErrorStatus_e(NsmNodeState_e& nsmNodeState));
-  MOCK_METHOD3(getSessionStateNSM,
-      NsmErrorStatus_e(const std::string& sessionName, const NsmSeat_e seatID, NsmSessionState_e& sessionState));
-  MOCK_METHOD1(getApplicationModeNSM,
-      NsmErrorStatus_e(NsmApplicationMode_e& applicationMode));
-  MOCK_METHOD2(registerShutdownClientNSM,
-      NsmErrorStatus_e(const uint32_t shutdownMode, const uint32_t timeoutMs));
-  MOCK_METHOD1(unRegisterShutdownClientNSM,
-      NsmErrorStatus_e(const uint32_t shutdownMode));
-  MOCK_METHOD1(getInterfaceVersionNSM,
-      am_Error_e(uint32_t& version));
-  MOCK_METHOD2(sendLifecycleRequestCompleteNSM,
-      NsmErrorStatus_e(const uint32_t RequestId, const NsmErrorStatus_e status));
   MOCK_CONST_METHOD2(getListMainSinkSoundProperties,
       am_Error_e(const am_sinkID_t sinkID, std::vector<am_MainSoundProperty_s>& listSoundproperties));
   MOCK_CONST_METHOD2(getListMainSourceSoundProperties,

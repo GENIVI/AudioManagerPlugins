@@ -150,10 +150,13 @@ void CAmConvertCAPI2AM(const am_types::am_Sink_s & source, am::am_Sink_s & desti
 
 void CAmConvertCAPI2AM(const am_types::am_Volumes_s & source, am::am_Volumes_s & destination)
 {
-	CAmConvertCAPI2AM(source, destination);
+	destination.volumeType = static_cast<am::am_VolumeType_e>((int)source.getVolumeType());
+	if(destination.volumeType==VT_SINK)
+		destination.volumeID.sink = source.getVolumeID();
+	else if(destination.volumeType==VT_SOURCE)
+		destination.volumeID.source = source.getVolumeID();
 	destination.volume = source.getVolume();
 	destination.time = source.getTime();
-	destination.volumeType = static_cast<am::am_VolumeType_e>((int)source.getVolumeType());
 	destination.ramp = static_cast<am::am_CustomRampType_t>(source.getRamp());
 }
 
@@ -215,8 +218,14 @@ void CAmConvertCAPI2AM(const am_types::am_EarlyData_s & source, am::am_EarlyData
 {
 	CAmConvertCAPI2AM(source.getData(), destination.data);
 	destination.type = static_cast<am_EarlyDataType_e>((int)source.getType());
-	if (destination.type==am_EarlyDataType_e::ED_SOURCE_VOLUME)
-		destination.sinksource.source = static_cast<am::am_sourceID_t>(source.getSinksource());
+	if(destination.type==am::am_EarlyDataType_e::ED_SINK_PROPERTY)
+		destination.sinksource.sink = source.getSinksource();
+	else if(destination.type==am::am_EarlyDataType_e::ED_SINK_VOLUME)
+		destination.sinksource.sink = source.getSinksource();
+	else if(destination.type==am::am_EarlyDataType_e::ED_SOURCE_PROPERTY)
+		destination.sinksource.source = source.getSinksource();
+	else if(destination.type==am::am_EarlyDataType_e::ED_SOURCE_VOLUME)
+		destination.sinksource.source = source.getSinksource();
 }
 
 

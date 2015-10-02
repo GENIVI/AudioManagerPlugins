@@ -50,22 +50,22 @@ INCLUDE_DIRECTORIES(
     "../include"
 )
 
-    if(${COMMONAPI_USED_BINDING} EQUAL 0)
-        INCLUDE_DIRECTORIES(${INCLUDE_DIRECTORIES}
-                ${COMMONAPI_DBUS_INCLUDE_DIRS}
-                ${DBUS_INCLUDE_DIRS})	
-   else()
-       INCLUDE_DIRECTORIES(${INCLUDE_DIRECTORIES}
-                ${VSOMEIP_INCLUDE_DIRS}
-                ${COMMONAPI_SOMEIP_INCLUDE_DIRS})
-   endif()
+#if(${SELECTED_CAPI_BINDING} EQUAL 0)
+    INCLUDE_DIRECTORIES(${INCLUDE_DIRECTORIES}
+            ${COMMONAPI_DBUS_INCLUDE_DIRS}
+            ${DBUS_INCLUDE_DIRS})	
+#else()
+   INCLUDE_DIRECTORIES(${INCLUDE_DIRECTORIES}
+            ${VSOMEIP_INCLUDE_DIRS}
+            ${COMMONAPI_SOMEIP_INCLUDE_DIRS})
+#endif()
 
 link_directories(
         ${LINK_DIRECTORIES}
 )
    
 file(GLOB CAPI_PLUGIN_INTERFACE_SRCS_CXX 
-	 ${COMMON_API_ROUTING_INTERFACE_GEN_SOURCES}
+	 ${ROUTING_GEN_SOURCES}
      "${AUDIOMANAGER_UTILITIES_SRC}/CAmCommonAPIWrapper.cpp"
      "${AUDIOMANAGER_UTILITIES_SRC}/CAmSocketHandler.cpp"
      "${AUDIOMANAGER_UTILITIES_SRC}/CAmDltWrapper.cpp"
@@ -91,11 +91,7 @@ TARGET_LINK_LIBRARIES(AmRoutingInterfaceCAPITests
     gmock
 )
 
-    if(${COMMONAPI_USED_BINDING} EQUAL 0)
-		TARGET_LINK_LIBRARIES(AmRoutingInterfaceCAPITests  ${CommonAPI-DBus_LIBRARY} )
-   else()
-		TARGET_LINK_LIBRARIES(AmRoutingInterfaceCAPITests  ${CommonAPI-SomeIP_LIBRARY} )
-   endif()
+TARGET_LINK_LIBRARIES(AmRoutingInterfaceCAPITests  ${CommonAPI-${BINDING_SUFFIX}_LIBRARY} )
 
 INSTALL(TARGETS AmRoutingInterfaceCAPITests 
         DESTINATION ${TEST_EXECUTABLE_INSTALL_PATH}
@@ -103,3 +99,29 @@ INSTALL(TARGETS AmRoutingInterfaceCAPITests
         COMPONENT plugin-tests
 )
 
+IF(CONFIG_INI_TEST_PATH)
+    FILE(READ ${CONFIG_INI_TEST_PATH} CONFIG_INI)
+    STRING(REPLACE "[stub]" 
+                "[stub]\n${RoutingControlObserver}=../plugins/${STUB_ROUTINGCONTROL_BINDING_LIB}\n${RoutingControl}=../plugins/${STUB_ROUTINGCONTROL_BINDING_LIB}" 
+               CONFIG_INI_TEST 
+               ${CONFIG_INI})
+    STRING(REPLACE "[proxy]" 
+                   "[proxy]\n${RoutingControlObserver}=../plugins/${PROXY_ROUTINGCONTROL_BINDING_LIB}\n${RoutingControl}=../plugins/${PROXY_ROUTINGCONTROL_BINDING_LIB}" 
+                   CONFIG_INI_TEST 
+                   ${CONFIG_INI_TEST})
+    
+    FILE(WRITE ${CONFIG_INI_TEST_PATH} ${CONFIG_INI_TEST}) 
+                    
+    configure_file( ${CONFIG_INI_TEST_PATH} ${TEST_EXECUTABLE_OUTPUT_PATH}/commonapi.ini COPYONLY)
+    configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/vsomeip.json ${TEST_EXECUTABLE_OUTPUT_PATH}/vsomeip.json COPYONLY)  
+    
+    
+    GET_PROPERTY(TEST_CONFIG_INSTALLED GLOBAL PROPERTY CAPI_TEST_CONFIG_INSTALLED)
+    IF(NOT TEST_CONFIG_INSTALLED)
+        SET_PROPERTY(GLOBAL PROPERTY CAPI_TEST_CONFIG_INSTALLED ON)
+        INSTALL(FILES ${TEST_EXECUTABLE_OUTPUT_PATH}/commonapi.ini ${TEST_EXECUTABLE_OUTPUT_PATH}/vsomeip.json
+                                DESTINATION ${TEST_EXECUTABLE_INSTALL_PATH}
+                                PERMISSIONS OWNER_WRITE OWNER_READ GROUP_WRITE GROUP_READ WORLD_READ
+                                COMPONENT plugin-tests)
+    ENDIF(NOT TEST_CONFIG_INSTALLED) 
+ENDIF(CONFIG_INI_TEST_PATH)

@@ -20,6 +20,7 @@ cmake_minimum_required(VERSION 2.8.8)
 include(CMakeDependentOption)
 find_package(PkgConfig)
 
+
 OPTION (WITH_COMMAND_INTERFACE_COMMON_CAPI
         "build with commandinterface common-api plugin" ON )
 OPTION (WITH_COMMAND_INTERFACE_DBUS
@@ -31,11 +32,27 @@ OPTION (WITH_ROUTING_INTERFACE_ASYNC
 OPTION(WITH_ROUTING_INTERFACE_CAPI
        "build with routing iterface common-api plugin" ON)   
 OPTION(WITH_ROUTING_INTERFACE_DBUS
-       "build with routing iterface dbus plugin" OFF)                    
+       "build with routing iterface dbus plugin" OFF)        
+       
+IF (WITH_CAPI_WRAPPER) 
+    set (USE_CAPI_BINDING "DBUS" CACHE STRING "Select prefered binding for common-api 'DBUS' or 'SOMEIP'")
+    set_property(CACHE USE_CAPI_BINDING PROPERTY STRINGS "DBUS" "SOMEIP") 
+ELSE()     
+    unset(USE_CAPI_BINDING CACHE)
+ENDIF ()
 
-if(USE_BUILD_LIBS) 
+IF (USE_CAPI_BINDING STREQUAL "SOMEIP")
+    set(SELECTED_CAPI_BINDING 1 CACHE INTERNAL "hide this!" FORCE)
+ELSEIF (USE_CAPI_BINDING STREQUAL "DBUS")
+    set(SELECTED_CAPI_BINDING 0 CACHE INTERNAL "hide this!" FORCE)
+ELSE()
+    unset(SELECTED_CAPI_BINDING CACHE)
+ENDIF() 
+             
+
+IF(USE_BUILD_LIBS) 
 	file(MAKE_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}/plugins")
-endif(USE_BUILD_LIBS)
+ENDIF(USE_BUILD_LIBS)
 
 IF (WITH_COMMAND_INTERFACE_COMMON_CAPI)
 	add_subdirectory(PluginCommandInterfaceCAPI)
@@ -72,6 +89,5 @@ add_custom_target(plugin-test-install
      "${CMAKE_COMMAND}" -DCMAKE_INSTALL_COMPONENT=plugin-tests
      -P "${CMAKE_BINARY_DIR}/cmake_install.cmake"
 )
-
 
 

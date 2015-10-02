@@ -77,13 +77,6 @@ void CAmTestRoutingSenderService::onServiceStatusEvent(const CommonAPI::Availabi
     if(serviceStatus==CommonAPI::AvailabilityStatus::AVAILABLE)
     {
     	mIsServiceAvailable = true;
-    	CommonAPI::CallStatus callStatus;
-    	am_types::am_RoutingReady_e readyAttr;
-    	mRoutingInterfaceProxy->getRoutingReadyAttribute().getValue(callStatus,readyAttr);
-    	if (callStatus!=CommonAPI::CallStatus::SUCCESS)
-    		logError(__PRETTY_FUNCTION__,"Could not get RoutingReady");
-    	else
-    		mIsReady = (int)readyAttr == am_types::am_RoutingReady_e::RR_READY ? true : false;
     }
 }
 
@@ -100,6 +93,24 @@ void CAmTestRoutingSenderService::onRoutingReadyRundown()
     mIsDomainRegistred = false;
 }
 
+bool CAmTestRoutingSenderService::requestIsReady()
+{
+	CommonAPI::CallStatus callStatus;
+	am_types::am_RoutingReady_e readyAttr;
+	mRoutingInterfaceProxy->getRoutingReadyAttribute().getValue(callStatus,readyAttr);
+	if (callStatus!=CommonAPI::CallStatus::SUCCESS)
+	{
+		logError(__PRETTY_FUNCTION__,"Could not get RoutingReady");
+		return false;
+	}
+	else
+	{
+		logInfo(__PRETTY_FUNCTION__,"RoutingReady has been retrieved");
+		mIsReady = (int)readyAttr == am_types::am_RoutingReady_e::RR_READY ? true : false;
+		return true;
+	}
+}
+
 void CAmTestRoutingSenderService::setAbortHandle(am_types::am_Handle_s handle)
 {
 	mAbortedHandle=handle;
@@ -107,9 +118,9 @@ void CAmTestRoutingSenderService::setAbortHandle(am_types::am_Handle_s handle)
 
 bool CAmTestRoutingSenderService::registerDomain()
 {
+	requestIsReady();
 	logInfo(__PRETTY_FUNCTION__,"start registering domain ", mDomainData.getName(), mIsDomainRegistred, mIsServiceAvailable, mIsReady);
-//	if( mIsDomainRegistred || !mIsServiceAvailable || !mIsReady )
-	if( mIsDomainRegistred || !mIsServiceAvailable  )
+	if( mIsDomainRegistred || !mIsServiceAvailable || !mIsReady )
 		return false;
     am_types::am_Error_e error;
     am_types::am_domainID_t dID(0);

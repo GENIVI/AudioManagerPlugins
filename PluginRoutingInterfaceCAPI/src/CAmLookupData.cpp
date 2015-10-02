@@ -34,7 +34,10 @@ CAmLookupData::RSLookupData::RSLookupData(CAmLookupData *pLookupDataOwner, const
 	mSenderProxy = aProxy;
 	mpLookupDataOwner = pLookupDataOwner;
 	mIsConnected = mSenderProxy->isAvailable();
+	mIsSubcribed = false;
 	mSenderProxy->getProxyStatusEvent().subscribe(std::bind(&CAmLookupData::RSLookupData::onServiceStatusEvent,this,std::placeholders::_1));
+	if(mIsConnected)
+		subscribe();
 	logInfo(__PRETTY_FUNCTION__, "mIsConnected:", mIsConnected);
 }
 
@@ -43,16 +46,10 @@ CAmLookupData::RSLookupData::~RSLookupData()
 	mSenderProxy.reset();
 }
 
-void CAmLookupData::RSLookupData::onServiceStatusEvent(const CommonAPI::AvailabilityStatus& serviceStatus)
+void CAmLookupData::RSLookupData::subscribe()
 {
-	logInfo(__PRETTY_FUNCTION__, " status : ", (int)serviceStatus );
-	mIsConnected = (serviceStatus==CommonAPI::AvailabilityStatus::AVAILABLE);
-	if(mIsConnected)
+	if(!mIsSubcribed)
 	{
-		/* Subscribe should be done every time that connecting the proxy!
-		 *
-		 * An infinite loop in subscribe causes the method to hang when the status is UNAVAILABLE!
-		 */
 		mSenderProxy->getAckConnectSelectiveEvent().subscribe(std::bind(&CAmLookupData::ackConnect,mpLookupDataOwner,std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 		mSenderProxy->getAckDisconnectSelectiveEvent().subscribe(std::bind(&CAmLookupData::ackDisconnect,mpLookupDataOwner, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 		mSenderProxy->getAckSetVolumesSelectiveEvent().subscribe(std::bind(&CAmLookupData::ackSetVolumes,mpLookupDataOwner, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
@@ -68,9 +65,27 @@ void CAmLookupData::RSLookupData::onServiceStatusEvent(const CommonAPI::Availabi
 		mSenderProxy->getAckSetSourceStateSelectiveEvent().subscribe(std::bind(&CAmLookupData::ackSetSourceState,mpLookupDataOwner, std::placeholders::_1, std::placeholders::_2));
 		mSenderProxy->getAckSinkNotificationConfigurationSelectiveEvent().subscribe(std::bind(&CAmLookupData::ackSinkNotificationConfiguration,mpLookupDataOwner, std::placeholders::_1, std::placeholders::_2));
 		mSenderProxy->getAckSourceNotificationConfigurationSelectiveEvent().subscribe(std::bind(&CAmLookupData::ackSourceNotificationConfiguration,mpLookupDataOwner, std::placeholders::_1, std::placeholders::_2));
+		mIsSubcribed = true;
+	}
+	logInfo(__PRETTY_FUNCTION__);
+}
 
+void CAmLookupData::RSLookupData::onServiceStatusEvent(const CommonAPI::AvailabilityStatus& serviceStatus)
+{
+	logInfo(__PRETTY_FUNCTION__, " status : ", (int)serviceStatus );
+	mIsConnected = (serviceStatus==CommonAPI::AvailabilityStatus::AVAILABLE);
+
+	if(mIsConnected)
+	{
+		/* Subscribe should be done every time that connecting the proxy!
+		 *
+		 * An infinite loop in subscribe causes the method to hang when the status is UNAVAILABLE!
+		 */
+		subscribe();
 		logInfo("...event subscriptions done");
 	}
+	else
+		mIsSubcribed = false;
 }
 
 std::shared_ptr<am_routing_interface::RoutingControlProxy<>> & CAmLookupData::RSLookupData::getProxy()

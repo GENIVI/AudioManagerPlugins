@@ -51,17 +51,10 @@ void* run_client(void*)
 	CAmSocketHandler socketHandler;
 	env->mpSocketHandlerClient = &socketHandler;
 	CAmTestCAPIWrapper wrapper(&socketHandler, "AudioManager-client");
-	env->mSocketHandlerClient = &socketHandler;
-
 	env->mProxy = wrapper.buildProxy<am_commandcontrol::CommandControlProxy>(CAmCommandSenderCAPI::DEFAULT_DOMAIN, CAmCommandSenderCAPI::COMMAND_SENDER_INSTANCE);//"AudioManager-client"
 	assert(env->mProxy);
+	env->mpClientMock = new MockNotificationsClient();
 	env->mProxy->getProxyStatusEvent().subscribe(std::bind(&CAmTestsEnvironment::onServiceStatusEvent,env,std::placeholders::_1));
-	MockNotificationsClient mock;
-	env->mpMockClient = &mock;
-	env->mProxy->getNumberOfSourceClassesChangedEvent().subscribe(
-											std::bind(&MockNotificationsClient::onNumberOfSourceClassesChangedEvent, std::ref(mock)));
-
-	env->mProxy->getNewMainConnectionEvent().subscribe(std::bind(&MockNotificationsClient::onNewMainConnection, std::ref(mock), std::placeholders::_1));
 
 	pthread_mutex_lock(&mutexSer);
 	env->mIsProxyInitilized = true;
@@ -72,7 +65,7 @@ void* run_client(void*)
 
 //Cleanup
     env->mProxy.reset();
-    env->mSocketHandlerClient = NULL;
+    env->mpSocketHandlerClient = NULL;
 
     return (NULL);
 }
@@ -84,7 +77,6 @@ void* run_service(void*)
 	CAmTestCAPIWrapper wrapper(&socketHandler, "AudioManager");
 	CAmCommandSenderCAPI *pPlugin = CAmCommandSenderCAPI::newCommandSenderCAPI(&wrapper);
 	env->mpPlugin = pPlugin;
-	env->mSocketHandlerService = &socketHandler;
 	MockIAmCommandReceive mock;
 	env->mpCommandReceive = &mock;
     if(pPlugin->startupInterface(env->mpCommandReceive)!=E_OK)
@@ -109,7 +101,7 @@ void* run_service(void*)
 //Cleanup
     env->mpPlugin = NULL;
     env->mpCommandReceive = NULL;
-    env->mSocketHandlerClient = NULL;
+    env->mpSocketHandlerClient = NULL;
 
     return (NULL);
 }
@@ -146,12 +138,14 @@ CAmTestsEnvironment::CAmTestsEnvironment() :
 		mListenerThread(0),
 		mServicePThread(0),
 		mClientPThread(0),
-		mSocketHandlerService(NULL),
-		mSocketHandlerClient(NULL),
 		mIsProxyInitilized(false),
 		mIsServiceAvailable(false),
 		mpCommandReceive(NULL),
-		mpPlugin(NULL)
+		mpClientMock(NULL),
+		mpPlugin(NULL),
+		mpSocketHandlerClient(NULL),
+		mpSocketHandlerService(NULL),
+		mProxy()
 {
     env=this;
 
@@ -168,17 +162,18 @@ CAmTestsEnvironment::~CAmTestsEnvironment()
 
 void CAmTestsEnvironment::SetUp()
 {
+	::testing::FLAGS_gmock_verbose = "error";
 	pthread_cond_wait(&cond, &mutex);
-	mpSerializer = new CAmSerializer(env->mpSocketHandlerService);
+
 }
 
 void CAmTestsEnvironment::TearDown()
 {
 //	mWrapperClient.factory().reset();
 
-	mSocketHandlerClient->exit_mainloop();
+	mpSocketHandlerClient->exit_mainloop();
     pthread_join(mClientPThread, NULL);
-	mSocketHandlerService->exit_mainloop();
+	mpSocketHandlerService->exit_mainloop();
     pthread_join(mServicePThread, NULL);
     sleep(1);
 }
@@ -192,6 +187,39 @@ void CAmTestsEnvironment::onServiceStatusEvent(const CommonAPI::AvailabilityStat
     std::cout << std::endl << "Service Status changed to " << avail.str() << std::endl;
     pthread_mutex_lock(&mutexPxy);
     mIsServiceAvailable = (serviceStatus==CommonAPI::AvailabilityStatus::AVAILABLE);
+    if(mIsServiceAvailable)
+    {
+		mProxy->getNumberOfSourceClassesChangedEvent().subscribe(std::bind(&MockNotificationsClient::onNumberOfSourceClassesChangedEvent, mpClientMock));
+		mProxy->getNewMainConnectionEvent().subscribe(std::bind(&MockNotificationsClient::onNewMainConnection, mpClientMock, std::placeholders::_1));
+		mProxy->getRemovedMainConnectionEvent().subscribe(std::bind(&MockNotificationsClient::removedMainConnection, mpClientMock, std::placeholders::_1));
+		mProxy->getMainConnectionStateChangedEvent().subscribe(std::bind(&MockNotificationsClient::onMainConnectionStateChangedEvent, mpClientMock,std::placeholders::_1, std::placeholders::_2));
+		mProxy->getNewSourceEvent().subscribe(std::bind(&MockNotificationsClient::onSourceAddedEvent, mpClientMock,std::placeholders::_1));
+		mProxy->getRemovedSourceEvent().subscribe(std::bind(&MockNotificationsClient::onSourceRemovedEvent, mpClientMock,std::placeholders::_1));
+		mProxy->getMainSourceSoundPropertyChangedEvent().subscribe(std::bind(&MockNotificationsClient::onMainSourceSoundPropertyChangedEvent, mpClientMock, std::placeholders::_1, std::placeholders::_2));
+		mProxy->getSourceAvailabilityChangedEvent().subscribe(std::bind(&MockNotificationsClient::onSourceAvailabilityChangedEvent, mpClientMock, std::placeholders::_1, std::placeholders::_2));
+		mProxy->getNumberOfSinkClassesChangedEvent().subscribe(std::bind(&MockNotificationsClient::onNumberOfSinkClassesChangedEvent, mpClientMock));
+		mProxy->getNewSinkEvent().subscribe(std::bind(&MockNotificationsClient::onSinkAddedEvent, mpClientMock, std::placeholders::_1));
+		mProxy->getRemovedSinkEvent().subscribe(std::bind(&MockNotificationsClient::onSinkRemovedEvent, mpClientMock, std::placeholders::_1));
+		mProxy->getMainSinkSoundPropertyChangedEvent().subscribe(std::bind(&MockNotificationsClient::onMainSinkSoundPropertyChangedEvent, mpClientMock,std::placeholders::_1, std::placeholders::_2));
+		mProxy->getSinkAvailabilityChangedEvent().subscribe(std::bind(&MockNotificationsClient::onSinkAvailabilityChangedEvent, mpClientMock, std::placeholders::_1, std::placeholders::_2));
+		mProxy->getVolumeChangedEvent().subscribe(std::bind(&MockNotificationsClient::onVolumeChangedEvent, mpClientMock,std::placeholders::_1, std::placeholders::_2));
+		mProxy->getSinkMuteStateChangedEvent().subscribe(std::bind(&MockNotificationsClient::onSinkMuteStateChangedEvent, mpClientMock, std::placeholders::_1, std::placeholders::_2));
+		mProxy->getSystemPropertyChangedEvent().subscribe(std::bind(&MockNotificationsClient::onSystemPropertyChangedEvent, mpClientMock, std::placeholders::_1));
+		mProxy->getTimingInformationChangedEvent().subscribe(std::bind(&MockNotificationsClient::onTimingInformationChangedEvent, mpClientMock,
+															   std::placeholders::_1, std::placeholders::_2));
+		mProxy->getSinkUpdatedEvent().subscribe(std::bind(&MockNotificationsClient::onSinkUpdatedEvent, mpClientMock,
+															   std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+		mProxy->getSourceUpdatedEvent().subscribe(std::bind(&MockNotificationsClient::onSourceUpdatedEvent, mpClientMock,
+															   std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+		mProxy->getSinkNotificationEvent().subscribe(std::bind(&MockNotificationsClient::onSinkNotificationEvent, mpClientMock,
+															   std::placeholders::_1, std::placeholders::_2));
+		mProxy->getSourceNotificationEvent().subscribe(std::bind(&MockNotificationsClient::onSourceNotificationEvent, mpClientMock,
+															   std::placeholders::_1, std::placeholders::_2));
+		mProxy->getMainSinkNotificationConfigurationChangedEvent().subscribe(std::bind(&MockNotificationsClient::onMainSinkNotificationConfigurationChangedEvent, mpClientMock,
+															   std::placeholders::_1, std::placeholders::_2));
+		mProxy->getMainSourceNotificationConfigurationChangedEvent().subscribe(std::bind(&MockNotificationsClient::onMainSourceNotificationConfigurationChangedEvent, mpClientMock,
+															   std::placeholders::_1, std::placeholders::_2));
+    }
     pthread_mutex_unlock(&mutexPxy);
     pthread_cond_signal(&condPxy);
 }
@@ -215,20 +243,21 @@ CAmCommandSenderCAPITest::~CAmCommandSenderCAPITest()
 
 void CAmCommandSenderCAPITest::SetUp()
 {
-	::testing::GTEST_FLAG(throw_on_failure) = false;
-	::testing::FLAGS_gmock_verbose = "error";
-//	::testing::DefaultValue<am_Error_e>::Set(am_Error_e(E_OK));
+
 }
 
 void CAmCommandSenderCAPITest::TearDown()
 {
-	::testing::GTEST_FLAG(throw_on_failure) = true;
-}
-
-TEST_F(CAmCommandSenderCAPITest, ClientStartupTest)
-{
-	ASSERT_TRUE(env->mIsServiceAvailable);
-	EXPECT_TRUE(Mock::VerifyAndClearExpectations(env->mpCommandReceive));
+	if(env->mpClientMock)
+	{
+		Mock::AllowLeak(env->mpClientMock);
+		EXPECT_TRUE(Mock::VerifyAndClearExpectations(env->mpClientMock));
+	}
+	if(env->mpCommandReceive)
+	{
+		Mock::AllowLeak(env->mpCommandReceive);
+		EXPECT_TRUE(Mock::VerifyAndClearExpectations(env->mpCommandReceive));
+	}
 }
 
 ACTION(returnClientConnect)
@@ -256,7 +285,6 @@ TEST_F(CAmCommandSenderCAPITest, ConnectTest)
 		ASSERT_EQ((int)result, am_types::am_Error_e::E_OK);
 		env->mProxy->disconnect(mainConnectionID, callStatus, result);
 	}
-	EXPECT_TRUE(Mock::VerifyAndClearExpectations(env->mpCommandReceive));
 }
 
 TEST_F(CAmCommandSenderCAPITest, SetVolumeTest)
@@ -273,7 +301,6 @@ TEST_F(CAmCommandSenderCAPITest, SetVolumeTest)
 		env->mProxy->setVolume(sinkID, volume, callStatus, result);
 		ASSERT_EQ((int)result, am_types::am_Error_e::E_OK);
 	}
-	EXPECT_TRUE(Mock::VerifyAndClearExpectations(env->mpCommandReceive));
 }
 
 TEST_F(CAmCommandSenderCAPITest, VolumeStepTest)
@@ -291,7 +318,6 @@ TEST_F(CAmCommandSenderCAPITest, VolumeStepTest)
 		env->mProxy->volumeStep(sinkID, volume, callStatus, result);
 		ASSERT_EQ((int)result, am_types::am_Error_e::E_OK);
 	}
-	EXPECT_TRUE(Mock::VerifyAndClearExpectations(env->mpCommandReceive));
 }
 
 TEST_F(CAmCommandSenderCAPITest, SetSinkMuteStateTest)
@@ -308,7 +334,6 @@ TEST_F(CAmCommandSenderCAPITest, SetSinkMuteStateTest)
 		env->mProxy->setSinkMuteState(sinkID, value, callStatus, result);
 		ASSERT_EQ((int)result, am_types::am_Error_e::E_OK);
 	}
-	EXPECT_TRUE(Mock::VerifyAndClearExpectations(env->mpCommandReceive));
 }
 
 TEST_F(CAmCommandSenderCAPITest, SetMainSinkSoundPropertyTest)
@@ -327,7 +352,6 @@ TEST_F(CAmCommandSenderCAPITest, SetMainSinkSoundPropertyTest)
 		env->mProxy->setMainSinkSoundProperty(sinkID, value, callStatus, result);
 		ASSERT_EQ((int)result, am_types::am_Error_e::E_OK);
 	}
-	EXPECT_TRUE(Mock::VerifyAndClearExpectations(env->mpCommandReceive));
 }
 
 TEST_F(CAmCommandSenderCAPITest, SetMainSourceSoundPropertyTest)
@@ -346,7 +370,6 @@ TEST_F(CAmCommandSenderCAPITest, SetMainSourceSoundPropertyTest)
 		env->mProxy->setMainSourceSoundProperty(sID, value, callStatus, result);
 		ASSERT_EQ((int)result, am_types::am_Error_e::E_OK);
 	}
-	EXPECT_TRUE(Mock::VerifyAndClearExpectations(env->mpCommandReceive));
 }
 
 TEST_F(CAmCommandSenderCAPITest, SetSystemPropertyTest)
@@ -363,7 +386,6 @@ TEST_F(CAmCommandSenderCAPITest, SetSystemPropertyTest)
 		env->mProxy->setSystemProperty(value, callStatus, result);
 		ASSERT_EQ((int)result, am_types::am_Error_e::E_OK);
 	}
-	EXPECT_TRUE(Mock::VerifyAndClearExpectations(env->mpCommandReceive));
 }
 
 ACTION(returnListConnections){
@@ -394,7 +416,6 @@ TEST_F(CAmCommandSenderCAPITest, GetListMainConnectionsTest)
 		ASSERT_EQ(15, listConnections.at(0).getMainConnectionID());
 		ASSERT_EQ(4, listConnections.at(0).getSinkID());
 	}
-	EXPECT_TRUE(Mock::VerifyAndClearExpectations(env->mpCommandReceive));
 }
 
 ACTION(returnListSinks){
@@ -429,7 +450,6 @@ TEST_F(CAmCommandSenderCAPITest, GetListMainSinksTest)
 		ASSERT_EQ(am_types::am_Availability_e::A_UNAVAILABLE, listMainSinks.at(0).getAvailability().getAvailability());
 		ASSERT_EQ(AR_GENIVI_NOMEDIA, listMainSinks.at(0).getAvailability().getAvailabilityReason());
 	}
-	EXPECT_TRUE(Mock::VerifyAndClearExpectations(env->mpCommandReceive));
 }
 
 ACTION(returnListSources){
@@ -465,7 +485,6 @@ TEST_F(CAmCommandSenderCAPITest, GetListMainSourcesTest)
 		ASSERT_EQ(AR_GENIVI_SAMEMEDIA, list.at(0).getAvailability().getAvailabilityReason());
 		ASSERT_TRUE(22==list.at(0).getSourceID()||22==list.at(1).getSourceID());
 	}
-	EXPECT_TRUE(Mock::VerifyAndClearExpectations(env->mpCommandReceive));
 }
 
 ACTION(returnListMainSinkSoundProperties){
@@ -499,7 +518,6 @@ TEST_F(CAmCommandSenderCAPITest, GetListMainSinkSoundPropertiesTest)
 		ASSERT_EQ(2, list.at(1).getValue());
 		ASSERT_EQ(MSP_GENIVI_BASS, list.at(1).getType());
 	}
-	EXPECT_TRUE(Mock::VerifyAndClearExpectations(env->mpCommandReceive));
 }
 
 ACTION(returnListMainSourceSoundProperties){
@@ -533,7 +551,6 @@ TEST_F(CAmCommandSenderCAPITest, GetListMainSourceSoundPropertiesTest)
 		ASSERT_EQ(2, list.at(1).getValue());
 		ASSERT_EQ(MSP_GENIVI_BASS, list.at(1).getType());
 	}
-	EXPECT_TRUE(Mock::VerifyAndClearExpectations(env->mpCommandReceive));
 }
 
 ACTION(returnListSourceClasses){
@@ -575,7 +592,6 @@ TEST_F(CAmCommandSenderCAPITest, GetListSourceClassesTest)
 		ASSERT_EQ(2, list.at(1).getListClassProperties().size());
 		ASSERT_EQ(CP_UNKNOWN, list.at(1).getListClassProperties().at(0).getClassProperty());
 	}
-	EXPECT_TRUE(Mock::VerifyAndClearExpectations(env->mpCommandReceive));
 }
 
 ACTION(returnListSinkClasses){
@@ -619,7 +635,6 @@ TEST_F(CAmCommandSenderCAPITest, GetListSinkClassesTest)
 		ASSERT_EQ(2, list.at(1).getListClassProperties().size());
 		ASSERT_EQ(CP_UNKNOWN, list.at(1).getListClassProperties().at(0).getClassProperty());
 	}
-	EXPECT_TRUE(Mock::VerifyAndClearExpectations(env->mpCommandReceive));
 }
 
 ACTION(returnListSystemProperties){
@@ -648,7 +663,6 @@ TEST_F(CAmCommandSenderCAPITest, GetListSystemPropertiesTest)
 		ASSERT_EQ(-2245, list.at(0).getValue());
 		ASSERT_EQ(SYP_UNKNOWN, list.at(0).getType());
 	}
-	EXPECT_TRUE(Mock::VerifyAndClearExpectations(env->mpCommandReceive));
 }
 
 
@@ -656,7 +670,7 @@ TEST_F(CAmCommandSenderCAPITest, GetListSystemPropertiesTest)
  * Signal tests
  */
 
-#define SIMPLE_THREADS_SYNC_MICROSEC() usleep(500000)
+#define SIMPLE_THREADS_SYNC_MICROSEC() usleep(1000000)
 
 #define THREAD_SYNC_VARS()\
 std::mutex mutex;\
@@ -670,7 +684,7 @@ WillOnce(InvokeWithoutArgs([&]() {std::lock_guard<std::mutex> lock(mutex);done =
 {\
    std::unique_lock<std::mutex> lock(mutex);\
    auto now = std::chrono::system_clock::now();\
-   EXPECT_TRUE(cond_var.wait_until(lock, now + std::chrono::milliseconds(1000), [&done] { return done; }));\
+   EXPECT_TRUE(cond_var.wait_until(lock, now + std::chrono::milliseconds(4000), [&done] { return done; }));\
 }
 
 
@@ -688,8 +702,6 @@ TEST_F(CAmCommandSenderCAPITest, onNewMainConnection)
 	ASSERT_TRUE(env->mIsServiceAvailable);
 	if(env->mIsServiceAvailable)
 	{
-		THREAD_SYNC_VARS()
-
 		am_MainConnectionType_s mainConnection;
 		mainConnection.connectionState=am_ConnectionState_e::CS_CONNECTING;
 		mainConnection.delay=400;
@@ -702,15 +714,10 @@ TEST_F(CAmCommandSenderCAPITest, onNewMainConnection)
 		mainConnectionCAPI.setMainConnectionID(mainConnection.mainConnectionID);
 		mainConnectionCAPI.setSinkID(mainConnection.sinkID);
 		mainConnectionCAPI.setSourceID(mainConnection.sourceID);
-		EXPECT_CALL(*env->mpMockClient, onNewMainConnection(mainConnectionCAPI)).THREAD_NOTIFY_ALL();
-
-		auto t = std::make_tuple(mainConnection);
-		env->mpSerializer->doAsyncCall(env->mpPlugin, &CAmCommandSenderCAPI::cbNewMainConnection, t);
-		THREAD_WAIT()
+		EXPECT_CALL(*env->mpClientMock, onNewMainConnection(mainConnectionCAPI));
+		env->mpPlugin->cbNewMainConnection(mainConnection);
+		SIMPLE_THREADS_SYNC_MICROSEC();
 	}
-	EXPECT_TRUE(Mock::VerifyAndClearExpectations(env->mpCommandReceive));
-	EXPECT_TRUE(Mock::VerifyAndClearExpectations(env->mpMockClient));
-
 }
 
 TEST_F(CAmCommandSenderCAPITest, removedMainConnection)
@@ -718,47 +725,36 @@ TEST_F(CAmCommandSenderCAPITest, removedMainConnection)
 	ASSERT_TRUE(env->mIsServiceAvailable);
 	if(env->mIsServiceAvailable)
 	{
-		MockNotificationsClient mock;
-		auto subscription = env->mProxy->getRemovedMainConnectionEvent().subscribe(std::bind(&MockNotificationsClient::removedMainConnection, std::ref(mock), std::placeholders::_1));
 		am_mainConnectionID_t mainConnectionID(3);
 		am_types::am_mainConnectionID_t mainConnectionIDCAPI(mainConnectionID);
-		EXPECT_CALL(mock, removedMainConnection(mainConnectionIDCAPI));
+		EXPECT_CALL(*env->mpClientMock, removedMainConnection(mainConnectionIDCAPI));
 		env->mpPlugin->cbRemovedMainConnection(mainConnectionID);
 		SIMPLE_THREADS_SYNC_MICROSEC();
-		env->mProxy->getRemovedMainConnectionEvent().unsubscribe(subscription);
 	}
-	EXPECT_TRUE(Mock::VerifyAndClearExpectations(env->mpCommandReceive));
 }
+
 
 TEST_F(CAmCommandSenderCAPITest, onNumberOfSourceClassesChangedEventTest)
 {
 	ASSERT_TRUE(env->mIsServiceAvailable);
 	if(env->mIsServiceAvailable)
 	{
-		THREAD_SYNC_VARS()
-		EXPECT_CALL(*env->mpMockClient, onNumberOfSourceClassesChangedEvent()).THREAD_NOTIFY_ALL();
-		auto t = std::make_tuple();
-		env->mpSerializer->doAsyncCall(env->mpPlugin, &CAmCommandSenderCAPI::cbNumberOfSourceClassesChanged, t);
-		THREAD_WAIT()
+		EXPECT_CALL(*env->mpClientMock, onNumberOfSourceClassesChangedEvent());
+		env->mpPlugin->cbNumberOfSourceClassesChanged();
+		SIMPLE_THREADS_SYNC_MICROSEC();
 	}
-	EXPECT_TRUE(Mock::VerifyAndClearExpectations(env->mpCommandReceive));
-	EXPECT_TRUE(Mock::VerifyAndClearExpectations(env->mpMockClient));
 }
+
 
 TEST_F(CAmCommandSenderCAPITest, onMainConnectionStateChangedEventTest)
 {
 	ASSERT_TRUE(env->mIsServiceAvailable);
 	if(env->mIsServiceAvailable)
 	{
-		MockNotificationsClient mock;
-		auto subscription = env->mProxy->getMainConnectionStateChangedEvent().subscribe(std::bind(&MockNotificationsClient::onMainConnectionStateChangedEvent, std::ref(mock),
-													   std::placeholders::_1, std::placeholders::_2));
-		EXPECT_CALL(mock, onMainConnectionStateChangedEvent(101, am_types::am_ConnectionState_e(am_types::am_ConnectionState_e::CS_SUSPENDED)));
+		EXPECT_CALL(*env->mpClientMock, onMainConnectionStateChangedEvent(101, am_types::am_ConnectionState_e(am_types::am_ConnectionState_e::CS_SUSPENDED)));
 		env->mpPlugin->cbMainConnectionStateChanged(101, CS_SUSPENDED);
 		SIMPLE_THREADS_SYNC_MICROSEC();
-		env->mProxy->getMainConnectionStateChangedEvent().unsubscribe(subscription);
 	}
-	EXPECT_TRUE(Mock::VerifyAndClearExpectations(env->mpCommandReceive));
 }
 
 TEST_F(CAmCommandSenderCAPITest, onSourceAddedEventTest)
@@ -766,8 +762,6 @@ TEST_F(CAmCommandSenderCAPITest, onSourceAddedEventTest)
 	ASSERT_TRUE(env->mIsServiceAvailable);
 	if(env->mIsServiceAvailable)
 	{
-		MockNotificationsClient mock;
-		auto subscription = env->mProxy->getNewSourceEvent().subscribe(std::bind(&MockNotificationsClient::onSourceAddedEvent, std::ref(mock),std::placeholders::_1));
 		am_types::am_SourceType_s destination;
 		destination.setSourceID(100);
 		destination.setName("Name");
@@ -782,12 +776,10 @@ TEST_F(CAmCommandSenderCAPITest, onSourceAddedEventTest)
 		origin.availability.availability = A_MAX;
 		origin.availability.availabilityReason = 0;
  		origin.sourceClassID = 200;
-		EXPECT_CALL(mock, onSourceAddedEvent(destination));
+		EXPECT_CALL(*env->mpClientMock, onSourceAddedEvent(destination));
 		env->mpPlugin->cbNewSource(origin);
 		SIMPLE_THREADS_SYNC_MICROSEC();
-		env->mProxy->getNewSourceEvent().unsubscribe(subscription);
 	}
-	EXPECT_TRUE(Mock::VerifyAndClearExpectations(env->mpCommandReceive));
 }
 
 TEST_F(CAmCommandSenderCAPITest, onSourceRemovedEventTest)
@@ -795,16 +787,11 @@ TEST_F(CAmCommandSenderCAPITest, onSourceRemovedEventTest)
 	ASSERT_TRUE(env->mIsServiceAvailable);
 	if(env->mIsServiceAvailable)
 	{
-		MockNotificationsClient mock;
-		auto subscription = env->mProxy->getRemovedSourceEvent().subscribe(std::bind(&MockNotificationsClient::onSourceRemovedEvent, std::ref(mock),
-													   std::placeholders::_1));
 		am_sourceID_t source = 101;
-		EXPECT_CALL(mock, onSourceRemovedEvent(source));
+		EXPECT_CALL(*env->mpClientMock, onSourceRemovedEvent(source));
 		env->mpPlugin->cbRemovedSource(source);
 		SIMPLE_THREADS_SYNC_MICROSEC();
-		env->mProxy->getRemovedSourceEvent().unsubscribe(subscription);
 	}
-	EXPECT_TRUE(Mock::VerifyAndClearExpectations(env->mpCommandReceive));
 }
 
 TEST_F(CAmCommandSenderCAPITest, onMainSourceSoundPropertyChangedEventTest)
@@ -812,22 +799,16 @@ TEST_F(CAmCommandSenderCAPITest, onMainSourceSoundPropertyChangedEventTest)
 	ASSERT_TRUE(env->mIsServiceAvailable);
 	if(env->mIsServiceAvailable)
 	{
-		MockNotificationsClient mock;
-		auto subscription = env->mProxy->getMainSourceSoundPropertyChangedEvent().subscribe(std::bind(&MockNotificationsClient::onMainSourceSoundPropertyChangedEvent, std::ref(mock),
-													   std::placeholders::_1, std::placeholders::_2));
-
 		am_MainSoundProperty_s soundProperty;
 		soundProperty.value = 10;
 		soundProperty.type = MSP_UNKNOWN;
 
 		am_types::am_MainSoundProperty_s destination(MSP_UNKNOWN, 10);
 
-		EXPECT_CALL(mock, onMainSourceSoundPropertyChangedEvent(101, destination));
+		EXPECT_CALL(*env->mpClientMock, onMainSourceSoundPropertyChangedEvent(101, destination));
 		env->mpPlugin->cbMainSourceSoundPropertyChanged(101, soundProperty);
 		SIMPLE_THREADS_SYNC_MICROSEC();
-		env->mProxy->getMainSourceSoundPropertyChangedEvent().unsubscribe(subscription);
 	}
-	EXPECT_TRUE(Mock::VerifyAndClearExpectations(env->mpCommandReceive));
 }
 
 TEST_F(CAmCommandSenderCAPITest, onSourceAvailabilityChangedEventTest)
@@ -835,22 +816,16 @@ TEST_F(CAmCommandSenderCAPITest, onSourceAvailabilityChangedEventTest)
 	ASSERT_TRUE(env->mIsServiceAvailable);
 	if(env->mIsServiceAvailable)
 	{
-		MockNotificationsClient mock;
-		auto subscription = env->mProxy->getSourceAvailabilityChangedEvent().subscribe(std::bind(&MockNotificationsClient::onSourceAvailabilityChangedEvent, std::ref(mock),
-													   std::placeholders::_1, std::placeholders::_2));
-
 		am_Availability_s availability;
 		availability.availability = A_MAX;
 		availability.availabilityReason = AR_UNKNOWN;
 
 		am_types::am_Availability_s destination(am_types::am_Availability_e::A_MAX, AR_UNKNOWN);
 
-		EXPECT_CALL(mock, onSourceAvailabilityChangedEvent(101, destination));
+		EXPECT_CALL(*env->mpClientMock, onSourceAvailabilityChangedEvent(101, destination));
 		env->mpPlugin->cbSourceAvailabilityChanged(101, availability);
 		SIMPLE_THREADS_SYNC_MICROSEC();
-		env->mProxy->getSourceAvailabilityChangedEvent().unsubscribe(subscription);
 	}
-	EXPECT_TRUE(Mock::VerifyAndClearExpectations(env->mpCommandReceive));
 }
 
 TEST_F(CAmCommandSenderCAPITest, onNumberOfSinkClassesChangedEventTest)
@@ -858,14 +833,10 @@ TEST_F(CAmCommandSenderCAPITest, onNumberOfSinkClassesChangedEventTest)
 	ASSERT_TRUE(env->mIsServiceAvailable);
 	if(env->mIsServiceAvailable)
 	{
-		MockNotificationsClient mock;
-		auto subscription = env->mProxy->getNumberOfSinkClassesChangedEvent().subscribe(std::bind(&MockNotificationsClient::onNumberOfSinkClassesChangedEvent, std::ref(mock)));
-		EXPECT_CALL(mock, onNumberOfSinkClassesChangedEvent());
+		EXPECT_CALL(*env->mpClientMock, onNumberOfSinkClassesChangedEvent());
 		env->mpPlugin->cbNumberOfSinkClassesChanged();
 		SIMPLE_THREADS_SYNC_MICROSEC();
-		env->mProxy->getNumberOfSinkClassesChangedEvent().unsubscribe(subscription);
 	}
-	EXPECT_TRUE(Mock::VerifyAndClearExpectations(env->mpCommandReceive));
 }
 
 TEST_F(CAmCommandSenderCAPITest, onSinkAddedEventTest)
@@ -873,9 +844,6 @@ TEST_F(CAmCommandSenderCAPITest, onSinkAddedEventTest)
 	ASSERT_TRUE(env->mIsServiceAvailable);
 	if(env->mIsServiceAvailable)
 	{
-		MockNotificationsClient mock;
-		auto subscription = env->mProxy->getNewSinkEvent().subscribe(std::bind(&MockNotificationsClient::onSinkAddedEvent, std::ref(mock),
-													   std::placeholders::_1));
 		am_types::am_SinkType_s destination;
 		destination.setSinkID(100);
 		destination.setName("Name");
@@ -897,12 +865,10 @@ TEST_F(CAmCommandSenderCAPITest, onSinkAddedEventTest)
  		origin.volume = 1;
  		origin.sinkClassID = 100;
 
-		EXPECT_CALL(mock, onSinkAddedEvent(destination));
+		EXPECT_CALL(*env->mpClientMock, onSinkAddedEvent(destination));
 		env->mpPlugin->cbNewSink(origin);
 		SIMPLE_THREADS_SYNC_MICROSEC();
-		env->mProxy->getNewSinkEvent().unsubscribe(subscription);
 	}
-	EXPECT_TRUE(Mock::VerifyAndClearExpectations(env->mpCommandReceive));
 }
 
 TEST_F(CAmCommandSenderCAPITest, onSinkRemovedEventTest)
@@ -910,15 +876,10 @@ TEST_F(CAmCommandSenderCAPITest, onSinkRemovedEventTest)
 	ASSERT_TRUE(env->mIsServiceAvailable);
 	if(env->mIsServiceAvailable)
 	{
-		MockNotificationsClient mock;
-		auto subscription = env->mProxy->getRemovedSinkEvent().subscribe(std::bind(&MockNotificationsClient::onSinkRemovedEvent, std::ref(mock),
-													   std::placeholders::_1));
-		EXPECT_CALL(mock, onSinkRemovedEvent(101));
+		EXPECT_CALL(*env->mpClientMock, onSinkRemovedEvent(101));
 		env->mpPlugin->cbRemovedSink(101);
 		SIMPLE_THREADS_SYNC_MICROSEC();
-		env->mProxy->getRemovedSinkEvent().unsubscribe(subscription);
 	}
-	EXPECT_TRUE(Mock::VerifyAndClearExpectations(env->mpCommandReceive));
 }
 
 TEST_F(CAmCommandSenderCAPITest, onMainSinkSoundPropertyChangedEventTest)
@@ -926,22 +887,16 @@ TEST_F(CAmCommandSenderCAPITest, onMainSinkSoundPropertyChangedEventTest)
 	ASSERT_TRUE(env->mIsServiceAvailable);
 	if(env->mIsServiceAvailable)
 	{
-		MockNotificationsClient mock;
-		auto subscription = env->mProxy->getMainSinkSoundPropertyChangedEvent().subscribe(std::bind(&MockNotificationsClient::onMainSinkSoundPropertyChangedEvent, std::ref(mock),
-													   std::placeholders::_1, std::placeholders::_2));
-
 		am_MainSoundProperty_s soundProperty;
 		soundProperty.value = 10;
 		soundProperty.type = MSP_UNKNOWN;
 
 		am_types::am_MainSoundProperty_s destination(MSP_UNKNOWN, 10);
 
-		EXPECT_CALL(mock, onMainSinkSoundPropertyChangedEvent(101, destination));
+		EXPECT_CALL(*env->mpClientMock, onMainSinkSoundPropertyChangedEvent(101, destination));
 		env->mpPlugin->cbMainSinkSoundPropertyChanged(101, soundProperty);
 		SIMPLE_THREADS_SYNC_MICROSEC();
-		env->mProxy->getMainSinkSoundPropertyChangedEvent().unsubscribe(subscription);
 	}
-	EXPECT_TRUE(Mock::VerifyAndClearExpectations(env->mpCommandReceive));
 }
 
 TEST_F(CAmCommandSenderCAPITest, onSinkAvailabilityChangedEventTest)
@@ -949,22 +904,16 @@ TEST_F(CAmCommandSenderCAPITest, onSinkAvailabilityChangedEventTest)
 	ASSERT_TRUE(env->mIsServiceAvailable);
 	if(env->mIsServiceAvailable)
 	{
-		MockNotificationsClient mock;
-		auto subscription = env->mProxy->getSinkAvailabilityChangedEvent().subscribe(std::bind(&MockNotificationsClient::onSinkAvailabilityChangedEvent, std::ref(mock),
-													   std::placeholders::_1, std::placeholders::_2));
-
 		am_Availability_s availability;
 		availability.availability = A_MAX;
 		availability.availabilityReason = AR_UNKNOWN;
 
 		am_types::am_Availability_s destination(am_types::am_Availability_e::A_MAX, AR_UNKNOWN);
 
-		EXPECT_CALL(mock, onSinkAvailabilityChangedEvent(101, destination));
+		EXPECT_CALL(*env->mpClientMock, onSinkAvailabilityChangedEvent(101, destination));
 		env->mpPlugin->cbSinkAvailabilityChanged(101, availability);
 		SIMPLE_THREADS_SYNC_MICROSEC();
-		env->mProxy->getSinkAvailabilityChangedEvent().unsubscribe(subscription);
 	}
-	EXPECT_TRUE(Mock::VerifyAndClearExpectations(env->mpCommandReceive));
 }
 
 TEST_F(CAmCommandSenderCAPITest, onVolumeChangedEventTest)
@@ -972,15 +921,10 @@ TEST_F(CAmCommandSenderCAPITest, onVolumeChangedEventTest)
 	ASSERT_TRUE(env->mIsServiceAvailable);
 	if(env->mIsServiceAvailable)
 	{
-		MockNotificationsClient mock;
-		auto subscription = env->mProxy->getVolumeChangedEvent().subscribe(std::bind(&MockNotificationsClient::onVolumeChangedEvent, std::ref(mock),
-													   std::placeholders::_1, std::placeholders::_2));
-		EXPECT_CALL(mock, onVolumeChangedEvent(101, 4));
+		EXPECT_CALL(*env->mpClientMock, onVolumeChangedEvent(101, 4));
 		env->mpPlugin->cbVolumeChanged(101, 4);
 		SIMPLE_THREADS_SYNC_MICROSEC();
-		env->mProxy->getVolumeChangedEvent().unsubscribe(subscription);
 	}
-	EXPECT_TRUE(Mock::VerifyAndClearExpectations(env->mpCommandReceive));
 }
 
 TEST_F(CAmCommandSenderCAPITest, onSinkMuteStateChangedEventTest)
@@ -988,15 +932,10 @@ TEST_F(CAmCommandSenderCAPITest, onSinkMuteStateChangedEventTest)
 	ASSERT_TRUE(env->mIsServiceAvailable);
 	if(env->mIsServiceAvailable)
 	{
-		MockNotificationsClient mock;
-		auto subscription = env->mProxy->getSinkMuteStateChangedEvent().subscribe(std::bind(&MockNotificationsClient::onSinkMuteStateChangedEvent, std::ref(mock),
-													   std::placeholders::_1, std::placeholders::_2));
-		EXPECT_CALL(mock, onSinkMuteStateChangedEvent(101, am_types::am_MuteState_e(am_types::am_MuteState_e::MS_MAX)));
+		EXPECT_CALL(*env->mpClientMock, onSinkMuteStateChangedEvent(101, am_types::am_MuteState_e(am_types::am_MuteState_e::MS_MAX)));
 		env->mpPlugin->cbSinkMuteStateChanged(101, am_MuteState_e::MS_MAX);
 		SIMPLE_THREADS_SYNC_MICROSEC();
-		env->mProxy->getSinkMuteStateChangedEvent().unsubscribe(subscription);
 	}
-	EXPECT_TRUE(Mock::VerifyAndClearExpectations(env->mpCommandReceive));
 }
 
 TEST_F(CAmCommandSenderCAPITest, onSystemPropertyChangedEventTest)
@@ -1004,21 +943,15 @@ TEST_F(CAmCommandSenderCAPITest, onSystemPropertyChangedEventTest)
 	ASSERT_TRUE(env->mIsServiceAvailable);
 	if(env->mIsServiceAvailable)
 	{
-		MockNotificationsClient mock;
-		auto subscription = env->mProxy->getSystemPropertyChangedEvent().subscribe(std::bind(&MockNotificationsClient::onSystemPropertyChangedEvent, std::ref(mock),
-													   std::placeholders::_1));
-
 		am_types::am_SystemProperty_s value(static_cast<am_types::am_SystemPropertyType_pe>(SYP_UNKNOWN), (const int16_t)2);
 		am_SystemProperty_s systemProperty;
 		systemProperty.value = 2;
 		systemProperty.type = SYP_UNKNOWN;
 
-		EXPECT_CALL(mock, onSystemPropertyChangedEvent(value));
+		EXPECT_CALL(*env->mpClientMock, onSystemPropertyChangedEvent(value));
 		env->mpPlugin->cbSystemPropertyChanged(systemProperty);
 		SIMPLE_THREADS_SYNC_MICROSEC();
-		env->mProxy->getSystemPropertyChangedEvent().unsubscribe(subscription);
 	}
-	EXPECT_TRUE(Mock::VerifyAndClearExpectations(env->mpCommandReceive));
 }
 
 TEST_F(CAmCommandSenderCAPITest, onTimingInformationChangedEventTest)
@@ -1026,16 +959,10 @@ TEST_F(CAmCommandSenderCAPITest, onTimingInformationChangedEventTest)
 	ASSERT_TRUE(env->mIsServiceAvailable);
 	if(env->mIsServiceAvailable)
 	{
-		MockNotificationsClient mock;
-		auto subscription = env->mProxy->getTimingInformationChangedEvent().subscribe(std::bind(&MockNotificationsClient::onTimingInformationChangedEvent, std::ref(mock),
-													   std::placeholders::_1, std::placeholders::_2));
-
-		EXPECT_CALL(mock, onTimingInformationChangedEvent(1, 2));
+		EXPECT_CALL(*env->mpClientMock, onTimingInformationChangedEvent(1, 2));
 		env->mpPlugin->cbTimingInformationChanged(1, 2);
 		SIMPLE_THREADS_SYNC_MICROSEC();
-		env->mProxy->getTimingInformationChangedEvent().unsubscribe(subscription);
 	}
-	EXPECT_TRUE(Mock::VerifyAndClearExpectations(env->mpCommandReceive));
 }
 
 TEST_F(CAmCommandSenderCAPITest, onSinkUpdatedEventTest)
@@ -1043,20 +970,15 @@ TEST_F(CAmCommandSenderCAPITest, onSinkUpdatedEventTest)
 	ASSERT_TRUE(env->mIsServiceAvailable);
 	if(env->mIsServiceAvailable)
 	{
-		MockNotificationsClient mock;
-		auto subscription = env->mProxy->getSinkUpdatedEvent().subscribe(std::bind(&MockNotificationsClient::onSinkUpdatedEvent, std::ref(mock),
-													   std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 		std::vector<am_MainSoundProperty_s> listMainSoundProperties;
 		am_MainSoundProperty_s prop;
 		prop.value = 1;
 		prop.type = MSP_UNKNOWN;
 		listMainSoundProperties.push_back(prop);
-		EXPECT_CALL(mock, onSinkUpdatedEvent(1, 2, _));
+		EXPECT_CALL(*env->mpClientMock, onSinkUpdatedEvent(1, 2, _));
 		env->mpPlugin->cbSinkUpdated(1, 2, listMainSoundProperties);
 		SIMPLE_THREADS_SYNC_MICROSEC();
-		env->mProxy->getSinkUpdatedEvent().unsubscribe(subscription);
 	}
-	EXPECT_TRUE(Mock::VerifyAndClearExpectations(env->mpCommandReceive));
 }
 
 TEST_F(CAmCommandSenderCAPITest, onSourceUpdatedTest)
@@ -1064,20 +986,15 @@ TEST_F(CAmCommandSenderCAPITest, onSourceUpdatedTest)
 	ASSERT_TRUE(env->mIsServiceAvailable);
 	if(env->mIsServiceAvailable)
 	{
-		MockNotificationsClient mock;
-		auto subscription = env->mProxy->getSourceUpdatedEvent().subscribe(std::bind(&MockNotificationsClient::onSourceUpdatedEvent, std::ref(mock),
-													   std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 		std::vector<am_MainSoundProperty_s> listMainSoundProperties;
 		am_MainSoundProperty_s prop;
 		prop.value = 1;
 		prop.type = MSP_UNKNOWN;
 		listMainSoundProperties.push_back(prop);
-		EXPECT_CALL(mock, onSourceUpdatedEvent(1, 2, _));
+		EXPECT_CALL(*env->mpClientMock, onSourceUpdatedEvent(1, 2, _));
 		env->mpPlugin->cbSourceUpdated(1, 2, listMainSoundProperties);
 		SIMPLE_THREADS_SYNC_MICROSEC();
-		env->mProxy->getSourceUpdatedEvent().unsubscribe(subscription);
 	}
-	EXPECT_TRUE(Mock::VerifyAndClearExpectations(env->mpCommandReceive));
 }
 
 TEST_F(CAmCommandSenderCAPITest, onSinkNotificationEventTest)
@@ -1085,9 +1002,6 @@ TEST_F(CAmCommandSenderCAPITest, onSinkNotificationEventTest)
 	ASSERT_TRUE(env->mIsServiceAvailable);
 	if(env->mIsServiceAvailable)
 	{
-		MockNotificationsClient mock;
-		auto subscription = env->mProxy->getSinkNotificationEvent().subscribe(std::bind(&MockNotificationsClient::onSinkNotificationEvent, std::ref(mock),
-													   std::placeholders::_1, std::placeholders::_2));
 		am_NotificationPayload_s orig;
 		orig.type = NT_UNKNOWN;
 		orig.value = 1;
@@ -1095,12 +1009,10 @@ TEST_F(CAmCommandSenderCAPITest, onSinkNotificationEventTest)
 		dest.setType(NT_UNKNOWN);
 		dest.setValue(1);
 
-		EXPECT_CALL(mock, onSinkNotificationEvent(1, dest));
+		EXPECT_CALL(*env->mpClientMock, onSinkNotificationEvent(1, dest));
 		env->mpPlugin->cbSinkNotification(1, orig);
 		SIMPLE_THREADS_SYNC_MICROSEC();
-		env->mProxy->getSinkNotificationEvent().unsubscribe(subscription);
 	}
-	EXPECT_TRUE(Mock::VerifyAndClearExpectations(env->mpCommandReceive));
 }
 
 
@@ -1109,9 +1021,6 @@ TEST_F(CAmCommandSenderCAPITest, onSourceNotificationEventTest)
 	ASSERT_TRUE(env->mIsServiceAvailable);
 	if(env->mIsServiceAvailable)
 	{
-		MockNotificationsClient mock;
-		auto subscription = env->mProxy->getSourceNotificationEvent().subscribe(std::bind(&MockNotificationsClient::onSourceNotificationEvent, std::ref(mock),
-													   std::placeholders::_1, std::placeholders::_2));
 		am_NotificationPayload_s orig;
 		orig.type = NT_UNKNOWN;
 		orig.value = 1;
@@ -1119,12 +1028,10 @@ TEST_F(CAmCommandSenderCAPITest, onSourceNotificationEventTest)
 		dest.setType(NT_UNKNOWN);
 		dest.setValue(1);
 
-		EXPECT_CALL(mock, onSourceNotificationEvent(1, dest));
+		EXPECT_CALL(*env->mpClientMock, onSourceNotificationEvent(1, dest));
 		env->mpPlugin->cbSourceNotification(1, orig);
 		SIMPLE_THREADS_SYNC_MICROSEC();
-		env->mProxy->getSourceNotificationEvent().unsubscribe(subscription);
 	}
-	EXPECT_TRUE(Mock::VerifyAndClearExpectations(env->mpCommandReceive));
 }
 
 TEST_F(CAmCommandSenderCAPITest, onMainSinkNotificationConfigurationChangedEventTest)
@@ -1132,9 +1039,6 @@ TEST_F(CAmCommandSenderCAPITest, onMainSinkNotificationConfigurationChangedEvent
 	ASSERT_TRUE(env->mIsServiceAvailable);
 	if(env->mIsServiceAvailable)
 	{
-		MockNotificationsClient mock;
-		auto subscription = env->mProxy->getMainSinkNotificationConfigurationChangedEvent().subscribe(std::bind(&MockNotificationsClient::onMainSinkNotificationConfigurationChangedEvent, std::ref(mock),
-													   std::placeholders::_1, std::placeholders::_2));
 		am_NotificationConfiguration_s orig;
 		orig.type = NT_UNKNOWN;
 		orig.parameter = 1;
@@ -1144,12 +1048,10 @@ TEST_F(CAmCommandSenderCAPITest, onMainSinkNotificationConfigurationChangedEvent
 		dest.setParameter(1);
 		dest.setStatus(am_types::am_NotificationStatus_e(am_types::am_NotificationStatus_e::NS_MAX));
 
-		EXPECT_CALL(mock, onMainSinkNotificationConfigurationChangedEvent(1, dest));
+		EXPECT_CALL(*env->mpClientMock, onMainSinkNotificationConfigurationChangedEvent(1, dest));
 		env->mpPlugin->cbMainSinkNotificationConfigurationChanged(1, orig);
 		SIMPLE_THREADS_SYNC_MICROSEC();
-		env->mProxy->getMainSinkNotificationConfigurationChangedEvent().unsubscribe(subscription);
 	}
-	EXPECT_TRUE(Mock::VerifyAndClearExpectations(env->mpCommandReceive));
 }
 
 TEST_F(CAmCommandSenderCAPITest, onMainSourceNotificationConfigurationChangedEventTest)
@@ -1157,9 +1059,6 @@ TEST_F(CAmCommandSenderCAPITest, onMainSourceNotificationConfigurationChangedEve
 	ASSERT_TRUE(env->mIsServiceAvailable);
 	if(env->mIsServiceAvailable)
 	{
-		MockNotificationsClient mock;
-		auto subscription = env->mProxy->getMainSourceNotificationConfigurationChangedEvent().subscribe(std::bind(&MockNotificationsClient::onMainSourceNotificationConfigurationChangedEvent, std::ref(mock),
-													   std::placeholders::_1, std::placeholders::_2));
 		am_NotificationConfiguration_s orig;
 		orig.type = NT_UNKNOWN;
 		orig.parameter = 1;
@@ -1169,11 +1068,9 @@ TEST_F(CAmCommandSenderCAPITest, onMainSourceNotificationConfigurationChangedEve
 		dest.setParameter(1);
 		dest.setStatus(am_types::am_NotificationStatus_e(am_types::am_NotificationStatus_e::NS_MAX));
 
-		EXPECT_CALL(mock, onMainSourceNotificationConfigurationChangedEvent(1, dest));
+		EXPECT_CALL(*env->mpClientMock, onMainSourceNotificationConfigurationChangedEvent(1, dest));
 		env->mpPlugin->cbMainSourceNotificationConfigurationChanged(1, orig);
 		SIMPLE_THREADS_SYNC_MICROSEC();
-		env->mProxy->getMainSourceNotificationConfigurationChangedEvent().unsubscribe(subscription);
 	}
-	EXPECT_TRUE(Mock::VerifyAndClearExpectations(env->mpCommandReceive));
 }
 

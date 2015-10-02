@@ -61,6 +61,7 @@ public:
 	am_types::am_Domain_s & getDomainData() { return mDomainData; };
 	am_types::am_Handle_s & getAbortedHandle() { return mAbortedHandle; };
 	bool getIsReady() const { return mIsReady; };
+	bool requestIsReady();
 
 	void onServiceStatusEvent(const CommonAPI::AvailabilityStatus& serviceStatus);
 	void onRoutingReadyRundown();

@@ -89,10 +89,6 @@ public:
     void hookSourceNotificationDataChanged(const am_sourceID_t sourceID, const am_NotificationPayload_s& payload) ;
     am_Error_e hookUserSetMainSinkNotificationConfiguration(const am_sinkID_t sinkID, const am_NotificationConfiguration_s& notificationConfiguration) ;
     am_Error_e hookUserSetMainSourceNotificationConfiguration(const am_sourceID_t sourceID, const am_NotificationConfiguration_s& notificationConfiguration) ;
-    void hookSystemNodeStateChanged(const NsmNodeState_e NodeStateId) ;
-    void hookSystemNodeApplicationModeChanged(const NsmApplicationMode_e ApplicationModeId) ;
-    void hookSystemSessionStateChanged(const std::string& sessionName, const NsmSeat_e seatID, const NsmSessionState_e sessionStateID) ;
-    NsmErrorStatus_e hookSystemLifecycleRequest(const uint32_t Request, const uint32_t RequestId) ;
     void hookSystemSingleTimingInformationChanged(const am_connectionID_t connectionID, const am_timeSync_t time);
 
 private:

@@ -44,8 +44,10 @@ class CAmLookupData {
 	{
 		CAmLookupData *mpLookupDataOwner;
 	    bool mIsConnected; //!< bool indicating whether the domain is reachable or not
+	    bool mIsSubcribed;
 	    std::shared_ptr<am_routing_interface::RoutingControlProxy<> > mSenderProxy; //!< a pointer to the proxy object, which implements the connection out from AudioManager
 	    void onServiceStatusEvent(const CommonAPI::AvailabilityStatus& serviceStatus); //!< proxy status event callback
+	    void subscribe();
 	public:
 	    RSLookupData(CAmLookupData *pLookupDataOwner, const std::shared_ptr<am_routing_interface::RoutingControlProxy<> > & aProxy);
 	    ~RSLookupData();

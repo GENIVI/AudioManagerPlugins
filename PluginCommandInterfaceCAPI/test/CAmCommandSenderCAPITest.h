@@ -44,14 +44,11 @@ class CAmTestsEnvironment : public ::testing::Environment
 	pthread_t mServicePThread;
 	pthread_t mClientPThread;
 public:
-	CAmSocketHandler *mSocketHandlerService;
-	CAmSocketHandler *mSocketHandlerClient;
 	bool mIsProxyInitilized;
 	bool mIsServiceAvailable;
 	MockIAmCommandReceive *mpCommandReceive;
-	MockNotificationsClient *mpMockClient;
+	MockNotificationsClient *mpClientMock;
 	CAmCommandSenderCAPI *mpPlugin;
-	CAmSerializer *mpSerializer;
 	CAmSocketHandler *mpSocketHandlerClient;
 	CAmSocketHandler *mpSocketHandlerService;
 

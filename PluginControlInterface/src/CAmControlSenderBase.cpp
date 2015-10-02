@@ -794,18 +794,6 @@ void CAmControlSenderBase::confirmRoutingRundown(const am_Error_e error)
 	logInfo("ControlSenderPlugin got Routing Rundown confirmed");
 }
 
-void CAmControlSenderBase::hookSystemNodeStateChanged(const NsmNodeState_e NodeStateId)
-{
-    (void) NodeStateId;
-    //here you can process informations about the notestate
-}
-
-void CAmControlSenderBase::hookSystemNodeApplicationModeChanged(const NsmApplicationMode_e ApplicationModeId)
-{
-    (void) ApplicationModeId;
-}
-
-
 void CAmControlSenderBase::cbAckSetSinkNotificationConfiguration(const am_Handle_s handle, const am_Error_e error)
 {
     (void) handle;
@@ -816,15 +804,6 @@ void CAmControlSenderBase::cbAckSetSourceNotificationConfiguration(const am_Hand
 {
     (void) handle;
     (void) error;
-}
-
-
-NsmErrorStatus_e CAmControlSenderBase::hookSystemLifecycleRequest(const uint32_t Request, const uint32_t RequestId)
-{
-    (void) Request;
-    (void) RequestId;
-    logInfo("CAmControlSenderBase::hookSystemLifecycleRequest request=",Request," requestID=",RequestId);
-    return (NsmErrorStatus_Error);
 }
 
 am_Error_e CAmControlSenderBase::hookSystemUpdateSink(const am_sinkID_t sinkID, const am_sinkClass_t sinkClassID, const std::vector<am_SoundProperty_s>& listSoundProperties, const std::vector<am_CustomConnectionFormat_t>& listConnectionFormats, const std::vector<am_MainSoundProperty_s>& listMainSoundProperties)
@@ -896,13 +875,6 @@ am_Error_e CAmControlSenderBase::hookUserSetMainSourceNotificationConfiguration(
     (void) sourceID;
     (void) notificationConfiguration;
     return (E_NOT_USED);
-}
-
-void CAmControlSenderBase::hookSystemSessionStateChanged(const std::string& sessionName, const NsmSeat_e seatID, const NsmSessionState_e sessionStateID)
-{
-    (void) sessionName;
-    (void) seatID;
-    (void) sessionStateID;
 }
 
 void CAmControlSenderBase::callTAHandler()

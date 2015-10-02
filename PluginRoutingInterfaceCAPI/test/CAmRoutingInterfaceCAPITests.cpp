@@ -174,8 +174,10 @@ void* run_service(void*)
 	}
     else
     {
+    	EXPECT_CALL(*env->mpRoutingReceive, confirmRoutingReady(10,E_OK)).Times(1);
     	pPlugin->setRoutingReady(10);
     	socketHandler.start_listenting();
+    	EXPECT_CALL(*env->mpRoutingReceive, confirmRoutingRundown(10,E_OK)).Times(1);
     	pPlugin->setRoutingRundown(10);
     	pPlugin->tearDownInterface(env->mpRoutingReceive);
     }
@@ -238,6 +240,7 @@ void CAmRoutingInterfaceCAPITests::SetUp()
 
 void CAmRoutingInterfaceCAPITests::TearDown()
 {
+	EXPECT_TRUE(Mock::VerifyAndClearExpectations(env->mpRoutingReceive));
 }
 
 
@@ -286,7 +289,6 @@ void CAmTestsEnvironment::SetUp()
 
 void CAmTestsEnvironment::TearDown()
 {
-	EXPECT_TRUE(Mock::VerifyAndClearExpectations(mpRoutingReceive));
 	if(mSocketHandlerClient)
 		mSocketHandlerClient->exit_mainloop();
     pthread_join(mClientPThread, NULL);
@@ -302,8 +304,8 @@ void CAmTestsEnvironment::onServiceStatusEventProxy(const CommonAPI::Availabilit
     std::stringstream  avail;
     avail  << "(" << static_cast<int>(serviceStatus) << ")";
 
-    logInfo("Service Status changed to ", avail.str());
-    std::cout << std::endl << "Service Status changed to " << avail.str() << std::endl;
+    logInfo("CAmTestsEnvironment::onServiceStatusEventProxy -> Service Status changed to ", avail.str());
+    std::cout << std::endl << "CAmTestsEnvironment::onServiceStatusEventProxy -> Service Status changed to " << avail.str() << std::endl;
     pthread_mutex_lock(&mutexPxy);
     mIsServiceAvailable=(serviceStatus==CommonAPI::AvailabilityStatus::AVAILABLE);
     pthread_mutex_unlock(&mutexPxy);
@@ -494,7 +496,6 @@ TEST_F(CAmRoutingInterfaceCAPITests, registerService)
 		am::am_Domain_s amDomainData;
 		CAmConvertCAPI2AM(env->mDomainService->getDomainData(), amDomainData);
 
-		ON_CALL(*env->mpRoutingReceive, registerDomain(_, _)).WillByDefault(Return(E_OK));
 		EXPECT_CALL(*env->mpRoutingReceive, registerDomain(IsDomainDataEqualTo(amDomainData), _)).WillOnce(DoAll(actionRegister(), Return(E_OK)));
 
 		bool result = env->mDomainService->registerDomain();
@@ -520,6 +521,7 @@ TEST_F(CAmRoutingInterfaceCAPITests, ackConnect)
 		CAmConvertAM2CAPI(handle,retHandle);
 		EXPECT_CALL(*env->mpRoutingReceive, ackConnect(IsHandleEqual(handle), connectionID, error)).Times(1);
 		env->mDomainService->fireAckConnectSelective(retHandle, connectionID, am_types::am_Error_e::E_OK);
+		usleep(1000000);
 	}
 
 }
@@ -536,6 +538,7 @@ TEST_F(CAmRoutingInterfaceCAPITests, ackDisconnect)
 		CAmConvertAM2CAPI(handle,retHandle);
 		EXPECT_CALL(*env->mpRoutingReceive, ackDisconnect(IsHandleEqual(handle), connectionID, error)).Times(1);
 		env->mDomainService->fireAckDisconnectSelective(retHandle, connectionID, am_types::am_Error_e::E_OK);
+		usleep(1000000);
 	}
 
 }
@@ -552,6 +555,7 @@ TEST_F(CAmRoutingInterfaceCAPITests, ackSetSinkVolumeChange)
 		CAmConvertAM2CAPI(handle,retHandle);
 		EXPECT_CALL(*env->mpRoutingReceive, ackSetSinkVolumeChange(IsHandleEqual(handle), volume, error)).Times(1);
 		env->mDomainService->fireAckSetSinkVolumeChangeSelective(retHandle, volume, am_types::am_Error_e::E_OK);
+		usleep(1000000);
 	}
 }
 
@@ -567,6 +571,7 @@ TEST_F(CAmRoutingInterfaceCAPITests, ackSetSourceVolumeChange)
 		CAmConvertAM2CAPI(handle,retHandle);
 		EXPECT_CALL(*env->mpRoutingReceive, ackSetSourceVolumeChange(IsHandleEqual(handle), volume, error)).Times(1);
 		env->mDomainService->fireAckSetSourceVolumeChangeSelective(retHandle, volume, am_types::am_Error_e::E_OK);
+		usleep(1000000);
 	}
 }
 
@@ -582,6 +587,7 @@ TEST_F(CAmRoutingInterfaceCAPITests, ackSetSourceState)
 		CAmConvertAM2CAPI(handle,retHandle);
 		EXPECT_CALL(*env->mpRoutingReceive, ackSetSourceState(IsHandleEqual(handle), error)).Times(1);
 		env->mDomainService->fireAckSetSourceStateSelective(retHandle, am_types::am_Error_e::E_OK);
+		usleep(1000000);
 	}
 }
 
@@ -597,6 +603,7 @@ TEST_F(CAmRoutingInterfaceCAPITests, ackSetSinkSoundProperties)
 		CAmConvertAM2CAPI(handle,retHandle);
 		EXPECT_CALL(*env->mpRoutingReceive, ackSetSinkSoundProperties(IsHandleEqual(handle), error)).Times(1);
 		env->mDomainService->fireAckSetSinkSoundPropertiesSelective(retHandle, am_types::am_Error_e::E_OK);
+		usleep(1000000);
 	}
 }
 
@@ -612,6 +619,7 @@ TEST_F(CAmRoutingInterfaceCAPITests, ackSetSinkSoundProperty)
 		CAmConvertAM2CAPI(handle,retHandle);
 		EXPECT_CALL(*env->mpRoutingReceive, ackSetSinkSoundProperty(IsHandleEqual(handle), error)).Times(1);
 		env->mDomainService->fireAckSetSinkSoundPropertySelective(retHandle, am_types::am_Error_e::E_OK);
+		usleep(1000000);
 	}
 }
 
@@ -627,6 +635,7 @@ TEST_F(CAmRoutingInterfaceCAPITests, ackSetSourceSoundProperties)
 		CAmConvertAM2CAPI(handle,retHandle);
 		EXPECT_CALL(*env->mpRoutingReceive, ackSetSourceSoundProperties(IsHandleEqual(handle), error)).Times(1);
 		env->mDomainService->fireAckSetSourceSoundPropertiesSelective(retHandle, am_types::am_Error_e::E_OK);
+		usleep(1000000);
 	}
 }
 
@@ -642,6 +651,7 @@ TEST_F(CAmRoutingInterfaceCAPITests, ackSetSourceSoundProperty)
 		CAmConvertAM2CAPI(handle,retHandle);
 		EXPECT_CALL(*env->mpRoutingReceive, ackSetSourceSoundProperty(IsHandleEqual(handle), error)).Times(1);
 		env->mDomainService->fireAckSetSourceSoundPropertySelective(retHandle, am_types::am_Error_e::E_OK);
+		usleep(1000000);
 	}
 }
 
@@ -657,6 +667,7 @@ TEST_F(CAmRoutingInterfaceCAPITests, ackCrossFading)
 		CAmConvertAM2CAPI(handle,retHandle);
 		EXPECT_CALL(*env->mpRoutingReceive, ackCrossFading(IsHandleEqual(handle), hotSink, error)).Times(1);
 		env->mDomainService->fireAckCrossFadingSelective(retHandle, (am_types::am_HotSink_e::Literal)hotSink, am_types::am_Error_e::E_OK);
+		usleep(1000000);
 	}
 }
 
@@ -672,6 +683,7 @@ TEST_F(CAmRoutingInterfaceCAPITests, ackSourceVolumeTick)
 		CAmConvertAM2CAPI(handle,retHandle);
 		EXPECT_CALL(*env->mpRoutingReceive, ackSourceVolumeTick(IsHandleEqual(handle), sourceID, volume)).Times(1);
 		env->mDomainService->fireAckSourceVolumeTickSelective(retHandle, sourceID, volume);
+		usleep(1000000);
 	}
 }
 
@@ -687,6 +699,7 @@ TEST_F(CAmRoutingInterfaceCAPITests, ackSinkVolumeTick)
 		am_volume_t volume (20);
 		EXPECT_CALL(*env->mpRoutingReceive, ackSinkVolumeTick(IsHandleEqual(handle), sID, volume)).Times(1);
 		env->mDomainService->fireAckSinkVolumeTickSelective(retHandle, sID, volume);
+		usleep(1000000);
 	}
 }
 
@@ -698,8 +711,8 @@ TEST_F(CAmRoutingInterfaceCAPITests, ackSetVolumes)
 		uint16_t error = (uint16_t)E_OK;
 		uint16_t testID = 10;
 		am_types::am_Volumes_L listVolumes;
-		am_types::am_DataType_u dt(static_cast<am_types::am_sinkID_t>(103));
-		listVolumes.push_back(am_types::am_Volumes_s(am_types::am_VolumeType_e::VT_MAX,
+		am_types::am_SinkSourceID_t dt(103);
+		listVolumes.push_back(am_types::am_Volumes_s(am_types::am_VolumeType_e::VT_SINK,
 												   dt,
 												   50,
 												   static_cast<am_types::am_RampType_pe>(RAMP_GENIVI_DIRECT),
@@ -708,7 +721,7 @@ TEST_F(CAmRoutingInterfaceCAPITests, ackSetVolumes)
 		std::vector<am_Volumes_s> am_listVolumes;
 		am_DataType_u dt1;
 		dt1.sink = 103;
-		am_listVolumes.push_back((am_Volumes_s){VT_MAX,
+		am_listVolumes.push_back((am_Volumes_s){VT_SINK,
 												dt1,
 												50,
 												RAMP_GENIVI_DIRECT,
@@ -724,6 +737,7 @@ TEST_F(CAmRoutingInterfaceCAPITests, ackSetVolumes)
 		CAmConvertAM2CAPI(handle_s,retHandle);
 		EXPECT_CALL(*env->mpRoutingReceive, ackSetVolumes(IsHandleStructEqualTo(handle_s), IsSinkVolumeArrayEqualTo(am_listVolumes, true), E_OK)).Times(1);
 		env->mDomainService->fireAckSetVolumesSelective(retHandle, listVolumes, genError);
+		usleep(1000000);
 	}
 }
 
@@ -742,6 +756,7 @@ TEST_F(CAmRoutingInterfaceCAPITests, ackSinkNotificationConfiguration)
 		am_types::am_Error_e genError(am_types::am_Error_e::E_OK);
 		EXPECT_CALL(*env->mpRoutingReceive, ackSinkNotificationConfiguration(IsHandleStructEqualTo(handle_s), (am_Error_e)((int)error))).Times(1);
 		env->mDomainService->fireAckSinkNotificationConfigurationSelective(retHandle, genError);
+		usleep(1000000);
 	}
 }
 
@@ -760,6 +775,7 @@ TEST_F(CAmRoutingInterfaceCAPITests, ackSourceNotificationConfiguration)
 		am_types::am_Error_e genError(am_types::am_Error_e::E_OK);
 		EXPECT_CALL(*env->mpRoutingReceive, ackSourceNotificationConfiguration(IsHandleStructEqualTo(handle_s), (am_Error_e)((int)error))).Times(1);
 		env->mDomainService->fireAckSourceNotificationConfigurationSelective(retHandle, genError);
+		usleep(1000000);
 	}
 }
 
@@ -772,13 +788,11 @@ TEST_F(CAmRoutingInterfaceCAPITests, peekDomain)
 		am_types::am_Error_e error = am_types::am_Error_e::E_UNKNOWN;
 		std::string  name("domain name");
 		am_types::am_domainID_t domainID = 0;
-		ON_CALL(*env->mpRoutingReceive, peekDomain(_, _)).WillByDefault(Return(E_ALREADY_EXISTS));
 		EXPECT_CALL(*env->mpRoutingReceive, peekDomain(name, _)).WillOnce(DoAll(actionPeekDomain2(), Return(E_ALREADY_EXISTS)));
 		env->mProxy->peekDomain(name, callStatus, domainID, error);
 		ASSERT_EQ( domainID, TEST_ID_2 );
 		ASSERT_EQ((int)error, am_types::am_Error_e::E_ALREADY_EXISTS);
 	}
-
 }
 
 TEST_F(CAmRoutingInterfaceCAPITests, registerDomain)
@@ -800,7 +814,6 @@ TEST_F(CAmRoutingInterfaceCAPITests, registerDomain)
 
 //If the result is E_OK, then the routing service will try to establish a connection with the domain via common-api.
 //For now we won't test common-api connection with the domain therefore E_ALREADY_EXISTS is returned.
-		ON_CALL(*env->mpRoutingReceive, registerDomain(_, _)).WillByDefault(Return(E_ALREADY_EXISTS));
 		EXPECT_CALL(*env->mpRoutingReceive, registerDomain(IsDomainDataEqualTo(amDomainData), _)).WillOnce(DoAll(actionRegister2(), Return(E_ALREADY_EXISTS)));
 
 //example: 	[local:org.genivi.audiomanager.testdomaininterface:org.genivi.audiomanager]
@@ -825,7 +838,6 @@ TEST_F(CAmRoutingInterfaceCAPITests, deregisterDomain)
 		am_types::am_Error_e error = am_types::am_Error_e::E_UNKNOWN;
 		am_types::am_domainID_t domainID = TEST_ID_2;
 
-		ON_CALL(*env->mpRoutingReceive, deregisterDomain(_)).WillByDefault(Return(E_NON_EXISTENT));
 		EXPECT_CALL(*env->mpRoutingReceive, deregisterDomain(domainID)).WillOnce(Return(E_NON_EXISTENT));
 		env->mProxy->deregisterDomain(domainID, callStatus, error);
 		ASSERT_EQ((int)error, am_types::am_Error_e::E_NON_EXISTENT);
@@ -873,7 +885,6 @@ TEST_F(CAmRoutingInterfaceCAPITests, registerGateway)
 		am_Gateway_s amGateway;
 		CAmConvertCAPI2AM(gateway, amGateway);
 
-		ON_CALL(*env->mpRoutingReceive, registerGateway(_, _)).WillByDefault(Return(E_OK));
 		EXPECT_CALL(*env->mpRoutingReceive, registerGateway(IsGatewayDataEqualTo(amGateway), _)).WillOnce(DoAll(actionRegisterGateway(), Return(E_OK)));
 		env->mProxy->registerGateway(gateway, callStatus, gatewayID, error);
 		ASSERT_EQ( gatewayID, TEST_ID_1 );
@@ -892,7 +903,6 @@ TEST_F(CAmRoutingInterfaceCAPITests, deregisterGateway)
 		am_types::am_Error_e error = am_types::am_Error_e::E_UNKNOWN;
 		am_types::am_gatewayID_t gatewayID = TEST_ID_1;
 
-		ON_CALL(*env->mpRoutingReceive, deregisterGateway(_)).WillByDefault(Return(E_OK));
 		EXPECT_CALL(*env->mpRoutingReceive, deregisterGateway(gatewayID)).WillOnce(Return(E_OK));
 		env->mProxy->deregisterGateway(gatewayID, callStatus, error);
 		ASSERT_EQ((int)error, am_types::am_Error_e::E_OK);
@@ -936,7 +946,6 @@ TEST_F(CAmRoutingInterfaceCAPITests, registerConverter)
 		am_Converter_s amGateway;
 		CAmConvertCAPI2AM(gateway, amGateway);
 
-		ON_CALL(*env->mpRoutingReceive, registerConverter(_, _)).WillByDefault(Return(E_OK));
 		EXPECT_CALL(*env->mpRoutingReceive, registerConverter(IsConverterDataEqualTo(amGateway), _)).WillOnce(DoAll(actionRegisterGateway(), Return(E_OK)));
 		env->mProxy->registerConverter(gateway, callStatus, converterID, error);
 		ASSERT_EQ( converterID, TEST_ID_1 );
@@ -955,7 +964,6 @@ TEST_F(CAmRoutingInterfaceCAPITests, deregisterConverter)
 		am_types::am_Error_e error = am_types::am_Error_e::E_UNKNOWN;
 		am_types::am_converterID_t converterID = TEST_ID_1;
 
-		ON_CALL(*env->mpRoutingReceive, deregisterConverter(_)).WillByDefault(Return(E_OK));
 		EXPECT_CALL(*env->mpRoutingReceive, deregisterConverter(converterID)).WillOnce(Return(E_OK));
 		env->mProxy->deregisterConverter(converterID, callStatus, error);
 		ASSERT_EQ((int)error, am_types::am_Error_e::E_OK);
@@ -965,6 +973,7 @@ TEST_F(CAmRoutingInterfaceCAPITests, deregisterConverter)
 }
 
 ACTION(actionPeek){
+	logInfo("peek", arg0);
 	arg1=TEST_ID_1;
 }
 
@@ -977,8 +986,7 @@ TEST_F(CAmRoutingInterfaceCAPITests, peekSink)
 		am_types::am_Error_e error = am_types::am_Error_e::E_UNKNOWN;
 		std::string  name("name");
 		am_types::am_sinkID_t sinkID = 0;
-		ON_CALL(*env->mpRoutingReceive, peekSink(_, _)).WillByDefault(Return(E_OK));
-		EXPECT_CALL(*env->mpRoutingReceive, peekSink(name, _)).WillOnce(DoAll(actionPeek(), Return(E_OK)));
+		EXPECT_CALL(*env->mpRoutingReceive, peekSink(_, _)).WillOnce(DoAll(actionPeek(), Return(E_OK)));
 		env->mProxy->peekSink(name, callStatus, sinkID, error);
 		ASSERT_EQ( sinkID, TEST_ID_1 );
 		ASSERT_EQ((int)error, am_types::am_Error_e::E_OK);
@@ -1001,7 +1009,6 @@ TEST_F(CAmRoutingInterfaceCAPITests, registerSink)
 		am_types::am_sinkID_t sinkID = 0;
 		initSink(sink, amSink, TEST_ID_2, sinkID);
 
-		ON_CALL(*env->mpRoutingReceive, registerSink(_, _)).WillByDefault(Return(E_OK));
 		EXPECT_CALL(*env->mpRoutingReceive, registerSink(IsSinkDataEqualTo(amSink), _)).WillOnce(DoAll(actionRegister(), Return(E_OK)));
 		env->mProxy->registerSink(sink, callStatus, sinkID, error);
 		ASSERT_EQ( sinkID, TEST_ID_1 );
@@ -1020,7 +1027,6 @@ TEST_F(CAmRoutingInterfaceCAPITests, deregisterSink)
 		am_types::am_Error_e error = am_types::am_Error_e::E_UNKNOWN;
 		am_types::am_sinkID_t sinkID = TEST_ID_1;
 
-		ON_CALL(*env->mpRoutingReceive, deregisterSink(_)).WillByDefault(Return(E_OK));
 		EXPECT_CALL(*env->mpRoutingReceive, deregisterSink(sinkID)).WillOnce(Return(E_OK));
 		env->mProxy->deregisterSink(sinkID, callStatus, error);
 		ASSERT_EQ((int)error, am_types::am_Error_e::E_OK);
@@ -1038,8 +1044,7 @@ TEST_F(CAmRoutingInterfaceCAPITests, peekSource)
 		am_types::am_Error_e error = am_types::am_Error_e::E_UNKNOWN;
 		std::string  name("name");
 		am_types::am_sourceID_t sinkID = 0;
-		ON_CALL(*env->mpRoutingReceive, peekSource(_, _)).WillByDefault(Return(E_OK));
-		EXPECT_CALL(*env->mpRoutingReceive, peekSource(name, _)).WillOnce(DoAll(actionPeek(), Return(E_OK)));
+		EXPECT_CALL(*env->mpRoutingReceive, peekSource(_, _)).WillOnce(DoAll(actionPeek(), Return(E_OK)));
 		env->mProxy->peekSource(name, callStatus, sinkID, error);
 		ASSERT_EQ( sinkID, TEST_ID_1 );
 		ASSERT_EQ((int)error, am_types::am_Error_e::E_OK);
@@ -1061,7 +1066,6 @@ TEST_F(CAmRoutingInterfaceCAPITests, registerSource)
 		am_types::am_sourceID_t sourceID = 0;
 		initSource(source, amSource, TEST_ID_2, sourceID);
 
-		ON_CALL(*env->mpRoutingReceive, registerSource(_, _)).WillByDefault(Return(E_OK));
 		EXPECT_CALL(*env->mpRoutingReceive, registerSource(IsSourceDataEqualTo(amSource), _)).WillOnce(DoAll(actionRegister(), Return(E_OK)));
 		env->mProxy->registerSource(source, callStatus, sourceID, error);
 		ASSERT_EQ( sourceID, TEST_ID_1 );
@@ -1080,7 +1084,6 @@ TEST_F(CAmRoutingInterfaceCAPITests, deregisterSource)
 		am_types::am_Error_e error = am_types::am_Error_e::E_UNKNOWN;
 		am_types::am_sourceID_t sinkID = TEST_ID_1;
 
-		ON_CALL(*env->mpRoutingReceive, deregisterSource(_)).WillByDefault(Return(E_OK));
 		EXPECT_CALL(*env->mpRoutingReceive, deregisterSource(sinkID)).WillOnce(Return(E_OK));
 		env->mProxy->deregisterSource(sinkID, callStatus, error);
 		ASSERT_EQ((int)error, am_types::am_Error_e::E_OK);
@@ -1102,7 +1105,6 @@ TEST_F(CAmRoutingInterfaceCAPITests, registerCrossfader)
 		am_Crossfader_s amCrossfader;
 		initCrossfader(crossfader, amCrossfader, crossfaderID);
 
-		ON_CALL(*env->mpRoutingReceive, registerCrossfader(_, _)).WillByDefault(Return(E_OK));
 		EXPECT_CALL(*env->mpRoutingReceive, registerCrossfader(IsCrossfaderDataEqualTo(amCrossfader), _)).WillOnce(DoAll(actionRegister(), Return(E_OK)));
 		env->mProxy->registerCrossfader(crossfader, callStatus, crossfaderID, error);
 		ASSERT_EQ( crossfaderID, TEST_ID_1 );
@@ -1121,7 +1123,6 @@ TEST_F(CAmRoutingInterfaceCAPITests, deregisterCrossfader)
 		am_types::am_Error_e error = am_types::am_Error_e::E_UNKNOWN;
 		am_types::am_crossfaderID_t crossfaderID = TEST_ID_1;
 
-		ON_CALL(*env->mpRoutingReceive, deregisterCrossfader(_)).WillByDefault(Return(E_OK));
 		EXPECT_CALL(*env->mpRoutingReceive, deregisterCrossfader(crossfaderID)).WillOnce(Return(E_OK));
 		env->mProxy->deregisterCrossfader(crossfaderID, callStatus, error);
 		ASSERT_EQ((int)error, am_types::am_Error_e::E_OK);
@@ -1139,7 +1140,6 @@ TEST_F(CAmRoutingInterfaceCAPITests, peekSourceClassID)
 		am_types::am_Error_e error = am_types::am_Error_e::E_UNKNOWN;
 		std::string  name("name");
 		am_types::am_sourceClass_t sinkID = 0;
-		ON_CALL(*env->mpRoutingReceive, peekSourceClassID(_, _)).WillByDefault(Return(E_OK));
 		EXPECT_CALL(*env->mpRoutingReceive, peekSourceClassID(name, _)).WillOnce(DoAll(actionPeek(), Return(E_OK)));
 		env->mProxy->peekSourceClassID(name, callStatus, sinkID, error);
 		ASSERT_EQ( sinkID, TEST_ID_1 );
@@ -1158,7 +1158,6 @@ TEST_F(CAmRoutingInterfaceCAPITests, peekSinkClassID)
 		am_types::am_Error_e error = am_types::am_Error_e::E_UNKNOWN;
 		std::string  name("name");
 		am_types::am_sinkClass_t sinkID = 0;
-		ON_CALL(*env->mpRoutingReceive, peekSinkClassID(_, _)).WillByDefault(Return(E_OK));
 		EXPECT_CALL(*env->mpRoutingReceive, peekSinkClassID(name, _)).WillOnce(DoAll(actionPeek(), Return(E_OK)));
 		env->mProxy->peekSinkClassID(name, callStatus, sinkID, error);
 		ASSERT_EQ( sinkID, TEST_ID_1 );
@@ -1296,26 +1295,26 @@ MATCHER_P(IsEarlyDataEqualTo, value, "") {
 			if(ed_lh.type==ED_SINK_VOLUME)
 			{
 				result &= ed_lh.data.volume == ed_rh.getData().get<am_types::am_volume_t>();
-				result &= ed_lh.sinksource.sink == ed_rh.getSinksource().get<am_types::am_sinkID_t>();
+				result &= ed_lh.sinksource.sink == ed_rh.getSinksource();
 			}
 			else if(ed_lh.type==ED_SINK_PROPERTY)
 			{
 				am_types::am_SoundProperty_s soundproperty=ed_rh.getData().get<am_types::am_SoundProperty_s>();
 				result &= ed_lh.data.soundProperty.type == soundproperty.getType();
 				result &= ed_lh.data.soundProperty.value == soundproperty.getValue();
-				result &= ed_lh.sinksource.sink == ed_rh.getSinksource().get<am_types::am_sinkID_t>();
+				result &= ed_lh.sinksource.sink == ed_rh.getSinksource();
 			}
 			else if(ed_lh.type==ED_SOURCE_VOLUME)
 			{
 				result &= ed_lh.data.volume == ed_rh.getData().get<am_types::am_volume_t>();
-				result &= ed_lh.sinksource.source == ed_rh.getSinksource().get<am_types::am_sourceID_t>();
+				result &= ed_lh.sinksource.source == ed_rh.getSinksource();
 			}
 			else if(ed_lh.type==ED_SOURCE_PROPERTY)
 			{
 				am_types::am_SoundProperty_s soundproperty=ed_rh.getData().get<am_types::am_SoundProperty_s>();
 				result &= ed_lh.data.soundProperty.type == soundproperty.getType();
 				result &= ed_lh.data.soundProperty.value == soundproperty.getValue();
-				result &= ed_lh.sinksource.source == ed_rh.getSinksource().get<am_types::am_sinkID_t>();
+				result &= ed_lh.sinksource.source == ed_rh.getSinksource();
 			}
 			else
 			{
@@ -1338,25 +1337,25 @@ TEST_F(CAmRoutingInterfaceCAPITests, sendChangedData)
 		am_types::am_connectionID_t testID = TEST_ID_1;
 		am_types::am_EarlyData_L earlyData;
 
-		am_types::am_DataType_u dt11(static_cast<am_types::am_sinkID_t>(103));
+		am_types::am_SinkSourceID_t dt11(103);
 		am_types::am_EarlyData_u ed11(static_cast<am_types::am_volume_t>(50));
-		earlyData.push_back(am_types::am_EarlyData_s(am_types::am_EarlyDataType_e::ED_SINK_VOLUME,
+		earlyData.push_back(am_types::am_EarlyData_s(ed11,
 											dt11,
-											ed11));
-		am_types::am_DataType_u dt12(static_cast<am_types::am_sinkID_t>(104));
-		earlyData.push_back(am_types::am_EarlyData_s(am_types::am_EarlyDataType_e::ED_SINK_VOLUME,
+											am_types::am_EarlyDataType_e::ED_SINK_VOLUME));
+		am_types::am_SinkSourceID_t dt12(104);
+		earlyData.push_back(am_types::am_EarlyData_s(ed11,
 											dt12,
-											ed11));
+											am_types::am_EarlyDataType_e::ED_SINK_VOLUME));
 
-		am_types::am_DataType_u dt13(static_cast<am_types::am_sinkID_t>(105));
+		am_types::am_SinkSourceID_t dt13(105);
 		am_types::am_EarlyData_u ed12(am_types::am_SoundProperty_s(SP_UNKNOWN, 50));
-		earlyData.push_back(am_types::am_EarlyData_s(am_types::am_EarlyDataType_e::ED_SINK_PROPERTY,
+		earlyData.push_back(am_types::am_EarlyData_s(ed12,
 											dt13,
-											ed12));
-		am_types::am_DataType_u dt14(static_cast<am_types::am_sinkID_t>(106));
-		earlyData.push_back(am_types::am_EarlyData_s(am_types::am_EarlyDataType_e::ED_SINK_PROPERTY,
+											am_types::am_EarlyDataType_e::ED_SINK_PROPERTY));
+		am_types::am_SinkSourceID_t dt14(106);
+		earlyData.push_back(am_types::am_EarlyData_s(ed12,
 											dt14,
-											ed12));
+											am_types::am_EarlyDataType_e::ED_SINK_PROPERTY));
 
 		EXPECT_CALL(*env->mpRoutingReceive, sendChangedData(IsEarlyDataEqualTo(earlyData))).Times(1);
 
@@ -1397,8 +1396,7 @@ TEST_F(CAmRoutingInterfaceCAPITests, updateGateway)
 		std::vector<bool> am_convertionMatrix;
 		am_convertionMatrix.push_back(1);
 		am_convertionMatrix.push_back(0);
-		ON_CALL(*env->mpRoutingReceive, updateGateway(_, _, _, _)).WillByDefault(Return(E_OK));
-		EXPECT_CALL(*env->mpRoutingReceive, updateGateway(testID, am_listSourceFormats, am_listSinkFormats, am_convertionMatrix)).Times(1);
+		EXPECT_CALL(*env->mpRoutingReceive, updateGateway(testID, am_listSourceFormats, am_listSinkFormats, am_convertionMatrix)).WillOnce(Return(E_OK));
 
 		am_types::am_Error_e CAPIError;
 		env->mProxy->updateGateway(testID, listSourceFormats, listSinkFormats, convertionMatrix, callStatus,CAPIError);
@@ -1439,8 +1437,7 @@ TEST_F(CAmRoutingInterfaceCAPITests, updateConverter)
 		std::vector<bool> am_convertionMatrix;
 		am_convertionMatrix.push_back(1);
 		am_convertionMatrix.push_back(0);
-		ON_CALL(*env->mpRoutingReceive, updateConverter(_, _, _, _)).WillByDefault(Return(E_OK));
-		EXPECT_CALL(*env->mpRoutingReceive, updateConverter(testID, am_listSourceFormats, am_listSinkFormats, am_convertionMatrix)).Times(1);
+		EXPECT_CALL(*env->mpRoutingReceive, updateConverter(testID, am_listSourceFormats, am_listSinkFormats, am_convertionMatrix)).WillOnce(Return(E_OK));
 
 		am_types::am_Error_e CAPIError;
 		env->mProxy->updateConverter(testID, listSourceFormats, listSinkFormats, convertionMatrix, callStatus,CAPIError);
@@ -1504,8 +1501,7 @@ TEST_F(CAmRoutingInterfaceCAPITests, updateSink)
 		std::vector<am_MainSoundProperty_s> am_listMainSoundProperties;
 		prepareArrays(listSoundProperties, listSinkFormats, listMainSoundProperties, am_listSinkFormats, am_listSoundProperties, am_listMainSoundProperties);
 
-		ON_CALL(*env->mpRoutingReceive, updateSink(_, _, _, _, _)).WillByDefault(Return(E_OK));
-		EXPECT_CALL(*env->mpRoutingReceive, updateSink(testID, TEST_ID_2, IsSoundPropertiesArrayEqualTo(am_listSoundProperties), am_listSinkFormats, IsSoundPropertiesArrayEqualTo(am_listMainSoundProperties))).Times(1);
+		EXPECT_CALL(*env->mpRoutingReceive, updateSink(testID, TEST_ID_2, IsSoundPropertiesArrayEqualTo(am_listSoundProperties), am_listSinkFormats, IsSoundPropertiesArrayEqualTo(am_listMainSoundProperties))).WillOnce(Return(E_OK));
 		am_types::am_Error_e CAPIError;
 		env->mProxy->updateSink(testID, TEST_ID_2, listSoundProperties, listSinkFormats, listMainSoundProperties, callStatus,CAPIError);
 		ASSERT_EQ( callStatus, CommonAPI::CallStatus::SUCCESS );
@@ -1530,8 +1526,7 @@ TEST_F(CAmRoutingInterfaceCAPITests, updateSource)
 		std::vector<am_MainSoundProperty_s> am_listMainSoundProperties;
 		prepareArrays(listSoundProperties, listSinkFormats, listMainSoundProperties, am_listSinkFormats, am_listSoundProperties, am_listMainSoundProperties);
 
-		ON_CALL(*env->mpRoutingReceive, updateSource(_, _, _, _, _)).WillByDefault(Return(E_OK));
-		EXPECT_CALL(*env->mpRoutingReceive, updateSource(testID, TEST_ID_2, IsSoundPropertiesArrayEqualTo(am_listSoundProperties), am_listSinkFormats, IsSoundPropertiesArrayEqualTo(am_listMainSoundProperties))).Times(1);
+		EXPECT_CALL(*env->mpRoutingReceive, updateSource(testID, TEST_ID_2, IsSoundPropertiesArrayEqualTo(am_listSoundProperties), am_listSinkFormats, IsSoundPropertiesArrayEqualTo(am_listMainSoundProperties))).WillOnce(Return(E_OK));
 		am_types::am_Error_e CAPIError;
 		env->mProxy->updateSource(testID, TEST_ID_2, listSoundProperties, listSinkFormats, listMainSoundProperties, callStatus,CAPIError);
 		ASSERT_EQ( callStatus, CommonAPI::CallStatus::SUCCESS );
@@ -1609,7 +1604,6 @@ TEST_F(CAmRoutingInterfaceCAPITests, TestDomain_registerSource)
 		am_types::am_sourceID_t sinkID = 0;
 		initSource(source, amSource, domainID, sinkID);
 
-		ON_CALL(*env->mpRoutingReceive, registerSource(_, _)).WillByDefault(Return(E_OK));
 		EXPECT_CALL(*env->mpRoutingReceive, registerSource(IsSourceDataEqualTo(amSource), _)).WillOnce(DoAll(actionRegister(), Return(E_OK)));
 		env->mProxy->registerSource(source, callStatus, sinkID, error);
 		usleep(50000);
@@ -1647,7 +1641,6 @@ TEST_F(CAmRoutingInterfaceCAPITests, TestDomain_registerSink)
 		am_types::am_sinkID_t sinkID = 0;
 		initSink(sink, amSink, domainID, sinkID);
 
-		ON_CALL(*env->mpRoutingReceive, registerSink(_, _)).WillByDefault(Return(E_OK));
 		EXPECT_CALL(*env->mpRoutingReceive, registerSink(IsSinkDataEqualTo(amSink), _)).WillOnce(DoAll(actionRegister(), Return(E_OK)));
 		env->mProxy->registerSink(sink, callStatus, sinkID, error);
 
@@ -1692,7 +1685,7 @@ TEST_F(CAmRoutingInterfaceCAPITests, TestDomain_asyncSetSourceState)
 		EXPECT_CALL(*env->mpRoutingReceive, ackSetSourceState(IsHandleEqual(handle), E_OK)).Times(1);
 		EXPECT_CALL(*env->mpRoutingReceive, getDomainOfSource(TEST_ID_1, _)).WillOnce(Return(E_OK));
 		am_Error_e error = env->mpPlugin->asyncSetSourceState(handle, sID, state);
-		usleep(50000);
+		usleep(1000000);
 		ASSERT_EQ( error, E_OK );
 		ASSERT_FALSE( backdoor.containsHandle( handle.handle) );
 	}
@@ -1740,7 +1733,6 @@ TEST_F(CAmRoutingInterfaceCAPITests, TestDomain_registerCrossfader)
 		am_Crossfader_s amCrossfaderData;
 		initCrossfader(crossfaderData, amCrossfaderData, crossfaderID);
 
-		ON_CALL(*env->mpRoutingReceive, registerCrossfader(_, _)).WillByDefault(Return(E_OK));
 		EXPECT_CALL(*env->mpRoutingReceive, registerCrossfader(IsCrossfaderDataEqualTo(amCrossfaderData), _)).WillOnce(DoAll(actionRegister(), Return(E_OK)));
 		env->mProxy->registerCrossfader(crossfaderData, callStatus, crossfaderID, error);
 
@@ -2033,7 +2025,7 @@ TEST_F(CAmRoutingInterfaceCAPITests, TestDomain_asyncSetVolumes)
 		ASSERT_TRUE( backdoor.containsSourceWithID( TEST_ID_1) );
 
 		am_types::am_Volumes_L listVolumes;
-		am_types::am_DataType_u dt(static_cast<am_types::am_sourceID_t>(TEST_ID_1));
+		am_types::am_SinkSourceID_t dt(TEST_ID_1);
 		listVolumes.push_back(am_types::am_Volumes_s(am_types::am_VolumeType_e::VT_SOURCE,
 												   dt,
 												   50,
@@ -2072,7 +2064,6 @@ TEST_F(CAmRoutingInterfaceCAPITests, TestDomain_deregisterSink)
 		IAmRoutingSenderBackdoor backdoor(env->mpPlugin);
 		ASSERT_TRUE( backdoor.containsSinkWithID( sinkID ));
 
-		ON_CALL(*env->mpRoutingReceive, deregisterSink(_)).WillByDefault(Return(E_OK));
 		EXPECT_CALL(*env->mpRoutingReceive, deregisterSink(sinkID)).WillOnce(Return(E_OK));
 		env->mProxy->deregisterSink(sinkID, callStatus, error);
 		usleep(50000);
@@ -2095,7 +2086,6 @@ TEST_F(CAmRoutingInterfaceCAPITests, TestDomain_deregisterSource)
 		IAmRoutingSenderBackdoor backdoor(env->mpPlugin);
 		ASSERT_TRUE( backdoor.containsSourceWithID( sID ));
 
-		ON_CALL(*env->mpRoutingReceive, deregisterSource(_)).WillByDefault(Return(E_OK));
 		EXPECT_CALL(*env->mpRoutingReceive, deregisterSource(sID)).WillOnce(Return(E_OK));
 		env->mProxy->deregisterSource(sID, callStatus, error);
 		usleep(50000);
@@ -2118,7 +2108,6 @@ TEST_F(CAmRoutingInterfaceCAPITests, TestDomain_deregisterCrossfader)
 		IAmRoutingSenderBackdoor backdoor(env->mpPlugin);
 		ASSERT_TRUE( backdoor.containsCrossfader( sID ));
 
-		ON_CALL(*env->mpRoutingReceive, deregisterCrossfader(_)).WillByDefault(Return(E_OK));
 		EXPECT_CALL(*env->mpRoutingReceive, deregisterCrossfader(sID)).WillOnce(Return(E_OK));
 		env->mProxy->deregisterCrossfader(sID, callStatus, error);
 		usleep(50000);
@@ -2134,7 +2123,6 @@ TEST_F(CAmRoutingInterfaceCAPITests, deregisterService)
 	ASSERT_TRUE(env->isServiceAvailable());
 	if(env->isServiceAvailable())
 	{
-		ON_CALL(*env->mpRoutingReceive, deregisterDomain(_)).WillByDefault(Return(E_OK));
 		EXPECT_CALL(*env->mpRoutingReceive, deregisterDomain(env->mDomainService->getDomainData().getDomainID())).WillOnce(Return(E_OK));
 		bool result = env->mDomainService->deregisterDomain();
 		usleep(50000);
@@ -2148,6 +2136,10 @@ TEST_F(CAmRoutingInterfaceCAPITests, deregisterService)
 		ASSERT_EQ( backdoor.connectionsCount(), 0 );
 	}
 }
+
+/* Not applicable for SOMEIP due a different configuration.
+ */
+#if SELECTED_CAPI_BINDING == 0
 
 TEST_F(CAmRoutingInterfaceCAPITests, confirmRoutingRundown)
 {
@@ -2165,11 +2157,16 @@ TEST_F(CAmRoutingInterfaceCAPITests, confirmRoutingRundown)
 		EXPECT_CALL(*env->mpRoutingReceive, registerDomain(_, _)).WillOnce(DoAll(actionRegister(), Return(E_OK)));
 		env->mProxy->registerDomain(domainData,"sd","sd",domainstatus,domainID,CAPIError);
 		ASSERT_EQ( domainstatus, CommonAPI::CallStatus::SUCCESS );
-		env->mpPlugin->setRoutingRundown(5);
 		EXPECT_CALL(*env->mpRoutingReceive, confirmRoutingRundown(5,E_OK)).Times(1);
+		env->mpPlugin->setRoutingRundown(5);
+		EXPECT_CALL(*env->mpRoutingReceive, confirmRoutingRundown(_,E_OK)).Times(1);
 		env->mProxy->confirmRoutingRundown(name, callStatus);
 		EXPECT_CALL(*env->mpRoutingReceive, deregisterDomain(_)).WillOnce(Return(E_OK));
 		env->mProxy->deregisterDomain(domainID,domainstatus,CAPIError);
-		ASSERT_EQ( callStatus, CommonAPI::CallStatus::SUCCESS );
+		ASSERT_EQ( domainstatus, CommonAPI::CallStatus::SUCCESS );
 	}
 }
+
+#endif
+
+

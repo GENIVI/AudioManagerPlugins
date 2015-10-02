@@ -43,7 +43,12 @@ if (NOT DAEMONVERSION)
     endif(AUDIOMANAGER_FOUND)
 endif (NOT DAEMONVERSION)    
 
-if (${WITH_ENABLED_IPC} STREQUAL "CAPI")
+set(LIBRARY_OUTPUT_PATH ${PLUGINS_OUTPUT_PATH}/command)
+
+if (WITH_CAPI_WRAPPER)
+
+        OPTION (WITH_COMMAND_INTERFACE_GLUE_LIBS
+            "build command interface common-api glue code" OFF )
 
 	if(WITH_DLT)    
 	    pkg_check_modules(DLT REQUIRED automotive-dlt>=2.2.0)
@@ -52,8 +57,6 @@ if (${WITH_ENABLED_IPC} STREQUAL "CAPI")
 	    link_directories(${DLT_LIBRARY_DIRS})
 	endif(WITH_DLT)
 
-    set(LIBRARY_OUTPUT_PATH ${PLUGINS_OUTPUT_PATH}/command)
-
     set (AM_LINK_LIBS 
         ${CMAKE_DL_LIBS}
         rt)
@@ -61,20 +64,24 @@ if (${WITH_ENABLED_IPC} STREQUAL "CAPI")
     set(INCLUDE_FOLDER "include")
         
     # Include CommonAPI ... 
-    INCLUDE (CommonAPI)
+    INCLUDE (../cmake/CommonAPI.cmake)
     
     # load all the necessary libraries 
-    # LOAD_COMMONAPI() without argument will use the CACHE variable COMMONAPI_USED_BINDING (0-DBus, 1-SomeIP).
-    # It can be called with DBUS or SOMEIP as parameter: LOAD_COMMONAPI(DBUS) , LOAD_COMMONAPI(SOMEIP) which will overwrite COMMONAPI_USED_BINDING.
-    LOAD_COMMONAPI()
+    # LOAD_COMMONAPI() without argument will use the CACHE variable SELECTED_CAPI_BINDING (0-DBus, 1-SomeIP).
+    # It can be called with DBUS or SOMEIP as parameter: LOAD_COMMONAPI(DBUS) , LOAD_COMMONAPI(SOMEIP) which will overwrite SELECTED_CAPI_BINDING.
+    LOAD_COMMONAPI_LIB()
+    LOAD_COMMONAPI_DBUS_LIB()
+	LOAD_COMMONAPI_SOMEIP_LIB()
     
-        
-    IF(${COMMONAPI_USED_BINDING} EQUAL 1)#SomeIP
-	  	SET(SRC_GEN src-gen/v${COMMONAPI_SOMEIP_VERSION_NUMBER}/someip)
-		SET(CAPI_BINDING_FIDLS fidl/CommandInterface.fdepl fidl/AudioManagerTypes.fdepl)	
+    
+    IF(${SELECTED_CAPI_BINDING} EQUAL 1)#SomeIP
+        SET(BINDING_SUFFIX SomeIP)
+	  	SET(SRC_GEN src-gen/v${COMMONAPI_SOMEIP_VERSION_NUMBER}/${BINDING_SUFFIX})
+		SET(CAPI_BINDING_FIDLS fidl/CommandInterface.fdepl fidl/AudioManagerTypes.fdepl ) #fidl/CommandInterfaceProviderSomeIp.fdepl	
 	ELSE()#Dbus
-	   	SET(SRC_GEN src-gen/v${COMMONAPI_DBUS_VERSION_NUMBER}/dbus)
-	    SET(CAPI_BINDING_FIDLS fidl/CommandInterface.fidl fidl/AudioManagerTypes.fdepl)	
+	    SET(BINDING_SUFFIX DBus)
+	   	SET(SRC_GEN src-gen/v${COMMONAPI_DBUS_VERSION_NUMBER}/${BINDING_SUFFIX})
+	    SET(CAPI_BINDING_FIDLS fidl/CommandInterface.fidl fidl/AudioManagerTypes.fidl)	
 	ENDIF()
     
     # Find the common-api sources. 
@@ -82,7 +89,7 @@ if (${WITH_ENABLED_IPC} STREQUAL "CAPI")
     # The ALT_DESTINATION is used as fall back if the DESTINATION directory dosen't contain the sources or you just don't want to use the generator.
     COMMON_API_GENERATE_SOURCES(
                                 # Prefix.
-                                TARGET COMMON_API_COMMAND_INTERFACE 
+                                TARGET COMMAND_CTR 
                                 # A list with fidls for the generic generator.
                                 FIDLS_GENERIC fidl/CommandInterface.fidl
                                 # A list with fidls for the binding generator.
@@ -92,7 +99,7 @@ if (${WITH_ENABLED_IPC} STREQUAL "CAPI")
                                 # An alternative relative/absolute path with common-api sources, usually in the source tree.
                                 ALT_DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/src-gen
                                 )
-    
+
     INCLUDE_DIRECTORIES(
     	${CMAKE_SOURCE_DIR} 
      	${CMAKE_CURRENT_BINARY_DIR}
@@ -100,31 +107,113 @@ if (${WITH_ENABLED_IPC} STREQUAL "CAPI")
     	${AUDIOMANAGER_INCLUDE_FOLDER}
     	${AUDIOMANAGER_UTILITIES_INCLUDE}
     	${COMMONAPI_INCLUDE_DIRS}
-    	${COMMON_API_COMMAND_INTERFACE_GEN_INCLUDE_DIR}
+    	${COMMAND_CTR_GEN_INCLUDE_DIR}
     	${INCLUDE_FOLDER}
     )
-    
+ 
         # all source files go here
     file(GLOB PLUGINCAPI_SRCS_CXX "src/*.cpp" )
-    SET(PLUGINCAPI_SRCS_CXX ${PLUGINCAPI_SRCS_CXX} ${COMMON_API_COMMAND_INTERFACE_GEN_SOURCES})
-    IF(${COMMONAPI_USED_BINDING} EQUAL 0)# CommonAPI-DBus
-        INCLUDE_DIRECTORIES(${INCLUDE_DIRECTORIES}
-                ${COMMONAPI_DBUS_INCLUDE_DIRS}
-                ${DBUS_INCLUDE_DIRS})	   
-   ELSE()# CommonAPI-SomeIP
-       	INCLUDE_DIRECTORIES(${INCLUDE_DIRECTORIES}
-                ${VSOMEIP_INCLUDE_DIRS}
-                ${COMMONAPI_SOMEIP_INCLUDE_DIRS})
 
-        SET(DEFAULT_SOMEIP_BINDING_LIB local__org_genivi_am_commandinterface_CommandControl__org_genivi_audiomanager)  
-		#SET(DEFAULT_SOMEIP_BINDING_LIB Command-SomeIP)         
+    SET(PLUGINCAPI_SRCS_CXX ${PLUGINCAPI_SRCS_CXX} ${COMMAND_CTR_GEN_COMMON_SOURCES})
+    
+    INCLUDE_DIRECTORIES(${INCLUDE_DIRECTORIES}
+            ${COMMONAPI_DBUS_INCLUDE_DIRS}
+            ${DBUS_INCLUDE_DIRS}	   
+            ${VSOMEIP_INCLUDE_DIRS}
+            ${COMMONAPI_SOMEIP_INCLUDE_DIRS})
+            
+    IF(WITH_COMMAND_INTERFACE_GLUE_LIBS)
+    
+        SET(STUB_COMMANDCONTROL_BINDING CommandControlStubs-${BINDING_SUFFIX} )
+        SET(PROXY_COMMANDCONTROL_BINDING CommandControlProxies-${BINDING_SUFFIX} )
+        
+        SET(STUB_COMMANDCONTROL_BINDING_LIB lib${STUB_COMMANDCONTROL_BINDING}.so )
+        SET(PROXY_COMMANDCONTROL_BINDING_LIB lib${PROXY_COMMANDCONTROL_BINDING}.so )
+        
+        SET(STUB_COMMANDCONTROL_BINDING_LIB ${STUB_COMMANDCONTROL_BINDING_LIB} PARENT_SCOPE)
+        SET(PROXY_COMMANDCONTROL_BINDING_LIB ${PROXY_COMMANDCONTROL_BINDING_LIB} PARENT_SCOPE)
+              
+        add_library (${STUB_COMMANDCONTROL_BINDING} SHARED ${COMMAND_CTR_GEN_BINDING_STUB_SOURCES} ${COMMAND_CTR_GEN_BINDING_DEPLOYMENT_SOURCES})
+        add_library (${PROXY_COMMANDCONTROL_BINDING} SHARED ${COMMAND_CTR_GEN_BINDING_PROXY_SOURCES} ${COMMAND_CTR_GEN_BINDING_DEPLOYMENT_SOURCES})
+        
+    	target_link_libraries(${STUB_COMMANDCONTROL_BINDING} ${CommonAPI-${BINDING_SUFFIX}_LIBRARY})
+	    target_link_libraries(${PROXY_COMMANDCONTROL_BINDING} ${CommonAPI-${BINDING_SUFFIX}_LIBRARY})
+        
+    	set_target_properties(${STUB_COMMANDCONTROL_BINDING} PROPERTIES 
+    	                            LINKER_LANGUAGE CXX 
+    	                            LIBRARY_OUTPUT_DIRECTORY ${PLUGINS_OUTPUT_PATH})
+    	set_target_properties(${PROXY_COMMANDCONTROL_BINDING} PROPERTIES 
+    	                            LINKER_LANGUAGE CXX 
+    	                            LIBRARY_OUTPUT_DIRECTORY ${PLUGINS_OUTPUT_PATH})
+    	                            
+    	INSTALL(TARGETS ${STUB_COMMANDCONTROL_BINDING} ${PROXY_COMMANDCONTROL_BINDING}
+            DESTINATION lib/${LIB_INSTALL_SUFFIX}/
+            PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
+            COMPONENT plugin) 
+        
+        GET_PROPERTY(CONFIG_INSTALLED GLOBAL PROPERTY CAPI_CONFIG_INSTALLED)
+        IF(NOT CONFIG_INSTALLED)
+            SET_PROPERTY(GLOBAL PROPERTY CAPI_CONFIG_INSTALLED ON)
+            SET(CONFIG_INI_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/commonapi4${BINDING_SUFFIX}.ini )
+     
+            configure_file(${CONFIG_INI_PATH} ${CMAKE_BINARY_DIR}/commonapi-bin.ini COPYONLY)
+            configure_file(${CONFIG_INI_PATH} ${CMAKE_BINARY_DIR}/commonapi-depl.ini COPYONLY) 
 
-		add_library (${DEFAULT_SOMEIP_BINDING_LIB} SHARED ${COMMON_API_COMMAND_INTERFACE_GEN_SOURCES})
-		target_link_libraries(${DEFAULT_SOMEIP_BINDING_LIB} ${CommonAPI-SomeIP_LIBRARY})
-		set_target_properties(${DEFAULT_SOMEIP_BINDING_LIB} PROPERTIES LINKER_LANGUAGE CXX)
-   ENDIF()
-    
-    
+            SET(CONFIG_INI_DEPL_PATH ${CMAKE_BINARY_DIR}/commonapi-depl.ini)
+            SET(CONFIG_INI_DEPL_PATH ${CONFIG_INI_DEPL_PATH} PARENT_SCOPE)
+            SET(CONFIG_INI_BIN_PATH ${CMAKE_BINARY_DIR}/commonapi-bin.ini)
+            SET(CONFIG_INI_BIN_PATH ${CONFIG_INI_BIN_PATH} PARENT_SCOPE)
+            
+            configure_file(${CONFIG_INI_PATH} ${CMAKE_BINARY_DIR}/commonapi-test.ini COPYONLY) 
+            SET(CONFIG_INI_TEST_PATH ${CMAKE_BINARY_DIR}/commonapi-test.ini)
+            SET(CONFIG_INI_TEST_PATH ${CONFIG_INI_TEST_PATH} PARENT_SCOPE) 
+            
+            INSTALL(FILES ${CMAKE_BINARY_DIR}/commonapi-depl.ini
+                        DESTINATION /etc
+                        PERMISSIONS OWNER_WRITE OWNER_READ GROUP_WRITE GROUP_READ WORLD_READ
+                        COMPONENT bin
+                        RENAME commonapi.ini) 
+            INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/vsomeip.json
+                    DESTINATION /etc
+                    PERMISSIONS OWNER_WRITE OWNER_READ GROUP_WRITE GROUP_READ WORLD_READ
+                    COMPONENT bin) 
+         ENDIF(NOT CONFIG_INSTALLED)   
+            
+        FILE(READ ${CONFIG_INI_DEPL_PATH} CONFIG_INI)
+        
+        SET(CommandControl "local:org.genivi.am.commandinterface.CommandControl:org.genivi.audiomanager") 
+                
+        STRING(REPLACE "[stub]" 
+                        "[stub]\n${CommandControl}=../lib/audiomanager/plugins/${STUB_COMMANDCONTROL_BINDING_LIB}" 
+                       CONFIG_INI_DEPLYMENT 
+                       ${CONFIG_INI})
+        STRING(REPLACE "[proxy]" 
+                       "[proxy]\n${CommandControl}=../lib/audiomanager/plugins/${PROXY_COMMANDCONTROL_BINDING_LIB}" 
+                       CONFIG_INI_DEPLYMENT 
+                       ${CONFIG_INI_DEPLYMENT})
+        FILE(WRITE ${CONFIG_INI_DEPL_PATH} ${CONFIG_INI_DEPLYMENT})          
+        
+        IF(NOT ${EXECUTABLE_OUTPUT_PATH} STREQUAL "")    
+            FILE(READ ${CONFIG_INI_BIN_PATH} CONFIG_INI)
+            
+            STRING(REPLACE "[stub]" 
+                            "[stub]\n${CommandControl}=plugins/${STUB_COMMANDCONTROL_BINDING_LIB}" 
+                           CONFIG_INI_BIN 
+                           ${CONFIG_INI})
+            STRING(REPLACE "[proxy]" 
+                           "[proxy]\n${CommandControl}=plugins/${PROXY_COMMANDCONTROL_BINDING_LIB}" 
+                           CONFIG_INI_BIN 
+                           ${CONFIG_INI_BIN})
+            FILE(WRITE ${CONFIG_INI_BIN_PATH} ${CONFIG_INI_BIN})               
+
+            configure_file( ${CONFIG_INI_BIN_PATH}  ${EXECUTABLE_OUTPUT_PATH}/commonapi.ini COPYONLY)
+            configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/vsomeip.json ${EXECUTABLE_OUTPUT_PATH}/vsomeip.json COPYONLY)
+
+        ENDIF()
+                                           
+	ENDIF(WITH_COMMAND_INTERFACE_GLUE_LIBS)                          
+
+   
     IF(WITH_DLT)
         INCLUDE_DIRECTORIES(${INCLUDE_DIRECTORIES} ${DLT_INCLUDE_DIRS})
         set (AM_LINK_LIBS ${AM_LINK_LIBS} ${DLT_LIBRARIES})
@@ -132,27 +221,28 @@ if (${WITH_ENABLED_IPC} STREQUAL "CAPI")
         
     add_library(PluginCommandInterfaceCAPI MODULE ${PLUGINCAPI_SRCS_CXX})
     set (AM_LINK_LIBS ${AM_LINK_LIBS} ${CommonAPI_LIBRARY})
-    if(${COMMONAPI_USED_BINDING} EQUAL 0)
-       set (AM_LINK_LIBS ${AM_LINK_LIBS} 
-                        ${CommonAPI-DBus_LIBRARY}
-                        ${DBUS_LIBRARIES}
-                        ${CommonAPI_LIBRARY})
-   else()
-       set (AM_LINK_LIBS ${AM_LINK_LIBS} 
-                        ${CommonAPI-SomeIP_LIBRARY}
-                        ${CommonAPI_LIBRARY})
-   endif()
+#    if(${SELECTED_CAPI_BINDING} EQUAL 0)
+#       set (AM_LINK_LIBS ${AM_LINK_LIBS} 
+#                        ${CommonAPI-DBus_LIBRARY}
+#                        ${DBUS_LIBRARIES}
+#                        )
+#   else()
+#       set (AM_LINK_LIBS ${AM_LINK_LIBS} 
+#                        ${CommonAPI-SomeIP_LIBRARY}
+#                        ${vsomeip_LIBRARY}
+#                        )
+#   endif()
     
     TARGET_LINK_LIBRARIES(PluginCommandInterfaceCAPI ${AM_LINK_LIBS})
-    
-    IF(WITH_TESTS)
-    	add_subdirectory (test)
-    ENDIF(WITH_TESTS)
-             
+                 
     install(TARGETS PluginCommandInterfaceCAPI          
             DESTINATION lib/${LIB_INSTALL_SUFFIX}/command
             PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
             COMPONENT plugin
     )
+    
+    IF(WITH_TESTS)
+    	add_subdirectory (test)
+    ENDIF(WITH_TESTS)   
 
-endif (${WITH_ENABLED_IPC} STREQUAL "CAPI")
+endif (WITH_CAPI_WRAPPER)

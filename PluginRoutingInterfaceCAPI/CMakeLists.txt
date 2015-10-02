@@ -42,16 +42,21 @@ if (NOT DAEMONVERSION)
     endif(AUDIOMANAGER_FOUND)
 endif (NOT DAEMONVERSION)        
 
-IF(${WITH_ENABLED_IPC} STREQUAL "CAPI")
+IF(WITH_CAPI_WRAPPER)
+
+OPTION (WITH_ROUTING_INTERFACE_GLUE_LIBS
+            "build routing iterface common-api glue code" OFF )
 
     set(INCLUDE_FOLDER "include")
     # Include CommonAPI ... 
-    INCLUDE (CommonAPI)
+    INCLUDE (../cmake/CommonAPI.cmake)
     
     # load all the necessary libraries 
-    # LOAD_COMMONAPI() without argument will use the CACHE variable COMMONAPI_USED_BINDING (0-DBus, 1-SomeIP).
-    # It can be called with DBUS or SOMEIP as parameter: LOAD_COMMONAPI(DBUS) , LOAD_COMMONAPI(SOMEIP) which will overwrite COMMONAPI_USED_BINDING.
-    LOAD_COMMONAPI()
+    # LOAD_COMMONAPI() without argument will use the CACHE variable SELECTED_CAPI_BINDING (0-DBus, 1-SomeIP).
+    # It can be called with DBUS or SOMEIP as parameter: LOAD_COMMONAPI(DBUS) , LOAD_COMMONAPI(SOMEIP) which will overwrite SELECTED_CAPI_BINDING.
+    LOAD_COMMONAPI_LIB()
+    LOAD_COMMONAPI_DBUS_LIB()
+	LOAD_COMMONAPI_SOMEIP_LIB()
     
     set(LIBRARY_OUTPUT_PATH ${PLUGINS_OUTPUT_PATH}/routing)
     
@@ -66,16 +71,18 @@ IF(${WITH_ENABLED_IPC} STREQUAL "CAPI")
     # The sources can be placed in the build directory (DESTINATION) or in the source tree (ALT_DESTINATION). 
     # The ALT_DESTINATION is used as fall back if the DESTINATION directory dosen't contain the sources or you just don't want to use the generator.
   
-	IF(${COMMONAPI_USED_BINDING} EQUAL 1)#SomeIP
-	  	SET(SRC_GEN src-gen/v${COMMONAPI_SOMEIP_VERSION_NUMBER}/someip)
-		SET(CAPI_BINDING_FIDLS fidl/RoutingInterface.fdepl fidl/AudioManagerTypes.fdepl)	
+	IF(${SELECTED_CAPI_BINDING} EQUAL 1)#SomeIP
+	    SET(BINDING_SUFFIX SomeIP)
+	  	SET(SRC_GEN src-gen/v${COMMONAPI_SOMEIP_VERSION_NUMBER}/${BINDING_SUFFIX})
+		SET(CAPI_BINDING_FIDLS fidl/RoutingInterface.fdepl fidl/AudioManagerTypes.fdepl ) # fidl/RoutingInterfaceProviderSomeIp.fdepl	
 	ELSE()#Dbus
-	   	SET(SRC_GEN src-gen/v${COMMONAPI_DBUS_VERSION_NUMBER}/dbus)
+	    SET(BINDING_SUFFIX DBus)
+	   	SET(SRC_GEN src-gen/v${COMMONAPI_DBUS_VERSION_NUMBER}/${BINDING_SUFFIX})
 	    SET(CAPI_BINDING_FIDLS fidl/RoutingInterface.fidl fidl/AudioManagerTypes.fdepl)	
 	ENDIF()
     COMMON_API_GENERATE_SOURCES(
                                 # Prefix.
-                                TARGET COMMON_API_ROUTING_INTERFACE 
+                                TARGET ROUTING 
                                 # A list with fidls for the generic generator.
                                 FIDLS_GENERIC fidl/RoutingInterface.fidl 
                                 # A list with fidls for the binding generator.
@@ -95,60 +102,146 @@ IF(${WITH_ENABLED_IPC} STREQUAL "CAPI")
     	${AUDIOMANAGER_INCLUDE_FOLDER}
     	${AUDIOMANAGER_UTILITIES_INCLUDE}
     	${COMMONAPI_INCLUDE_DIRS}
-    	${COMMON_API_ROUTING_INTERFACE_GEN_INCLUDE_DIR}
+    	${ROUTING_GEN_INCLUDE_DIR}
     	${INCLUDE_FOLDER}
     )
     
      # all source files go here
     file(GLOB PLUGINCAPI_SRCS_CXX "src/*.cpp" )
-	SET(PLUGINCAPI_SRCS_CXX ${PLUGINCAPI_SRCS_CXX} ${COMMON_API_ROUTING_INTERFACE_GEN_SOURCES})
-    IF(${COMMONAPI_USED_BINDING} EQUAL 0)
-        INCLUDE_DIRECTORIES(${INCLUDE_DIRECTORIES}
-                ${COMMONAPI_DBUS_INCLUDE_DIRS}
-                ${DBUS_INCLUDE_DIRS})	
+	SET(PLUGINCAPI_SRCS_CXX 
+	    ${PLUGINCAPI_SRCS_CXX} 
+        ${ROUTING_GEN_COMMON_SOURCES}
+	    )
+	
+   	INCLUDE_DIRECTORIES(${INCLUDE_DIRECTORIES}
+	    		    ${VSOMEIP_INCLUDE_DIRS}
+    	    		${COMMONAPI_SOMEIP_INCLUDE_DIRS}
+    	    		${COMMONAPI_DBUS_INCLUDE_DIRS}
+                    ${DBUS_INCLUDE_DIRS}
+                    ${ROUTING_GEN_INCLUDE_DIR}
+                    )
+	
+    IF(WITH_ROUTING_INTERFACE_GLUE_LIBS)
+        SET(STUB_ROUTINGCONTROL_BINDING RoutingStubs-${BINDING_SUFFIX} )
+        SET(PROXY_ROUTINGCONTROL_BINDING RoutingProxies-${BINDING_SUFFIX} )
+                
+        SET(STUB_ROUTINGCONTROL_BINDING_LIB lib${STUB_ROUTINGCONTROL_BINDING}.so )
+        SET(PROXY_ROUTINGCONTROL_BINDING_LIB lib${PROXY_ROUTINGCONTROL_BINDING}.so )
+                
+        SET(STUB_ROUTINGCONTROL_BINDING_LIB ${STUB_ROUTINGCONTROL_BINDING_LIB} PARENT_SCOPE )
+        SET(PROXY_ROUTINGCONTROL_BINDING_LIB ${PROXY_ROUTINGCONTROL_BINDING_LIB} PARENT_SCOPE )
+                      
+        add_library (${STUB_ROUTINGCONTROL_BINDING} SHARED ${ROUTING_GEN_BINDING_STUB_SOURCES} ${ROUTING_GEN_BINDING_DEPLOYMENT_SOURCES})
+        add_library (${PROXY_ROUTINGCONTROL_BINDING} SHARED ${ROUTING_GEN_BINDING_PROXY_SOURCES} ${ROUTING_GEN_BINDING_DEPLOYMENT_SOURCES})
+                  	
+    	target_link_libraries(${STUB_ROUTINGCONTROL_BINDING} ${CommonAPI-${BINDING_SUFFIX}_LIBRARY})
+	    target_link_libraries(${PROXY_ROUTINGCONTROL_BINDING} ${CommonAPI-${BINDING_SUFFIX}_LIBRARY})
+    	
+    	set_target_properties(${STUB_ROUTINGCONTROL_BINDING} PROPERTIES 
+    	                            LINKER_LANGUAGE CXX 
+    	                            LIBRARY_OUTPUT_DIRECTORY ${PLUGINS_OUTPUT_PATH})
+    	set_target_properties(${PROXY_ROUTINGCONTROL_BINDING} PROPERTIES 
+    	                            LINKER_LANGUAGE CXX 
+    	                            LIBRARY_OUTPUT_DIRECTORY ${PLUGINS_OUTPUT_PATH})  	    	
         
-   ELSE()
-       	INCLUDE_DIRECTORIES(${INCLUDE_DIRECTORIES}
-        	    		    ${VSOMEIP_INCLUDE_DIRS}
-            	    		${COMMONAPI_SOMEIP_INCLUDE_DIRS})
-    	SET(DEFAULT_SOMEIP_BINDING_LIB1 local__org_genivi_am_routinginterface_RoutingControlObserver__sd)    
-    	SET(DEFAULT_SOMEIP_BINDING_LIB2 local__org_genivi_am_routinginterface_RoutingControl__sd)
-    
-     	#SET(DEFAULT_SOMEIP_BINDING_LIB1 Routing-SomeIP)    
-       	     
-       	add_library (${DEFAULT_SOMEIP_BINDING_LIB1} SHARED ${COMMON_API_ROUTING_INTERFACE_GEN_SOURCES})
-	  	target_link_libraries(${DEFAULT_SOMEIP_BINDING_LIB1} ${CommonAPI-SomeIP_LIBRARY})
-		set_target_properties(${DEFAULT_SOMEIP_BINDING_LIB1} PROPERTIES LINKER_LANGUAGE CXX)    
-		
-		add_library (${DEFAULT_SOMEIP_BINDING_LIB2} SHARED ${COMMON_API_ROUTING_INTERFACE_GEN_SOURCES})
-	  	target_link_libraries(${DEFAULT_SOMEIP_BINDING_LIB2} ${CommonAPI-SomeIP_LIBRARY})
-		set_target_properties(${DEFAULT_SOMEIP_BINDING_LIB2} PROPERTIES LINKER_LANGUAGE CXX)     
-				     
-   ENDIF()
+        INSTALL(TARGETS ${PROXY_ROUTINGCONTROL_BINDING} ${STUB_ROUTINGCONTROL_BINDING}
+            DESTINATION lib/${LIB_INSTALL_SUFFIX}/
+            PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
+            COMPONENT plugin)
+              
+       GET_PROPERTY(CONFIG_INSTALLED GLOBAL PROPERTY CAPI_CONFIG_INSTALLED)
+
+        IF(NOT CONFIG_INSTALLED)
+            SET_PROPERTY(GLOBAL PROPERTY CAPI_CONFIG_INSTALLED ON)
+            SET(CONFIG_INI_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/commonapi4${BINDING_SUFFIX}.ini )
+            configure_file(${CONFIG_INI_PATH} ${CMAKE_BINARY_DIR}/commonapi-bin.ini COPYONLY)
+            configure_file(${CONFIG_INI_PATH} ${CMAKE_BINARY_DIR}/commonapi-depl.ini COPYONLY) 
+                        
+            SET(CONFIG_INI_DEPL_PATH ${CMAKE_BINARY_DIR}/commonapi-depl.ini)
+            SET(CONFIG_INI_DEPL_PATH ${CONFIG_INI_DEPL_PATH} PARENT_SCOPE)
+            SET(CONFIG_INI_BIN_PATH ${CMAKE_BINARY_DIR}/commonapi-bin.ini)
+            SET(CONFIG_INI_BIN_PATH ${CONFIG_INI_BIN_PATH} PARENT_SCOPE)
+            configure_file(${CONFIG_INI_PATH} ${CMAKE_BINARY_DIR}/commonapi-test.ini COPYONLY)      
+            SET(CONFIG_INI_TEST_PATH ${CMAKE_BINARY_DIR}/commonapi-test.ini)
+            SET(CONFIG_INI_TEST_PATH ${CONFIG_INI_TEST_PATH} PARENT_SCOPE)   
+
+            INSTALL(FILES ${CMAKE_BINARY_DIR}/commonapi-depl.ini
+                        DESTINATION /etc
+                        PERMISSIONS OWNER_WRITE OWNER_READ GROUP_WRITE GROUP_READ WORLD_READ
+                        COMPONENT bin
+                        RENAME commonapi.ini) 
+            INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/vsomeip.json
+                    DESTINATION /etc
+                    PERMISSIONS OWNER_WRITE OWNER_READ GROUP_WRITE GROUP_READ WORLD_READ
+                    COMPONENT bin) 
+            
+        ENDIF (NOT CONFIG_INSTALLED)
+       
+       
+        FILE(READ ${CONFIG_INI_DEPL_PATH} CONFIG_INI)
+        
+        SET(RoutingControlObserver "local:org.genivi.am.routinginterface.RoutingControlObserver:org.genivi.audiomanager") 
+        SET(RoutingControl "local:org.genivi.am.routinginterface.RoutingControl:RoutingControlInstance2") 
+
+        STRING(REPLACE "[stub]" 
+                        "[stub]\n${RoutingControlObserver}=../lib/audiomanager/plugins/${STUB_ROUTINGCONTROL_BINDING_LIB}\n${RoutingControl}=../lib/audiomanager/plugins/${STUB_ROUTINGCONTROL_BINDING_LIB}" 
+                       CONFIG_INI_DEPLYMENT 
+                       ${CONFIG_INI})
+        STRING(REPLACE "[proxy]" 
+                       "[proxy]\n${RoutingControlObserver}=../lib/audiomanager/plugins/${PROXY_ROUTINGCONTROL_BINDING_LIB}\n${RoutingControl}=../lib/audiomanager/plugins/${PROXY_ROUTINGCONTROL_BINDING_LIB}" 
+                       CONFIG_INI_DEPLYMENT 
+                       ${CONFIG_INI_DEPLYMENT})
+        FILE(WRITE ${CONFIG_INI_DEPL_PATH} ${CONFIG_INI_DEPLYMENT})          
+        
+        IF(NOT ${EXECUTABLE_OUTPUT_PATH} STREQUAL "")    
+            FILE(READ ${CONFIG_INI_BIN_PATH} CONFIG_INI)
+            STRING(REPLACE "[stub]" 
+                        "[stub]\n${RoutingControlObserver}=plugins/${STUB_ROUTINGCONTROL_BINDING_LIB}\n${RoutingControl}=plugins/${STUB_ROUTINGCONTROL_BINDING_LIB}" 
+                       CONFIG_INI_BIN 
+                       ${CONFIG_INI})
+            STRING(REPLACE "[proxy]" 
+                           "[proxy]\n${RoutingControlObserver}=plugins/${PROXY_ROUTINGCONTROL_BINDING_LIB}\n${RoutingControl}=plugins/${PROXY_ROUTINGCONTROL_BINDING_LIB}" 
+                           CONFIG_INI_BIN 
+                           ${CONFIG_INI_BIN})
+            
+            FILE(WRITE ${CONFIG_INI_BIN_PATH} ${CONFIG_INI_BIN})               
+            configure_file( ${CONFIG_INI_BIN_PATH}  ${EXECUTABLE_OUTPUT_PATH}/commonapi.ini COPYONLY)
+            configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/vsomeip.json ${EXECUTABLE_OUTPUT_PATH}/vsomeip.json COPYONLY)
+
+        ENDIF()
+                     
+            
+   ENDIF(WITH_ROUTING_INTERFACE_GLUE_LIBS)  	    		
+
      
     add_library(PluginRoutingInterfaceCAPI MODULE ${PLUGINCAPI_SRCS_CXX})
     
     TARGET_LINK_LIBRARIES(PluginRoutingInterfaceCAPI 
         ${DLT_LIBRARIES}
         ${CommonAPI_LIBRARY}
-        ${DBUS_LIBRARIES}
+#        ${DBUS_LIBRARIES}
     )
     
-   if(${COMMONAPI_USED_BINDING} EQUAL 0)
-		TARGET_LINK_LIBRARIES(PluginRoutingInterfaceCAPI  ${CommonAPI-DBus_LIBRARY} )
-   else()
-		TARGET_LINK_LIBRARIES(PluginRoutingInterfaceCAPI  ${CommonAPI-SomeIP_LIBRARY} )
-   endif()
-    
-    IF(WITH_TESTS)
-    	add_subdirectory (test)
-    ENDIF(WITH_TESTS)
-   
-    
+#   if(${SELECTED_CAPI_BINDING} EQUAL 0)
+#		TARGET_LINK_LIBRARIES(PluginRoutingInterfaceCAPI  
+#		                ${DBUS_LIBRARIES} 
+#		                ${CommonAPI-DBus_LIBRARY} 
+#		                )
+#   else()
+#		TARGET_LINK_LIBRARIES(PluginRoutingInterfaceCAPI  
+#                        ${vsomeip_LIBRARY} 
+#                        ${CommonAPI-SomeIP_LIBRARY} 
+#                        )
+#   endif()
+        
     INSTALL(TARGETS PluginRoutingInterfaceCAPI 
             DESTINATION lib/${LIB_INSTALL_SUFFIX}/routing
             PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
             COMPONENT plugin
     )
 
-ENDIF(${WITH_ENABLED_IPC} STREQUAL "CAPI")
+    IF(WITH_TESTS)
+    	add_subdirectory (test)
+    ENDIF(WITH_TESTS)
+    
+ENDIF(WITH_CAPI_WRAPPER)
