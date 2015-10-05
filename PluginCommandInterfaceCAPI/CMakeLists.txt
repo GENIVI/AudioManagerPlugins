@@ -46,8 +46,22 @@ endif (NOT DAEMONVERSION)
 set(LIBRARY_OUTPUT_PATH ${PLUGINS_OUTPUT_PATH}/command)
 
 if (WITH_CAPI_WRAPPER)
+    GET_PROPERTY(_USE_CAPI_BINDING GLOBAL PROPERTY USE_CAPI_BINDING)
+    IF(NOT _USE_CAPI_BINDING)
+        set (USE_CAPI_BINDING "DBUS" CACHE STRING "Select prefered binding for common-api 'DBUS' or 'SOMEIP'")
+        set_property(CACHE USE_CAPI_BINDING PROPERTY STRINGS "DBUS" "SOMEIP") 
+        
+        IF (USE_CAPI_BINDING STREQUAL "SOMEIP")
+            set(SELECTED_CAPI_BINDING 1 CACHE INTERNAL "hide this!" FORCE)
+        ELSEIF (USE_CAPI_BINDING STREQUAL "DBUS")
+            set(SELECTED_CAPI_BINDING 0 CACHE INTERNAL "hide this!" FORCE)
+        ELSE()
+            unset(SELECTED_CAPI_BINDING CACHE)
+        ENDIF() 
+        set (WITH_CAPI_GENERATOR_IF_AVAILABLE ON CACHE INTERNAL "hide this!" FORCE)
+    ENDIF ()
 
-        OPTION (WITH_COMMAND_INTERFACE_GLUE_LIBS
+    OPTION (WITH_COMMAND_INTERFACE_GLUE_LIBS
             "build command interface common-api glue code" OFF )
 
 	if(WITH_DLT)    
@@ -64,7 +78,7 @@ if (WITH_CAPI_WRAPPER)
     set(INCLUDE_FOLDER "include")
         
     # Include CommonAPI ... 
-    INCLUDE (../cmake/CommonAPI.cmake)
+    INCLUDE (cmake/CommonAPI.cmake)
     
     # load all the necessary libraries 
     # LOAD_COMMONAPI() without argument will use the CACHE variable SELECTED_CAPI_BINDING (0-DBus, 1-SomeIP).
@@ -72,7 +86,6 @@ if (WITH_CAPI_WRAPPER)
     LOAD_COMMONAPI_LIB()
     LOAD_COMMONAPI_DBUS_LIB()
 	LOAD_COMMONAPI_SOMEIP_LIB()
-    
     
     IF(${SELECTED_CAPI_BINDING} EQUAL 1)#SomeIP
         SET(BINDING_SUFFIX SomeIP)
@@ -150,11 +163,13 @@ if (WITH_CAPI_WRAPPER)
             DESTINATION lib/${LIB_INSTALL_SUFFIX}/
             PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
             COMPONENT plugin) 
-        
-        GET_PROPERTY(CONFIG_INSTALLED GLOBAL PROPERTY CAPI_CONFIG_INSTALLED)
+                                 
+	ENDIF(WITH_COMMAND_INTERFACE_GLUE_LIBS)                          
+
+    GET_PROPERTY(CONFIG_INSTALLED GLOBAL PROPERTY CAPI_CONFIG_INSTALLED)
         IF(NOT CONFIG_INSTALLED)
             SET_PROPERTY(GLOBAL PROPERTY CAPI_CONFIG_INSTALLED ON)
-            SET(CONFIG_INI_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/commonapi4${BINDING_SUFFIX}.ini )
+            SET(CONFIG_INI_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/commonapi4${BINDING_SUFFIX}.ini )
      
             configure_file(${CONFIG_INI_PATH} ${CMAKE_BINARY_DIR}/commonapi-bin.ini COPYONLY)
             configure_file(${CONFIG_INI_PATH} ${CMAKE_BINARY_DIR}/commonapi-depl.ini COPYONLY) 
@@ -173,7 +188,7 @@ if (WITH_CAPI_WRAPPER)
                         PERMISSIONS OWNER_WRITE OWNER_READ GROUP_WRITE GROUP_READ WORLD_READ
                         COMPONENT bin
                         RENAME commonapi.ini) 
-            INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/vsomeip.json
+            INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/cmake/vsomeip.json
                     DESTINATION /etc
                     PERMISSIONS OWNER_WRITE OWNER_READ GROUP_WRITE GROUP_READ WORLD_READ
                     COMPONENT bin) 
@@ -181,38 +196,41 @@ if (WITH_CAPI_WRAPPER)
             
         FILE(READ ${CONFIG_INI_DEPL_PATH} CONFIG_INI)
         
-        SET(CommandControl "local:org.genivi.am.commandinterface.CommandControl:org.genivi.audiomanager") 
-                
-        STRING(REPLACE "[stub]" 
-                        "[stub]\n${CommandControl}=../lib/audiomanager/plugins/${STUB_COMMANDCONTROL_BINDING_LIB}" 
-                       CONFIG_INI_DEPLYMENT 
-                       ${CONFIG_INI})
-        STRING(REPLACE "[proxy]" 
-                       "[proxy]\n${CommandControl}=../lib/audiomanager/plugins/${PROXY_COMMANDCONTROL_BINDING_LIB}" 
-                       CONFIG_INI_DEPLYMENT 
-                       ${CONFIG_INI_DEPLYMENT})
+        IF(STUB_COMMANDCONTROL_BINDING_LIB AND PROXY_COMMANDCONTROL_BINDING_LIB)       
+            SET(CommandControl "local:org.genivi.am.commandinterface.CommandControl:org.genivi.audiomanager") 
+            STRING(REPLACE "[stub]" 
+                            "[stub]\n${CommandControl}=../lib/audiomanager/plugins/${STUB_COMMANDCONTROL_BINDING_LIB}" 
+                           CONFIG_INI_DEPLYMENT 
+                           ${CONFIG_INI})
+            STRING(REPLACE "[proxy]" 
+                           "[proxy]\n${CommandControl}=../lib/audiomanager/plugins/${PROXY_COMMANDCONTROL_BINDING_LIB}" 
+                           CONFIG_INI_DEPLYMENT 
+                           ${CONFIG_INI_DEPLYMENT})
+        ELSE()
+             SET(CONFIG_INI_DEPLYMENT ${CONFIG_INI})                 
+        ENDIF()               
         FILE(WRITE ${CONFIG_INI_DEPL_PATH} ${CONFIG_INI_DEPLYMENT})          
         
         IF(NOT ${EXECUTABLE_OUTPUT_PATH} STREQUAL "")    
             FILE(READ ${CONFIG_INI_BIN_PATH} CONFIG_INI)
-            
-            STRING(REPLACE "[stub]" 
-                            "[stub]\n${CommandControl}=plugins/${STUB_COMMANDCONTROL_BINDING_LIB}" 
-                           CONFIG_INI_BIN 
-                           ${CONFIG_INI})
-            STRING(REPLACE "[proxy]" 
-                           "[proxy]\n${CommandControl}=plugins/${PROXY_COMMANDCONTROL_BINDING_LIB}" 
-                           CONFIG_INI_BIN 
-                           ${CONFIG_INI_BIN})
+            IF(STUB_COMMANDCONTROL_BINDING_LIB AND PROXY_COMMANDCONTROL_BINDING_LIB) 
+                STRING(REPLACE "[stub]" 
+                                "[stub]\n${CommandControl}=plugins/${STUB_COMMANDCONTROL_BINDING_LIB}" 
+                               CONFIG_INI_BIN 
+                               ${CONFIG_INI})
+                STRING(REPLACE "[proxy]" 
+                               "[proxy]\n${CommandControl}=plugins/${PROXY_COMMANDCONTROL_BINDING_LIB}" 
+                               CONFIG_INI_BIN 
+                               ${CONFIG_INI_BIN})
+            ELSE()
+                 SET(CONFIG_INI_BIN ${CONFIG_INI})                 
+            ENDIF() 
             FILE(WRITE ${CONFIG_INI_BIN_PATH} ${CONFIG_INI_BIN})               
 
             configure_file( ${CONFIG_INI_BIN_PATH}  ${EXECUTABLE_OUTPUT_PATH}/commonapi.ini COPYONLY)
-            configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/vsomeip.json ${EXECUTABLE_OUTPUT_PATH}/vsomeip.json COPYONLY)
+            configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/cmake/vsomeip.json ${EXECUTABLE_OUTPUT_PATH}/vsomeip.json COPYONLY)
 
         ENDIF()
-                                           
-	ENDIF(WITH_COMMAND_INTERFACE_GLUE_LIBS)                          
-
    
     IF(WITH_DLT)
         INCLUDE_DIRECTORIES(${INCLUDE_DIRECTORIES} ${DLT_INCLUDE_DIRS})

@@ -22,7 +22,6 @@ PROJECT(CAmRoutingInterfaceCAPITests)
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-local-typedefs -DUNIT_TEST=1 -DDLT_CONTEXT=AudioManager")
 
 set(STD_INCLUDE_DIRS "/usr/include")
-set(EXECUTABLE_OUTPUT_PATH ${TEST_EXECUTABLE_OUTPUT_PATH})
 
 FIND_PACKAGE(Threads)
 FIND_PACKAGE(PkgConfig)
@@ -101,19 +100,33 @@ INSTALL(TARGETS AmRoutingInterfaceCAPITests
 
 IF(CONFIG_INI_TEST_PATH)
     FILE(READ ${CONFIG_INI_TEST_PATH} CONFIG_INI)
-    STRING(REPLACE "[stub]" 
-                "[stub]\n${RoutingControlObserver}=../plugins/${STUB_ROUTINGCONTROL_BINDING_LIB}\n${RoutingControl}=../plugins/${STUB_ROUTINGCONTROL_BINDING_LIB}" 
-               CONFIG_INI_TEST 
-               ${CONFIG_INI})
-    STRING(REPLACE "[proxy]" 
-                   "[proxy]\n${RoutingControlObserver}=../plugins/${PROXY_ROUTINGCONTROL_BINDING_LIB}\n${RoutingControl}=../plugins/${PROXY_ROUTINGCONTROL_BINDING_LIB}" 
+    IF(STUB_ROUTINGCONTROL_BINDING_LIB AND PROXY_ROUTINGCONTROL_BINDING_LIB) 
+        IF(NOT ${EXECUTABLE_OUTPUT_PATH} STREQUAL "") 
+            STRING(REPLACE "[stub]" 
+                        "[stub]\n${RoutingControlObserver}=../plugins/${STUB_ROUTINGCONTROL_BINDING_LIB}\n${RoutingControl}=../plugins/${STUB_ROUTINGCONTROL_BINDING_LIB}" 
+                       CONFIG_INI_TEST 
+                       ${CONFIG_INI})
+            STRING(REPLACE "[proxy]" 
+                           "[proxy]\n${RoutingControlObserver}=../plugins/${PROXY_ROUTINGCONTROL_BINDING_LIB}\n${RoutingControl}=../plugins/${PROXY_ROUTINGCONTROL_BINDING_LIB}" 
+                           CONFIG_INI_TEST 
+                           ${CONFIG_INI_TEST})
+        ELSE()
+            STRING(REPLACE "[stub]" 
+                    "[stub]\n${RoutingControlObserver}=${STUB_ROUTINGCONTROL_BINDING_LIB}\n${RoutingControl}=${STUB_ROUTINGCONTROL_BINDING_LIB}" 
                    CONFIG_INI_TEST 
-                   ${CONFIG_INI_TEST})
-    
+                   ${CONFIG_INI})
+        STRING(REPLACE "[proxy]" 
+                       "[proxy]\n${RoutingControlObserver}=${PROXY_ROUTINGCONTROL_BINDING_LIB}\n${RoutingControl}=${PROXY_ROUTINGCONTROL_BINDING_LIB}" 
+                       CONFIG_INI_TEST 
+                       ${CONFIG_INI_TEST})                                   
+        ENDIF()                 
+    ELSE()
+        SET(CONFIG_INI_TEST ${CONFIG_INI})                                    
+    ENDIF() 
     FILE(WRITE ${CONFIG_INI_TEST_PATH} ${CONFIG_INI_TEST}) 
                     
     configure_file( ${CONFIG_INI_TEST_PATH} ${TEST_EXECUTABLE_OUTPUT_PATH}/commonapi.ini COPYONLY)
-    configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/vsomeip.json ${TEST_EXECUTABLE_OUTPUT_PATH}/vsomeip.json COPYONLY)  
+    configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/vsomeip.json ${TEST_EXECUTABLE_OUTPUT_PATH}/vsomeip.json COPYONLY)  
     
     
     GET_PROPERTY(TEST_CONFIG_INSTALLED GLOBAL PROPERTY CAPI_TEST_CONFIG_INSTALLED)
@@ -125,3 +138,5 @@ IF(CONFIG_INI_TEST_PATH)
                                 COMPONENT plugin-tests)
     ENDIF(NOT TEST_CONFIG_INSTALLED) 
 ENDIF(CONFIG_INI_TEST_PATH)
+
+set(EXECUTABLE_OUTPUT_PATH ${TEST_EXECUTABLE_OUTPUT_PATH})

@@ -330,7 +330,7 @@ MACRO(EXECUTE_GENERATOR)
     	SET(GENERATE_STUB 0) 
     ENDIF()
     SET(${PARAMS_TARGET}_GEN_INCLUDE_DIR ${PARAMS_DESTINATION} PARENT_SCOPE)
-        
+       
     # searching for common-api-generator executable ...
     FIND_AND_EXEC_GENERATOR(${COMMONAPI_GENERATOR_EXECUTABLE} ${GENERATE_STUB} "${IN_FIDLS_GENERIC}")
     SET(GENERIC_DST ${TEMP_GEN_DST})
@@ -374,7 +374,7 @@ FUNCTION(COMMON_API_GENERATE_SOURCES)
          set(PARAMS_DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/${PARAMS_ALT_DESTINATION})
     endif()
     # check the cmake option, whether to use the generator or not ...
-    IF(NOT WITH_COMMON_API_GEN)
+    IF(NOT WITH_CAPI_GENERATOR_IF_AVAILABLE)
         message(STATUS "Looking for generated common-api files...")
         # check which of the given folders exists and get it as destination
         IF(EXISTS ${PARAMS_DESTINATION})

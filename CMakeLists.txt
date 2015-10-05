@@ -33,23 +33,7 @@ OPTION(WITH_ROUTING_INTERFACE_CAPI
        "build with routing iterface common-api plugin" ON)   
 OPTION(WITH_ROUTING_INTERFACE_DBUS
        "build with routing iterface dbus plugin" OFF)        
-       
-IF (WITH_CAPI_WRAPPER) 
-    set (USE_CAPI_BINDING "DBUS" CACHE STRING "Select prefered binding for common-api 'DBUS' or 'SOMEIP'")
-    set_property(CACHE USE_CAPI_BINDING PROPERTY STRINGS "DBUS" "SOMEIP") 
-ELSE()     
-    unset(USE_CAPI_BINDING CACHE)
-ENDIF ()
-
-IF (USE_CAPI_BINDING STREQUAL "SOMEIP")
-    set(SELECTED_CAPI_BINDING 1 CACHE INTERNAL "hide this!" FORCE)
-ELSEIF (USE_CAPI_BINDING STREQUAL "DBUS")
-    set(SELECTED_CAPI_BINDING 0 CACHE INTERNAL "hide this!" FORCE)
-ELSE()
-    unset(SELECTED_CAPI_BINDING CACHE)
-ENDIF() 
-             
-
+                    
 IF(USE_BUILD_LIBS) 
 	file(MAKE_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}/plugins")
 ENDIF(USE_BUILD_LIBS)

@@ -21,8 +21,6 @@ PROJECT(CAmCommandSenderCAPITests)
 
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-local-typedefs -DUNIT_TEST=1 -DDLT_CONTEXT=AudioManager")
 
-set(EXECUTABLE_OUTPUT_PATH ${TEST_EXECUTABLE_OUTPUT_PATH})
-
 FIND_PACKAGE(Threads)
 FIND_PACKAGE(PkgConfig)
 FIND_PACKAGE(PythonLibs REQUIRED)
@@ -98,18 +96,34 @@ INSTALL(TARGETS AmCommandSenderCAPITest
 
 IF(CONFIG_INI_TEST_PATH)
     FILE(READ ${CONFIG_INI_TEST_PATH} CONFIG_INI_TEST)
-    STRING(REPLACE "[stub]" 
-                    "[stub]\n${CommandControl}=../plugins/${STUB_COMMANDCONTROL_BINDING_LIB}" 
-                   CONFIG_INI_TEST 
-                   ${CONFIG_INI})
-    STRING(REPLACE "[proxy]" 
-                   "[proxy]\n${CommandControl}=../plugins/${PROXY_COMMANDCONTROL_BINDING_LIB}" 
-                   CONFIG_INI_TEST 
-                   ${CONFIG_INI_TEST})
+    IF(STUB_COMMANDCONTROL_BINDING_LIB AND PROXY_COMMANDCONTROL_BINDING_LIB) 
+        MESSAGE(STATUS "EXECUTABLE_OUTPUT_PATH ${EXECUTABLE_OUTPUT_PATH}")
+        IF(NOT ${EXECUTABLE_OUTPUT_PATH} STREQUAL "") 
+            STRING(REPLACE "[stub]" 
+                            "[stub]\n${CommandControl}=../plugins/${STUB_COMMANDCONTROL_BINDING_LIB}" 
+                           CONFIG_INI_TEST 
+                           ${CONFIG_INI})
+            STRING(REPLACE "[proxy]" 
+                           "[proxy]\n${CommandControl}=../plugins/${PROXY_COMMANDCONTROL_BINDING_LIB}" 
+                           CONFIG_INI_TEST 
+                           ${CONFIG_INI_TEST})
+        ELSE()
+            STRING(REPLACE "[stub]" 
+                        "[stub]\n${CommandControl}=${STUB_COMMANDCONTROL_BINDING_LIB}" 
+                       CONFIG_INI_TEST 
+                       ${CONFIG_INI})
+            STRING(REPLACE "[proxy]" 
+                           "[proxy]\n${CommandControl}=${PROXY_COMMANDCONTROL_BINDING_LIB}" 
+                           CONFIG_INI_TEST 
+                           ${CONFIG_INI_TEST})    
+       ENDIF()                        
+    ELSE()
+        SET(CONFIG_INI_TEST ${CONFIG_INI})                                    
+    ENDIF()                 
     FILE(WRITE ${CONFIG_INI_TEST_PATH} ${CONFIG_INI_TEST}) 
     
     configure_file( ${CONFIG_INI_TEST_PATH} ${TEST_EXECUTABLE_OUTPUT_PATH}/commonapi.ini COPYONLY)
-    configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/vsomeip.json ${TEST_EXECUTABLE_OUTPUT_PATH}/vsomeip.json COPYONLY)  
+    configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/vsomeip.json ${TEST_EXECUTABLE_OUTPUT_PATH}/vsomeip.json COPYONLY)  
     
     GET_PROPERTY(TEST_CONFIG_INSTALLED GLOBAL PROPERTY CAPI_TEST_CONFIG_INSTALLED)
     IF(NOT TEST_CONFIG_INSTALLED)
@@ -120,3 +134,6 @@ IF(CONFIG_INI_TEST_PATH)
                                 COMPONENT plugin-tests)
     ENDIF(NOT TEST_CONFIG_INSTALLED) 
 ENDIF(CONFIG_INI_TEST_PATH)
+
+set(EXECUTABLE_OUTPUT_PATH ${TEST_EXECUTABLE_OUTPUT_PATH})
+
