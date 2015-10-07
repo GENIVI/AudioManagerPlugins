@@ -18,10 +18,12 @@
  *  For further information see http://www.genivi.org/.
  */
 
-#include "CAmRoutingSenderDbus.h"
+#include "../../PluginRoutingInterfaceDbus/include/CAmRoutingSenderDbus.h"
+
 #include <cassert>
 #include <map>
-#include "CAmDbusSend.h"
+
+#include "../../PluginRoutingInterfaceDbus/include/CAmDbusSend.h"
 #include "CAmDltWrapper.h"
 #include "CAmDbusWrapper.h"
 
@@ -71,7 +73,7 @@ am_Error_e CAmRoutingSenderDbus::startupInterface(IAmRoutingReceive* pIAmRouting
 
 void CAmRoutingSenderDbus::getInterfaceVersion(std::string & version) const
 {
-    version = RoutingSendVersion;
+    version = RoutingVersion;
 }
 
 void CAmRoutingSenderDbus::setRoutingReady(const uint16_t handle)

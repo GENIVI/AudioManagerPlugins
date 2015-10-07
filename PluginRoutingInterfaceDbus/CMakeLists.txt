@@ -26,17 +26,16 @@ if (NOT DAEMONVERSION)
         include ("${AUDIOMANAGER_CMAKE_CONFIG_PATH}/audiomanagerConfig.cmake")
         set(PLUGINS_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}) 
         set(TEST_EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}) 
-        if(WITH_TESTS)
-            add_subdirectory(${GOOGLE_MOCK_PROJECT_FOLDER} ${CMAKE_CURRENT_BINARY_DIR}/gmock)
-        endif(WITH_TESTS)
-        
+       
         set(COMMONAPI_DBUS_CONFIGURATIONS "") 
     else(AUDIOMANAGER_FOUND)
         message(FATAL_ERROR "Could not find audiomanager cmake configuration")
     endif(AUDIOMANAGER_FOUND)
 endif (NOT DAEMONVERSION)          
 
-IF(${WITH_ENABLED_IPC} STREQUAL "DBUS")
+IF(NOT WITH_DBUS_WRAPPER)
+	message (FATAL_ERROR "For Dbus plugins you need to compile the AM WITH_DBUS_WRAPPER")
+ENDIF(NOT WITH_DBUS_WRAPPER)
 
     set(LIBRARY_OUTPUT_PATH ${PLUGINS_OUTPUT_PATH}/routing)
     set(INCLUDE_FOLDER "include")
@@ -58,13 +57,12 @@ IF(${WITH_ENABLED_IPC} STREQUAL "DBUS")
     
     CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/cmake/config.cmake ${CMAKE_CURRENT_SOURCE_DIR}/include/configRoutingDbus.h )
     
-    FIND_PACKAGE(DBUS REQUIRED)
+   	pkg_check_modules (DBUS "dbus-1 >= 1.4" REQUIRED)
     
     INCLUDE_DIRECTORIES(
     	${CMAKE_SOURCE_DIR} 
      	${CMAKE_CURRENT_BINARY_DIR}
-     	${DBUS_INCLUDE_DIR}
-    	${DBUS_ARCH_INCLUDE_DIR}
+     	${DBUS_INCLUDE_DIRS}
     	${AUDIO_INCLUDE_FOLDER}
     	${AUDIOMANAGER_INCLUDE_FOLDER}
     	${AUDIOMANAGER_UTILITIES_INCLUDE}
@@ -108,6 +106,3 @@ IF(${WITH_ENABLED_IPC} STREQUAL "DBUS")
             COMPONENT plugin
     )
     
-
-
-ENDIF(${WITH_ENABLED_IPC} STREQUAL "DBUS")

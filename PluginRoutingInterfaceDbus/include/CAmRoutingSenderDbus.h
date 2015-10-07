@@ -19,9 +19,9 @@
 #ifndef ROUTINGSENDER_H_
 #define ROUTINGSENDER_H_
 
+#include "../../PluginRoutingInterfaceDbus/include/CAmDbusMessageHandler.h"
+#include "../../PluginRoutingInterfaceDbus/include/IAmRoutingReceiverShadow.h"
 #include "IAmRouting.h"
-#include "CAmDbusMessageHandler.h"
-#include "IAmRoutingReceiverShadow.h"
 
 namespace am
 {
