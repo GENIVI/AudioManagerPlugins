@@ -70,9 +70,7 @@ IF(WITH_CAPI_WRAPPER)
     # LOAD_COMMONAPI() without argument will use the CACHE variable SELECTED_CAPI_BINDING (0-DBus, 1-SomeIP).
     # It can be called with DBUS or SOMEIP as parameter: LOAD_COMMONAPI(DBUS) , LOAD_COMMONAPI(SOMEIP) which will overwrite SELECTED_CAPI_BINDING.
     LOAD_COMMONAPI_LIB()
-    LOAD_COMMONAPI_DBUS_LIB()
-	LOAD_COMMONAPI_SOMEIP_LIB()
-    
+   
     set(LIBRARY_OUTPUT_PATH ${PLUGINS_OUTPUT_PATH}/routing)
     
 	if(WITH_DLT)    
@@ -87,10 +85,12 @@ IF(WITH_CAPI_WRAPPER)
     # The ALT_DESTINATION is used as fall back if the DESTINATION directory dosen't contain the sources or you just don't want to use the generator.
   
 	IF(${SELECTED_CAPI_BINDING} EQUAL 1)#SomeIP
+	    LOAD_COMMONAPI_SOMEIP_LIB()
 	    SET(BINDING_SUFFIX SomeIP)
 	  	SET(SRC_GEN src-gen/v${COMMONAPI_SOMEIP_VERSION_NUMBER}/${BINDING_SUFFIX})
 		SET(CAPI_BINDING_FIDLS fidl/RoutingInterface.fdepl fidl/AudioManagerTypes.fdepl ) # fidl/RoutingInterfaceProviderSomeIp.fdepl	
 	ELSE()#Dbus
+	    LOAD_COMMONAPI_DBUS_LIB()
 	    SET(BINDING_SUFFIX DBus)
 	   	SET(SRC_GEN src-gen/v${COMMONAPI_DBUS_VERSION_NUMBER}/${BINDING_SUFFIX})
 	    SET(CAPI_BINDING_FIDLS fidl/RoutingInterface.fidl fidl/AudioManagerTypes.fdepl)	
@@ -163,7 +163,16 @@ IF(WITH_CAPI_WRAPPER)
             DESTINATION lib/${LIB_INSTALL_SUFFIX}/
             PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
             COMPONENT plugin)
-                          
+        IF(WITH_TESTS)
+            INSTALL(TARGETS ${STUB_ROUTINGCONTROL_BINDING} ${PROXY_ROUTINGCONTROL_BINDING}
+                    DESTINATION ${TEST_EXECUTABLE_INSTALL_PATH}
+                    PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
+                    COMPONENT plugin-tests)
+            INSTALL(TARGETS ${PROXY_ROUTINGCONTROL_BINDING}
+                    DESTINATION ${TEST_EXECUTABLE_INSTALL_PATH}
+                    PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
+                    COMPONENT plugin-tests)        
+        ENDIF(WITH_TESTS)                  
    ENDIF(WITH_ROUTING_INTERFACE_GLUE_LIBS)  
    
     GET_PROPERTY(CONFIG_INSTALLED GLOBAL PROPERTY CAPI_CONFIG_INSTALLED)
@@ -200,18 +209,19 @@ IF(WITH_CAPI_WRAPPER)
     SET(RoutingControlObserver "local:org.genivi.am.routinginterface.RoutingControlObserver:org.genivi.audiomanager") 
     SET(RoutingControl "local:org.genivi.am.routinginterface.RoutingControl:RoutingControlInstance2") 
     IF(STUB_ROUTINGCONTROL_BINDING_LIB AND PROXY_ROUTINGCONTROL_BINDING_LIB) 
+        FILE(RELATIVE_PATH REL_PATH ${CMAKE_INSTALL_PREFIX}/bin ${CMAKE_INSTALL_PREFIX}/lib/${LIB_INSTALL_SUFFIX} )
         STRING(REPLACE "[stub]" 
-                        "[stub]\n${RoutingControlObserver}=../lib/audiomanager/plugins/${STUB_ROUTINGCONTROL_BINDING_LIB}\n${RoutingControl}=../lib/audiomanager/plugins/${STUB_ROUTINGCONTROL_BINDING_LIB}" 
-                       CONFIG_INI_DEPLYMENT 
+                        "[stub]\n${RoutingControlObserver}=${REL_PATH}/${STUB_ROUTINGCONTROL_BINDING_LIB}\n${RoutingControl}=${REL_PATH}/${STUB_ROUTINGCONTROL_BINDING_LIB}" 
+                       CONFIG_INI_DEPLOYMENT 
                        ${CONFIG_INI})
         STRING(REPLACE "[proxy]" 
-                       "[proxy]\n${RoutingControlObserver}=../lib/audiomanager/plugins/${PROXY_ROUTINGCONTROL_BINDING_LIB}\n${RoutingControl}=../lib/audiomanager/plugins/${PROXY_ROUTINGCONTROL_BINDING_LIB}" 
-                       CONFIG_INI_DEPLYMENT 
-                       ${CONFIG_INI_DEPLYMENT})
+                       "[proxy]\n${RoutingControlObserver}=${REL_PATH}/${PROXY_ROUTINGCONTROL_BINDING_LIB}\n${RoutingControl}=${REL_PATH}/${PROXY_ROUTINGCONTROL_BINDING_LIB}" 
+                       CONFIG_INI_DEPLOYMENT 
+                       ${CONFIG_INI_DEPLOYMENT})
     ELSE()
-        SET(CONFIG_INI_DEPLYMENT ${CONFIG_INI})                                    
+        SET(CONFIG_INI_DEPLOYMENT ${CONFIG_INI})                                    
     ENDIF()               
-    FILE(WRITE ${CONFIG_INI_DEPL_PATH} ${CONFIG_INI_DEPLYMENT})          
+    FILE(WRITE ${CONFIG_INI_DEPL_PATH} ${CONFIG_INI_DEPLOYMENT})          
     
     IF(NOT ${EXECUTABLE_OUTPUT_PATH} STREQUAL "")    
         FILE(READ ${CONFIG_INI_BIN_PATH} CONFIG_INI)
@@ -239,20 +249,7 @@ IF(WITH_CAPI_WRAPPER)
     TARGET_LINK_LIBRARIES(PluginRoutingInterfaceCAPI 
         ${DLT_LIBRARIES}
         ${CommonAPI_LIBRARY}
-#        ${DBUS_LIBRARIES}
     )
-    
-#   if(${SELECTED_CAPI_BINDING} EQUAL 0)
-#		TARGET_LINK_LIBRARIES(PluginRoutingInterfaceCAPI  
-#		                ${DBUS_LIBRARIES} 
-#		                ${CommonAPI-DBus_LIBRARY} 
-#		                )
-#   else()
-#		TARGET_LINK_LIBRARIES(PluginRoutingInterfaceCAPI  
-#                        ${vsomeip_LIBRARY} 
-#                        ${CommonAPI-SomeIP_LIBRARY} 
-#                        )
-#   endif()
         
     INSTALL(TARGETS PluginRoutingInterfaceCAPI 
             DESTINATION lib/${LIB_INSTALL_SUFFIX}/routing

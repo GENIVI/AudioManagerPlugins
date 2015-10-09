@@ -84,14 +84,14 @@ if (WITH_CAPI_WRAPPER)
     # LOAD_COMMONAPI() without argument will use the CACHE variable SELECTED_CAPI_BINDING (0-DBus, 1-SomeIP).
     # It can be called with DBUS or SOMEIP as parameter: LOAD_COMMONAPI(DBUS) , LOAD_COMMONAPI(SOMEIP) which will overwrite SELECTED_CAPI_BINDING.
     LOAD_COMMONAPI_LIB()
-    LOAD_COMMONAPI_DBUS_LIB()
-	LOAD_COMMONAPI_SOMEIP_LIB()
     
     IF(${SELECTED_CAPI_BINDING} EQUAL 1)#SomeIP
+        LOAD_COMMONAPI_SOMEIP_LIB()
         SET(BINDING_SUFFIX SomeIP)
 	  	SET(SRC_GEN src-gen/v${COMMONAPI_SOMEIP_VERSION_NUMBER}/${BINDING_SUFFIX})
 		SET(CAPI_BINDING_FIDLS fidl/CommandInterface.fdepl fidl/AudioManagerTypes.fdepl ) #fidl/CommandInterfaceProviderSomeIp.fdepl	
 	ELSE()#Dbus
+	    LOAD_COMMONAPI_DBUS_LIB()
 	    SET(BINDING_SUFFIX DBus)
 	   	SET(SRC_GEN src-gen/v${COMMONAPI_DBUS_VERSION_NUMBER}/${BINDING_SUFFIX})
 	    SET(CAPI_BINDING_FIDLS fidl/CommandInterface.fidl fidl/AudioManagerTypes.fidl)	
@@ -136,7 +136,7 @@ if (WITH_CAPI_WRAPPER)
             ${COMMONAPI_SOMEIP_INCLUDE_DIRS})
             
     IF(WITH_COMMAND_INTERFACE_GLUE_LIBS)
-    
+        
         SET(STUB_COMMANDCONTROL_BINDING CommandControlStubs-${BINDING_SUFFIX} )
         SET(PROXY_COMMANDCONTROL_BINDING CommandControlProxies-${BINDING_SUFFIX} )
         
@@ -163,7 +163,17 @@ if (WITH_CAPI_WRAPPER)
             DESTINATION lib/${LIB_INSTALL_SUFFIX}/
             PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
             COMPONENT plugin) 
-                                 
+
+         IF(WITH_TESTS)
+             INSTALL(TARGETS ${PROXY_COMMANDCONTROL_BINDING}
+                        DESTINATION ${TEST_EXECUTABLE_INSTALL_PATH}
+                        PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
+                        COMPONENT plugin-tests)  
+             INSTALL(TARGETS ${STUB_COMMANDCONTROL_BINDING}
+                        DESTINATION ${TEST_EXECUTABLE_INSTALL_PATH}
+                        PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
+                        COMPONENT plugin-tests)             
+         ENDIF(WITH_TESTS)                        
 	ENDIF(WITH_COMMAND_INTERFACE_GLUE_LIBS)                          
 
     GET_PROPERTY(CONFIG_INSTALLED GLOBAL PROPERTY CAPI_CONFIG_INSTALLED)
@@ -197,19 +207,20 @@ if (WITH_CAPI_WRAPPER)
         FILE(READ ${CONFIG_INI_DEPL_PATH} CONFIG_INI)
         
         IF(STUB_COMMANDCONTROL_BINDING_LIB AND PROXY_COMMANDCONTROL_BINDING_LIB)       
+            FILE(RELATIVE_PATH REL_PATH ${CMAKE_INSTALL_PREFIX}/bin ${CMAKE_INSTALL_PREFIX}/lib/${LIB_INSTALL_SUFFIX} )
             SET(CommandControl "local:org.genivi.am.commandinterface.CommandControl:org.genivi.audiomanager") 
             STRING(REPLACE "[stub]" 
-                            "[stub]\n${CommandControl}=../lib/audiomanager/plugins/${STUB_COMMANDCONTROL_BINDING_LIB}" 
-                           CONFIG_INI_DEPLYMENT 
+                            "[stub]\n${CommandControl}=${REL_PATH}/${STUB_COMMANDCONTROL_BINDING_LIB}" 
+                           CONFIG_INI_DEPLOYMENT 
                            ${CONFIG_INI})
             STRING(REPLACE "[proxy]" 
-                           "[proxy]\n${CommandControl}=../lib/audiomanager/plugins/${PROXY_COMMANDCONTROL_BINDING_LIB}" 
-                           CONFIG_INI_DEPLYMENT 
-                           ${CONFIG_INI_DEPLYMENT})
+                           "[proxy]\n${CommandControl}=${REL_PATH}/${PROXY_COMMANDCONTROL_BINDING_LIB}" 
+                           CONFIG_INI_DEPLOYMENT 
+                           ${CONFIG_INI_DEPLOYMENT})
         ELSE()
-             SET(CONFIG_INI_DEPLYMENT ${CONFIG_INI})                 
+             SET(CONFIG_INI_DEPLOYMENT ${CONFIG_INI})                 
         ENDIF()               
-        FILE(WRITE ${CONFIG_INI_DEPL_PATH} ${CONFIG_INI_DEPLYMENT})          
+        FILE(WRITE ${CONFIG_INI_DEPL_PATH} ${CONFIG_INI_DEPLOYMENT})          
         
         IF(NOT ${EXECUTABLE_OUTPUT_PATH} STREQUAL "")    
             FILE(READ ${CONFIG_INI_BIN_PATH} CONFIG_INI)
@@ -239,17 +250,6 @@ if (WITH_CAPI_WRAPPER)
         
     add_library(PluginCommandInterfaceCAPI MODULE ${PLUGINCAPI_SRCS_CXX})
     set (AM_LINK_LIBS ${AM_LINK_LIBS} ${CommonAPI_LIBRARY})
-#    if(${SELECTED_CAPI_BINDING} EQUAL 0)
-#       set (AM_LINK_LIBS ${AM_LINK_LIBS} 
-#                        ${CommonAPI-DBus_LIBRARY}
-#                        ${DBUS_LIBRARIES}
-#                        )
-#   else()
-#       set (AM_LINK_LIBS ${AM_LINK_LIBS} 
-#                        ${CommonAPI-SomeIP_LIBRARY}
-#                        ${vsomeip_LIBRARY}
-#                        )
-#   endif()
     
     TARGET_LINK_LIBRARIES(PluginCommandInterfaceCAPI ${AM_LINK_LIBS})
                  
