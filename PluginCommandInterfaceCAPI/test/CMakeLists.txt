@@ -94,21 +94,39 @@ IF(CONFIG_INI_TEST_PATH)
     FILE(READ ${CONFIG_INI_TEST_PATH} CONFIG_INI_TEST)
     IF(STUB_COMMANDCONTROL_BINDING_LIB AND PROXY_COMMANDCONTROL_BINDING_LIB) 
         IF(NOT ${EXECUTABLE_OUTPUT_PATH} STREQUAL "") 
+        
+            STRING(REPLACE "REL_PATH" 
+                               "../plugins/${STUB_COMMANDCONTROL_BINDING_LIB}" 
+                               CONFIG_STUB_SECTION 
+                               ${CONFIG_STUB_SECTION_INI})
+            STRING(REPLACE "REL_PATH" 
+                           "../plugins/${PROXY_COMMANDCONTROL_BINDING_LIB}" 
+                           CONFIG_PROXY_SECTION 
+                           ${CONFIG_PROXY_SECTION_INI})    
+   
             STRING(REPLACE "[stub]" 
-                            "[stub]\n${CommandControl}=../plugins/${STUB_COMMANDCONTROL_BINDING_LIB}" 
+                            ${CONFIG_STUB_SECTION} 
                            CONFIG_INI_TEST 
                            ${CONFIG_INI})
             STRING(REPLACE "[proxy]" 
-                           "[proxy]\n${CommandControl}=../plugins/${PROXY_COMMANDCONTROL_BINDING_LIB}" 
+                           ${CONFIG_PROXY_SECTION} 
                            CONFIG_INI_TEST 
                            ${CONFIG_INI_TEST})
         ELSE()
+            STRING(REPLACE "REL_PATH" 
+                       "${STUB_COMMANDCONTROL_BINDING_LIB}" 
+                       CONFIG_STUB_SECTION 
+                       ${CONFIG_STUB_SECTION_INI})
+            STRING(REPLACE "REL_PATH" 
+                           "${PROXY_COMMANDCONTROL_BINDING_LIB}" 
+                           CONFIG_PROXY_SECTION 
+                           ${CONFIG_PROXY_SECTION_INI}) 
             STRING(REPLACE "[stub]" 
-                        "[stub]\n${CommandControl}=${STUB_COMMANDCONTROL_BINDING_LIB}" 
+                        ${CONFIG_STUB_SECTION}  
                        CONFIG_INI_TEST 
                        ${CONFIG_INI})
             STRING(REPLACE "[proxy]" 
-                           "[proxy]\n${CommandControl}=${PROXY_COMMANDCONTROL_BINDING_LIB}" 
+                           ${CONFIG_PROXY_SECTION} 
                            CONFIG_INI_TEST 
                            ${CONFIG_INI_TEST})    
        ENDIF()                        

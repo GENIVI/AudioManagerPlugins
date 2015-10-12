@@ -977,6 +977,12 @@ ACTION(actionPeek){
 	arg1=TEST_ID_1;
 }
 
+ACTION(actionPeekUnexpected){
+	logError("unexpected peek", arg0);
+	std::cout<<"unexpected peek " << arg0.c_str()<<std::endl;
+	arg1=TEST_ID_1;
+}
+
 TEST_F(CAmRoutingInterfaceCAPITests, peekSink)
 {
 	ASSERT_TRUE(env->isServiceAvailable());
@@ -1140,6 +1146,7 @@ TEST_F(CAmRoutingInterfaceCAPITests, peekSourceClassID)
 		am_types::am_Error_e error = am_types::am_Error_e::E_UNKNOWN;
 		std::string  name("name");
 		am_types::am_sourceClass_t sinkID = 0;
+		ON_CALL(*env->mpRoutingReceive, peekSourceClassID(_, _)).WillByDefault(DoAll(actionPeekUnexpected(), Return(E_OK)));
 		EXPECT_CALL(*env->mpRoutingReceive, peekSourceClassID(name, _)).WillOnce(DoAll(actionPeek(), Return(E_OK)));
 		env->mProxy->peekSourceClassID(name, callStatus, sinkID, error);
 		ASSERT_EQ( sinkID, TEST_ID_1 );
@@ -1158,6 +1165,7 @@ TEST_F(CAmRoutingInterfaceCAPITests, peekSinkClassID)
 		am_types::am_Error_e error = am_types::am_Error_e::E_UNKNOWN;
 		std::string  name("name");
 		am_types::am_sinkClass_t sinkID = 0;
+		ON_CALL(*env->mpRoutingReceive, peekSinkClassID(_, _)).WillByDefault(DoAll(actionPeekUnexpected(), Return(E_OK)));
 		EXPECT_CALL(*env->mpRoutingReceive, peekSinkClassID(name, _)).WillOnce(DoAll(actionPeek(), Return(E_OK)));
 		env->mProxy->peekSinkClassID(name, callStatus, sinkID, error);
 		ASSERT_EQ( sinkID, TEST_ID_1 );
@@ -2136,37 +2144,5 @@ TEST_F(CAmRoutingInterfaceCAPITests, deregisterService)
 		ASSERT_EQ( backdoor.connectionsCount(), 0 );
 	}
 }
-
-/* Not applicable for SOMEIP due a different configuration.
- */
-#if SELECTED_CAPI_BINDING == 0
-
-TEST_F(CAmRoutingInterfaceCAPITests, confirmRoutingRundown)
-{
-	ASSERT_TRUE(env->isServiceAvailable());
-	if(env->isServiceAvailable())
-	{
-		CommonAPI::CallStatus callStatus = CommonAPI::CallStatus::NOT_AVAILABLE, domainstatus = CommonAPI::CallStatus::NOT_AVAILABLE;
-		am_types::am_domainID_t domainID;
-		am_Error_e error = E_OK;
-		am_types::am_Error_e CAPIError;
-		std::string name("test domain name");
-        std::string busname("busname");
-        std::string nodename("nodename");
-		am_types::am_Domain_s domainData(0, name, busname, nodename, false, false, am_types::am_DomainState_e::DS_CONTROLLED);
-		EXPECT_CALL(*env->mpRoutingReceive, registerDomain(_, _)).WillOnce(DoAll(actionRegister(), Return(E_OK)));
-		env->mProxy->registerDomain(domainData,"sd","sd",domainstatus,domainID,CAPIError);
-		ASSERT_EQ( domainstatus, CommonAPI::CallStatus::SUCCESS );
-		EXPECT_CALL(*env->mpRoutingReceive, confirmRoutingRundown(5,E_OK)).Times(1);
-		env->mpPlugin->setRoutingRundown(5);
-		EXPECT_CALL(*env->mpRoutingReceive, confirmRoutingRundown(_,E_OK)).Times(1);
-		env->mProxy->confirmRoutingRundown(name, callStatus);
-		EXPECT_CALL(*env->mpRoutingReceive, deregisterDomain(_)).WillOnce(Return(E_OK));
-		env->mProxy->deregisterDomain(domainID,domainstatus,CAPIError);
-		ASSERT_EQ( domainstatus, CommonAPI::CallStatus::SUCCESS );
-	}
-}
-
-#endif
 
 

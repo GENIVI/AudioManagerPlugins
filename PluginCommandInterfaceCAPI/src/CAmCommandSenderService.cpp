@@ -90,14 +90,6 @@ void CAmCommandSenderService::setSystemProperty(const std::shared_ptr<CommonAPI:
     _reply(result);
 }
 
-void CAmCommandSenderService::getVolume(const std::shared_ptr<CommonAPI::ClientId> _client, am_types::am_sinkID_t _sinkID, getVolumeReply_t _reply) {
-
-	am_mainVolume_t mainVolume = 0;
-	assert(mpIAmCommandReceive);
-	am_types::am_Error_e result = CAmConvert2CAPIType(mpIAmCommandReceive->getVolume(_sinkID, mainVolume));
-	_reply(mainVolume, result);
-}
-
 void CAmCommandSenderService::getListMainConnections(const std::shared_ptr<CommonAPI::ClientId> _client, getListMainConnectionsReply_t _reply) {
     assert(mpIAmCommandReceive);
     std::vector<am_MainConnectionType_s> list;

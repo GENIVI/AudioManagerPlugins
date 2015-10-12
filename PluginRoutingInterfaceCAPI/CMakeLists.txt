@@ -205,17 +205,33 @@ IF(WITH_CAPI_WRAPPER)
        
        
     FILE(READ ${CONFIG_INI_DEPL_PATH} CONFIG_INI)
-    
-    SET(RoutingControlObserver "local:org.genivi.am.routinginterface.RoutingControlObserver:org.genivi.audiomanager") 
-    SET(RoutingControl "local:org.genivi.am.routinginterface.RoutingControl:RoutingControlInstance2") 
+    FILE(READ ${CMAKE_CURRENT_SOURCE_DIR}/cmake/routing-stub.ini CONFIG_STUB_SECTION_INI)
+    FILE(READ ${CMAKE_CURRENT_SOURCE_DIR}/cmake/routing-proxy.ini CONFIG_PROXY_SECTION_INI)
+        
     IF(STUB_ROUTINGCONTROL_BINDING_LIB AND PROXY_ROUTINGCONTROL_BINDING_LIB) 
         FILE(RELATIVE_PATH REL_PATH ${CMAKE_INSTALL_PREFIX}/bin ${CMAKE_INSTALL_PREFIX}/lib/${LIB_INSTALL_SUFFIX} )
+        STRING(REPLACE "REL_PATH_ROUTING_CONTROL" 
+                        "${REL_PATH}/${STUB_ROUTINGCONTROL_BINDING_LIB}" 
+                       CONFIG_STUB_SECTION 
+                       ${CONFIG_STUB_SECTION_INI})
+        STRING(REPLACE "REL_PATH_ROUTING_OBSERVER" 
+                        "${REL_PATH}/${STUB_ROUTINGCONTROL_BINDING_LIB}" 
+                       CONFIG_STUB_SECTION 
+                       ${CONFIG_STUB_SECTION})               
+        STRING(REPLACE "REL_PATH_ROUTING_CONTROL" 
+                        "${REL_PATH}/${PROXY_ROUTINGCONTROL_BINDING_LIB}" 
+                       CONFIG_PROXY_SECTION 
+                       ${CONFIG_PROXY_SECTION_INI})  
+        STRING(REPLACE "REL_PATH_ROUTING_OBSERVER" 
+                        "${REL_PATH}/${PROXY_ROUTINGCONTROL_BINDING_LIB}" 
+                       CONFIG_PROXY_SECTION 
+                       ${CONFIG_PROXY_SECTION}) 
         STRING(REPLACE "[stub]" 
-                        "[stub]\n${RoutingControlObserver}=${REL_PATH}/${STUB_ROUTINGCONTROL_BINDING_LIB}\n${RoutingControl}=${REL_PATH}/${STUB_ROUTINGCONTROL_BINDING_LIB}" 
+                        ${CONFIG_STUB_SECTION} 
                        CONFIG_INI_DEPLOYMENT 
                        ${CONFIG_INI})
         STRING(REPLACE "[proxy]" 
-                       "[proxy]\n${RoutingControlObserver}=${REL_PATH}/${PROXY_ROUTINGCONTROL_BINDING_LIB}\n${RoutingControl}=${REL_PATH}/${PROXY_ROUTINGCONTROL_BINDING_LIB}" 
+                       ${CONFIG_PROXY_SECTION} 
                        CONFIG_INI_DEPLOYMENT 
                        ${CONFIG_INI_DEPLOYMENT})
     ELSE()
@@ -226,12 +242,29 @@ IF(WITH_CAPI_WRAPPER)
     IF(NOT ${EXECUTABLE_OUTPUT_PATH} STREQUAL "")    
         FILE(READ ${CONFIG_INI_BIN_PATH} CONFIG_INI)
         IF(STUB_ROUTINGCONTROL_BINDING_LIB AND PROXY_ROUTINGCONTROL_BINDING_LIB) 
+            STRING(REPLACE "REL_PATH_ROUTING_CONTROL" 
+                        "plugins/${STUB_ROUTINGCONTROL_BINDING_LIB}" 
+                       CONFIG_STUB_SECTION 
+                       ${CONFIG_STUB_SECTION_INI})
+            STRING(REPLACE "REL_PATH_ROUTING_OBSERVER" 
+                            "plugins/${STUB_ROUTINGCONTROL_BINDING_LIB}" 
+                           CONFIG_STUB_SECTION 
+                           ${CONFIG_STUB_SECTION})               
+            STRING(REPLACE "REL_PATH_ROUTING_CONTROL" 
+                            "plugins/${PROXY_ROUTINGCONTROL_BINDING_LIB}" 
+                           CONFIG_PROXY_SECTION 
+                           ${CONFIG_PROXY_SECTION_INI})  
+            STRING(REPLACE "REL_PATH_ROUTING_OBSERVER" 
+                            "plugins/${PROXY_ROUTINGCONTROL_BINDING_LIB}" 
+                           CONFIG_PROXY_SECTION 
+                           ${CONFIG_PROXY_SECTION}) 
+                       
             STRING(REPLACE "[stub]" 
-                        "[stub]\n${RoutingControlObserver}=plugins/${STUB_ROUTINGCONTROL_BINDING_LIB}\n${RoutingControl}=plugins/${STUB_ROUTINGCONTROL_BINDING_LIB}" 
-                       CONFIG_INI_BIN 
-                       ${CONFIG_INI})
+                        ${CONFIG_STUB_SECTION} 
+                        CONFIG_INI_BIN 
+                        ${CONFIG_INI})
             STRING(REPLACE "[proxy]" 
-                           "[proxy]\n${RoutingControlObserver}=plugins/${PROXY_ROUTINGCONTROL_BINDING_LIB}\n${RoutingControl}=plugins/${PROXY_ROUTINGCONTROL_BINDING_LIB}" 
+                           ${CONFIG_PROXY_SECTION} 
                            CONFIG_INI_BIN 
                            ${CONFIG_INI_BIN})
         ELSE()

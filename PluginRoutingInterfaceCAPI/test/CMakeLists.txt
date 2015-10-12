@@ -98,23 +98,59 @@ IF(CONFIG_INI_TEST_PATH)
     FILE(READ ${CONFIG_INI_TEST_PATH} CONFIG_INI)
     IF(STUB_ROUTINGCONTROL_BINDING_LIB AND PROXY_ROUTINGCONTROL_BINDING_LIB) 
         IF(NOT ${EXECUTABLE_OUTPUT_PATH} STREQUAL "") 
+            STRING(REPLACE "REL_PATH_ROUTING_CONTROL" 
+                        "../plugins/${STUB_ROUTINGCONTROL_BINDING_LIB}" 
+                       CONFIG_STUB_SECTION 
+                       ${CONFIG_STUB_SECTION_INI})
+            STRING(REPLACE "REL_PATH_ROUTING_OBSERVER" 
+                            "../plugins/${STUB_ROUTINGCONTROL_BINDING_LIB}" 
+                           CONFIG_STUB_SECTION 
+                           ${CONFIG_STUB_SECTION})               
+            STRING(REPLACE "REL_PATH_ROUTING_CONTROL" 
+                            "../plugins/${PROXY_ROUTINGCONTROL_BINDING_LIB}" 
+                           CONFIG_PROXY_SECTION 
+                           ${CONFIG_PROXY_SECTION_INI})  
+            STRING(REPLACE "REL_PATH_ROUTING_OBSERVER" 
+                            "../plugins/${PROXY_ROUTINGCONTROL_BINDING_LIB}" 
+                           CONFIG_PROXY_SECTION 
+                           ${CONFIG_PROXY_SECTION}) 
+        
+        
             STRING(REPLACE "[stub]" 
-                        "[stub]\n${RoutingControlObserver}=../plugins/${STUB_ROUTINGCONTROL_BINDING_LIB}\n${RoutingControl}=../plugins/${STUB_ROUTINGCONTROL_BINDING_LIB}" 
+                        ${CONFIG_STUB_SECTION}
                        CONFIG_INI_TEST 
                        ${CONFIG_INI})
             STRING(REPLACE "[proxy]" 
-                           "[proxy]\n${RoutingControlObserver}=../plugins/${PROXY_ROUTINGCONTROL_BINDING_LIB}\n${RoutingControl}=../plugins/${PROXY_ROUTINGCONTROL_BINDING_LIB}" 
+                           ${CONFIG_PROXY_SECTION} 
                            CONFIG_INI_TEST 
                            ${CONFIG_INI_TEST})
         ELSE()
+        
+            STRING(REPLACE "REL_PATH_ROUTING_CONTROL" 
+                        "${STUB_ROUTINGCONTROL_BINDING_LIB}" 
+                       CONFIG_STUB_SECTION 
+                       ${CONFIG_STUB_SECTION_INI})
+            STRING(REPLACE "REL_PATH_ROUTING_OBSERVER" 
+                            "${STUB_ROUTINGCONTROL_BINDING_LIB}" 
+                           CONFIG_STUB_SECTION 
+                           ${CONFIG_STUB_SECTION})               
+            STRING(REPLACE "REL_PATH_ROUTING_CONTROL" 
+                            "${PROXY_ROUTINGCONTROL_BINDING_LIB}" 
+                           CONFIG_PROXY_SECTION 
+                           ${CONFIG_PROXY_SECTION_INI})  
+            STRING(REPLACE "REL_PATH_ROUTING_OBSERVER" 
+                            "${PROXY_ROUTINGCONTROL_BINDING_LIB}" 
+                           CONFIG_PROXY_SECTION 
+                           ${CONFIG_PROXY_SECTION}) 
+        
             STRING(REPLACE "[stub]" 
-                    "[stub]\n${RoutingControlObserver}=${STUB_ROUTINGCONTROL_BINDING_LIB}\n${RoutingControl}=${STUB_ROUTINGCONTROL_BINDING_LIB}" 
-                   CONFIG_INI_TEST 
-                   ${CONFIG_INI})
-        STRING(REPLACE "[proxy]" 
-                       "[proxy]\n${RoutingControlObserver}=${PROXY_ROUTINGCONTROL_BINDING_LIB}\n${RoutingControl}=${PROXY_ROUTINGCONTROL_BINDING_LIB}" 
-                       CONFIG_INI_TEST 
-                       ${CONFIG_INI_TEST})                                   
+                            ${CONFIG_STUB_SECTION}  
+                            CONFIG_INI_TEST 
+                            ${CONFIG_INI})
+            STRING(REPLACE "[proxy]" 
+                           ${CONFIG_PROXY_SECTION}  
+                           CONFIG_INI_TEST 
+                           ${CONFIG_INI_TEST})                                   
         ENDIF()                 
     ELSE()
         SET(CONFIG_INI_TEST ${CONFIG_INI})                                    

@@ -205,16 +205,27 @@ if (WITH_CAPI_WRAPPER)
          ENDIF(NOT CONFIG_INSTALLED)   
             
         FILE(READ ${CONFIG_INI_DEPL_PATH} CONFIG_INI)
-        
+        FILE(READ ${CMAKE_CURRENT_SOURCE_DIR}/cmake/command-stub.ini CONFIG_STUB_SECTION_INI)
+        FILE(READ ${CMAKE_CURRENT_SOURCE_DIR}/cmake/command-proxy.ini CONFIG_PROXY_SECTION_INI)
+
+
         IF(STUB_COMMANDCONTROL_BINDING_LIB AND PROXY_COMMANDCONTROL_BINDING_LIB)       
             FILE(RELATIVE_PATH REL_PATH ${CMAKE_INSTALL_PREFIX}/bin ${CMAKE_INSTALL_PREFIX}/lib/${LIB_INSTALL_SUFFIX} )
-            SET(CommandControl "local:org.genivi.am.commandinterface.CommandControl:org.genivi.audiomanager") 
+            
+            STRING(REPLACE "REL_PATH" 
+                            "${REL_PATH}/${STUB_COMMANDCONTROL_BINDING_LIB}" 
+                           CONFIG_STUB_SECTION 
+                           ${CONFIG_STUB_SECTION_INI})
+            STRING(REPLACE "REL_PATH" 
+                            "${REL_PATH}/${PROXY_COMMANDCONTROL_BINDING_LIB}" 
+                           CONFIG_PROXY_SECTION 
+                           ${CONFIG_PROXY_SECTION_INI})                             
             STRING(REPLACE "[stub]" 
-                            "[stub]\n${CommandControl}=${REL_PATH}/${STUB_COMMANDCONTROL_BINDING_LIB}" 
+                           ${CONFIG_STUB_SECTION} 
                            CONFIG_INI_DEPLOYMENT 
                            ${CONFIG_INI})
             STRING(REPLACE "[proxy]" 
-                           "[proxy]\n${CommandControl}=${REL_PATH}/${PROXY_COMMANDCONTROL_BINDING_LIB}" 
+                           ${CONFIG_PROXY_SECTION} 
                            CONFIG_INI_DEPLOYMENT 
                            ${CONFIG_INI_DEPLOYMENT})
         ELSE()
@@ -225,12 +236,21 @@ if (WITH_CAPI_WRAPPER)
         IF(NOT ${EXECUTABLE_OUTPUT_PATH} STREQUAL "")    
             FILE(READ ${CONFIG_INI_BIN_PATH} CONFIG_INI)
             IF(STUB_COMMANDCONTROL_BINDING_LIB AND PROXY_COMMANDCONTROL_BINDING_LIB) 
+            
+                STRING(REPLACE "REL_PATH" 
+                               "plugins/${STUB_COMMANDCONTROL_BINDING_LIB}" 
+                               CONFIG_STUB_SECTION 
+                               ${CONFIG_STUB_SECTION_INI})
+                STRING(REPLACE "REL_PATH" 
+                               "plugins/${PROXY_COMMANDCONTROL_BINDING_LIB}" 
+                               CONFIG_PROXY_SECTION 
+                               ${CONFIG_PROXY_SECTION_INI})    
                 STRING(REPLACE "[stub]" 
-                                "[stub]\n${CommandControl}=plugins/${STUB_COMMANDCONTROL_BINDING_LIB}" 
+                               ${CONFIG_STUB_SECTION} 
                                CONFIG_INI_BIN 
                                ${CONFIG_INI})
                 STRING(REPLACE "[proxy]" 
-                               "[proxy]\n${CommandControl}=plugins/${PROXY_COMMANDCONTROL_BINDING_LIB}" 
+                               ${CONFIG_PROXY_SECTION}
                                CONFIG_INI_BIN 
                                ${CONFIG_INI_BIN})
             ELSE()
