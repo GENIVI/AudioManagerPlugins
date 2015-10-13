@@ -57,6 +57,14 @@ void CAmCommandSenderService::setVolume(const std::shared_ptr<CommonAPI::ClientI
 	_reply(result);
 }
 
+void CAmCommandSenderService::getVolume(const std::shared_ptr<CommonAPI::ClientId> _client, ::v1_0::org::genivi::am::audiomanagertypes::__Anonymous__::am_sinkID_t _sinkID, getVolumeReply_t _reply)
+{
+	assert(mpIAmCommandReceive);
+	am_mainVolume_t mainVolume;
+	am_types::am_Error_e result = CAmConvert2CAPIType(mpIAmCommandReceive->getVolume(_sinkID, mainVolume));
+	_reply(mainVolume, result);
+}
+
 void CAmCommandSenderService::volumeStep(const std::shared_ptr<CommonAPI::ClientId> _client, am_types::am_sinkID_t _sinkID, int16_t _step, volumeStepReply_t _reply) {
 	assert(mpIAmCommandReceive);
 	am_types::am_Error_e result = CAmConvert2CAPIType(mpIAmCommandReceive->volumeStep(_sinkID, _step));

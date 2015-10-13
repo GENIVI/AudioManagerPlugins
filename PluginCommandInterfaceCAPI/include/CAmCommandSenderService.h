@@ -43,6 +43,8 @@ public:
 
 	    void setVolume(const std::shared_ptr<CommonAPI::ClientId> _client, am_types::am_sinkID_t _sinkID, am_types::am_mainVolume_t _volume, setVolumeReply_t _reply);
 
+	    void getVolume(const std::shared_ptr<CommonAPI::ClientId> _client, am_types::am_sinkID_t _sinkID, getVolumeReply_t _reply);
+
 	    void volumeStep(const std::shared_ptr<CommonAPI::ClientId> _client, am_types::am_sinkID_t _sinkID, int16_t _step, volumeStepReply_t _reply);
 
 	    void setSinkMuteState(const std::shared_ptr<CommonAPI::ClientId> _client, am_types::am_sinkID_t _sinkID, am_types::am_MuteState_e _muteState, setSinkMuteStateReply_t _reply);
@@ -52,8 +54,6 @@ public:
 	    void setMainSourceSoundProperty(const std::shared_ptr<CommonAPI::ClientId> _client, am_types::am_sourceID_t _sourceID, am_types::am_MainSoundProperty_s _soundProperty, setMainSourceSoundPropertyReply_t _reply);
 
 	    void setSystemProperty(const std::shared_ptr<CommonAPI::ClientId> _client, am_types::am_SystemProperty_s _property, setSystemPropertyReply_t _reply);
-
-	    void getVolume(const std::shared_ptr<CommonAPI::ClientId> _client, am_types::am_sinkID_t _sinkID, getVolumeReply_t _reply);
 
 	    void getListMainConnections(const std::shared_ptr<CommonAPI::ClientId> _client, getListMainConnectionsReply_t _reply);
 
