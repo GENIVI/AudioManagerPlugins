@@ -107,9 +107,7 @@ IF(WITH_CAPI_WRAPPER)
                                 # An alternative relative/absolute path with common-api sources, usually in the source tree.
                                 ALT_DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/src-gen 
                                 )
-	              
-	message (status "dfdfdb ${COMMON_API_ROUTING_INTERFACE_GEN_INCLUDE_DIR}")                  
-    
+	                  
     INCLUDE_DIRECTORIES(
     	${CMAKE_SOURCE_DIR} 
      	${CMAKE_CURRENT_BINARY_DIR}

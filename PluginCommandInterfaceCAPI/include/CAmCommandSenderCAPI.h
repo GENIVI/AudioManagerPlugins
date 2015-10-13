@@ -67,7 +67,8 @@ public:
     void cbMainSinkNotificationConfigurationChanged(const am_sinkID_t sinkID, const am_NotificationConfiguration_s& mainNotificationConfiguration) ;
     void cbMainSourceNotificationConfigurationChanged(const am_sourceID_t sourceID, const am_NotificationConfiguration_s& mainNotificationConfiguration) ;
 
-    static const char * COMMAND_SENDER_SERVICE;
+    static const char * COMMAND_SENDER_INSTANCE;
+    static const char * DEFAULT_DOMAIN;
 
 #ifdef UNIT_TEST
      static CAmCommandSenderCAPI * newCommandSenderCAPI(CAmCommonAPIWrapper *wrapper)

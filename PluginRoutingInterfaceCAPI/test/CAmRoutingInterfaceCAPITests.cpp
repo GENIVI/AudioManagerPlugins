@@ -132,6 +132,7 @@ void* run_client(void*)
 
 	env->mProxy = wrapper.buildProxy<am_routing_interface::RoutingControlObserverProxy>(CAmRoutingSenderCAPI::DEFAULT_DOMAIN, CAmRoutingSenderCAPI::ROUTING_INSTANCE);
 	assert(env->mProxy);
+
 	env->mProxy->getProxyStatusEvent().subscribe(std::bind(&CAmTestsEnvironment::onServiceStatusEventProxy,env,std::placeholders::_1));
 
 	env->mDomainService = std::make_shared<CAmTestRoutingSenderService>(&wrapper, env->mProxy);

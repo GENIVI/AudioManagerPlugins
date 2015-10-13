@@ -17,7 +17,7 @@
  *  For further information see http://www.genivi.org/.
  */
 
-#include "../../PluginRoutingInterfaceDbus/include/CAmDbusSend.h"
+#include "CAmDbusSend.h"
 
 #include "CAmDltWrapper.h"
 

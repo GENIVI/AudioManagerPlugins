@@ -23,7 +23,7 @@
 #include <dbus/dbus.h>
 #include <map>
 
-#include "../../PluginRoutingInterfaceDbus/include/CAmDbusMessageHandler.h"
+#include "CAmDbusMessageHandler.h"
 
 namespace am {
 

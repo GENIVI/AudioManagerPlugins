@@ -10,17 +10,17 @@
 #  ${PARAMS_TARGET}_GEN_INCLUDE_DIR
 #     A list with include directories
 #
-#  ${PARAMS_TARGET}_GEN_STUB_HEADERS
+#  ${PARAMS_TARGET}_GEN_BINDING_STUB_HEADERS
 #     A list with generated stub headers
-#  ${PARAMS_TARGET}_GEN_STUB_SOURCES
+#  ${PARAMS_TARGET}_GEN_BINDING_STUB_SOURCES
 #     A list with generated stub sources
-#  ${PARAMS_TARGET}_GEN_PROXY_HEADERS
+#  ${PARAMS_TARGET}_GEN_BINDING_PROXY_HEADERS
 #     A list with generated proxy headers
-#  ${PARAMS_TARGET}_GEN_PROXY_SOURCES
+#  ${PARAMS_TARGET}_GEN_BINDING_PROXY_SOURCES
 #     A list with generated proxy sources
-#  ${PARAMS_TARGET}_GEN_DEPLOYMENT_HEADERS
+#  ${PARAMS_TARGET}_GEN_BINDING_DEPLOYMENT_HEADERS
 #     A list with generated deplyment headers
-#  ${PARAMS_TARGET}_GEN_DEPLOYMENT_SOURCES
+#  ${PARAMS_TARGET}_GEN_BINDING_DEPLOYMENT_SOURCES
 #     A list with generated deplyment sources
 #  ${PARAMS_TARGET}_GEN_COMMON_HEADERS
 #     A list with generated common headerss
@@ -394,16 +394,16 @@ FUNCTION(COMMON_API_GENERATE_SOURCES)
         # Run configure_file on each .fidl which forces cmake to reexecute its configure phase if the input file changes.
         foreach(FIDL ${PARAMS_FIDLS_GENERIC})
             get_filename_component(FIDL_PATH ${FIDL} ABSOLUTE)
-            string(MD5 ${FIDL_PATH} FIDL_CHECKSUM)
-            configure_file(${FIDL_PATH} ${CMAKE_CURRENT_BINARY_DIR}/${FIDL_CHECKSUM}.fidl.done)
+#            string(MD5 FIDL_CHECKSUM ${FIDL_PATH}) 
+#            configure_file(${FIDL_PATH} ${CMAKE_CURRENT_BINARY_DIR}/${FIDL_CHECKSUM}.fidl.done)
             list(APPEND IN_FIDLS_GENERIC ${FIDL_PATH})
         endforeach()
 
         if(PARAMS_FIDLS_BINDING)
             foreach(FIDL ${PARAMS_FIDLS_BINDING})
                 get_filename_component(FIDL_PATH ${FIDL} ABSOLUTE)
-                string(MD5 ${FIDL_PATH} FIDL_CHECKSUM)
-                configure_file(${FIDL_PATH} ${CMAKE_CURRENT_BINARY_DIR}/${FIDL_CHECKSUM}.fidl.done)
+#                string(MD5 FIDL_CHECKSUM ${FIDL_PATH})              
+#                configure_file(${FIDL_PATH} ${CMAKE_CURRENT_BINARY_DIR}/${FIDL_CHECKSUM}.fidl.done)
                 list(APPEND IN_FIDLS_BINDING ${FIDL_PATH})
             endforeach()
         else()

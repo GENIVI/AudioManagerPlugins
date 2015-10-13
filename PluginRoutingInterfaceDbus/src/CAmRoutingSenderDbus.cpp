@@ -18,12 +18,12 @@
  *  For further information see http://www.genivi.org/.
  */
 
-#include "../../PluginRoutingInterfaceDbus/include/CAmRoutingSenderDbus.h"
+#include "CAmRoutingSenderDbus.h"
 
 #include <cassert>
 #include <map>
 
-#include "../../PluginRoutingInterfaceDbus/include/CAmDbusSend.h"
+#include "CAmDbusSend.h"
 #include "CAmDltWrapper.h"
 #include "CAmDbusWrapper.h"
 

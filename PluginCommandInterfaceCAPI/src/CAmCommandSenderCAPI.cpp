@@ -21,6 +21,7 @@
 #include <vector>
 #include <cassert>
 #include <set>
+#include <thread>
 #include "CAmDltWrapper.h"
 #include "CAmCommandSenderCommon.h"
 
@@ -45,7 +46,8 @@ extern "C" void destroyPluginCommandInterfaceCAPIFactory(IAmCommandSend* command
 }
 
 
-const char * CAmCommandSenderCAPI::COMMAND_SENDER_SERVICE = "local:org.genivi.audiomanager.commandinterface:org.genivi.audiomanager";
+const char * CAmCommandSenderCAPI::COMMAND_SENDER_INSTANCE = DBUS_SERVICE_PREFIX;
+const char * CAmCommandSenderCAPI::DEFAULT_DOMAIN = "local";
 
 #define RETURN_IF_NOT_READY() if(!mReady) return;
 
@@ -81,6 +83,7 @@ am_Error_e CAmCommandSenderCAPI::startService(IAmCommandReceive* commandreceivei
 		//Registers the service
 		if( false == mpCAmCAPIWrapper->registerService(mService, CAmCommandSenderCAPI::DEFAULT_DOMAIN, CAmCommandSenderCAPI::COMMAND_SENDER_INSTANCE) )
 		{
+		    log(&ctxCommandCAPI, DLT_LOG_ERROR, "Can't register stub ", CAmCommandSenderCAPI::DEFAULT_DOMAIN, v1_0::org::genivi::am::commandinterface::CommandControl::getInterface(), CAmCommandSenderCAPI::COMMAND_SENDER_INSTANCE);
 			return (E_NOT_POSSIBLE);
 		}
 		log(&ctxCommandCAPI, DLT_LOG_INFO, "Stub has been successful registered!", CAmCommandSenderCAPI::DEFAULT_DOMAIN, v1_0::org::genivi::am::commandinterface::CommandControl::getInterface(), CAmCommandSenderCAPI::COMMAND_SENDER_INSTANCE);
@@ -109,7 +112,7 @@ am_Error_e CAmCommandSenderCAPI::tearDownInterface(IAmCommandReceive*)
     	if(mIsServiceStarted)
     	{
     		mIsServiceStarted = false;
-			mpCAmCAPIWrapper->unregisterStub(CAmCommandSenderCAPI::COMMAND_SENDER_SERVICE);
+			mpCAmCAPIWrapper->unregisterService(CAmCommandSenderCAPI::DEFAULT_DOMAIN, v1_0::org::genivi::am::commandinterface::CommandControl::getInterface(), CAmCommandSenderCAPI::COMMAND_SENDER_INSTANCE);
 			mService.reset();
     	}
    		return (E_OK);

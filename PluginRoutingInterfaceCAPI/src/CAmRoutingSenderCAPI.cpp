@@ -44,15 +44,10 @@ extern "C" void destroyPluginRoutingInterfaceCAPI(IAmRoutingSend* routingSendInt
     delete routingSendInterface;
 }
 
-#define CAPI_DEFAULT_DOMAIN "local"
-#define CAPI_ROUTING_SERVICE_INTERFACE DBUS_SERVICE_PREFIX ".routinginterface"
-#define CAPI_ROUTING_ADDRESS_STRING CAPI_DEFAULT_DOMAIN ":" CAPI_ROUTING_SERVICE_INTERFACE ":" DBUS_SERVICE_PREFIX
 
-const char * CAmRoutingSenderCAPI::ROUTING_INTERFACE = CAPI_ROUTING_SERVICE_INTERFACE;
 const char * CAmRoutingSenderCAPI::ROUTING_INSTANCE = DBUS_SERVICE_PREFIX;
-const char * CAmRoutingSenderCAPI::DEFAULT_DOMAIN = CAPI_DEFAULT_DOMAIN;
+const char * CAmRoutingSenderCAPI::DEFAULT_DOMAIN = "local";
 
-const char * CAmRoutingSenderCAPI::ROUTING_SERVICE_ADDRESS = CAPI_ROUTING_ADDRESS_STRING;
 
 CAmRoutingSenderCAPI::CAmRoutingSenderCAPI() :
                 mIsServiceStarted(false),
@@ -86,6 +81,7 @@ am_Error_e CAmRoutingSenderCAPI::startService(IAmRoutingReceive* pIAmRoutingRece
 		//Registers the service
 		if( false == mpCAmCAPIWrapper->registerService(mService, CAmRoutingSenderCAPI::DEFAULT_DOMAIN, CAmRoutingSenderCAPI::ROUTING_INSTANCE) )//"AudioManager"
 		{
+			log(&ctxCommandCAPI, DLT_LOG_ERROR, "Can't register stub ", CAmRoutingSenderCAPI::DEFAULT_DOMAIN, am_routing_interface::RoutingControlObserver::getInterface(), CAmRoutingSenderCAPI::ROUTING_INSTANCE);
 			return (E_NOT_POSSIBLE);
 		}
 		log(&ctxCommandCAPI, DLT_LOG_INFO, "Stub has been successful registered!", CAmRoutingSenderCAPI::DEFAULT_DOMAIN, am_routing_interface::RoutingControlObserver::getInterface(), CAmRoutingSenderCAPI::ROUTING_INSTANCE);
@@ -109,7 +105,7 @@ am_Error_e CAmRoutingSenderCAPI::tearDownInterface(IAmRoutingReceive*)
     	if(mIsServiceStarted)
     	{
     		mIsServiceStarted = false;
-			mpCAmCAPIWrapper->unregisterService(CAmRoutingSenderCAPI::DEFAULT_DOMAIN, CAmRoutingSenderCAPI::ROUTING_INTERFACE, CAmRoutingSenderCAPI::ROUTING_INSTANCE);
+			mpCAmCAPIWrapper->unregisterService(CAmRoutingSenderCAPI::DEFAULT_DOMAIN, am_routing_interface::RoutingControlObserver::getInterface(), CAmRoutingSenderCAPI::ROUTING_INSTANCE);
 			mService.reset();
     	}
    		return (E_OK);

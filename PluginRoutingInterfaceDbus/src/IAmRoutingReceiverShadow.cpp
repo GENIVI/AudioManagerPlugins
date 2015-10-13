@@ -17,15 +17,15 @@
  *  For further information see http://www.genivi.org/.
  */
 
-#include "../../PluginRoutingInterfaceDbus/include/IAmRoutingReceiverShadow.h"
+#include "IAmRoutingReceiverShadow.h"
 
 #include <string.h>
 #include <fstream>
 #include <stdexcept>
 #include <cassert>
 
-#include "../../PluginRoutingInterfaceDbus/include/configRoutingDbus.h"
-#include "../../PluginRoutingInterfaceDbus/include/CAmRoutingSenderDbus.h"
+#include "configRoutingDbus.h"
+#include "CAmRoutingSenderDbus.h"
 #include "CAmDbusWrapper.h"
 #include "CAmDltWrapper.h"
 

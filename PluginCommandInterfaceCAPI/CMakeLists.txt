@@ -122,18 +122,16 @@ if (WITH_CAPI_WRAPPER)
     	${COMMONAPI_INCLUDE_DIRS}
     	${COMMAND_CTR_GEN_INCLUDE_DIR}
     	${INCLUDE_FOLDER}
+    	${COMMONAPI_DBUS_INCLUDE_DIRS}
+        ${DBUS_INCLUDE_DIRS}	   
+        ${VSOMEIP_INCLUDE_DIRS}
+        ${COMMONAPI_SOMEIP_INCLUDE_DIRS}
     )
- 
+
         # all source files go here
     file(GLOB PLUGINCAPI_SRCS_CXX "src/*.cpp" )
 
     SET(PLUGINCAPI_SRCS_CXX ${PLUGINCAPI_SRCS_CXX} ${COMMAND_CTR_GEN_COMMON_SOURCES})
-    
-    INCLUDE_DIRECTORIES(${INCLUDE_DIRECTORIES}
-            ${COMMONAPI_DBUS_INCLUDE_DIRS}
-            ${DBUS_INCLUDE_DIRS}	   
-            ${VSOMEIP_INCLUDE_DIRS}
-            ${COMMONAPI_SOMEIP_INCLUDE_DIRS})
             
     IF(WITH_COMMAND_INTERFACE_GLUE_LIBS)
         
@@ -271,7 +269,7 @@ if (WITH_CAPI_WRAPPER)
     add_library(PluginCommandInterfaceCAPI MODULE ${PLUGINCAPI_SRCS_CXX})
     set (AM_LINK_LIBS ${AM_LINK_LIBS} ${CommonAPI_LIBRARY})
     
-    TARGET_LINK_LIBRARIES(PluginCommandInterfaceCAPI ${AM_LINK_LIBS})
+    TARGET_LINK_LIBRARIES(PluginCommandInterfaceCAPI ${AM_LINK_LIBS} )
                  
     install(TARGETS PluginCommandInterfaceCAPI          
             DESTINATION lib/${LIB_INSTALL_SUFFIX}/command
