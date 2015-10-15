@@ -44,7 +44,6 @@ INCLUDE_DIRECTORIES(
     "../include"
 )
 
-   
 file(GLOB CAPI_PLUGIN_INTERFACE_SRCS_CXX 
      "${AUDIOMANAGER_UTILITIES_SRC}/CAmCommonAPIWrapper.cpp"
      "${AUDIOMANAGER_UTILITIES_SRC}/CAmSocketHandler.cpp"
@@ -55,18 +54,15 @@ file(GLOB CAPI_PLUGIN_INTERFACE_SRCS_CXX
      "../src/*.cpp"
 )
 
-SET(CAPI_PLUGIN_INTERFACE_SRCS_CXX ${CAPI_PLUGIN_INTERFACE_SRCS_CXX} ${COMMAND_CTR_GEN_SOURCES})
-
-INCLUDE_DIRECTORIES(${INCLUDE_DIRECTORIES}
-        ${COMMONAPI_DBUS_INCLUDE_DIRS}
-        ${DBUS_INCLUDE_DIRS}
-        ${VSOMEIP_INCLUDE_DIRS}
-        ${COMMONAPI_SOMEIP_INCLUDE_DIRS})    
+SET(CAPI_PLUGIN_INTERFACE_SRCS_CXX ${CAPI_PLUGIN_INTERFACE_SRCS_CXX})
 
 link_directories(
-        ${LINK_DIRECTORIES}
- 
+        ${LINK_DIRECTORIES} 
+#        ${CMAKE_INSTALL_PREFIX}/lib/
+        ${CMAKE_BINARY_DIR}
+        ${CC_LIBDIR}
 )
+
 ADD_EXECUTABLE(AmCommandSenderCAPITest ${CAPI_PLUGIN_INTERFACE_SRCS_CXX})
 
 TARGET_LINK_LIBRARIES(AmCommandSenderCAPITest 
@@ -76,76 +72,16 @@ TARGET_LINK_LIBRARIES(AmCommandSenderCAPITest
     ${PYTHON_LIBRARY}
     ${PC_GSTREAMER_LIBRARIES}
     ${CommonAPI_LIBRARY}
-    ${DBUS_LIBRARIES}
-    ${CommonAPI-${BINDING_SUFFIX}_LIBRARY}
-    ${vsomeip_LIBRARY}
+    ${COMMANDCONTROL_CAPI}
     gtest
     gmock
 )
-
+    
 INSTALL(TARGETS AmCommandSenderCAPITest 
         DESTINATION ${TEST_EXECUTABLE_INSTALL_PATH}
         PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
         COMPONENT plugin-tests
 )
-
-IF(CONFIG_INI_TEST_PATH)
-    FILE(READ ${CONFIG_INI_TEST_PATH} CONFIG_INI_TEST)
-    IF(STUB_COMMANDCONTROL_BINDING_LIB AND PROXY_COMMANDCONTROL_BINDING_LIB) 
-        IF(NOT ${EXECUTABLE_OUTPUT_PATH} STREQUAL "") 
-        
-            STRING(REPLACE "REL_PATH" 
-                               "../plugins/${STUB_COMMANDCONTROL_BINDING_LIB}" 
-                               CONFIG_STUB_SECTION 
-                               ${CONFIG_STUB_SECTION_INI})
-            STRING(REPLACE "REL_PATH" 
-                           "../plugins/${PROXY_COMMANDCONTROL_BINDING_LIB}" 
-                           CONFIG_PROXY_SECTION 
-                           ${CONFIG_PROXY_SECTION_INI})    
-   
-            STRING(REPLACE "[stub]" 
-                            ${CONFIG_STUB_SECTION} 
-                           CONFIG_INI_TEST 
-                           ${CONFIG_INI})
-            STRING(REPLACE "[proxy]" 
-                           ${CONFIG_PROXY_SECTION} 
-                           CONFIG_INI_TEST 
-                           ${CONFIG_INI_TEST})
-        ELSE()
-            STRING(REPLACE "REL_PATH" 
-                       "${STUB_COMMANDCONTROL_BINDING_LIB}" 
-                       CONFIG_STUB_SECTION 
-                       ${CONFIG_STUB_SECTION_INI})
-            STRING(REPLACE "REL_PATH" 
-                           "${PROXY_COMMANDCONTROL_BINDING_LIB}" 
-                           CONFIG_PROXY_SECTION 
-                           ${CONFIG_PROXY_SECTION_INI}) 
-            STRING(REPLACE "[stub]" 
-                        ${CONFIG_STUB_SECTION}  
-                       CONFIG_INI_TEST 
-                       ${CONFIG_INI})
-            STRING(REPLACE "[proxy]" 
-                           ${CONFIG_PROXY_SECTION} 
-                           CONFIG_INI_TEST 
-                           ${CONFIG_INI_TEST})    
-       ENDIF()                        
-    ELSE()
-        SET(CONFIG_INI_TEST ${CONFIG_INI})                                    
-    ENDIF()                 
-    FILE(WRITE ${CONFIG_INI_TEST_PATH} ${CONFIG_INI_TEST}) 
-    
-    configure_file( ${CONFIG_INI_TEST_PATH} ${TEST_EXECUTABLE_OUTPUT_PATH}/commonapi.ini COPYONLY)
-    configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/vsomeip.json ${TEST_EXECUTABLE_OUTPUT_PATH}/vsomeip.json COPYONLY)  
-                    
-    GET_PROPERTY(TEST_CONFIG_INSTALLED GLOBAL PROPERTY CAPI_TEST_CONFIG_INSTALLED)
-    IF(NOT TEST_CONFIG_INSTALLED)
-        SET_PROPERTY(GLOBAL PROPERTY CAPI_TEST_CONFIG_INSTALLED ON)
-        INSTALL(FILES ${TEST_EXECUTABLE_OUTPUT_PATH}/commonapi.ini ${TEST_EXECUTABLE_OUTPUT_PATH}/vsomeip.json
-                                DESTINATION ${TEST_EXECUTABLE_INSTALL_PATH}
-                                PERMISSIONS OWNER_WRITE OWNER_READ GROUP_WRITE GROUP_READ WORLD_READ
-                                COMPONENT plugin-tests)
-    ENDIF(NOT TEST_CONFIG_INSTALLED) 
-ENDIF(CONFIG_INI_TEST_PATH)
 
 set(EXECUTABLE_OUTPUT_PATH ${TEST_EXECUTABLE_OUTPUT_PATH})
 

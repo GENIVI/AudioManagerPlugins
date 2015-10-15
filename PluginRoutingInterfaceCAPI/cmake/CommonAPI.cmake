@@ -31,6 +31,14 @@
 
 include(CMakeParseArguments)
 
+IF(NOT WITH_CAPI_GENERATOR_IF_AVAILABLE)
+    SET(WITH_CAPI_GENERATOR_IF_AVAILABLE ON CACHE INTERNAL "hide this!" FORCE)
+ENDIF(NOT WITH_CAPI_GENERATOR_IF_AVAILABLE)
+
+IF(NOT SELECTED_CAPI_BINDING)
+    SET(SELECTED_CAPI_BINDING 0 CACHE INTERNAL "hide this!" FORCE)
+ENDIF(NOT SELECTED_CAPI_BINDING)    
+
 # find the proper libs ...
 MACRO(LOAD_COMMONAPI_LIB)
 	FIND_PACKAGE(CommonAPI REQUIRED)
@@ -129,7 +137,7 @@ endfunction()
 
 # get lists with headers and sources after they has been generated
 macro(GET_GENERATED_FILES GEN_DESTINATION)
-    
+        
     IF(${SELECTED_CAPI_BINDING} EQUAL 1)
         SET(BINDING_SUFFIX "SomeIP")
     ELSE()
@@ -144,10 +152,15 @@ macro(GET_GENERATED_FILES GEN_DESTINATION)
             ERROR_STRIP_TRAILING_WHITESPACE)
 
     IF(_FIND_ERROR)
-        MESSAGE(FATAL_ERROR "Can't find generated stub headers!")
+        MESSAGE(FATAL_ERROR "...an error occurred: ${_FIND_ERROR}")
+    ELSE()
+        IF(NOT _FIND_RESULT)
+            MESSAGE(STATUS "hint...can't find any binding stub headers!")
+        ELSE()
+             string(REPLACE "\n" ";" CAPI_BINDING_STUB_HEADERS ${_FIND_RESULT})   
+        ENDIF()
     ENDIF()
-    string(REPLACE "\n" ";" CAPI_BINDING_STUB_HEADERS ${_FIND_RESULT})     
-       
+        
     execute_process(COMMAND find ${GEN_DESTINATION} -type f -name "*${BINDING_SUFFIX}Proxy*.hpp"
                 RESULT_VARIABLE EXIT_CODE
                 OUTPUT_VARIABLE _FIND_RESULT
@@ -156,9 +169,14 @@ macro(GET_GENERATED_FILES GEN_DESTINATION)
                 ERROR_STRIP_TRAILING_WHITESPACE)
 
     IF(_FIND_ERROR)
-        MESSAGE(FATAL_ERROR "Can't find generated proxy headers!")
+        MESSAGE(FATAL_ERROR "...an error occurred: ${_FIND_ERROR}")
+    ELSE()
+        IF(NOT _FIND_RESULT)
+            MESSAGE(STATUS "hint...can't find any binding proxy headers!")
+        ELSE()
+            string(REPLACE "\n" ";" CAPI_BINDING_PROXY_HEADERS ${_FIND_RESULT})     
+        ENDIF()
     ENDIF()
-    string(REPLACE "\n" ";" CAPI_BINDING_PROXY_HEADERS ${_FIND_RESULT}) 
     
     execute_process(COMMAND find ${GEN_DESTINATION} -type f -name "*${BINDING_SUFFIX}Deployment.hpp"
             RESULT_VARIABLE EXIT_CODE
@@ -168,9 +186,14 @@ macro(GET_GENERATED_FILES GEN_DESTINATION)
             ERROR_STRIP_TRAILING_WHITESPACE)
 
     IF(_FIND_ERROR)
-        MESSAGE(FATAL_ERROR "Can't find generated deployment headers!")
+        MESSAGE(FATAL_ERROR "...an error occurred: ${_FIND_ERROR}")
+    ELSE() 
+        IF(NOT _FIND_RESULT)
+            MESSAGE(STATUS "hint...can't find any binding deployment headers!")
+        ELSE()
+            string(REPLACE "\n" ";" CAPI_BINDING_DEPLOYMENT_HEADERS ${_FIND_RESULT})    
+        ENDIF()   
     ENDIF()
-    string(REPLACE "\n" ";" CAPI_BINDING_DEPLOYMENT_HEADERS ${_FIND_RESULT})
 
     execute_process(COMMAND find ${GEN_DESTINATION} -type f -name *.hpp -and -not -name "*${BINDING_SUFFIX}Proxy*.hpp" -and -not -name "*${BINDING_SUFFIX}Stub*.hpp" -and -not -name "*${BINDING_SUFFIX}Deployment.hpp"
                 RESULT_VARIABLE EXIT_CODE
@@ -180,9 +203,14 @@ macro(GET_GENERATED_FILES GEN_DESTINATION)
                 ERROR_STRIP_TRAILING_WHITESPACE)
 
     IF(_FIND_ERROR)
-        MESSAGE(FATAL_ERROR "Can't find generated common headers!")
+        MESSAGE(FATAL_ERROR "...an error occurred: ${_FIND_ERROR}")
+    ELSE()
+        IF(NOT _FIND_RESULT)
+            MESSAGE(STATUS "hint...can't any find generic headers!")
+        ELSE()
+            string(REPLACE "\n" ";" CAPI_COMMON_HEADERS ${_FIND_RESULT}) 
+        ENDIF()
     ENDIF()
-    string(REPLACE "\n" ";" CAPI_COMMON_HEADERS ${_FIND_RESULT}) 
     
      execute_process(COMMAND find ${GEN_DESTINATION} -type f -name "*${BINDING_SUFFIX}Stub*.cpp"
             RESULT_VARIABLE EXIT_CODE
@@ -192,10 +220,15 @@ macro(GET_GENERATED_FILES GEN_DESTINATION)
             ERROR_STRIP_TRAILING_WHITESPACE)
 
     IF(_FIND_ERROR)
-        MESSAGE(FATAL_ERROR "Can't find generated stub headers!")
+        MESSAGE(FATAL_ERROR "...an error occurred: ${_FIND_ERROR}")
+    ELSE()
+        IF(NOT _FIND_RESULT)
+            MESSAGE(STATUS "hint...can't find any binding stub sources!")
+        ELSE()
+            string(REPLACE "\n" ";" CAPI_BINDING_STUB_SOURCES ${_FIND_RESULT})       
+        ENDIF()
     ENDIF()
-    string(REPLACE "\n" ";" CAPI_BINDING_STUB_SOURCES ${_FIND_RESULT})     
-       
+      
     execute_process(COMMAND find ${GEN_DESTINATION} -type f -name "*${BINDING_SUFFIX}Proxy*.cpp"
                 RESULT_VARIABLE EXIT_CODE
                 OUTPUT_VARIABLE _FIND_RESULT
@@ -204,9 +237,14 @@ macro(GET_GENERATED_FILES GEN_DESTINATION)
                 ERROR_STRIP_TRAILING_WHITESPACE)
 
     IF(_FIND_ERROR)
-        MESSAGE(FATAL_ERROR "Can't find generated proxy headers!")
+        MESSAGE(FATAL_ERROR "...an error occurred: ${_FIND_ERROR}")
+    ELSE()
+        IF(NOT _FIND_RESULT)
+            MESSAGE(STATUS "hint...can't find any binding proxy sources!")
+        ELSE()    
+            string(REPLACE "\n" ";" CAPI_BINDING_PROXY_SOURCES ${_FIND_RESULT}) 
+        ENDIF()
     ENDIF()
-    string(REPLACE "\n" ";" CAPI_BINDING_PROXY_SOURCES ${_FIND_RESULT}) 
     
     execute_process(COMMAND find ${GEN_DESTINATION} -type f -name "*${BINDING_SUFFIX}Deployment.cpp"
             RESULT_VARIABLE EXIT_CODE
@@ -216,10 +254,14 @@ macro(GET_GENERATED_FILES GEN_DESTINATION)
             ERROR_STRIP_TRAILING_WHITESPACE)
 
     IF(_FIND_ERROR)
-        MESSAGE(FATAL_ERROR "Can't find generated deployment headers!")
+        MESSAGE(FATAL_ERROR "...an error occurred: ${_FIND_ERROR}")
+    ELSE()
+        IF(NOT _FIND_RESULT)
+            MESSAGE(STATUS "hint...can't find any binding deployment sources!")
+        ELSE()
+            string(REPLACE "\n" ";" CAPI_BINDING_DEPLOYMENT_SOURCES ${_FIND_RESULT})
+        ENDIF()
     ENDIF()
-    string(REPLACE "\n" ";" CAPI_BINDING_DEPLOYMENT_SOURCES ${_FIND_RESULT})
-
     execute_process(COMMAND find ${GEN_DESTINATION} -type f -name *.cpp -and -not -name "*${BINDING_SUFFIX}Proxy*.cpp" -and -not -name "*${BINDING_SUFFIX}Stub*.cpp" -and -not -name "*${BINDING_SUFFIX}Deployment.cpp"
                 RESULT_VARIABLE EXIT_CODE
                 OUTPUT_VARIABLE _FIND_RESULT
@@ -228,9 +270,14 @@ macro(GET_GENERATED_FILES GEN_DESTINATION)
                 ERROR_STRIP_TRAILING_WHITESPACE)
 
     IF(_FIND_ERROR)
-        MESSAGE(FATAL_ERROR "Can't find generated common headers!")
+        MESSAGE(FATAL_ERROR "...an error occurred: ${_FIND_ERROR}")
+    ELSE()
+        IF(NOT _FIND_RESULT)
+            MESSAGE(STATUS "hint...can't find any generic sources!")
+        ELSE()
+             string(REPLACE "\n" ";" CAPI_COMMON_SOURCES ${_FIND_RESULT}) 
+        ENDIF()
     ENDIF()
-    string(REPLACE "\n" ";" CAPI_COMMON_SOURCES ${_FIND_RESULT}) 
     
    set(${PARAMS_TARGET}_GEN_BINDING_DEPLOYMENT_HEADERS ${${PARAMS_TARGET}_GEN_BINDING_DEPLOYMENT_HEADERS} ${CAPI_BINDING_DEPLOYMENT_HEADERS} PARENT_SCOPE)
    set(${PARAMS_TARGET}_GEN_BINDING_STUB_HEADERS ${${PARAMS_TARGET}_GEN_BINDING_STUB_HEADERS} ${CAPI_BINDING_STUB_HEADERS} PARENT_SCOPE)
@@ -384,7 +431,11 @@ FUNCTION(COMMON_API_GENERATE_SOURCES)
         ENDIF()    
     ELSE()
         if(NOT PARAMS_FIDLS_GENERIC)
-            message(FATAL_ERROR "FIDLS must be specified")
+            message(STATUS "No fidls for the generic generator. The generation of generic code will be skipped !")
+        endif()
+        
+        if(NOT PARAMS_FIDLS_BINDING)
+            message(STATUS "No fidls for the binding generator. The generation of binding code will be skipped !")
         endif()
     
         if(PARAMS_HEADER_TEMPLATE)
@@ -406,8 +457,6 @@ FUNCTION(COMMON_API_GENERATE_SOURCES)
 #                configure_file(${FIDL_PATH} ${CMAKE_CURRENT_BINARY_DIR}/${FIDL_CHECKSUM}.fidl.done)
                 list(APPEND IN_FIDLS_BINDING ${FIDL_PATH})
             endforeach()
-        else()
-            SET(IN_FIDLS_BINDING ${IN_FIDLS_GENERIC})
         endif()
         
         # run the generator ...

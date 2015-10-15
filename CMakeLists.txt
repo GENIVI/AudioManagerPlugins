@@ -21,7 +21,7 @@ include(CMakeDependentOption)
 find_package(PkgConfig)
 
 
-OPTION (WITH_COMMAND_INTERFACE_COMMON_CAPI
+OPTION (WITH_COMMAND_INTERFACE_CAPI
         "build with commandinterface common-api plugin" ON )
 OPTION (WITH_COMMAND_INTERFACE_DBUS
         "build with commandinterface dbus plugin" OFF )
@@ -38,9 +38,9 @@ IF(USE_BUILD_LIBS)
 	file(MAKE_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}/plugins")
 ENDIF(USE_BUILD_LIBS)
 
-IF (WITH_COMMAND_INTERFACE_COMMON_CAPI)
+IF (WITH_COMMAND_INTERFACE_CAPI)
 	add_subdirectory(PluginCommandInterfaceCAPI)
-ENDIF(WITH_COMMAND_INTERFACE_COMMON_CAPI)
+ENDIF(WITH_COMMAND_INTERFACE_CAPI)
  
 IF (WITH_COMMAND_INTERFACE_DBUS)
 	add_subdirectory(PluginCommandInterfaceDbus)
@@ -61,6 +61,7 @@ ENDIF(WITH_ROUTING_INTERFACE_CAPI)
 IF(WITH_ROUTING_INTERFACE_DBUS) 
 		add_subdirectory(PluginRoutingInterfaceDbus)
 ENDIF(WITH_ROUTING_INTERFACE_DBUS) 
+             
         
 add_custom_target(plugins-install
   COMMAND

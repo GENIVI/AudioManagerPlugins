@@ -22,9 +22,8 @@
 #include "CAmCommandSenderCommon.h"
 #include "IAmCommand.h"
 
-#ifndef am_commandinterface
-#define am_commandinterface v1_0::org::genivi::am::commandinterface
-#endif
+
+
 
 namespace am {
 
@@ -43,8 +42,6 @@ public:
 	    void disconnect(const std::shared_ptr<CommonAPI::ClientId> _client, am_types::am_mainConnectionID_t _mainConnectionID, disconnectReply_t _reply);
 
 	    void setVolume(const std::shared_ptr<CommonAPI::ClientId> _client, am_types::am_sinkID_t _sinkID, am_types::am_mainVolume_t _volume, setVolumeReply_t _reply);
-
-//	    void getVolume(const std::shared_ptr<CommonAPI::ClientId> _client, am_types::am_sinkID_t _sinkID, getVolumeReply_t _reply);
 
 	    void volumeStep(const std::shared_ptr<CommonAPI::ClientId> _client, am_types::am_sinkID_t _sinkID, int16_t _step, volumeStepReply_t _reply);
 

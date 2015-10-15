@@ -44,33 +44,11 @@ endif (NOT DAEMONVERSION)
 
 IF(WITH_CAPI_WRAPPER)
 
-    GET_PROPERTY(_USE_CAPI_BINDING GLOBAL PROPERTY USE_CAPI_BINDING)
-    IF(NOT _USE_CAPI_BINDING)
-        set (USE_CAPI_BINDING "DBUS" CACHE STRING "Select prefered binding for common-api 'DBUS' or 'SOMEIP'")
-        set_property(CACHE USE_CAPI_BINDING PROPERTY STRINGS "DBUS" "SOMEIP") 
-        
-        IF (USE_CAPI_BINDING STREQUAL "SOMEIP")
-            set(SELECTED_CAPI_BINDING 1 CACHE INTERNAL "hide this!" FORCE)
-        ELSEIF (USE_CAPI_BINDING STREQUAL "DBUS")
-            set(SELECTED_CAPI_BINDING 0 CACHE INTERNAL "hide this!" FORCE)
-        ELSE()
-            unset(SELECTED_CAPI_BINDING CACHE)
-        ENDIF() 
-        set (WITH_CAPI_GENERATOR_IF_AVAILABLE ON CACHE INTERNAL "hide this!" FORCE)
-    ENDIF ()
-
-    OPTION (WITH_ROUTING_INTERFACE_GLUE_LIBS
+    OPTION (WITH_ROUTING_INTERFACE_GENERIC_LIB
             "build routing iterface common-api glue code" OFF )
 
     set(INCLUDE_FOLDER "include")
-    # Include CommonAPI ... 
-    INCLUDE (cmake/CommonAPI.cmake)
-    
-    # load all the necessary libraries 
-    # LOAD_COMMONAPI() without argument will use the CACHE variable SELECTED_CAPI_BINDING (0-DBus, 1-SomeIP).
-    # It can be called with DBUS or SOMEIP as parameter: LOAD_COMMONAPI(DBUS) , LOAD_COMMONAPI(SOMEIP) which will overwrite SELECTED_CAPI_BINDING.
-    LOAD_COMMONAPI_LIB()
-   
+
     set(LIBRARY_OUTPUT_PATH ${PLUGINS_OUTPUT_PATH}/routing)
     
 	if(WITH_DLT)    
@@ -79,207 +57,91 @@ IF(WITH_CAPI_WRAPPER)
 	    include_directories(${DLT_INCLUDE_DIRS})
 	    link_directories(${DLT_LIBRARY_DIRS})
 	endif(WITH_DLT)    
-    
-    # Find the common-api sources. 
-    # The sources can be placed in the build directory (DESTINATION) or in the source tree (ALT_DESTINATION). 
-    # The ALT_DESTINATION is used as fall back if the DESTINATION directory dosen't contain the sources or you just don't want to use the generator.
-  
-	IF(${SELECTED_CAPI_BINDING} EQUAL 1)#SomeIP
-	    LOAD_COMMONAPI_SOMEIP_LIB()
-	    SET(BINDING_SUFFIX SomeIP)
-	  	SET(SRC_GEN src-gen/v${COMMONAPI_SOMEIP_VERSION_NUMBER}/${BINDING_SUFFIX})
-		SET(CAPI_BINDING_FIDLS fidl/RoutingInterface.fdepl fidl/AudioManagerTypes.fdepl ) # fidl/RoutingInterfaceProviderSomeIp.fdepl	
-	ELSE()#Dbus
-	    LOAD_COMMONAPI_DBUS_LIB()
-	    SET(BINDING_SUFFIX DBus)
-	   	SET(SRC_GEN src-gen/v${COMMONAPI_DBUS_VERSION_NUMBER}/${BINDING_SUFFIX})
-	    SET(CAPI_BINDING_FIDLS fidl/RoutingInterface.fidl fidl/AudioManagerTypes.fdepl)	
-	ENDIF()
-    COMMON_API_GENERATE_SOURCES(
-                                # Prefix.
-                                TARGET ROUTING 
-                                # A list with fidls for the generic generator.
-                                FIDLS_GENERIC fidl/RoutingInterface.fidl 
-                                # A list with fidls for the binding generator.
-                                FIDLS_BINDING ${CAPI_BINDING_FIDLS}
-                                # A relative path to the build directory or an absolute path.
-                                DESTINATION ${SRC_GEN} 
-                                # An alternative relative/absolute path with common-api sources, usually in the source tree.
-                                ALT_DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/src-gen 
-                                )
-	                  
+
     INCLUDE_DIRECTORIES(
     	${CMAKE_SOURCE_DIR} 
      	${CMAKE_CURRENT_BINARY_DIR}
     	${AUDIO_INCLUDE_FOLDER}
     	${AUDIOMANAGER_INCLUDE_FOLDER}
     	${AUDIOMANAGER_UTILITIES_INCLUDE}
-    	${COMMONAPI_INCLUDE_DIRS}
-    	${ROUTING_GEN_INCLUDE_DIR}
     	${INCLUDE_FOLDER}
     )
     
      # all source files go here
     file(GLOB PLUGINCAPI_SRCS_CXX "src/*.cpp" )
-	SET(PLUGINCAPI_SRCS_CXX 
-	    ${PLUGINCAPI_SRCS_CXX} 
-        ${ROUTING_GEN_COMMON_SOURCES}
-	    )
-	
-   	INCLUDE_DIRECTORIES(${INCLUDE_DIRECTORIES}
-	    		    ${VSOMEIP_INCLUDE_DIRS}
-    	    		${COMMONAPI_SOMEIP_INCLUDE_DIRS}
-    	    		${COMMONAPI_DBUS_INCLUDE_DIRS}
-                    ${DBUS_INCLUDE_DIRS}
-                    ${ROUTING_GEN_INCLUDE_DIR}
-                    )
-	
-    IF(WITH_ROUTING_INTERFACE_GLUE_LIBS)
-        SET(STUB_ROUTINGCONTROL_BINDING RoutingStubs-${BINDING_SUFFIX} )
-        SET(PROXY_ROUTINGCONTROL_BINDING RoutingProxies-${BINDING_SUFFIX} )
-                
-        SET(STUB_ROUTINGCONTROL_BINDING_LIB lib${STUB_ROUTINGCONTROL_BINDING}.so )
-        SET(PROXY_ROUTINGCONTROL_BINDING_LIB lib${PROXY_ROUTINGCONTROL_BINDING}.so )
-                
-        SET(STUB_ROUTINGCONTROL_BINDING_LIB ${STUB_ROUTINGCONTROL_BINDING_LIB} PARENT_SCOPE )
-        SET(PROXY_ROUTINGCONTROL_BINDING_LIB ${PROXY_ROUTINGCONTROL_BINDING_LIB} PARENT_SCOPE )
-                      
-        add_library (${STUB_ROUTINGCONTROL_BINDING} SHARED ${ROUTING_GEN_BINDING_STUB_SOURCES} ${ROUTING_GEN_BINDING_DEPLOYMENT_SOURCES})
-        add_library (${PROXY_ROUTINGCONTROL_BINDING} SHARED ${ROUTING_GEN_BINDING_PROXY_SOURCES} ${ROUTING_GEN_BINDING_DEPLOYMENT_SOURCES})
-                  	
-    	target_link_libraries(${STUB_ROUTINGCONTROL_BINDING} ${CommonAPI-${BINDING_SUFFIX}_LIBRARY})
-	    target_link_libraries(${PROXY_ROUTINGCONTROL_BINDING} ${CommonAPI-${BINDING_SUFFIX}_LIBRARY})
+
+
+    SET(ROUTINGCONTROL_CAPI RoutingControlGenericCommonAPI )
+    SET(ROUTINGCONTROL_CAPI_LIB lib${ROUTINGCONTROL_CAPI}.so )                
+    SET(ROUTINGCONTROL_CAPI_LIB ${ROUTINGCONTROL_CAPI_LIB} PARENT_SCOPE )
+
+    INCLUDE (cmake/CommonAPI.cmake)
+    LOAD_COMMONAPI_LIB()
+
+    IF(NOT WITH_ROUTING_INTERFACE_GENERIC_LIB ) 
+        pkg_check_modules(RC ${ROUTINGCONTROL_CAPI})
+        IF(NOT RC_FOUND)
+            SET(WITH_ROUTING_INTERFACE_GENERIC_LIB ON)
+        ELSE(NOT RC_FOUND)
+           SET(ROUTING_GEN_INCLUDE_DIR ${RC_INCLUDEDIR}) 
+           INCLUDE_DIRECTORIES(${INCLUDE_DIRECTORIES} ${COMMONAPI_INCLUDE_DIRS} ${RC_INCLUDEDIR})  
+           link_directories(${RC_LIBDIR})  
+        ENDIF(NOT RC_FOUND)
+    ENDIF()
+    
+    IF(WITH_ROUTING_INTERFACE_GENERIC_LIB)        
+      
+   	   	SET(SRC_GEN src-gen/v${COMMONAPI_VERSION_NUMBER}/Generic)
+        # Find the common-api sources. 
+        # The sources can be placed in the build directory (DESTINATION) or in the source tree (ALT_DESTINATION). 
+        # The ALT_DESTINATION is used as fall back if the DESTINATION directory dosen't contain the sources or you just don't want to use the generator.
+        COMMON_API_GENERATE_SOURCES(
+                                    # Prefix.
+                                    TARGET ROUTING 
+                                    # A list with fidls for the generic generator. Leave this parameter empty if you won't generic code.
+                                    FIDLS_GENERIC fidl/RoutingInterface.fidl 
+                                    # A list with fidls for the binding generator. Leave this parameter empty if you won't binding code.
+                                    FIDLS_BINDING #Empty
+                                    # A relative path to the build directory or an absolute path.
+                                    DESTINATION ${SRC_GEN} 
+                                    # An alternative relative/absolute path with common-api sources, usually in the source tree.
+                                    ALT_DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/src-gen 
+                                    )
+        
+        INCLUDE_DIRECTORIES(${INCLUDE_DIRECTORIES}
+    		    ${VSOMEIP_INCLUDE_DIRS}
+	    		${COMMONAPI_SOMEIP_INCLUDE_DIRS}
+	    		${COMMONAPI_DBUS_INCLUDE_DIRS}
+                ${DBUS_INCLUDE_DIRS}
+                ${ROUTING_GEN_INCLUDE_DIR}
+                ${COMMONAPI_INCLUDE_DIRS}
+                )
+                     
+        add_library (${ROUTINGCONTROL_CAPI} SHARED ${ROUTING_GEN_COMMON_SOURCES} ) 	
+    	target_link_libraries(${ROUTINGCONTROL_CAPI} ${CommonAPI_LIBRARY} )
     	
-    	set_target_properties(${STUB_ROUTINGCONTROL_BINDING} PROPERTIES 
+    	set_target_properties(${ROUTINGCONTROL_CAPI} PROPERTIES 
     	                            LINKER_LANGUAGE CXX 
-    	                            LIBRARY_OUTPUT_DIRECTORY ${PLUGINS_OUTPUT_PATH})
-    	set_target_properties(${PROXY_ROUTINGCONTROL_BINDING} PROPERTIES 
-    	                            LINKER_LANGUAGE CXX 
-    	                            LIBRARY_OUTPUT_DIRECTORY ${PLUGINS_OUTPUT_PATH})  	    	
-        
-        INSTALL(TARGETS ${PROXY_ROUTINGCONTROL_BINDING} ${STUB_ROUTINGCONTROL_BINDING}
-            DESTINATION lib/${LIB_INSTALL_SUFFIX}/
-            PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
-            COMPONENT plugin)
-        IF(WITH_TESTS)
-            INSTALL(TARGETS ${STUB_ROUTINGCONTROL_BINDING} ${PROXY_ROUTINGCONTROL_BINDING}
-                    DESTINATION ${TEST_EXECUTABLE_INSTALL_PATH}
-                    PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
-                    COMPONENT plugin-tests)
-            INSTALL(TARGETS ${PROXY_ROUTINGCONTROL_BINDING}
-                    DESTINATION ${TEST_EXECUTABLE_INSTALL_PATH}
-                    PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
-                    COMPONENT plugin-tests)        
-        ENDIF(WITH_TESTS)                  
-   ENDIF(WITH_ROUTING_INTERFACE_GLUE_LIBS)  
+    	                            LIBRARY_OUTPUT_DIRECTORY ${PLUGINS_OUTPUT_PATH})	    	
+                                    
+      INSTALL (TARGETS ${ROUTINGCONTROL_CAPI}
+              PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
+              LIBRARY DESTINATION lib
+              COMPONENT plugin)                   
+       set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)       
+#       link_directories(${CMAKE_INSTALL_PREFIX}/lib/${LIB_INSTALL_SUFFIX})  
+       link_directories(${CMAKE_CURRENT_BINARY_DIR})   
+
+      INSTALL( DIRECTORY ${ROUTING_GEN_INCLUDE_DIR} DESTINATION include/${LIB_INSTALL_SUFFIX} )
+      configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/cmake/plugin.pc.in ${CMAKE_BINARY_DIR}/${ROUTINGCONTROL_CAPI}.pc @ONLY )  
+      install(FILES ${CMAKE_BINARY_DIR}/${ROUTINGCONTROL_CAPI}.pc DESTINATION lib/pkgconfig COMPONENT plugin)  
+                        
+   ENDIF()  
    
-    GET_PROPERTY(CONFIG_INSTALLED GLOBAL PROPERTY CAPI_CONFIG_INSTALLED)
-
-    IF(NOT CONFIG_INSTALLED)
-        SET_PROPERTY(GLOBAL PROPERTY CAPI_CONFIG_INSTALLED ON)
-        SET(CONFIG_INI_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/commonapi4${BINDING_SUFFIX}.ini )
-        configure_file(${CONFIG_INI_PATH} ${CMAKE_BINARY_DIR}/commonapi-bin.ini COPYONLY)
-        configure_file(${CONFIG_INI_PATH} ${CMAKE_BINARY_DIR}/commonapi-depl.ini COPYONLY) 
-                    
-        SET(CONFIG_INI_DEPL_PATH ${CMAKE_BINARY_DIR}/commonapi-depl.ini)
-        SET(CONFIG_INI_DEPL_PATH ${CONFIG_INI_DEPL_PATH} PARENT_SCOPE)
-        SET(CONFIG_INI_BIN_PATH ${CMAKE_BINARY_DIR}/commonapi-bin.ini)
-        SET(CONFIG_INI_BIN_PATH ${CONFIG_INI_BIN_PATH} PARENT_SCOPE)
-        configure_file(${CONFIG_INI_PATH} ${CMAKE_BINARY_DIR}/commonapi-test.ini COPYONLY)      
-        SET(CONFIG_INI_TEST_PATH ${CMAKE_BINARY_DIR}/commonapi-test.ini)
-        SET(CONFIG_INI_TEST_PATH ${CONFIG_INI_TEST_PATH} PARENT_SCOPE)   
-    
-        INSTALL(FILES ${CMAKE_BINARY_DIR}/commonapi-depl.ini
-                    DESTINATION /etc
-                    PERMISSIONS OWNER_WRITE OWNER_READ GROUP_WRITE GROUP_READ WORLD_READ
-                    COMPONENT bin
-                    RENAME commonapi.ini) 
-        INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/cmake/vsomeip.json
-                DESTINATION /etc
-                PERMISSIONS OWNER_WRITE OWNER_READ GROUP_WRITE GROUP_READ WORLD_READ
-                COMPONENT bin) 
-        
-    ENDIF (NOT CONFIG_INSTALLED)
-       
-       
-    FILE(READ ${CONFIG_INI_DEPL_PATH} CONFIG_INI)
-    FILE(READ ${CMAKE_CURRENT_SOURCE_DIR}/cmake/routing-stub.ini CONFIG_STUB_SECTION_INI)
-    FILE(READ ${CMAKE_CURRENT_SOURCE_DIR}/cmake/routing-proxy.ini CONFIG_PROXY_SECTION_INI)
-        
-    IF(STUB_ROUTINGCONTROL_BINDING_LIB AND PROXY_ROUTINGCONTROL_BINDING_LIB) 
-        FILE(RELATIVE_PATH REL_PATH ${CMAKE_INSTALL_PREFIX}/bin ${CMAKE_INSTALL_PREFIX}/lib/${LIB_INSTALL_SUFFIX} )
-        STRING(REPLACE "REL_PATH_ROUTING_CONTROL" 
-                        "${REL_PATH}/${STUB_ROUTINGCONTROL_BINDING_LIB}" 
-                       CONFIG_STUB_SECTION 
-                       ${CONFIG_STUB_SECTION_INI})
-        STRING(REPLACE "REL_PATH_ROUTING_OBSERVER" 
-                        "${REL_PATH}/${STUB_ROUTINGCONTROL_BINDING_LIB}" 
-                       CONFIG_STUB_SECTION 
-                       ${CONFIG_STUB_SECTION})               
-        STRING(REPLACE "REL_PATH_ROUTING_CONTROL" 
-                        "${REL_PATH}/${PROXY_ROUTINGCONTROL_BINDING_LIB}" 
-                       CONFIG_PROXY_SECTION 
-                       ${CONFIG_PROXY_SECTION_INI})  
-        STRING(REPLACE "REL_PATH_ROUTING_OBSERVER" 
-                        "${REL_PATH}/${PROXY_ROUTINGCONTROL_BINDING_LIB}" 
-                       CONFIG_PROXY_SECTION 
-                       ${CONFIG_PROXY_SECTION}) 
-        STRING(REPLACE "[stub]" 
-                        ${CONFIG_STUB_SECTION} 
-                       CONFIG_INI_DEPLOYMENT 
-                       ${CONFIG_INI})
-        STRING(REPLACE "[proxy]" 
-                       ${CONFIG_PROXY_SECTION} 
-                       CONFIG_INI_DEPLOYMENT 
-                       ${CONFIG_INI_DEPLOYMENT})
-    ELSE()
-        SET(CONFIG_INI_DEPLOYMENT ${CONFIG_INI})                                    
-    ENDIF()               
-    FILE(WRITE ${CONFIG_INI_DEPL_PATH} ${CONFIG_INI_DEPLOYMENT})          
-    
-    IF(NOT ${EXECUTABLE_OUTPUT_PATH} STREQUAL "")    
-        FILE(READ ${CONFIG_INI_BIN_PATH} CONFIG_INI)
-        IF(STUB_ROUTINGCONTROL_BINDING_LIB AND PROXY_ROUTINGCONTROL_BINDING_LIB) 
-            STRING(REPLACE "REL_PATH_ROUTING_CONTROL" 
-                        "plugins/${STUB_ROUTINGCONTROL_BINDING_LIB}" 
-                       CONFIG_STUB_SECTION 
-                       ${CONFIG_STUB_SECTION_INI})
-            STRING(REPLACE "REL_PATH_ROUTING_OBSERVER" 
-                            "plugins/${STUB_ROUTINGCONTROL_BINDING_LIB}" 
-                           CONFIG_STUB_SECTION 
-                           ${CONFIG_STUB_SECTION})               
-            STRING(REPLACE "REL_PATH_ROUTING_CONTROL" 
-                            "plugins/${PROXY_ROUTINGCONTROL_BINDING_LIB}" 
-                           CONFIG_PROXY_SECTION 
-                           ${CONFIG_PROXY_SECTION_INI})  
-            STRING(REPLACE "REL_PATH_ROUTING_OBSERVER" 
-                            "plugins/${PROXY_ROUTINGCONTROL_BINDING_LIB}" 
-                           CONFIG_PROXY_SECTION 
-                           ${CONFIG_PROXY_SECTION}) 
-                       
-            STRING(REPLACE "[stub]" 
-                        ${CONFIG_STUB_SECTION} 
-                        CONFIG_INI_BIN 
-                        ${CONFIG_INI})
-            STRING(REPLACE "[proxy]" 
-                           ${CONFIG_PROXY_SECTION} 
-                           CONFIG_INI_BIN 
-                           ${CONFIG_INI_BIN})
-        ELSE()
-             SET(CONFIG_INI_BIN ${CONFIG_INI})                                    
-        ENDIF()
-        FILE(WRITE ${CONFIG_INI_BIN_PATH} ${CONFIG_INI_BIN})               
-        configure_file( ${CONFIG_INI_BIN_PATH}  ${EXECUTABLE_OUTPUT_PATH}/commonapi.ini COPYONLY)
-        configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/cmake/vsomeip.json ${EXECUTABLE_OUTPUT_PATH}/vsomeip.json COPYONLY)
-    
-    ENDIF()	    		
-
-     
     add_library(PluginRoutingInterfaceCAPI MODULE ${PLUGINCAPI_SRCS_CXX})
     
     TARGET_LINK_LIBRARIES(PluginRoutingInterfaceCAPI 
-        ${DLT_LIBRARIES}
-        ${CommonAPI_LIBRARY}
+        ${ROUTINGCONTROL_CAPI}
     )
         
     INSTALL(TARGETS PluginRoutingInterfaceCAPI 

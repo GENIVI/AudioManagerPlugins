@@ -40,7 +40,7 @@ INCLUDE_DIRECTORIES(
     ${CMAKE_SOURCE_DIR} 
     ${DLT_INCLUDE_DIRS}
 	${COMMON_API_INCLUDE_DIRS}
-	${ROUTING_GEN_INCLUDE_DIR}
+	${COMMON_API_GEN_INCLUDE_DIR}
     ${INCLUDE_FOLDER}
     ${PYTHON_INCLUDE_DIRS}
     ${GOOGLE_TEST_INCLUDE_DIR}
@@ -49,14 +49,11 @@ INCLUDE_DIRECTORIES(
     "../include"
 )
 
-INCLUDE_DIRECTORIES(${INCLUDE_DIRECTORIES}
-        ${COMMONAPI_DBUS_INCLUDE_DIRS}
-        ${DBUS_INCLUDE_DIRS}
-        ${VSOMEIP_INCLUDE_DIRS}
-        ${COMMONAPI_SOMEIP_INCLUDE_DIRS})
-
 link_directories(
         ${LINK_DIRECTORIES}
+#        ${CMAKE_INSTALL_PREFIX}/lib/${LIB_INSTALL_SUFFIX}
+        ${CMAKE_BINARY_DIR}
+        ${RC_LIBDIR}
 )
    
 file(GLOB CAPI_PLUGIN_INTERFACE_SRCS_CXX 
@@ -79,95 +76,16 @@ TARGET_LINK_LIBRARIES(AmRoutingInterfaceCAPITests
     ${CMAKE_DL_LIBS}
     ${CMAKE_THREAD_LIBS_INIT}
     ${PYTHON_LIBRARY}
-    ${PC_GSTREAMER_LIBRARIES}
     ${CommonAPI_LIBRARY}
-    ${DBUS_LIBRARIES}
-    ${vsomeip_LIBRARY}
-    ${CommonAPI-${BINDING_SUFFIX}_LIBRARY}
     gtest
     gmock
-)
+    ${ROUTINGCONTROL_CAPI} 
+    )
 
 INSTALL(TARGETS AmRoutingInterfaceCAPITests 
         DESTINATION ${TEST_EXECUTABLE_INSTALL_PATH}
         PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
         COMPONENT plugin-tests
 )
-
-IF(CONFIG_INI_TEST_PATH)
-    FILE(READ ${CONFIG_INI_TEST_PATH} CONFIG_INI)
-    IF(STUB_ROUTINGCONTROL_BINDING_LIB AND PROXY_ROUTINGCONTROL_BINDING_LIB) 
-        IF(NOT ${EXECUTABLE_OUTPUT_PATH} STREQUAL "") 
-            STRING(REPLACE "REL_PATH_ROUTING_CONTROL" 
-                        "../plugins/${STUB_ROUTINGCONTROL_BINDING_LIB}" 
-                       CONFIG_STUB_SECTION 
-                       ${CONFIG_STUB_SECTION_INI})
-            STRING(REPLACE "REL_PATH_ROUTING_OBSERVER" 
-                            "../plugins/${STUB_ROUTINGCONTROL_BINDING_LIB}" 
-                           CONFIG_STUB_SECTION 
-                           ${CONFIG_STUB_SECTION})               
-            STRING(REPLACE "REL_PATH_ROUTING_CONTROL" 
-                            "../plugins/${PROXY_ROUTINGCONTROL_BINDING_LIB}" 
-                           CONFIG_PROXY_SECTION 
-                           ${CONFIG_PROXY_SECTION_INI})  
-            STRING(REPLACE "REL_PATH_ROUTING_OBSERVER" 
-                            "../plugins/${PROXY_ROUTINGCONTROL_BINDING_LIB}" 
-                           CONFIG_PROXY_SECTION 
-                           ${CONFIG_PROXY_SECTION}) 
-        
-        
-            STRING(REPLACE "[stub]" 
-                        ${CONFIG_STUB_SECTION}
-                       CONFIG_INI_TEST 
-                       ${CONFIG_INI})
-            STRING(REPLACE "[proxy]" 
-                           ${CONFIG_PROXY_SECTION} 
-                           CONFIG_INI_TEST 
-                           ${CONFIG_INI_TEST})
-        ELSE()
-        
-            STRING(REPLACE "REL_PATH_ROUTING_CONTROL" 
-                        "${STUB_ROUTINGCONTROL_BINDING_LIB}" 
-                       CONFIG_STUB_SECTION 
-                       ${CONFIG_STUB_SECTION_INI})
-            STRING(REPLACE "REL_PATH_ROUTING_OBSERVER" 
-                            "${STUB_ROUTINGCONTROL_BINDING_LIB}" 
-                           CONFIG_STUB_SECTION 
-                           ${CONFIG_STUB_SECTION})               
-            STRING(REPLACE "REL_PATH_ROUTING_CONTROL" 
-                            "${PROXY_ROUTINGCONTROL_BINDING_LIB}" 
-                           CONFIG_PROXY_SECTION 
-                           ${CONFIG_PROXY_SECTION_INI})  
-            STRING(REPLACE "REL_PATH_ROUTING_OBSERVER" 
-                            "${PROXY_ROUTINGCONTROL_BINDING_LIB}" 
-                           CONFIG_PROXY_SECTION 
-                           ${CONFIG_PROXY_SECTION}) 
-        
-            STRING(REPLACE "[stub]" 
-                            ${CONFIG_STUB_SECTION}  
-                            CONFIG_INI_TEST 
-                            ${CONFIG_INI})
-            STRING(REPLACE "[proxy]" 
-                           ${CONFIG_PROXY_SECTION}  
-                           CONFIG_INI_TEST 
-                           ${CONFIG_INI_TEST})                                   
-        ENDIF()                 
-    ELSE()
-        SET(CONFIG_INI_TEST ${CONFIG_INI})                                    
-    ENDIF() 
-    FILE(WRITE ${CONFIG_INI_TEST_PATH} ${CONFIG_INI_TEST}) 
-                    
-    configure_file( ${CONFIG_INI_TEST_PATH} ${TEST_EXECUTABLE_OUTPUT_PATH}/commonapi.ini COPYONLY)
-    configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/vsomeip.json ${TEST_EXECUTABLE_OUTPUT_PATH}/vsomeip.json COPYONLY)  
-        
-    GET_PROPERTY(TEST_CONFIG_INSTALLED GLOBAL PROPERTY CAPI_TEST_CONFIG_INSTALLED)
-    IF(NOT TEST_CONFIG_INSTALLED)
-        SET_PROPERTY(GLOBAL PROPERTY CAPI_TEST_CONFIG_INSTALLED ON)
-        INSTALL(FILES ${TEST_EXECUTABLE_OUTPUT_PATH}/commonapi.ini ${TEST_EXECUTABLE_OUTPUT_PATH}/vsomeip.json
-                                DESTINATION ${TEST_EXECUTABLE_INSTALL_PATH}
-                                PERMISSIONS OWNER_WRITE OWNER_READ GROUP_WRITE GROUP_READ WORLD_READ
-                                COMPONENT plugin-tests)
-    ENDIF(NOT TEST_CONFIG_INSTALLED) 
-ENDIF(CONFIG_INI_TEST_PATH)
 
 set(EXECUTABLE_OUTPUT_PATH ${TEST_EXECUTABLE_OUTPUT_PATH})
