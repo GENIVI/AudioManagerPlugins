@@ -131,7 +131,7 @@ if (WITH_CAPI_WRAPPER)
         INSTALL (TARGETS ${COMMANDCONTROL_CAPI}
                   PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
                   LIBRARY DESTINATION lib
-                  )    
+                  COMPONENT plugin)    
         set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
         link_directories(${CMAKE_CURRENT_BINARY_DIR}) 
         
