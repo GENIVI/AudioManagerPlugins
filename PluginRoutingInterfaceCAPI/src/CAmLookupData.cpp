@@ -38,7 +38,7 @@ CAmLookupData::RSLookupData::RSLookupData(CAmLookupData *pLookupDataOwner, const
 	mSenderProxy->getProxyStatusEvent().subscribe(std::bind(&CAmLookupData::RSLookupData::onServiceStatusEvent,this,std::placeholders::_1));
 	if(mIsConnected)
 		subscribe();
-	logInfo(__PRETTY_FUNCTION__, "mIsConnected:", mIsConnected);
+	log(&GetDefaultRoutingDltContext(), DLT_LOG_INFO, __PRETTY_FUNCTION__, "mIsConnected:", mIsConnected);
 }
 
 CAmLookupData::RSLookupData::~RSLookupData()
@@ -67,12 +67,12 @@ void CAmLookupData::RSLookupData::subscribe()
 		mSenderProxy->getAckSourceNotificationConfigurationSelectiveEvent().subscribe(std::bind(&CAmLookupData::ackSourceNotificationConfiguration,mpLookupDataOwner, std::placeholders::_1, std::placeholders::_2));
 		mIsSubcribed = true;
 	}
-	logInfo(__PRETTY_FUNCTION__);
+	log(&GetDefaultRoutingDltContext(), DLT_LOG_INFO,__PRETTY_FUNCTION__);
 }
 
 void CAmLookupData::RSLookupData::onServiceStatusEvent(const CommonAPI::AvailabilityStatus& serviceStatus)
 {
-	logInfo(__PRETTY_FUNCTION__, " status : ", (int)serviceStatus );
+	log(&GetDefaultRoutingDltContext(), DLT_LOG_INFO,__PRETTY_FUNCTION__, " status : ", (int)serviceStatus );
 	mIsConnected = (serviceStatus==CommonAPI::AvailabilityStatus::AVAILABLE);
 
 	if(mIsConnected)
@@ -82,7 +82,7 @@ void CAmLookupData::RSLookupData::onServiceStatusEvent(const CommonAPI::Availabi
 		 * An infinite loop in subscribe causes the method to hang when the status is UNAVAILABLE!
 		 */
 		subscribe();
-		logInfo("...event subscriptions done");
+		log(&GetDefaultRoutingDltContext(), DLT_LOG_INFO,"...event subscriptions done");
 	}
 	else
 		mIsSubcribed = false;
@@ -100,11 +100,11 @@ bool CAmLookupData::RSLookupData::isConnected()
 
 am_Error_e CAmLookupData::RSLookupData::doAbort(const am_Handle_s handle, am_routing_interface::RoutingControlProxyBase::AsyncAbortAsyncCallback callback)
 {
-	logInfo(__PRETTY_FUNCTION__, " [ isConnected : ", mIsConnected, " ]");
+	log(&GetDefaultRoutingDltContext(), DLT_LOG_INFO,__PRETTY_FUNCTION__, " [ isConnected : ", mIsConnected, " ]");
 	if(mIsConnected)
 	{
 		am_types::am_Handle_s myHandle;
-		CAmConvertAM2CAPI(handle,myHandle);
+		convert_am_types(handle,myHandle);
 		mSenderProxy->asyncAbortAsync(myHandle, callback);
 		return (E_OK);
 	}
@@ -118,11 +118,11 @@ am_Error_e CAmLookupData::RSLookupData::doConnect(const am_Handle_s handle,
 											const am_CustomConnectionFormat_t connectionFormat,
 											am_routing_interface::RoutingControlProxyBase::AsyncConnectAsyncCallback callback)
 {
-	logInfo(__PRETTY_FUNCTION__, " [ isConnected : ", mIsConnected, " ]");
+	log(&GetDefaultRoutingDltContext(), DLT_LOG_INFO,__PRETTY_FUNCTION__, " [ isConnected : ", mIsConnected, " ]");
 	if(mIsConnected)
 	{
 		am_types::am_Handle_s myHandle;
-		CAmConvertAM2CAPI(handle,myHandle);
+		convert_am_types(handle,myHandle);
 		mSenderProxy->asyncConnectAsync(myHandle,
 										static_cast<am_types::am_connectionID_t>(connectionID),
 										static_cast<am_types::am_sourceID_t>(sourceID),
@@ -138,11 +138,11 @@ am_Error_e CAmLookupData::RSLookupData::doDisconnect(const am_Handle_s handle,
 												const am_connectionID_t connectionID,
 												am_routing_interface::RoutingControlProxyBase::AsyncDisconnectAsyncCallback cb)
 {
-	logInfo(__PRETTY_FUNCTION__, " [ isConnected : ", mIsConnected, " ]");
+	log(&GetDefaultRoutingDltContext(), DLT_LOG_INFO,__PRETTY_FUNCTION__, " [ isConnected : ", mIsConnected, " ]");
 	if(mIsConnected)
 	{
 		am_types::am_Handle_s myHandle;
-		CAmConvertAM2CAPI(handle,myHandle);
+		convert_am_types(handle,myHandle);
 		mSenderProxy->asyncDisconnectAsync(myHandle,
 										   static_cast<am_types::am_connectionID_t>(connectionID),
 										   cb);
@@ -158,11 +158,11 @@ am_Error_e CAmLookupData::RSLookupData::doSetSinkVolume(	const am_Handle_s handl
 													const am_time_t time,
 													am_routing_interface::RoutingControlProxyBase::AsyncSetSinkVolumeAsyncCallback cb)
 {
-	logInfo(__PRETTY_FUNCTION__, " [ isConnected : ", mIsConnected, " ]");
+	log(&GetDefaultRoutingDltContext(), DLT_LOG_INFO,__PRETTY_FUNCTION__, " [ isConnected : ", mIsConnected, " ]");
 	if(mIsConnected)
 	{
 		am_types::am_Handle_s myHandle;
-		CAmConvertAM2CAPI(handle,myHandle);
+		convert_am_types(handle,myHandle);
 		mSenderProxy->asyncSetSinkVolumeAsync(myHandle,
 										      static_cast<am_types::am_sinkID_t>(sinkID),
 										      static_cast<am_types::am_volume_t>(volume),
@@ -181,11 +181,11 @@ am_Error_e CAmLookupData::RSLookupData::doSetSourceVolume(const am_Handle_s hand
 														const am_time_t time,
 														am_routing_interface::RoutingControlProxyBase::AsyncSetSourceVolumeAsyncCallback cb)
 {
-	logInfo(__PRETTY_FUNCTION__, " [ isConnected : ", mIsConnected, " ]");
+	log(&GetDefaultRoutingDltContext(), DLT_LOG_INFO,__PRETTY_FUNCTION__, " [ isConnected : ", mIsConnected, " ]");
 	if(mIsConnected)
 	{
 		am_types::am_Handle_s myHandle;
-		CAmConvertAM2CAPI(handle,myHandle);
+		convert_am_types(handle,myHandle);
 		mSenderProxy->asyncSetSourceVolumeAsync(myHandle,
 												static_cast<am_types::am_sourceID_t>(sourceID),
 												static_cast<am_types::am_volume_t>(volume),
@@ -202,11 +202,11 @@ am_Error_e CAmLookupData::RSLookupData::doSetSourceState(	const am_Handle_s hand
 															const am_SourceState_e state,
 															am_routing_interface::RoutingControlProxyBase::AsyncSetSinkSoundPropertiesAsyncCallback cb)
 {
-	logInfo(__FUNCTION__, " [ isConnected : ", mIsConnected, " ]");
+	log(&GetDefaultRoutingDltContext(), DLT_LOG_INFO,__FUNCTION__, " [ isConnected : ", mIsConnected, " ]");
 	if(mIsConnected)
 	{
 		am_types::am_Handle_s myHandle;
-		CAmConvertAM2CAPI(handle,myHandle);
+		convert_am_types(handle,myHandle);
 		mSenderProxy->asyncSetSourceStateAsync(myHandle,
 												static_cast<am_types::am_sourceID_t>(sourceID),
 												static_cast<am_types::am_SourceState_e::Literal>(state),
@@ -221,13 +221,13 @@ am_Error_e CAmLookupData::RSLookupData::doSetSinkSoundProperties(	const am_Handl
 																const std::vector<am_SoundProperty_s>& listSoundProperties,
 																am_routing_interface::RoutingControlProxyBase::AsyncSetSinkSoundPropertiesAsyncCallback cb)
 {
-	logInfo(__PRETTY_FUNCTION__, " [ isConnected : ", mIsConnected, " ]");
+	log(&GetDefaultRoutingDltContext(), DLT_LOG_INFO,__PRETTY_FUNCTION__, " [ isConnected : ", mIsConnected, " ]");
 	if(mIsConnected)
 	{
 		am_types::am_SoundProperty_L lsp;
-		CAmConvertAMVector2CAPI(listSoundProperties, lsp);
+		convert_am_types(listSoundProperties, lsp);
 		am_types::am_Handle_s myHandle;
-		CAmConvertAM2CAPI(handle,myHandle);
+		convert_am_types(handle,myHandle);
 		mSenderProxy->asyncSetSinkSoundPropertiesAsync(myHandle,
 														static_cast<am_types::am_sinkID_t>(sinkID),
 														lsp,
@@ -242,13 +242,13 @@ am_Error_e CAmLookupData::RSLookupData::doSetSinkSoundProperty(	const am_Handle_
 															const am_SoundProperty_s& soundProperty,
 															am_routing_interface::RoutingControlProxyBase::AsyncSetSinkSoundPropertyAsyncCallback cb)
 {
-	logInfo(__PRETTY_FUNCTION__, " [ isConnected : ", mIsConnected, " ]");
+	log(&GetDefaultRoutingDltContext(), DLT_LOG_INFO,__PRETTY_FUNCTION__, " [ isConnected : ", mIsConnected, " ]");
 	if(mIsConnected)
 	{
 		am_types::am_SoundProperty_s converted;
-		CAmConvertAM2CAPI(soundProperty, converted);
+		convert_am_types(soundProperty, converted);
 		am_types::am_Handle_s myHandle;
-		CAmConvertAM2CAPI(handle,myHandle);
+		convert_am_types(handle,myHandle);
 		mSenderProxy->asyncSetSinkSoundPropertyAsync(myHandle,
 													 static_cast<am_types::am_sinkID_t>(sinkID),
 													 converted,
@@ -263,13 +263,13 @@ am_Error_e CAmLookupData::RSLookupData::doSetSourceSoundProperties(const am_Hand
 																const std::vector<am_SoundProperty_s>& listSoundProperties,
 																am_routing_interface::RoutingControlProxyBase::AsyncSetSourceSoundPropertiesAsyncCallback cb)
 {
-	logInfo(__PRETTY_FUNCTION__, " [ isConnected : ", mIsConnected, " ]");
+	log(&GetDefaultRoutingDltContext(), DLT_LOG_INFO,__PRETTY_FUNCTION__, " [ isConnected : ", mIsConnected, " ]");
 	if(mIsConnected)
 	{
 		am_types::am_SoundProperty_L lsp;
-		CAmConvertAMVector2CAPI(listSoundProperties, lsp);
+		convert_am_types(listSoundProperties, lsp);
 		am_types::am_Handle_s myHandle;
-		CAmConvertAM2CAPI(handle,myHandle);
+		convert_am_types(handle,myHandle);
 		mSenderProxy->asyncSetSourceSoundPropertiesAsync(myHandle,
 														static_cast<am_types::am_sourceID_t>(sourceID),
 														lsp,
@@ -284,13 +284,13 @@ am_Error_e CAmLookupData::RSLookupData::doSetSourceSoundProperty(const am_Handle
 																const am_SoundProperty_s& soundProperty,
 																am_routing_interface::RoutingControlProxyBase::AsyncSetSourceSoundPropertyAsyncCallback cb)
 {
-	logInfo(__PRETTY_FUNCTION__, " [ isConnected : ", mIsConnected, " ]");
+	log(&GetDefaultRoutingDltContext(), DLT_LOG_INFO,__PRETTY_FUNCTION__, " [ isConnected : ", mIsConnected, " ]");
 	if(mIsConnected)
 	{
 		am_types::am_SoundProperty_s converted;
-		CAmConvertAM2CAPI(soundProperty, converted);
+		convert_am_types(soundProperty, converted);
 		am_types::am_Handle_s myHandle;
-		CAmConvertAM2CAPI(handle,myHandle);
+		convert_am_types(handle,myHandle);
 		mSenderProxy->asyncSetSourceSoundPropertyAsync(	myHandle,
 														static_cast<am_types::am_sourceID_t>(sourceID),
 														converted,
@@ -308,11 +308,11 @@ am_Error_e CAmLookupData::RSLookupData::doCrossFade(const am_Handle_s handle,
 												const am_time_t time,
 												am_routing_interface::RoutingControlProxyBase::AsyncCrossFadeAsyncCallback cb)
 {
-	logInfo(__PRETTY_FUNCTION__, " [ isConnected : ", mIsConnected, " ]");
+	log(&GetDefaultRoutingDltContext(), DLT_LOG_INFO,__PRETTY_FUNCTION__, " [ isConnected : ", mIsConnected, " ]");
 	if(mIsConnected)
 	{
 		am_types::am_Handle_s myHandle;
-		CAmConvertAM2CAPI(handle,myHandle);
+		convert_am_types(handle,myHandle);
 		mSenderProxy->asyncCrossFadeAsync(myHandle,
 										  static_cast<am_types::am_crossfaderID_t>(crossfaderID),
 										  static_cast<am_types::am_HotSink_e::Literal>(hotSink),
@@ -326,7 +326,7 @@ am_Error_e CAmLookupData::RSLookupData::doCrossFade(const am_Handle_s handle,
 
 am_Error_e CAmLookupData::RSLookupData::doSetDomainState(const am_domainID_t domainID, const am_DomainState_e domainState, am_routing_interface::RoutingControlProxyBase::SetDomainStateAsyncCallback cb)
 {
-	logInfo(__PRETTY_FUNCTION__, " [ isConnected : ", mIsConnected, " ]");
+	log(&GetDefaultRoutingDltContext(), DLT_LOG_INFO,__PRETTY_FUNCTION__, " [ isConnected : ", mIsConnected, " ]");
 	if(mIsConnected)
 	{
 		mSenderProxy->setDomainStateAsync(static_cast<am_types::am_domainID_t>(domainID),
@@ -341,13 +341,13 @@ am_Error_e CAmLookupData::RSLookupData::doSetVolumes(const am_Handle_s handle,
 												const std::vector<am_Volumes_s>& volumes ,
 												am_routing_interface::RoutingControlProxyBase::AsyncSetVolumesAsyncCallback cb )
 {
-	logInfo(__PRETTY_FUNCTION__, " [ isConnected : ", mIsConnected, " ]");
+	log(&GetDefaultRoutingDltContext(), DLT_LOG_INFO,__PRETTY_FUNCTION__, " [ isConnected : ", mIsConnected, " ]");
 	if(mIsConnected)
 	{
 		am_types::am_Volumes_L list;
-		CAmConvertAMVector2CAPI(volumes, list);
+		convert_am_types(volumes, list);
 		am_types::am_Handle_s myHandle;
-		CAmConvertAM2CAPI(handle,myHandle);
+		convert_am_types(handle,myHandle);
 		mSenderProxy->asyncSetVolumesAsync(myHandle,
 								      list,
 									   cb);
@@ -361,13 +361,13 @@ am_Error_e CAmLookupData::RSLookupData::doSetSinkNotificationConfiguration(const
 																		 const am_NotificationConfiguration_s& notificationConfiguration,
 																		 am_routing_interface::RoutingControlProxyBase::AsyncSetSinkNotificationConfigurationAsyncCallback cb)
 {
-	logInfo(__PRETTY_FUNCTION__, " [ isConnected : ", mIsConnected, " ]");
+	log(&GetDefaultRoutingDltContext(), DLT_LOG_INFO,__PRETTY_FUNCTION__, " [ isConnected : ", mIsConnected, " ]");
 	if(mIsConnected)
 	{
 		am_types::am_NotificationConfiguration_s converted;
-		CAmConvertAM2CAPI(notificationConfiguration, converted);
+		convert_am_types(notificationConfiguration, converted);
 		am_types::am_Handle_s myHandle;
-		CAmConvertAM2CAPI(handle,myHandle);
+		convert_am_types(handle,myHandle);
 		mSenderProxy->asyncSetSinkNotificationConfigurationAsync(myHandle,
 										  	  	  	  	    static_cast<am_types::am_sinkID_t>(sinkID),
 										  	  	  	  	    converted,
@@ -382,13 +382,13 @@ am_Error_e CAmLookupData::RSLookupData::doSetSourceNotificationConfiguration(con
 																			const am_NotificationConfiguration_s& notificationConfiguration,
 																			am_routing_interface::RoutingControlProxyBase::AsyncSetSourceNotificationConfigurationAsyncCallback cb)
 {
-	logInfo(__PRETTY_FUNCTION__, " [ isConnected : ", mIsConnected, " ]");
+	log(&GetDefaultRoutingDltContext(), DLT_LOG_INFO,__PRETTY_FUNCTION__, " [ isConnected : ", mIsConnected, " ]");
 	if(mIsConnected)
 	{
 		am_types::am_NotificationConfiguration_s converted;
-		CAmConvertAM2CAPI(notificationConfiguration, converted);
+		convert_am_types(notificationConfiguration, converted);
 		am_types::am_Handle_s myHandle;
-		CAmConvertAM2CAPI(handle,myHandle);
+		convert_am_types(handle,myHandle);
 		mSenderProxy->asyncSetSourceNotificationConfigurationAsync( myHandle,
 																static_cast<am_types::am_sourceID_t>(sourceID),
 																converted,
@@ -422,14 +422,9 @@ CAmLookupData::~CAmLookupData() {
 void CAmLookupData::addDomainLookup(am_domainID_t & domainID,
 										std::shared_ptr<am_routing_interface::RoutingControlProxy<>> & aProxy)
 {
-	logInfo(__PRETTY_FUNCTION__, " [ domainID : ", domainID, " ]");
+	log(&GetDefaultRoutingDltContext(), DLT_LOG_INFO,__PRETTY_FUNCTION__, " [ domainID : ", domainID, " ]");
 	RSLookupDataPtr lookupData = std::make_shared<RSLookupData>(this, aProxy);
 	mMapDomains.insert(std::make_pair(domainID, lookupData));
-
-//	event.subscribe([&](am_types::am_Handle_s handle, am_types::am_connectionID_t connectionID, am_types::am_Error_e error){
-//			logInfo("bla");
-//		});
-
 }
 
 void CAmLookupData::removeHandle(am_Handle_s handle)
@@ -439,7 +434,7 @@ void CAmLookupData::removeHandle(am_Handle_s handle)
 
 void CAmLookupData::addSourceLookup(am_sourceID_t sourceID, am_domainID_t domainID)
 {
-	logInfo(__PRETTY_FUNCTION__, " [ domainID : ", domainID, " ]", " [ sourceID : ", sourceID, " ]");
+	log(&GetDefaultRoutingDltContext(), DLT_LOG_INFO,__PRETTY_FUNCTION__, " [ domainID : ", domainID, " ]", " [ sourceID : ", sourceID, " ]");
     mapDomain_t::iterator iter(mMapDomains.begin());
     iter = mMapDomains.find(domainID);
     if (iter != mMapDomains.end())
@@ -450,7 +445,7 @@ void CAmLookupData::addSourceLookup(am_sourceID_t sourceID, am_domainID_t domain
 
 void CAmLookupData::addSinkLookup(am_sinkID_t sinkID, am_domainID_t domainID)
 {
-	logInfo(__PRETTY_FUNCTION__, " [ domainID : ", domainID, " ]", " [ sinkID : ", sinkID, " ]");
+	log(&GetDefaultRoutingDltContext(), DLT_LOG_INFO,__PRETTY_FUNCTION__, " [ domainID : ", domainID, " ]", " [ sinkID : ", sinkID, " ]");
     mapDomain_t::iterator iter(mMapDomains.begin());
     iter = mMapDomains.find(domainID);
     if (iter != mMapDomains.end())
@@ -461,7 +456,7 @@ void CAmLookupData::addSinkLookup(am_sinkID_t sinkID, am_domainID_t domainID)
 
 void CAmLookupData::addCrossfaderLookup(am_crossfaderID_t crossfaderID, am_sourceID_t soucreID)
 {
-	logInfo(__PRETTY_FUNCTION__, " [ crossfaderID : ", crossfaderID, " ]", " [ soucreID : ", soucreID, " ]");
+	log(&GetDefaultRoutingDltContext(), DLT_LOG_INFO,__PRETTY_FUNCTION__, " [ crossfaderID : ", crossfaderID, " ]", " [ soucreID : ", soucreID, " ]");
     mapSources_t::iterator iter(mMapSources.begin());
     iter = mMapSources.find(soucreID);
     if (iter != mMapSources.end())
@@ -547,10 +542,10 @@ am_Error_e CAmLookupData::asyncConnect(const am_Handle_s handle,
 											am_routing_interface::RoutingControlProxyBase::AsyncConnectAsyncCallback callback)
 {
     RSLookupDataPtr result = CAmLookupData::getValueForKey(sourceID, mMapSources);
-    logInfo(__PRETTY_FUNCTION__, " [sourceID:", sourceID, " sinkID:", sinkID, "]");
+    log(&GetDefaultRoutingDltContext(), DLT_LOG_INFO,__PRETTY_FUNCTION__, " [sourceID:", sourceID, " sinkID:", sinkID, "]");
     if(result)
     {
-    	logInfo("	[address:", result->getProxy()->getAddress().getAddress(), " connected:", result->isConnected(), "]" );
+    	log(&GetDefaultRoutingDltContext(), DLT_LOG_INFO,"	[address:", result->getProxy()->getAddress().getAddress(), " connected:", result->isConnected(), "]" );
 
         mMapConnections.insert(std::make_pair(connectionID, result));
         mMapHandles.insert(std::make_pair(+handle.handle, result));
@@ -754,7 +749,7 @@ void CAmLookupData::ackConnect(am_types::am_Handle_s handle, am_types::am_connec
 {
 	assert(mpIAmRoutingReceive);
 	am_Handle_s handle_s;
-	CAmConvertCAPI2AM(handle,handle_s);
+	convert_am_types(handle,handle_s);
 	mpIAmRoutingReceive->ackConnect(handle_s, (int)connectionID, static_cast<am_Error_e>((int)error));
 	removeHandle(handle_s);
 }
@@ -763,7 +758,7 @@ void CAmLookupData::ackDisconnect(am_types::am_Handle_s handle, am_types::am_con
 {
 	assert(mpIAmRoutingReceive);
 	am_Handle_s handle_s;
-	CAmConvertCAPI2AM(handle,handle_s);
+	convert_am_types(handle,handle_s);
 	mpIAmRoutingReceive->ackDisconnect(handle_s, (int)connectionID, static_cast<am_Error_e>((int)error));
 	removeHandle(handle_s);
 	removeConnectionLookup(connectionID);
@@ -773,7 +768,7 @@ void CAmLookupData::ackSetSinkVolumeChange(am_types::am_Handle_s handle, am_type
 {
 	assert(mpIAmRoutingReceive);
 	am_Handle_s handle_s;
-	CAmConvertCAPI2AM(handle,handle_s);
+	convert_am_types(handle,handle_s);
 	mpIAmRoutingReceive->ackSetSinkVolumeChange(handle_s, volume, static_cast<am_Error_e>((int)error));
 	removeHandle(handle_s);
 }
@@ -782,7 +777,7 @@ void CAmLookupData::ackSetSourceVolumeChange(am_types::am_Handle_s handle, am_ty
 {
 	assert(mpIAmRoutingReceive);
 	am_Handle_s handle_s;
-	CAmConvertCAPI2AM(handle,handle_s);
+	convert_am_types(handle,handle_s);
 	mpIAmRoutingReceive->ackSetSourceVolumeChange(handle_s, volume, static_cast<am_Error_e>((int)error));
 	removeHandle(handle_s);
 }
@@ -791,7 +786,7 @@ void CAmLookupData::ackSetSourceState(am_types::am_Handle_s handle, am_types::am
 {
 	assert(mpIAmRoutingReceive);
 	am_Handle_s handle_s;
-	CAmConvertCAPI2AM(handle,handle_s);
+	convert_am_types(handle,handle_s);
 	mpIAmRoutingReceive->ackSetSourceState(handle_s, static_cast<am_Error_e>((int)error));
 	removeHandle(handle_s);
 }
@@ -800,7 +795,7 @@ void CAmLookupData::ackSetSinkSoundProperties(am_types::am_Handle_s handle, am_t
 {
 	assert(mpIAmRoutingReceive);
 	am_Handle_s handle_s;
-	CAmConvertCAPI2AM(handle,handle_s);
+	convert_am_types(handle,handle_s);
 	mpIAmRoutingReceive->ackSetSinkSoundProperties(handle_s, static_cast<am_Error_e>((int)error));
 	removeHandle(handle_s);
 }
@@ -809,7 +804,7 @@ void CAmLookupData::ackSetSinkSoundProperty(am_types::am_Handle_s handle, am_typ
 {
 	assert(mpIAmRoutingReceive);
 	am_Handle_s handle_s;
-	CAmConvertCAPI2AM(handle,handle_s);
+	convert_am_types(handle,handle_s);
 	mpIAmRoutingReceive->ackSetSinkSoundProperty(handle_s, static_cast<am_Error_e>((int)error));
 	removeHandle(handle_s);
 }
@@ -818,7 +813,7 @@ void CAmLookupData::ackSetSourceSoundProperties(am_types::am_Handle_s handle, am
 {
 	assert(mpIAmRoutingReceive);
 	am_Handle_s handle_s;
-	CAmConvertCAPI2AM(handle,handle_s);
+	convert_am_types(handle,handle_s);
 	mpIAmRoutingReceive->ackSetSourceSoundProperties(handle_s, static_cast<am_Error_e>((int)error));
 	removeHandle(handle_s);
 }
@@ -827,7 +822,7 @@ void CAmLookupData::ackSetSourceSoundProperty(am_types::am_Handle_s handle, am_t
 {
 	assert(mpIAmRoutingReceive);
 	am_Handle_s handle_s;
-	CAmConvertCAPI2AM(handle,handle_s);
+	convert_am_types(handle,handle_s);
 	mpIAmRoutingReceive->ackSetSourceSoundProperty(handle_s, static_cast<am_Error_e>((int)error));
 	removeHandle(handle_s);
 }
@@ -836,7 +831,7 @@ void CAmLookupData::ackCrossFading(am_types::am_Handle_s handle, am_types::am_Ho
 {
 	assert(mpIAmRoutingReceive);
 	am_Handle_s handle_s;
-	CAmConvertCAPI2AM(handle,handle_s);
+	convert_am_types(handle,handle_s);
 	mpIAmRoutingReceive->ackCrossFading(handle_s, static_cast<am_HotSink_e>((int)hotSink), static_cast<am_Error_e>((int)error));
 	removeHandle(handle_s);
 }
@@ -845,7 +840,7 @@ void CAmLookupData::ackSourceVolumeTick(am_types::am_Handle_s handle, am_types::
 {
 	assert(mpIAmRoutingReceive);
 	am_Handle_s handle_s;
-	CAmConvertCAPI2AM(handle,handle_s);
+	convert_am_types(handle,handle_s);
 	mpIAmRoutingReceive->ackSourceVolumeTick(handle_s, source, volume);
 }
 
@@ -853,16 +848,16 @@ void CAmLookupData::ackSinkVolumeTick(am_types::am_Handle_s handle, am_types::am
 {
 	assert(mpIAmRoutingReceive);
 	am_Handle_s handle_s;
-	CAmConvertCAPI2AM(handle,handle_s);
+	convert_am_types(handle,handle_s);
 	mpIAmRoutingReceive->ackSinkVolumeTick(handle_s, sink, volume);
 }
 
 void CAmLookupData::ackSetVolumes(am_types::am_Handle_s handle , am_types::am_Volumes_L listVolumes, am_types::am_Error_e error) {
 	assert(mpIAmRoutingReceive);
 	am_Handle_s handle_s;
-	CAmConvertCAPI2AM(handle,handle_s);
+	convert_am_types(handle,handle_s);
 	std::vector<am_Volumes_s> list;
-	CAmConvertCAPIVector2AM(listVolumes, list);
+	convert_am_types(listVolumes, list);
 	am_Error_e amError = static_cast<am_Error_e>((int)error);
 	mpIAmRoutingReceive->ackSetVolumes(handle_s, list, amError);
 	removeHandle(handle_s);
@@ -871,7 +866,7 @@ void CAmLookupData::ackSetVolumes(am_types::am_Handle_s handle , am_types::am_Vo
 void CAmLookupData::ackSinkNotificationConfiguration (am_types::am_Handle_s handle, am_types::am_Error_e error) {
 	assert(mpIAmRoutingReceive);
 	am_Handle_s handle_s;
-	CAmConvertCAPI2AM(handle,handle_s);
+	convert_am_types(handle,handle_s);
     am_Error_e amError = static_cast<am_Error_e>((int)error);
     mpIAmRoutingReceive->ackSinkNotificationConfiguration(handle_s, amError);
     removeHandle(handle_s);
@@ -880,7 +875,7 @@ void CAmLookupData::ackSinkNotificationConfiguration (am_types::am_Handle_s hand
 void CAmLookupData::ackSourceNotificationConfiguration(am_types::am_Handle_s handle, am_types::am_Error_e error) {
 	assert(mpIAmRoutingReceive);
 	am_Handle_s handle_s;
-	CAmConvertCAPI2AM(handle,handle_s);
+	convert_am_types(handle,handle_s);
     am_Error_e amError = static_cast<am_Error_e>((int)error);
     mpIAmRoutingReceive->ackSourceNotificationConfiguration(handle_s, amError);
     removeHandle(handle_s);

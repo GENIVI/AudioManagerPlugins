@@ -455,7 +455,7 @@ TEST_F(CAmCommandSenderCAPITest, GetListMainSinksTest)
 ACTION(returnListSources){
 	std::vector<am_SourceType_s> list;
 	am_SourceType_s listItem;
-	listItem.availability.availability=A_MAX;
+	listItem.availability.availability=A_AVAILABLE;
 	listItem.availability.availabilityReason=AR_GENIVI_SAMEMEDIA;
 	listItem.name="MySource";
 	listItem.sourceClassID=12;
@@ -481,7 +481,7 @@ TEST_F(CAmCommandSenderCAPITest, GetListMainSourcesTest)
 		ASSERT_EQ(2, list.size());
 		ASSERT_EQ(12, list.at(0).getSourceClassID());
 		ASSERT_TRUE(224==list.at(0).getSourceID()||224==list.at(1).getSourceID());
-		ASSERT_EQ(am_types::am_Availability_e::A_MAX, list.at(0).getAvailability().getAvailability());
+		ASSERT_EQ(am_types::am_Availability_e::A_AVAILABLE, list.at(0).getAvailability().getAvailability());
 		ASSERT_EQ(AR_GENIVI_SAMEMEDIA, list.at(0).getAvailability().getAvailabilityReason());
 		ASSERT_TRUE(22==list.at(0).getSourceID()||22==list.at(1).getSourceID());
 	}
@@ -765,7 +765,7 @@ TEST_F(CAmCommandSenderCAPITest, onSourceAddedEventTest)
 		am_types::am_SourceType_s destination;
 		destination.setSourceID(100);
 		destination.setName("Name");
-		am_types::am_Availability_e ave(am_types::am_Availability_e::A_MAX);
+		am_types::am_Availability_e ave(am_types::am_Availability_e::A_AVAILABLE);
 		am_types::am_AvailabilityReason_pe avr(0);
 		destination.setAvailability(am_types::am_Availability_s(ave, avr));
 		destination.setSourceClassID(200);
@@ -773,7 +773,7 @@ TEST_F(CAmCommandSenderCAPITest, onSourceAddedEventTest)
 		am_SourceType_s origin;
 		origin.sourceID = 100;
 		origin.name = "Name";
-		origin.availability.availability = A_MAX;
+		origin.availability.availability = A_AVAILABLE;
 		origin.availability.availabilityReason = 0;
  		origin.sourceClassID = 200;
 		EXPECT_CALL(*env->mpClientMock, onSourceAddedEvent(destination));
@@ -817,10 +817,10 @@ TEST_F(CAmCommandSenderCAPITest, onSourceAvailabilityChangedEventTest)
 	if(env->mIsServiceAvailable)
 	{
 		am_Availability_s availability;
-		availability.availability = A_MAX;
+		availability.availability = A_AVAILABLE;
 		availability.availabilityReason = AR_UNKNOWN;
 
-		am_types::am_Availability_s destination(am_types::am_Availability_e::A_MAX, AR_UNKNOWN);
+		am_types::am_Availability_s destination(am_types::am_Availability_e::A_AVAILABLE, AR_UNKNOWN);
 
 		EXPECT_CALL(*env->mpClientMock, onSourceAvailabilityChangedEvent(101, destination));
 		env->mpPlugin->cbSourceAvailabilityChanged(101, availability);
@@ -848,20 +848,20 @@ TEST_F(CAmCommandSenderCAPITest, onSinkAddedEventTest)
 		destination.setSinkID(100);
 		destination.setName("Name");
 
-		am_types::am_Availability_e ave(am_types::am_Availability_e::A_MAX);
+		am_types::am_Availability_e ave(am_types::am_Availability_e::A_AVAILABLE);
 		am_types::am_AvailabilityReason_pe avr(0);
 		destination.setAvailability(am_types::am_Availability_s(ave, avr));
 
-		destination.setMuteState(am_types::am_MuteState_e(am_types::am_MuteState_e::MS_MAX));
+		destination.setMuteState(am_types::am_MuteState_e(am_types::am_MuteState_e::MS_MUTED));
 		destination.setVolume(1);
 		destination.setSinkClassID(100);
 
 		am_SinkType_s origin;
 		origin.sinkID = 100;
 		origin.name = "Name";
-		origin.availability.availability = A_MAX;
+		origin.availability.availability = A_AVAILABLE;
 		origin.availability.availabilityReason = AR_UNKNOWN;
- 		origin.muteState = am_MuteState_e::MS_MAX;
+ 		origin.muteState = am_MuteState_e::MS_MUTED;
  		origin.volume = 1;
  		origin.sinkClassID = 100;
 
@@ -905,10 +905,10 @@ TEST_F(CAmCommandSenderCAPITest, onSinkAvailabilityChangedEventTest)
 	if(env->mIsServiceAvailable)
 	{
 		am_Availability_s availability;
-		availability.availability = A_MAX;
+		availability.availability = A_AVAILABLE;
 		availability.availabilityReason = AR_UNKNOWN;
 
-		am_types::am_Availability_s destination(am_types::am_Availability_e::A_MAX, AR_UNKNOWN);
+		am_types::am_Availability_s destination(am_types::am_Availability_e::A_AVAILABLE, AR_UNKNOWN);
 
 		EXPECT_CALL(*env->mpClientMock, onSinkAvailabilityChangedEvent(101, destination));
 		env->mpPlugin->cbSinkAvailabilityChanged(101, availability);
@@ -932,8 +932,8 @@ TEST_F(CAmCommandSenderCAPITest, onSinkMuteStateChangedEventTest)
 	ASSERT_TRUE(env->mIsServiceAvailable);
 	if(env->mIsServiceAvailable)
 	{
-		EXPECT_CALL(*env->mpClientMock, onSinkMuteStateChangedEvent(101, am_types::am_MuteState_e(am_types::am_MuteState_e::MS_MAX)));
-		env->mpPlugin->cbSinkMuteStateChanged(101, am_MuteState_e::MS_MAX);
+		EXPECT_CALL(*env->mpClientMock, onSinkMuteStateChangedEvent(101, am_types::am_MuteState_e(am_types::am_MuteState_e::MS_MUTED)));
+		env->mpPlugin->cbSinkMuteStateChanged(101, am_MuteState_e::MS_MUTED);
 		SIMPLE_THREADS_SYNC_MICROSEC();
 	}
 }
@@ -1042,11 +1042,11 @@ TEST_F(CAmCommandSenderCAPITest, onMainSinkNotificationConfigurationChangedEvent
 		am_NotificationConfiguration_s orig;
 		orig.type = NT_UNKNOWN;
 		orig.parameter = 1;
-		orig.status = am_NotificationStatus_e::NS_MAX;
+		orig.status = am_NotificationStatus_e::NS_PERIODIC;
 		am_types::am_NotificationConfiguration_s dest;
 		dest.setType(NT_UNKNOWN);
 		dest.setParameter(1);
-		dest.setStatus(am_types::am_NotificationStatus_e(am_types::am_NotificationStatus_e::NS_MAX));
+		dest.setStatus(am_types::am_NotificationStatus_e(am_types::am_NotificationStatus_e::NS_PERIODIC));
 
 		EXPECT_CALL(*env->mpClientMock, onMainSinkNotificationConfigurationChangedEvent(1, dest));
 		env->mpPlugin->cbMainSinkNotificationConfigurationChanged(1, orig);
@@ -1062,11 +1062,11 @@ TEST_F(CAmCommandSenderCAPITest, onMainSourceNotificationConfigurationChangedEve
 		am_NotificationConfiguration_s orig;
 		orig.type = NT_UNKNOWN;
 		orig.parameter = 1;
-		orig.status = am_NotificationStatus_e::NS_MAX;
+		orig.status = am_NotificationStatus_e::NS_PERIODIC;
 		am_types::am_NotificationConfiguration_s dest;
 		dest.setType(NT_UNKNOWN);
 		dest.setParameter(1);
-		dest.setStatus(am_types::am_NotificationStatus_e(am_types::am_NotificationStatus_e::NS_MAX));
+		dest.setStatus(am_types::am_NotificationStatus_e(am_types::am_NotificationStatus_e::NS_PERIODIC));
 
 		EXPECT_CALL(*env->mpClientMock, onMainSourceNotificationConfigurationChangedEvent(1, dest));
 		env->mpPlugin->cbMainSourceNotificationConfigurationChanged(1, orig);

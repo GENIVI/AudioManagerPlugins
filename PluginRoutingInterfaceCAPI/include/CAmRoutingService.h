@@ -39,11 +39,15 @@ class CAmRoutingService: public am_routing_interface::RoutingControlObserverStub
     uint16_t mHandle;		///< unsigned current handle
     bool mReady;			///< bool whether the service is in ready state or not
 
+    static void parseConfigFile(std::istream & cfgfile, std::map<std::string, std::string> & options);
+
     CAmRoutingService();
 public:
-
 	CAmRoutingService(IAmRoutingReceive *aReceiver, CAmLookupData*   aLookpData, CAmCommonAPIWrapper *aCAPIWrapper);
 	virtual ~CAmRoutingService();
+
+    static const char * DOMAIN_INSTANCES_FILENAME;
+    static bool getDomainInstance(const std::string & domainName, std::string & instanceID);
 
 	void ackConnect(am_Handle_s handle, am_connectionID_t connectionID, am_Error_e error);
 	void ackDisconnect(am_Handle_s handle, am_connectionID_t connectionID, am_Error_e error);

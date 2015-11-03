@@ -18,11 +18,17 @@
 
 #include "CAmRoutingSenderCommon.h"
 
+DltContext & GetDefaultRoutingDltContext()
+{
+	static DLT_DECLARE_CONTEXT(ctxRoutingCAPI);
+	return ctxRoutingCAPI;
+}
+
 /**
  * Utility functions
  */
 
-void CAmConvertCAPI2AM(const am_types::am_Domain_s & source, am::am_Domain_s & destination)
+void convert_am_types(const am_types::am_Domain_s & source, am::am_Domain_s & destination)
 {
 	destination.domainID = source.getDomainID();
 	destination.name = source.getName();
@@ -33,77 +39,77 @@ void CAmConvertCAPI2AM(const am_types::am_Domain_s & source, am::am_Domain_s & d
 	destination.state = static_cast<am::am_DomainState_e>((int)source.getState());
 }
 
-void CAmConvertCAPI2AM(const am_types::am_SoundProperty_s & source, am::am_SoundProperty_s & destination)
+void convert_am_types(const am_types::am_SoundProperty_s & source, am::am_SoundProperty_s & destination)
 {
 	destination.type = static_cast<am::am_CustomSoundPropertyType_t>(source.getType());
 	destination.value = source.getValue();
 }
 
-void CAmConvertCAPIVector2AM(const std::vector<am_types::am_SoundProperty_s> & source, std::vector<am::am_SoundProperty_s> & destination)
+void convert_am_types(const std::vector<am_types::am_SoundProperty_s> & source, std::vector<am::am_SoundProperty_s> & destination)
 {
 	am::am_SoundProperty_s soundProp;
 	destination.clear();
 	for(std::vector<am_types::am_SoundProperty_s>::const_iterator iter = source.begin(); iter!=source.end(); ++iter)
 	{
-		CAmConvertCAPI2AM(*iter, soundProp);
+		convert_am_types(*iter, soundProp);
 		destination.push_back(soundProp);
 	}
 }
 
-void CAmConvertCAPI2AM(const am_types::am_MainSoundProperty_s & source, am::am_MainSoundProperty_s & destination)
+void convert_am_types(const am_types::am_MainSoundProperty_s & source, am::am_MainSoundProperty_s & destination)
 {
 	destination.type = static_cast<am::am_CustomMainSoundPropertyType_t>(source.getType());
 	destination.value = source.getValue();
 }
 
 
-void CAmConvertCAPI2AM(const am_types::am_NotificationPayload_s & source, am::am_NotificationPayload_s & destination)
+void convert_am_types(const am_types::am_NotificationPayload_s & source, am::am_NotificationPayload_s & destination)
 {
 	destination.type = static_cast<am::am_CustomNotificationType_t>(source.getType());
 	destination.value = source.getValue();
 }
 
-void CAmConvertCAPIVector2AM(const std::vector<am_types::am_Volumes_s> & source, std::vector<am::am_Volumes_s> & destination)
+void convert_am_types(const std::vector<am_types::am_Volumes_s> & source, std::vector<am::am_Volumes_s> & destination)
 {
 	destination.clear();
 	for(std::vector<am_types::am_Volumes_s>::const_iterator iter = source.begin(); iter!=source.end(); ++iter)
 	{
 		am::am_Volumes_s volume;
-		CAmConvertCAPI2AM(*iter, volume);
+		convert_am_types(*iter, volume);
 		destination.push_back(volume);
 	}
 }
 
-void CAmConvertCAPIVector2AM(const std::vector<am_types::am_MainSoundProperty_s> & source, std::vector<am::am_MainSoundProperty_s> & destination)
+void convert_am_types(const std::vector<am_types::am_MainSoundProperty_s> & source, std::vector<am::am_MainSoundProperty_s> & destination)
 {
 	am::am_MainSoundProperty_s soundProp;
 	destination.clear();
 	for(std::vector<am_types::am_MainSoundProperty_s>::const_iterator iter = source.begin(); iter!=source.end(); ++iter)
 	{
-		CAmConvertCAPI2AM(*iter, soundProp);
+		convert_am_types(*iter, soundProp);
 		destination.push_back(soundProp);
 	}
 }
 
-void CAmConvertCAPI2AM(const am_types::am_NotificationConfiguration_s & source, am::am_NotificationConfiguration_s & destination)
+void convert_am_types(const am_types::am_NotificationConfiguration_s & source, am::am_NotificationConfiguration_s & destination)
 {
 	destination.type = static_cast<am::am_CustomNotificationType_t>(source.getType());
 	destination.status = static_cast<am::am_NotificationStatus_e>((int)source.getStatus());
 	destination.parameter = source.getParameter();
 }
 
-void CAmConvertCAPIVector2AM(const std::vector<am_types::am_NotificationConfiguration_s> & source, std::vector<am::am_NotificationConfiguration_s> & destination)
+void convert_am_types(const std::vector<am_types::am_NotificationConfiguration_s> & source, std::vector<am::am_NotificationConfiguration_s> & destination)
 {
 	am::am_NotificationConfiguration_s soundProp;
 	destination.clear();
 	for(std::vector<am_types::am_NotificationConfiguration_s>::const_iterator iter = source.begin(); iter!=source.end(); ++iter)
 	{
-		CAmConvertCAPI2AM(*iter, soundProp);
+		convert_am_types(*iter, soundProp);
 		destination.push_back(soundProp);
 	}
 }
 
-void CAmConvertCAPIVector2AM(const std::vector<am_types::am_ConnectionFormat_pe> & source, std::vector<am::am_CustomConnectionFormat_t> & destination)
+void convert_am_types(const std::vector<am_types::am_ConnectionFormat_pe> & source, std::vector<am::am_CustomConnectionFormat_t> & destination)
 {
 	destination.clear();
 	for(std::vector<am_types::am_ConnectionFormat_pe>::const_iterator iter = source.begin(); iter!=source.end(); ++iter)
@@ -112,7 +118,7 @@ void CAmConvertCAPIVector2AM(const std::vector<am_types::am_ConnectionFormat_pe>
 
 
 
-void CAmConvertCAPI2AM(const am_types::am_Source_s & source, am::am_Source_s & destination)
+void convert_am_types(const am_types::am_Source_s & source, am::am_Source_s & destination)
 {
 	destination.sourceID = source.getSourceID();
 	destination.domainID = source.getDomainID();
@@ -121,16 +127,16 @@ void CAmConvertCAPI2AM(const am_types::am_Source_s & source, am::am_Source_s & d
 	destination.sourceState = static_cast<am::am_SourceState_e>((int)source.getSourceState());
 	destination.volume = source.getVolume();
 	destination.visible = source.getVisible();
-	CAmConvertCAPI2AM(source.getAvailable(), destination.available);
+	convert_am_types(source.getAvailable(), destination.available);
 	destination.interruptState =  static_cast<am::am_InterruptState_e>((int)source.getInterruptState());
-	CAmConvertCAPIVector2AM(source.getListSoundProperties(), destination.listSoundProperties);
-	CAmConvertCAPIVector2AM(source.getListConnectionFormats(), destination.listConnectionFormats);
-	CAmConvertCAPIVector2AM(source.getListMainSoundProperties(), destination.listMainSoundProperties);
-	CAmConvertCAPIVector2AM(source.getListNotificationConfigurations(), destination.listNotificationConfigurations);
-	CAmConvertCAPIVector2AM(source.getListMainNotificationConfigurations(), destination.listMainNotificationConfigurations);
+	convert_am_types(source.getListSoundProperties(), destination.listSoundProperties);
+	convert_am_types(source.getListConnectionFormats(), destination.listConnectionFormats);
+	convert_am_types(source.getListMainSoundProperties(), destination.listMainSoundProperties);
+	convert_am_types(source.getListNotificationConfigurations(), destination.listNotificationConfigurations);
+	convert_am_types(source.getListMainNotificationConfigurations(), destination.listMainNotificationConfigurations);
 }
 
-void CAmConvertCAPI2AM(const am_types::am_Sink_s & source, am::am_Sink_s & destination)
+void convert_am_types(const am_types::am_Sink_s & source, am::am_Sink_s & destination)
 {
 	destination.sinkID = source.getSinkID();
 	destination.domainID = source.getDomainID();
@@ -140,15 +146,15 @@ void CAmConvertCAPI2AM(const am_types::am_Sink_s & source, am::am_Sink_s & desti
 	destination.volume = source.getVolume();
 	destination.visible = source.getVisible();
 	destination.mainVolume = source.getMainVolume();
-	CAmConvertCAPI2AM(source.getAvailable(), destination.available);
-	CAmConvertCAPIVector2AM(source.getListSoundProperties(), destination.listSoundProperties);
-	CAmConvertCAPIVector2AM(source.getListConnectionFormats(), destination.listConnectionFormats);
-	CAmConvertCAPIVector2AM(source.getListMainSoundProperties(), destination.listMainSoundProperties);
-	CAmConvertCAPIVector2AM(source.getListNotificationConfigurations(), destination.listNotificationConfigurations);
-	CAmConvertCAPIVector2AM(source.getListMainNotificationConfigurations(), destination.listMainNotificationConfigurations);
+	convert_am_types(source.getAvailable(), destination.available);
+	convert_am_types(source.getListSoundProperties(), destination.listSoundProperties);
+	convert_am_types(source.getListConnectionFormats(), destination.listConnectionFormats);
+	convert_am_types(source.getListMainSoundProperties(), destination.listMainSoundProperties);
+	convert_am_types(source.getListNotificationConfigurations(), destination.listNotificationConfigurations);
+	convert_am_types(source.getListMainNotificationConfigurations(), destination.listMainNotificationConfigurations);
 }
 
-void CAmConvertCAPI2AM(const am_types::am_Volumes_s & source, am::am_Volumes_s & destination)
+void convert_am_types(const am_types::am_Volumes_s & source, am::am_Volumes_s & destination)
 {
 	destination.volumeType = static_cast<am::am_VolumeType_e>((int)source.getVolumeType());
 	if(destination.volumeType==VT_SINK)
@@ -161,7 +167,7 @@ void CAmConvertCAPI2AM(const am_types::am_Volumes_s & source, am::am_Volumes_s &
 }
 
 
-void CAmConvertCAPI2AM(const am_types::am_Crossfader_s & source, am::am_Crossfader_s & destination)
+void convert_am_types(const am_types::am_Crossfader_s & source, am::am_Crossfader_s & destination)
 {
 	destination.crossfaderID = source.getCrossfaderID();
 	destination.sinkID_A = source.getSinkIDA();
@@ -172,7 +178,7 @@ void CAmConvertCAPI2AM(const am_types::am_Crossfader_s & source, am::am_Crossfad
 }
 
 
-void CAmConvertCAPI2AM(const am_types::am_Gateway_s & source, am::am_Gateway_s & destination)
+void convert_am_types(const am_types::am_Gateway_s & source, am::am_Gateway_s & destination)
 {
 	destination.sinkID = source.getSinkID();
 	destination.gatewayID = source.getGatewayID();
@@ -181,24 +187,24 @@ void CAmConvertCAPI2AM(const am_types::am_Gateway_s & source, am::am_Gateway_s &
 	destination.domainSinkID = source.getDomainSinkID();
 	destination.domainSourceID = source.getDomainSourceID();
 	destination.controlDomainID = source.getControlDomainID();
-	CAmConvertCAPIVector2AM(source.getListSourceFormats(), destination.listSourceFormats);
-	CAmConvertCAPIVector2AM(source.getListSinkFormats(), destination.listSinkFormats);
+	convert_am_types(source.getListSourceFormats(), destination.listSourceFormats);
+	convert_am_types(source.getListSinkFormats(), destination.listSinkFormats);
 	destination.convertionMatrix = source.getConvertionMatrix();
 }
 
-void CAmConvertCAPI2AM(const am_types::am_Converter_s & source, am::am_Converter_s & destination)
+void convert_am_types(const am_types::am_Converter_s & source, am::am_Converter_s & destination)
 {
 	destination.sinkID = source.getSinkID();
 	destination.converterID = source.getConverterID();
 	destination.name = source.getName();
 	destination.sourceID = source.getSourceID();
 	destination.domainID = source.getDomainID();
-	CAmConvertCAPIVector2AM(source.getListSourceFormats(), destination.listSourceFormats);
-	CAmConvertCAPIVector2AM(source.getListSinkFormats(), destination.listSinkFormats);
+	convert_am_types(source.getListSourceFormats(), destination.listSourceFormats);
+	convert_am_types(source.getListSinkFormats(), destination.listSinkFormats);
 	destination.convertionMatrix = source.getConvertionMatrix();
 }
 
-void CAmConvertCAPI2AM(const am_types::am_EarlyData_u & source, am::am_EarlyData_u & destination)
+void convert_am_types(const am_types::am_EarlyData_u & source, am::am_EarlyData_u & destination)
 {
 	if(source.isType<am_types::am_volume_t>())
 	{
@@ -209,14 +215,14 @@ void CAmConvertCAPI2AM(const am_types::am_EarlyData_u & source, am::am_EarlyData
 	{
 		am_types::am_SoundProperty_s value = source.get<am_types::am_SoundProperty_s>();
 		am_SoundProperty_s converted;
-		CAmConvertCAPI2AM(value, converted);
+		convert_am_types(value, converted);
 		destination.soundProperty = converted;
 	}
 }
 
-void CAmConvertCAPI2AM(const am_types::am_EarlyData_s & source, am::am_EarlyData_s & destination)
+void convert_am_types(const am_types::am_EarlyData_s & source, am::am_EarlyData_s & destination)
 {
-	CAmConvertCAPI2AM(source.getData(), destination.data);
+	convert_am_types(source.getData(), destination.data);
 	destination.type = static_cast<am_EarlyDataType_e>((int)source.getType());
 	if(destination.type==am::am_EarlyDataType_e::ED_SINK_PROPERTY)
 		destination.sinksource.sink = source.getSinksource();
@@ -229,45 +235,45 @@ void CAmConvertCAPI2AM(const am_types::am_EarlyData_s & source, am::am_EarlyData
 }
 
 
-void CAmConvertCAPI2AM(const am_types::am_Availability_s  & source,  am_Availability_s & destination)
+void convert_am_types(const am_types::am_Availability_s  & source,  am_Availability_s & destination)
 {
 	destination.availability = static_cast<am_Availability_e>((int)source.getAvailability());
 	destination.availabilityReason = static_cast<am_CustomAvailabilityReason_t>((int)source.getAvailabilityReason());
 }
 
-void CAmConvertCAPI2AM(const am_types::am_Handle_s& source, am_Handle_s& destination)
+void convert_am_types(const am_types::am_Handle_s& source, am_Handle_s& destination)
 {
 	destination.handle = static_cast<int16_t>(source.getHandle());
 	destination.handleType = static_cast<am_Handle_e>((int)source.getHandleType());
 }
 
-void CAmConvertAM2CAPI(const am_Availability_s & source,  am_types::am_Availability_s & destination)
+void convert_am_types(const am_Availability_s & source,  am_types::am_Availability_s & destination)
 {
 	destination.setAvailability((am_types::am_Availability_e::Literal)source.availability);
 	destination.setAvailabilityReason((am_types::am_AvailabilityReason_pe)source.availabilityReason);
 }
 
-void CAmConvertAM2CAPI(const am::am_SoundProperty_s & source, am_types::am_SoundProperty_s & destination)
+void convert_am_types(const am::am_SoundProperty_s & source, am_types::am_SoundProperty_s & destination)
 {
 	destination.setType(source.type);
 	destination.setValue(source.value);
 }
 
-extern void CAmConvertAM2CAPI(const am::am_Handle_s& source,am_types::am_Handle_s& destination)
+extern void convert_am_types(const am::am_Handle_s& source,am_types::am_Handle_s& destination)
 {
 	destination.setHandle(source.handle);
 	destination.setHandleType((am_types::am_Handle_e::Literal)source.handleType);
 }
 
 
-void CAmConvertAM2CAPI(const am::am_NotificationConfiguration_s & source, am_types::am_NotificationConfiguration_s & destination)
+void convert_am_types(const am::am_NotificationConfiguration_s & source, am_types::am_NotificationConfiguration_s & destination)
 {
 	destination.setType(source.type);
 	destination.setStatus((am_types::am_NotificationStatus_e::Literal)source.status);
 	destination.setParameter(source.parameter);
 }
 
-void CAmConvertAM2CAPI(const am::am_Volumes_s & source, am_types::am_Volumes_s & destination)
+void convert_am_types(const am::am_Volumes_s & source, am_types::am_Volumes_s & destination)
 {
 	if(source.volumeType == VT_SINK)
 		destination.setVolumeID(am_types::am_SinkSourceID_t(static_cast<am_types::am_sinkID_t>(source.volumeID.sink)));
@@ -279,35 +285,35 @@ void CAmConvertAM2CAPI(const am::am_Volumes_s & source, am_types::am_Volumes_s &
 	destination.setTime(source.time);
 }
 
-void CAmConvertAMVector2CAPI(const std::vector<am::am_Volumes_s> & source, am_types::am_Volumes_L & destination)
+void convert_am_types(const std::vector<am::am_Volumes_s> & source, am_types::am_Volumes_L & destination)
 {
 	destination.clear();
 	for(std::vector<am::am_Volumes_s>::const_iterator iter = source.begin(); iter!=source.end(); ++iter)
 	{
 		am_types::am_Volumes_s volume;
-		CAmConvertAM2CAPI(*iter, volume);
+		convert_am_types(*iter, volume);
 		destination.push_back(volume);
 	}
 }
 
-void CAmConvertCAPIVector2AM(const am_types::am_EarlyData_L& source,std::vector<am::am_EarlyData_s>& destination)
+void convert_am_types(const am_types::am_EarlyData_L& source,std::vector<am::am_EarlyData_s>& destination)
 {
 	destination.clear();
 	for (am_types::am_EarlyData_L::const_iterator iter = source.begin(); iter!=source.end(); ++iter)
 	{
 		am_EarlyData_s earlyData;
-		CAmConvertCAPI2AM(*iter,earlyData);
+		convert_am_types(*iter,earlyData);
 		destination.push_back(earlyData);
 	}
 }
 
-void CAmConvertAMVector2CAPI(const std::vector<am::am_SoundProperty_s> & source, std::vector<am_types::am_SoundProperty_s> & destination)
+void convert_am_types(const std::vector<am::am_SoundProperty_s> & source, std::vector<am_types::am_SoundProperty_s> & destination)
 {
 	am_types::am_SoundProperty_s soundProp;
 	destination.clear();
 	for(std::vector<am::am_SoundProperty_s>::const_iterator iter = source.begin(); iter!=source.end(); ++iter)
 	{
-		CAmConvertAM2CAPI(*iter, soundProp);
+		convert_am_types(*iter, soundProp);
 		destination.push_back(soundProp);
 	}
 }

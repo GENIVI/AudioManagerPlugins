@@ -65,7 +65,7 @@ pthread_mutex_t     mutexSer    = PTHREAD_MUTEX_INITIALIZER;
 void initSink(am_types::am_Sink_s & newSink, am_Sink_s & newAmSink, const am_types::am_domainID_t & domainID, const am_types::am_sinkID_t & sinkID = 0)
 {
 	am_types::am_MuteState_e muteState = am_types::am_MuteState_e::MS_UNKNOWN;
-    am_types::am_Availability_s available(am_types::am_Availability_e::A_MAX, AR_UNKNOWN);
+    am_types::am_Availability_s available(am_types::am_Availability_e::A_AVAILABLE, AR_UNKNOWN);
 	am_types::am_SoundProperty_L listSoundProperties;
 	listSoundProperties.push_back(am_types::am_SoundProperty_s(SP_GENIVI_MID, 100));
 	listSoundProperties.push_back(am_types::am_SoundProperty_s(SP_GENIVI_BASS, 101));
@@ -75,14 +75,14 @@ void initSink(am_types::am_Sink_s & newSink, am_Sink_s & newAmSink, const am_typ
 	am_types::am_MainSoundProperty_L listMainSoundProperties;
 	listMainSoundProperties.push_back(am_types::am_MainSoundProperty_s(MSP_UNKNOWN, 100));
 	am_types::am_NotificationConfiguration_L listMainNotificationConfigurations;
-	listMainNotificationConfigurations.push_back(am_types::am_NotificationConfiguration_s(NT_UNKNOWN, am_types::am_NotificationStatus_e::NS_MAX, 100));
+	listMainNotificationConfigurations.push_back(am_types::am_NotificationConfiguration_s(NT_UNKNOWN, am_types::am_NotificationStatus_e::NS_PERIODIC, 100));
 	am_types::am_NotificationConfiguration_L listNotificationConfigurations;
-	listNotificationConfigurations.push_back(am_types::am_NotificationConfiguration_s(NT_UNKNOWN, am_types::am_NotificationStatus_e::NS_MAX, 100));
+	listNotificationConfigurations.push_back(am_types::am_NotificationConfiguration_s(NT_UNKNOWN, am_types::am_NotificationStatus_e::NS_PERIODIC, 100));
 
 	am_types::am_Sink_s sink(sinkID, "name", domainID, 104, 50, true, available, muteState, 50,
 							listSoundProperties, listConnectionFormats, listMainSoundProperties, listMainNotificationConfigurations, listNotificationConfigurations);
 	newSink = sink;
-	CAmConvertCAPI2AM(sink, newAmSink);
+	convert_am_types(sink, newAmSink);
 }
 
 /**
@@ -90,8 +90,8 @@ void initSink(am_types::am_Sink_s & newSink, am_Sink_s & newAmSink, const am_typ
  */
 void initSource(am_types::am_Source_s & newSource, am_Source_s & newAmSource, const am_types::am_domainID_t & domainID, const am_types::am_sourceID_t & sourceID = 0)
 {
-	am_types::am_SourceState_e srcState = am_types::am_SourceState_e::SS_MAX;
-    am_types::am_Availability_s available(am_types::am_Availability_e::A_MAX, AR_UNKNOWN);
+	am_types::am_SourceState_e srcState = am_types::am_SourceState_e::SS_OFF;
+    am_types::am_Availability_s available(am_types::am_Availability_e::A_AVAILABLE, AR_UNKNOWN);
 	am_types::am_SoundProperty_L listSoundProperties;
 	listSoundProperties.push_back(am_types::am_SoundProperty_s(SP_GENIVI_MID, 100));
 	listSoundProperties.push_back(am_types::am_SoundProperty_s(SP_GENIVI_BASS, 101));
@@ -101,14 +101,14 @@ void initSource(am_types::am_Source_s & newSource, am_Source_s & newAmSource, co
 	am_types::am_MainSoundProperty_L listMainSoundProperties;
 	listMainSoundProperties.push_back(am_types::am_MainSoundProperty_s(MSP_UNKNOWN, 100));
 	am_types::am_NotificationConfiguration_L listMainNotificationConfigurations;
-	listMainNotificationConfigurations.push_back(am_types::am_NotificationConfiguration_s(NT_UNKNOWN, am_types::am_NotificationStatus_e::NS_MAX, 100));
+	listMainNotificationConfigurations.push_back(am_types::am_NotificationConfiguration_s(NT_UNKNOWN, am_types::am_NotificationStatus_e::NS_PERIODIC, 100));
 	am_types::am_NotificationConfiguration_L listNotificationConfigurations;
-	listNotificationConfigurations.push_back(am_types::am_NotificationConfiguration_s(NT_UNKNOWN, am_types::am_NotificationStatus_e::NS_MAX, 100));
+	listNotificationConfigurations.push_back(am_types::am_NotificationConfiguration_s(NT_UNKNOWN, am_types::am_NotificationStatus_e::NS_PERIODIC, 100));
 
-	am_types::am_Source_s source(sourceID, domainID, "name", 104, srcState, 50, true, available, am_types::am_InterruptState_e::IS_MAX,
+	am_types::am_Source_s source(sourceID, domainID, "name", 104, srcState, 50, true, available, am_types::am_InterruptState_e::IS_UNKNOWN,
 								listSoundProperties, listConnectionFormats, listMainSoundProperties, listMainNotificationConfigurations, listNotificationConfigurations);
 	newSource = source;
-	CAmConvertCAPI2AM(source, newAmSource);
+	convert_am_types(source, newAmSource);
 }
 
 /**
@@ -116,8 +116,8 @@ void initSource(am_types::am_Source_s & newSource, am_Source_s & newAmSource, co
  */
 void initCrossfader(am_types::am_Crossfader_s & newCrossfader, am_Crossfader_s & newAmCrossfader, const am_types::am_crossfaderID_t & crossfaderID = 0)
 {
-	am_types::am_Crossfader_s crossfader(crossfaderID, "name", TEST_ID_1, TEST_ID_2, TEST_ID_1, am_types::am_HotSink_e::HS_MAX);
-	CAmConvertCAPI2AM(crossfader, newAmCrossfader);
+	am_types::am_Crossfader_s crossfader(crossfaderID, "name", TEST_ID_1, TEST_ID_2, TEST_ID_1, am_types::am_HotSink_e::HS_UNKNOWN);
+	convert_am_types(crossfader, newAmCrossfader);
 	newCrossfader = crossfader;
 }
 
@@ -495,7 +495,7 @@ TEST_F(CAmRoutingInterfaceCAPITests, registerService)
 	{
 		sleep(1);
 		am::am_Domain_s amDomainData;
-		CAmConvertCAPI2AM(env->mDomainService->getDomainData(), amDomainData);
+		convert_am_types(env->mDomainService->getDomainData(), amDomainData);
 
 		EXPECT_CALL(*env->mpRoutingReceive, registerDomain(IsDomainDataEqualTo(amDomainData), _)).WillOnce(DoAll(actionRegister(), Return(E_OK)));
 
@@ -519,7 +519,7 @@ TEST_F(CAmRoutingInterfaceCAPITests, ackConnect)
 		am_Error_e error = E_OK;
 		am_Handle_s handle = {H_CONNECT, 20};
 		am_types::am_Handle_s retHandle(am_types::am_Handle_e::H_CONNECT, 20);
-		CAmConvertAM2CAPI(handle,retHandle);
+		convert_am_types(handle,retHandle);
 		EXPECT_CALL(*env->mpRoutingReceive, ackConnect(IsHandleEqual(handle), connectionID, error)).Times(1);
 		env->mDomainService->fireAckConnectSelective(retHandle, connectionID, am_types::am_Error_e::E_OK);
 		usleep(1000000);
@@ -536,7 +536,7 @@ TEST_F(CAmRoutingInterfaceCAPITests, ackDisconnect)
 		am_Error_e error = E_OK;
 		am_Handle_s handle = {H_DISCONNECT, 20};
 		am_types::am_Handle_s retHandle;
-		CAmConvertAM2CAPI(handle,retHandle);
+		convert_am_types(handle,retHandle);
 		EXPECT_CALL(*env->mpRoutingReceive, ackDisconnect(IsHandleEqual(handle), connectionID, error)).Times(1);
 		env->mDomainService->fireAckDisconnectSelective(retHandle, connectionID, am_types::am_Error_e::E_OK);
 		usleep(1000000);
@@ -553,7 +553,7 @@ TEST_F(CAmRoutingInterfaceCAPITests, ackSetSinkVolumeChange)
 		am_volume_t volume = 50;
 		am_Handle_s handle = {H_SETSINKVOLUME, 20};
 		am_types::am_Handle_s retHandle;
-		CAmConvertAM2CAPI(handle,retHandle);
+		convert_am_types(handle,retHandle);
 		EXPECT_CALL(*env->mpRoutingReceive, ackSetSinkVolumeChange(IsHandleEqual(handle), volume, error)).Times(1);
 		env->mDomainService->fireAckSetSinkVolumeChangeSelective(retHandle, volume, am_types::am_Error_e::E_OK);
 		usleep(1000000);
@@ -569,7 +569,7 @@ TEST_F(CAmRoutingInterfaceCAPITests, ackSetSourceVolumeChange)
 		am_volume_t volume = 50;
 		am_Handle_s handle = {H_SETSOURCEVOLUME, 20};
 		am_types::am_Handle_s retHandle;
-		CAmConvertAM2CAPI(handle,retHandle);
+		convert_am_types(handle,retHandle);
 		EXPECT_CALL(*env->mpRoutingReceive, ackSetSourceVolumeChange(IsHandleEqual(handle), volume, error)).Times(1);
 		env->mDomainService->fireAckSetSourceVolumeChangeSelective(retHandle, volume, am_types::am_Error_e::E_OK);
 		usleep(1000000);
@@ -585,7 +585,7 @@ TEST_F(CAmRoutingInterfaceCAPITests, ackSetSourceState)
 		am_volume_t volume = 50;
 		am_Handle_s handle = {H_SETSOURCESTATE, 20};
 		am_types::am_Handle_s retHandle;
-		CAmConvertAM2CAPI(handle,retHandle);
+		convert_am_types(handle,retHandle);
 		EXPECT_CALL(*env->mpRoutingReceive, ackSetSourceState(IsHandleEqual(handle), error)).Times(1);
 		env->mDomainService->fireAckSetSourceStateSelective(retHandle, am_types::am_Error_e::E_OK);
 		usleep(1000000);
@@ -601,7 +601,7 @@ TEST_F(CAmRoutingInterfaceCAPITests, ackSetSinkSoundProperties)
 		am_volume_t volume = 50;
 		am_Handle_s handle = {H_SETSINKSOUNDPROPERTIES, 20};
 		am_types::am_Handle_s retHandle;
-		CAmConvertAM2CAPI(handle,retHandle);
+		convert_am_types(handle,retHandle);
 		EXPECT_CALL(*env->mpRoutingReceive, ackSetSinkSoundProperties(IsHandleEqual(handle), error)).Times(1);
 		env->mDomainService->fireAckSetSinkSoundPropertiesSelective(retHandle, am_types::am_Error_e::E_OK);
 		usleep(1000000);
@@ -617,7 +617,7 @@ TEST_F(CAmRoutingInterfaceCAPITests, ackSetSinkSoundProperty)
 		am_volume_t volume = 50;
 		am_Handle_s handle = {H_SETSINKSOUNDPROPERTY, 20};
 		am_types::am_Handle_s retHandle;
-		CAmConvertAM2CAPI(handle,retHandle);
+		convert_am_types(handle,retHandle);
 		EXPECT_CALL(*env->mpRoutingReceive, ackSetSinkSoundProperty(IsHandleEqual(handle), error)).Times(1);
 		env->mDomainService->fireAckSetSinkSoundPropertySelective(retHandle, am_types::am_Error_e::E_OK);
 		usleep(1000000);
@@ -633,7 +633,7 @@ TEST_F(CAmRoutingInterfaceCAPITests, ackSetSourceSoundProperties)
 		am_volume_t volume = 50;
 		am_Handle_s handle = {H_SETSOURCESOUNDPROPERTIES, 20};
 		am_types::am_Handle_s retHandle;
-		CAmConvertAM2CAPI(handle,retHandle);
+		convert_am_types(handle,retHandle);
 		EXPECT_CALL(*env->mpRoutingReceive, ackSetSourceSoundProperties(IsHandleEqual(handle), error)).Times(1);
 		env->mDomainService->fireAckSetSourceSoundPropertiesSelective(retHandle, am_types::am_Error_e::E_OK);
 		usleep(1000000);
@@ -649,7 +649,7 @@ TEST_F(CAmRoutingInterfaceCAPITests, ackSetSourceSoundProperty)
 		am_volume_t volume = 50;
 		am_Handle_s handle = {H_SETSOURCESOUNDPROPERTY, 20};
 		am_types::am_Handle_s retHandle;
-		CAmConvertAM2CAPI(handle,retHandle);
+		convert_am_types(handle,retHandle);
 		EXPECT_CALL(*env->mpRoutingReceive, ackSetSourceSoundProperty(IsHandleEqual(handle), error)).Times(1);
 		env->mDomainService->fireAckSetSourceSoundPropertySelective(retHandle, am_types::am_Error_e::E_OK);
 		usleep(1000000);
@@ -665,7 +665,7 @@ TEST_F(CAmRoutingInterfaceCAPITests, ackCrossFading)
 		am_HotSink_e hotSink = HS_UNKNOWN;
 		am_Handle_s handle = {H_CROSSFADE, 20};
 		am_types::am_Handle_s retHandle;
-		CAmConvertAM2CAPI(handle,retHandle);
+		convert_am_types(handle,retHandle);
 		EXPECT_CALL(*env->mpRoutingReceive, ackCrossFading(IsHandleEqual(handle), hotSink, error)).Times(1);
 		env->mDomainService->fireAckCrossFadingSelective(retHandle, (am_types::am_HotSink_e::Literal)hotSink, am_types::am_Error_e::E_OK);
 		usleep(1000000);
@@ -681,7 +681,7 @@ TEST_F(CAmRoutingInterfaceCAPITests, ackSourceVolumeTick)
 		am_Handle_s handle = {H_SETSOURCEVOLUME, 20};
 		am_types::am_volume_t volume (20);
 		am_types::am_Handle_s retHandle;
-		CAmConvertAM2CAPI(handle,retHandle);
+		convert_am_types(handle,retHandle);
 		EXPECT_CALL(*env->mpRoutingReceive, ackSourceVolumeTick(IsHandleEqual(handle), sourceID, volume)).Times(1);
 		env->mDomainService->fireAckSourceVolumeTickSelective(retHandle, sourceID, volume);
 		usleep(1000000);
@@ -696,7 +696,7 @@ TEST_F(CAmRoutingInterfaceCAPITests, ackSinkVolumeTick)
 		am_sinkID_t sID = TEST_ID_1;
 		am_Handle_s handle = {H_SETSINKVOLUME, 20};
 		am_types::am_Handle_s retHandle;
-		CAmConvertAM2CAPI(handle,retHandle);
+		convert_am_types(handle,retHandle);
 		am_volume_t volume (20);
 		EXPECT_CALL(*env->mpRoutingReceive, ackSinkVolumeTick(IsHandleEqual(handle), sID, volume)).Times(1);
 		env->mDomainService->fireAckSinkVolumeTickSelective(retHandle, sID, volume);
@@ -722,7 +722,7 @@ TEST_F(CAmRoutingInterfaceCAPITests, ackSetVolumes)
 		std::vector<am_Volumes_s> am_listVolumes;
 		am_DataType_u dt1;
 		dt1.sink = 103;
-		am_listVolumes.push_back((am_Volumes_s){VT_SINK,
+		am_listVolumes.push_back(am_Volumes_s{VT_SINK,
 												dt1,
 												50,
 												RAMP_GENIVI_DIRECT,
@@ -732,10 +732,10 @@ TEST_F(CAmRoutingInterfaceCAPITests, ackSetVolumes)
 		handle_s.handle = 10;
 		handle_s.handleType = H_SETVOLUMES;
 		am_types::am_Handle_s handle;
-		CAmConvertAM2CAPI(handle_s,handle);
+		convert_am_types(handle_s,handle);
 		am_types::am_Error_e genError(am_types::am_Error_e::E_OK);
 		am_types::am_Handle_s retHandle;
-		CAmConvertAM2CAPI(handle_s,retHandle);
+		convert_am_types(handle_s,retHandle);
 		EXPECT_CALL(*env->mpRoutingReceive, ackSetVolumes(IsHandleStructEqualTo(handle_s), IsSinkVolumeArrayEqualTo(am_listVolumes, true), E_OK)).Times(1);
 		env->mDomainService->fireAckSetVolumesSelective(retHandle, listVolumes, genError);
 		usleep(1000000);
@@ -753,7 +753,7 @@ TEST_F(CAmRoutingInterfaceCAPITests, ackSinkNotificationConfiguration)
 		handle_s.handle = testID;
 		handle_s.handleType = H_CONNECT;
 		am_types::am_Handle_s retHandle;
-		CAmConvertAM2CAPI(handle_s,retHandle);
+		convert_am_types(handle_s,retHandle);
 		am_types::am_Error_e genError(am_types::am_Error_e::E_OK);
 		EXPECT_CALL(*env->mpRoutingReceive, ackSinkNotificationConfiguration(IsHandleStructEqualTo(handle_s), (am_Error_e)((int)error))).Times(1);
 		env->mDomainService->fireAckSinkNotificationConfigurationSelective(retHandle, genError);
@@ -772,7 +772,7 @@ TEST_F(CAmRoutingInterfaceCAPITests, ackSourceNotificationConfiguration)
 		handle_s.handle = testID;
 		handle_s.handleType = H_CONNECT;
 		am_types::am_Handle_s retHandle;
-		CAmConvertAM2CAPI(handle_s,retHandle);
+		convert_am_types(handle_s,retHandle);
 		am_types::am_Error_e genError(am_types::am_Error_e::E_OK);
 		EXPECT_CALL(*env->mpRoutingReceive, ackSourceNotificationConfiguration(IsHandleStructEqualTo(handle_s), (am_Error_e)((int)error))).Times(1);
 		env->mDomainService->fireAckSourceNotificationConfigurationSelective(retHandle, genError);
@@ -811,7 +811,7 @@ TEST_F(CAmRoutingInterfaceCAPITests, registerDomain)
 
 		am_types::am_Domain_s domainData(0, name, busname, nodename, false, false, am_types::am_DomainState_e::DS_CONTROLLED);
 		am::am_Domain_s amDomainData;
-		CAmConvertCAPI2AM(domainData, amDomainData);
+		convert_am_types(domainData, amDomainData);
 
 //If the result is E_OK, then the routing service will try to establish a connection with the domain via common-api.
 //For now we won't test common-api connection with the domain therefore E_ALREADY_EXISTS is returned.
@@ -884,7 +884,7 @@ TEST_F(CAmRoutingInterfaceCAPITests, registerGateway)
 		am_types::am_gatewayID_t gatewayID = 0;
 		am_types::am_Gateway_s gateway(gatewayID, "name", 103, 104, 105, 106, 107, listSourceFormats, listSinkFormats, convertionMatrix);
 		am_Gateway_s amGateway;
-		CAmConvertCAPI2AM(gateway, amGateway);
+		convert_am_types(gateway, amGateway);
 
 		EXPECT_CALL(*env->mpRoutingReceive, registerGateway(IsGatewayDataEqualTo(amGateway), _)).WillOnce(DoAll(actionRegisterGateway(), Return(E_OK)));
 		env->mProxy->registerGateway(gateway, callStatus, gatewayID, error);
@@ -945,7 +945,7 @@ TEST_F(CAmRoutingInterfaceCAPITests, registerConverter)
 		am_types::am_converterID_t converterID = 0;
 		am_types::am_Converter_s gateway(converterID, "name", 103, 104, 105, listSourceFormats, listSinkFormats, convertionMatrix);
 		am_Converter_s amGateway;
-		CAmConvertCAPI2AM(gateway, amGateway);
+		convert_am_types(gateway, amGateway);
 
 		EXPECT_CALL(*env->mpRoutingReceive, registerConverter(IsConverterDataEqualTo(amGateway), _)).WillOnce(DoAll(actionRegisterGateway(), Return(E_OK)));
 		env->mProxy->registerConverter(gateway, callStatus, converterID, error);
@@ -1183,7 +1183,7 @@ TEST_F(CAmRoutingInterfaceCAPITests, hookInterruptStatusChange)
 		CommonAPI::CallStatus callStatus = CommonAPI::CallStatus::NOT_AVAILABLE;
 		am_Error_e error = E_OK;
 		am_types::am_sourceID_t sourceID = TEST_ID_1;
-		am_InterruptState_e interruptState = am_InterruptState_e::IS_MAX;
+		am_InterruptState_e interruptState = am_InterruptState_e::IS_UNKNOWN;
 		am_types::am_InterruptState_e CAPIInterruptState=static_cast<am_types::am_InterruptState_e::Literal>(interruptState);
 		EXPECT_CALL(*env->mpRoutingReceive, hookInterruptStatusChange(sourceID, interruptState)).Times(1);
 		env->mProxy->hookInterruptStatusChange(sourceID, CAPIInterruptState, callStatus);
@@ -1222,9 +1222,9 @@ TEST_F(CAmRoutingInterfaceCAPITests, hookSinkAvailablityStatusChange)
 		am_Error_e error = E_OK;
 		am_types::am_sinkID_t testID = TEST_ID_1;
 
-		am_types::am_Availability_s available(am_types::am_Availability_e::A_MAX, AR_UNKNOWN);
+		am_types::am_Availability_s available(am_types::am_Availability_e::A_UNKNOWN, AR_UNKNOWN);
 		am_Availability_s amAvailable;
-		CAmConvertCAPI2AM(available, amAvailable);
+		convert_am_types(available, amAvailable);
 
 		EXPECT_CALL(*env->mpRoutingReceive, hookSinkAvailablityStatusChange(testID, IsAvailabilityEqualTo(amAvailable))).Times(1);
 		env->mProxy->hookSinkAvailablityStatusChange(testID, available, callStatus);
@@ -1242,9 +1242,9 @@ TEST_F(CAmRoutingInterfaceCAPITests, hookSourceAvailablityStatusChange)
 		am_Error_e error = E_OK;
 		am_types::am_sourceID_t testID = TEST_ID_1;
 
-		am_types::am_Availability_s available(am_types::am_Availability_e::A_MAX, AR_UNKNOWN);
+		am_types::am_Availability_s available(am_types::am_Availability_e::A_UNKNOWN, AR_UNKNOWN);
 		am_Availability_s amAvailable;
-		CAmConvertCAPI2AM(available, amAvailable);
+		convert_am_types(available, amAvailable);
 
 		EXPECT_CALL(*env->mpRoutingReceive, hookSourceAvailablityStatusChange(testID, IsAvailabilityEqualTo(amAvailable))).Times(1);
 		env->mProxy->hookSourceAvailablityStatusChange(testID, available, callStatus);
@@ -1261,8 +1261,8 @@ TEST_F(CAmRoutingInterfaceCAPITests, hookDomainStateChange)
 		CommonAPI::CallStatus callStatus = CommonAPI::CallStatus::NOT_AVAILABLE;
 		am_Error_e error = E_OK;
 		am_types::am_domainID_t testID = TEST_ID_1;
-		am_types::am_DomainState_e domainState(am_types::am_DomainState_e::DS_MAX);
-		EXPECT_CALL(*env->mpRoutingReceive, hookDomainStateChange(testID, am_DomainState_e::DS_MAX)).Times(1);
+		am_types::am_DomainState_e domainState(am_types::am_DomainState_e::DS_CONTROLLED);
+		EXPECT_CALL(*env->mpRoutingReceive, hookDomainStateChange(testID, am_DomainState_e::DS_CONTROLLED)).Times(1);
 		env->mProxy->hookDomainStateChange(testID, domainState, callStatus);
 		ASSERT_EQ( callStatus, CommonAPI::CallStatus::SUCCESS );
 	}
@@ -1278,7 +1278,7 @@ TEST_F(CAmRoutingInterfaceCAPITests, hookTimingInformationChanged)
 		am_Error_e error = E_OK;
 		am_types::am_connectionID_t testID = TEST_ID_1;
 		int16_t delay = 10;
-		am_types::am_DomainState_e domainState = am_types::am_DomainState_e::DS_MAX;
+		am_types::am_DomainState_e domainState = am_types::am_DomainState_e::DS_CONTROLLED;
 		EXPECT_CALL(*env->mpRoutingReceive, hookTimingInformationChanged(testID, delay)).Times(1);
 		env->mProxy->hookTimingInformationChanged(testID, delay, callStatus);
 		ASSERT_EQ( callStatus, CommonAPI::CallStatus::SUCCESS );
@@ -1486,11 +1486,11 @@ void prepareArrays(	am_types::am_SoundProperty_L & listSoundProperties,
 	am_listSinkFormats.push_back(CF_GENIVI_AUTO);
 	am_listSinkFormats.push_back(CF_GENIVI_ANALOG);
 
-	am_listSoundProperties.push_back((am_SoundProperty_s){SP_UNKNOWN, 50});
-	am_listSoundProperties.push_back((am_SoundProperty_s){SP_UNKNOWN, 51});
+	am_listSoundProperties.push_back(am_SoundProperty_s{SP_UNKNOWN, 50});
+	am_listSoundProperties.push_back(am_SoundProperty_s{SP_UNKNOWN, 51});
 
-	am_listMainSoundProperties.push_back((am_MainSoundProperty_s){MSP_UNKNOWN, 50});
-	am_listMainSoundProperties.push_back((am_MainSoundProperty_s){MSP_UNKNOWN, 51});
+	am_listMainSoundProperties.push_back(am_MainSoundProperty_s{MSP_UNKNOWN, 50});
+	am_listMainSoundProperties.push_back(am_MainSoundProperty_s{MSP_UNKNOWN, 51});
 }
 
 TEST_F(CAmRoutingInterfaceCAPITests, updateSink)
@@ -1562,7 +1562,7 @@ TEST_F(CAmRoutingInterfaceCAPITests, hookSinkNotificationDataChange)
 		am_types::am_sinkID_t testID = TEST_ID_1;
 		am_types::am_NotificationPayload_s payload(NT_UNKNOWN, 50);
 
-		am_NotificationPayload_s am_payload = (am_NotificationPayload_s){NT_UNKNOWN, 50};
+		am_NotificationPayload_s am_payload = am_NotificationPayload_s{NT_UNKNOWN, 50};
 
 		EXPECT_CALL(*env->mpRoutingReceive, hookSinkNotificationDataChange(testID, IsPayloadEqualTo(am_payload))).Times(1);
 		env->mProxy->hookSinkNotificationDataChange(testID, payload, callStatus);
@@ -1581,7 +1581,7 @@ TEST_F(CAmRoutingInterfaceCAPITests, hookSourceNotificationDataChange)
 		am_types::am_sourceID_t testID = TEST_ID_1;
 		am_types::am_NotificationPayload_s payload(NT_UNKNOWN, 50);
 
-		am_NotificationPayload_s am_payload = (am_NotificationPayload_s){NT_UNKNOWN, 50};
+		am_NotificationPayload_s am_payload = am_NotificationPayload_s{NT_UNKNOWN, 50};
 
 		EXPECT_CALL(*env->mpRoutingReceive, hookSourceNotificationDataChange(testID, IsPayloadEqualTo(am_payload))).Times(1);
 		env->mProxy->hookSourceNotificationDataChange(testID, payload, callStatus);
@@ -1690,7 +1690,7 @@ TEST_F(CAmRoutingInterfaceCAPITests, TestDomain_asyncSetSourceState)
 
 		am_volume_t volume = 50;
 		am_Handle_s handle = {H_SETSOURCESTATE, 20};
-		am_SourceState_e state = am_SourceState_e::SS_MAX;
+		am_SourceState_e state = am_SourceState_e::SS_OFF;
 		EXPECT_CALL(*env->mpRoutingReceive, ackSetSourceState(IsHandleEqual(handle), E_OK)).Times(1);
 		EXPECT_CALL(*env->mpRoutingReceive, getDomainOfSource(TEST_ID_1, _)).WillOnce(Return(E_OK));
 		am_Error_e error = env->mpPlugin->asyncSetSourceState(handle, sID, state);
@@ -1715,7 +1715,7 @@ TEST_F(CAmRoutingInterfaceCAPITests, TestDomain_asyncSetSourceVolume)
 		am_time_t time = 10;
 		am_CustomRampType_t ramp = RAMP_GENIVI_DIRECT;
 		am_Handle_s handle = {H_SETSOURCEVOLUME, 20};
-		am_SourceState_e state = am_SourceState_e::SS_MAX;
+		am_SourceState_e state = am_SourceState_e::SS_OFF;
 		EXPECT_CALL(*env->mpRoutingReceive, ackSetSourceVolumeChange(IsHandleEqual(handle), volume, E_OK)).Times(1);
 		EXPECT_CALL(*env->mpRoutingReceive, getDomainOfSource(TEST_ID_1, _)).WillOnce(Return(E_OK));
 		am_Error_e error = env->mpPlugin->asyncSetSourceVolume(handle, sID, volume, ramp, time);
@@ -1768,7 +1768,7 @@ TEST_F(CAmRoutingInterfaceCAPITests, TestDomain_asyncSetSinkVolume)
 		am_time_t time = 10;
 		am_CustomRampType_t ramp = RAMP_GENIVI_DIRECT;
 		am_Handle_s handle = {H_SETSINKVOLUME, 20};
-		am_SourceState_e state = am_SourceState_e::SS_MAX;
+		am_SourceState_e state = am_SourceState_e::SS_OFF;
 		EXPECT_CALL(*env->mpRoutingReceive, ackSetSinkVolumeChange(IsHandleEqual(handle), volume, E_OK)).Times(1);
 		EXPECT_CALL(*env->mpRoutingReceive, getDomainOfSink(TEST_ID_1, _)).WillOnce(Return(E_OK));
 		am_Error_e error = env->mpPlugin->asyncSetSinkVolume(handle, sID, volume, ramp, time);
@@ -1839,7 +1839,7 @@ TEST_F(CAmRoutingInterfaceCAPITests, TestDomain_asyncAbort)
 		am_types::am_Handle_s retHandle;
 		retHandle.setHandle(200);
 		retHandle.setHandleType(am_types::am_Handle_e(am_types::am_Handle_e::H_SETSOURCESTATE));
-		am_SourceState_e state = am_SourceState_e::SS_MAX;
+		am_SourceState_e state = am_SourceState_e::SS_OFF;
 
 		//we set an abort handle in order to test the return status
 		env->mDomainService->setAbortHandle(retHandle);
@@ -1876,12 +1876,12 @@ TEST_F(CAmRoutingInterfaceCAPITests, TestDomain_asyncSetSinkSoundProperties)
 		ASSERT_TRUE( backdoor.containsSourceWithID( (const am_sourceID_t)sID) );
 
 		am_Handle_s handle = {H_SETSINKSOUNDPROPERTIES, 200};
-		am_SourceState_e state = am_SourceState_e::SS_MAX;
+		am_SourceState_e state = am_SourceState_e::SS_OFF;
 
 		std::vector<am_SoundProperty_s> listSoundProperties;
-		listSoundProperties.push_back((am_SoundProperty_s){SP_GENIVI_MID, 100});
-		listSoundProperties.push_back((am_SoundProperty_s){SP_UNKNOWN, 101});
-		listSoundProperties.push_back((am_SoundProperty_s){SP_GENIVI_TREBLE, 100});
+		listSoundProperties.push_back(am_SoundProperty_s{SP_GENIVI_MID, 100});
+		listSoundProperties.push_back(am_SoundProperty_s{SP_UNKNOWN, 101});
+		listSoundProperties.push_back(am_SoundProperty_s{SP_GENIVI_TREBLE, 100});
 		EXPECT_CALL(*env->mpRoutingReceive, getDomainOfSink(TEST_ID_1, _)).WillOnce(Return(E_OK));
 		EXPECT_CALL(*env->mpRoutingReceive, ackSetSinkSoundProperties(IsHandleEqual(handle), E_OK)).Times(1);
 		am_Error_e error = env->mpPlugin->asyncSetSinkSoundProperties(handle, sID, listSoundProperties);
@@ -1903,10 +1903,10 @@ TEST_F(CAmRoutingInterfaceCAPITests, TestDomain_asyncSetSinkSoundProperty)
 		ASSERT_TRUE( backdoor.containsSourceWithID( (const am_sourceID_t)sID) );
 
 		am_Handle_s handle = {H_SETSINKSOUNDPROPERTY, 200};
-		am_SourceState_e state = am_SourceState_e::SS_MAX;
+		am_SourceState_e state = am_SourceState_e::SS_OFF;
 		EXPECT_CALL(*env->mpRoutingReceive, getDomainOfSink(TEST_ID_1, _)).WillOnce(Return(E_OK));
 		EXPECT_CALL(*env->mpRoutingReceive, ackSetSinkSoundProperty(IsHandleEqual(handle), E_OK)).Times(1);
-		am_Error_e error = env->mpPlugin->asyncSetSinkSoundProperty(handle, sID, (am_SoundProperty_s){SP_GENIVI_MID, 100});
+		am_Error_e error = env->mpPlugin->asyncSetSinkSoundProperty(handle, sID, am_SoundProperty_s{SP_GENIVI_MID, 100});
 		usleep(50000);
 		ASSERT_EQ( error, E_OK );
 		ASSERT_FALSE( backdoor.containsHandle( handle.handle) );
@@ -1925,12 +1925,12 @@ TEST_F(CAmRoutingInterfaceCAPITests, TestDomain_asyncSetSourceSoundProperties)
 		ASSERT_TRUE( backdoor.containsSourceWithID( (const am_sourceID_t)sID) );
 
 		am_Handle_s handle = {H_SETSOURCESOUNDPROPERTIES, 200};
-		am_SourceState_e state = am_SourceState_e::SS_MAX;
+		am_SourceState_e state = am_SourceState_e::SS_OFF;
 
 		std::vector<am_SoundProperty_s> listSoundProperties;
-		listSoundProperties.push_back((am_SoundProperty_s){SP_GENIVI_MID, 100});
-		listSoundProperties.push_back((am_SoundProperty_s){SP_UNKNOWN, 101});
-		listSoundProperties.push_back((am_SoundProperty_s){SP_GENIVI_TREBLE, 100});
+		listSoundProperties.push_back(am_SoundProperty_s{SP_GENIVI_MID, 100});
+		listSoundProperties.push_back(am_SoundProperty_s{SP_UNKNOWN, 101});
+		listSoundProperties.push_back(am_SoundProperty_s{SP_GENIVI_TREBLE, 100});
 		EXPECT_CALL(*env->mpRoutingReceive, getDomainOfSource(TEST_ID_1, _)).WillOnce(Return(E_OK));
 		EXPECT_CALL(*env->mpRoutingReceive, ackSetSourceSoundProperties(IsHandleEqual(handle), E_OK)).Times(1);
 		am_Error_e error = env->mpPlugin->asyncSetSourceSoundProperties(handle, sID, listSoundProperties);
@@ -1952,10 +1952,10 @@ TEST_F(CAmRoutingInterfaceCAPITests, TestDomain_asyncSetSourceSoundProperty)
 		ASSERT_TRUE( backdoor.containsSourceWithID( (const am_sourceID_t)sID) );
 
 		am_Handle_s handle = {H_SETSOURCESOUNDPROPERTY, 200};
-		am_SourceState_e state = am_SourceState_e::SS_MAX;
+		am_SourceState_e state = am_SourceState_e::SS_OFF;
 		EXPECT_CALL(*env->mpRoutingReceive, getDomainOfSource(TEST_ID_1, _)).WillOnce(Return(E_OK));
 		EXPECT_CALL(*env->mpRoutingReceive, ackSetSourceSoundProperty(IsHandleEqual(handle), E_OK)).Times(1);
-		am_Error_e error = env->mpPlugin->asyncSetSourceSoundProperty(handle, sID, (am_SoundProperty_s){SP_GENIVI_MID, 100});
+		am_Error_e error = env->mpPlugin->asyncSetSourceSoundProperty(handle, sID, am_SoundProperty_s{SP_GENIVI_MID, 100});
 		usleep(50000);
 		ASSERT_EQ( error, E_OK );
 		ASSERT_FALSE( backdoor.containsHandle( handle.handle) );
@@ -1994,7 +1994,7 @@ TEST_F(CAmRoutingInterfaceCAPITests, TestDomain_asyncSetSinkNotificationConfigur
 		ASSERT_TRUE( backdoor.containsSinkWithID( TEST_ID_1 ));
 
 		am_Handle_s handle = {H_CONNECT, 200};
-		am_NotificationConfiguration_s nc = (am_NotificationConfiguration_s){NT_UNKNOWN, am_NotificationStatus_e::NS_MAX};
+		am_NotificationConfiguration_s nc = am_NotificationConfiguration_s{NT_UNKNOWN, am_NotificationStatus_e::NS_PERIODIC};
 		EXPECT_CALL(*env->mpRoutingReceive, getDomainOfSink(TEST_ID_1, _)).WillOnce(Return(E_OK));
 		EXPECT_CALL(*env->mpRoutingReceive, ackSinkNotificationConfiguration(IsHandleStructEqualTo(handle), E_OK)).Times(1);
 		am_Error_e error = env->mpPlugin->asyncSetSinkNotificationConfiguration(handle, TEST_ID_1, nc);
@@ -2014,7 +2014,7 @@ TEST_F(CAmRoutingInterfaceCAPITests, TestDomain_asyncSetSourceNotificationConfig
 		ASSERT_TRUE( backdoor.containsSinkWithID( TEST_ID_1 ));
 
 		am_Handle_s handle = {H_CONNECT, 200};
-		am_NotificationConfiguration_s nc = (am_NotificationConfiguration_s){NT_UNKNOWN, am_NotificationStatus_e::NS_MAX};
+		am_NotificationConfiguration_s nc = am_NotificationConfiguration_s{NT_UNKNOWN, am_NotificationStatus_e::NS_PERIODIC};
 		EXPECT_CALL(*env->mpRoutingReceive, getDomainOfSource(TEST_ID_1, _)).WillOnce(Return(E_OK));
 		EXPECT_CALL(*env->mpRoutingReceive, ackSourceNotificationConfiguration(IsHandleStructEqualTo(handle), E_OK)).Times(1);
 		am_Error_e error = env->mpPlugin->asyncSetSourceNotificationConfiguration(handle, TEST_ID_1, nc);
@@ -2044,7 +2044,7 @@ TEST_F(CAmRoutingInterfaceCAPITests, TestDomain_asyncSetVolumes)
 		std::vector<am_Volumes_s> am_listVolumes;
 		am_DataType_u dt1;
 		dt1.source = TEST_ID_2;
-		am_listVolumes.push_back((am_Volumes_s){VT_SOURCE,
+		am_listVolumes.push_back(am_Volumes_s{VT_SOURCE,
 												dt1,
 												50,
 												RAMP_GENIVI_DIRECT,

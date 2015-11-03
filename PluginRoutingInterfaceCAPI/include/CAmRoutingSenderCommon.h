@@ -20,6 +20,7 @@
 
 #include <memory>
 #include "audiomanagertypes.h"
+#include "CAmDltWrapper.h"
 #include <v1_0/org/genivi/am/audiomanagertypes/__Anonymous__.hpp>
 
 using namespace am;
@@ -27,37 +28,41 @@ using namespace am;
 #define am_types v1_0::org::genivi::am::audiomanagertypes::__Anonymous__
 #define am_routing_interface v1_0::org::genivi::am::routinginterface
 
+DltContext & GetDefaultRoutingDltContext();
+
 /**
  * Utility functions
  */
-void CAmConvertCAPI2AM(const am_types::am_Domain_s &, am_Domain_s &);
-void CAmConvertCAPI2AM(const am_types::am_Source_s & , am::am_Source_s & );
-void CAmConvertCAPI2AM(const am_types::am_Sink_s & , am::am_Sink_s & );
-void CAmConvertCAPI2AM(const am_types::am_Availability_s  & ,  am_Availability_s & );
-void CAmConvertCAPI2AM(const am_types::am_SoundProperty_s &, am::am_SoundProperty_s &);
-void CAmConvertCAPI2AM(const am_types::am_MainSoundProperty_s &, am::am_MainSoundProperty_s & );
-void CAmConvertCAPI2AM(const am_types::am_NotificationConfiguration_s & , am::am_NotificationConfiguration_s & );
-void CAmConvertCAPI2AM(const am_types::am_Gateway_s & , am::am_Gateway_s & );
-void CAmConvertCAPI2AM(const am_types::am_Converter_s & , am::am_Converter_s & );
-void CAmConvertCAPI2AM(const am_types::am_Crossfader_s & , am::am_Crossfader_s & );
-void CAmConvertCAPI2AM(const am_types::am_EarlyData_s & , am::am_EarlyData_s & );
-void CAmConvertCAPI2AM(const am_types::am_EarlyData_u &, am::am_EarlyData_u & );
-void CAmConvertCAPI2AM(const am_types::am_Volumes_s &, am::am_Volumes_s &);
-void CAmConvertCAPI2AM(const am_types::am_Handle_s &, am::am_Handle_s &);
-void CAmConvertCAPI2AM(const am_types::am_NotificationPayload_s & , am::am_NotificationPayload_s & );
-void CAmConvertCAPIVector2AM(const std::vector<am_types::am_NotificationConfiguration_s> & , std::vector<am::am_NotificationConfiguration_s> & );
-void CAmConvertCAPIVector2AM(const std::vector<am_types::am_SoundProperty_s> &, std::vector<am::am_SoundProperty_s> &);
-void CAmConvertCAPIVector2AM(const std::vector<am_types::am_ConnectionFormat_pe> &, std::vector<am::am_CustomConnectionFormat_t> & );
-void CAmConvertCAPIVector2AM(const std::vector<am_types::am_MainSoundProperty_s> &, std::vector<am::am_MainSoundProperty_s> & );
-void CAmConvertCAPIVector2AM(const std::vector<am_types::am_Volumes_s> &, std::vector<am::am_Volumes_s> & );
-void CAmConvertCAPIVector2AM(const am_types::am_EarlyData_L &, std::vector<am::am_EarlyData_s> &);
+void convert_am_types(const am_types::am_Domain_s &, am_Domain_s &);
+void convert_am_types(const am_types::am_Source_s & , am::am_Source_s & );
+void convert_am_types(const am_types::am_Sink_s & , am::am_Sink_s & );
+void convert_am_types(const am_types::am_Availability_s  & ,  am_Availability_s & );
+void convert_am_types(const am_types::am_SoundProperty_s &, am::am_SoundProperty_s &);
+void convert_am_types(const am_types::am_MainSoundProperty_s &, am::am_MainSoundProperty_s & );
+void convert_am_types(const am_types::am_NotificationConfiguration_s & , am::am_NotificationConfiguration_s & );
+void convert_am_types(const am_types::am_Gateway_s & , am::am_Gateway_s & );
+void convert_am_types(const am_types::am_Converter_s & , am::am_Converter_s & );
+void convert_am_types(const am_types::am_Crossfader_s & , am::am_Crossfader_s & );
+void convert_am_types(const am_types::am_EarlyData_s & , am::am_EarlyData_s & );
+void convert_am_types(const am_types::am_EarlyData_u &, am::am_EarlyData_u & );
+void convert_am_types(const am_types::am_Volumes_s &, am::am_Volumes_s &);
+void convert_am_types(const am_types::am_Handle_s &, am::am_Handle_s &);
+void convert_am_types(const am_types::am_NotificationPayload_s & , am::am_NotificationPayload_s & );
+void convert_am_types(const std::vector<am_types::am_NotificationConfiguration_s> & , std::vector<am::am_NotificationConfiguration_s> & );
+void convert_am_types(const std::vector<am_types::am_SoundProperty_s> &, std::vector<am::am_SoundProperty_s> &);
+void convert_am_types(const std::vector<am_types::am_ConnectionFormat_pe> &, std::vector<am::am_CustomConnectionFormat_t> & );
+void convert_am_types(const std::vector<am_types::am_MainSoundProperty_s> &, std::vector<am::am_MainSoundProperty_s> & );
+void convert_am_types(const std::vector<am_types::am_Volumes_s> &, std::vector<am::am_Volumes_s> & );
+void convert_am_types(const am_types::am_EarlyData_L &, std::vector<am::am_EarlyData_s> &);
 
-void CAmConvertAM2CAPI(const am_Availability_s & ,  am_types::am_Availability_s & );
-void CAmConvertAM2CAPI(const am::am_SoundProperty_s &, am_types::am_SoundProperty_s &);
-void CAmConvertAM2CAPI(const am::am_NotificationConfiguration_s &, am_types::am_NotificationConfiguration_s &);
-void CAmConvertAM2CAPI(const am::am_Volumes_s &, am_types::am_Volumes_s &);
-void CAmConvertAMVector2CAPI(const std::vector<am::am_SoundProperty_s> &, std::vector<am_types::am_SoundProperty_s> &);
-void CAmConvertAMVector2CAPI(const std::vector<am::am_Volumes_s> & , std::vector<am_types::am_Volumes_s> & );
-void CAmConvertAM2CAPI(const am::am_Handle_s &, am_types::am_Handle_s &);
+void convert_am_types(const am_Availability_s & ,  am_types::am_Availability_s & );
+void convert_am_types(const am::am_SoundProperty_s &, am_types::am_SoundProperty_s &);
+void convert_am_types(const am::am_NotificationConfiguration_s &, am_types::am_NotificationConfiguration_s &);
+void convert_am_types(const am::am_Volumes_s &, am_types::am_Volumes_s &);
+void convert_am_types(const std::vector<am::am_SoundProperty_s> &, std::vector<am_types::am_SoundProperty_s> &);
+void convert_am_types(const std::vector<am::am_Volumes_s> & , std::vector<am_types::am_Volumes_s> & );
+void convert_am_types(const am::am_Handle_s &, am_types::am_Handle_s &);
+
+
 
 #endif /* CAMROUTINGSENDERCOMMON_H_ */

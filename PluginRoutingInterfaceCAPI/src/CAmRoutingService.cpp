@@ -17,6 +17,10 @@
 #include <memory>
 #include <assert.h>
 #include <algorithm>
+#include <fstream>
+#include <sstream>
+#include <sys/stat.h>
+#include <unistd.h>
 #include "CAmRoutingSenderCommon.h"
 #include "CAmCommonAPIWrapper.h"
 #include "CAmDltWrapper.h"
@@ -24,6 +28,8 @@
 
 
 namespace am {
+
+const char * CAmRoutingService::DOMAIN_INSTANCES_FILENAME = "domain_instances.cfg";
 
 timespec timespecFromMiliseconds(const unsigned long milisec)
 {
@@ -63,107 +69,107 @@ CAmRoutingService::~CAmRoutingService() {
 void CAmRoutingService::ackConnect(am_Handle_s handle, am_connectionID_t connectionID, am_Error_e error) {
 	assert(mpLookpData);
 	am_types::am_Handle_s dst;
-	CAmConvertAM2CAPI(handle, dst);
+	convert_am_types(handle, dst);
 	mpLookpData->ackConnect(dst, (int)connectionID, static_cast<am_types::am_Error_e::Literal>(error));
 }
 
 void CAmRoutingService::ackDisconnect(am_Handle_s handle , am_connectionID_t connectionID, am_Error_e error) {
 	assert(mpLookpData);
 	am_types::am_Handle_s dst;
-	CAmConvertAM2CAPI(handle, dst);
+	convert_am_types(handle, dst);
 	mpLookpData->ackDisconnect(dst, (int)connectionID, static_cast<am_types::am_Error_e::Literal>(error));
 }
 
 void CAmRoutingService::ackSetSinkVolumeChange(am_Handle_s handle , am_volume_t volume, am_Error_e error) {
 	assert(mpLookpData);
 	am_types::am_Handle_s dst;
-	CAmConvertAM2CAPI(handle, dst);
+	convert_am_types(handle, dst);
 	mpLookpData->ackSetSinkVolumeChange(dst, volume, static_cast<am_types::am_Error_e::Literal>(error));
 }
 
 void CAmRoutingService::ackSetSourceVolumeChange(am_Handle_s handle, am_volume_t volume, am_Error_e error){
 	assert(mpLookpData);
 	am_types::am_Handle_s dst;
-	CAmConvertAM2CAPI(handle, dst);
+	convert_am_types(handle, dst);
 	mpLookpData->ackSetSourceVolumeChange(dst, volume, static_cast<am_types::am_Error_e::Literal>(error));
 }
 
 void CAmRoutingService::ackSetSourceState(am_Handle_s handle, am_Error_e error) {
 	assert(mpLookpData);
 	am_types::am_Handle_s dst;
-	CAmConvertAM2CAPI(handle, dst);
+	convert_am_types(handle, dst);
 	mpLookpData->ackSetSourceState(dst, static_cast<am_types::am_Error_e::Literal>(error));
 }
 
 void CAmRoutingService::ackSetSinkSoundProperties(am_Handle_s handle, am_Error_e error){
 	assert(mpLookpData);
 	am_types::am_Handle_s dst;
-	CAmConvertAM2CAPI(handle, dst);
+	convert_am_types(handle, dst);
 	mpLookpData->ackSetSinkSoundProperties(dst, static_cast<am_types::am_Error_e::Literal>(error));
 }
 
 void CAmRoutingService::ackSetSinkSoundProperty(am_Handle_s handle, am_Error_e error) {
 	assert(mpLookpData);
 	am_types::am_Handle_s dst;
-	CAmConvertAM2CAPI(handle, dst);
+	convert_am_types(handle, dst);
 	mpLookpData->ackSetSinkSoundProperty(dst, static_cast<am_types::am_Error_e::Literal>(error));
 }
 
 void CAmRoutingService::ackSetSourceSoundProperties(am_Handle_s handle, am_Error_e error) {
 	assert(mpLookpData);
 	am_types::am_Handle_s dst;
-	CAmConvertAM2CAPI(handle, dst);
+	convert_am_types(handle, dst);
 	mpLookpData->ackSetSourceSoundProperties(dst, static_cast<am_types::am_Error_e::Literal>(error));
 }
 
 void CAmRoutingService::ackSetSourceSoundProperty(am_Handle_s handle, am_Error_e error) {
 	assert(mpLookpData);
 	am_types::am_Handle_s dst;
-	CAmConvertAM2CAPI(handle, dst);
+	convert_am_types(handle, dst);
 	mpLookpData->ackSetSourceSoundProperty(dst, static_cast<am_types::am_Error_e::Literal>(error));
 }
 
 void CAmRoutingService::ackCrossFading(am_Handle_s handle, am_HotSink_e hotSink, am_Error_e error) {
 	assert(mpLookpData);
 	am_types::am_Handle_s dst;
-	CAmConvertAM2CAPI(handle, dst);
+	convert_am_types(handle, dst);
 	mpLookpData->ackCrossFading(dst, static_cast<am_types::am_HotSink_e::Literal>(hotSink), static_cast<am_types::am_Error_e::Literal>(error));
 }
 
 void CAmRoutingService::ackSourceVolumeTick(am_Handle_s handle, am_sourceID_t source, am_volume_t volume) {
 	assert(mpLookpData);
 	am_types::am_Handle_s dst;
-	CAmConvertAM2CAPI(handle, dst);
+	convert_am_types(handle, dst);
 	mpLookpData->ackSourceVolumeTick(dst, source, volume);
 }
 
 void CAmRoutingService::ackSinkVolumeTick(am_Handle_s handle, am_sinkID_t sink, am_volume_t volume) {
 	assert(mpLookpData);
 	am_types::am_Handle_s dst;
-	CAmConvertAM2CAPI(handle, dst);
+	convert_am_types(handle, dst);
 	mpLookpData->ackSinkVolumeTick(dst, sink, volume);
 }
 
 void CAmRoutingService::ackSetVolumes(am_Handle_s handle , const std::vector<am_Volumes_s> & listVolumes, am_Error_e error) {
 	assert(mpLookpData);
 	am_types::am_Handle_s dst;
-	CAmConvertAM2CAPI(handle, dst);
+	convert_am_types(handle, dst);
 	am_types::am_Volumes_L list;
-	CAmConvertAMVector2CAPI(listVolumes, list);
+	convert_am_types(listVolumes, list);
 	mpLookpData->ackSetVolumes(dst, list, static_cast<am_types::am_Error_e::Literal>(error));
 }
 
 void CAmRoutingService::ackSinkNotificationConfiguration (am_Handle_s handle, am_Error_e error) {
 	assert(mpLookpData);
 	am_types::am_Handle_s dst;
-	CAmConvertAM2CAPI(handle, dst);
+	convert_am_types(handle, dst);
     mpLookpData->ackSinkNotificationConfiguration(dst, static_cast<am_types::am_Error_e::Literal>(error));
 }
 
 void CAmRoutingService::ackSourceNotificationConfiguration(am_Handle_s handle, am_Error_e error) {
 	assert(mpLookpData);
 	am_types::am_Handle_s dst;
-	CAmConvertAM2CAPI(handle, dst);
+	convert_am_types(handle, dst);
     mpLookpData->ackSourceNotificationConfiguration(dst, static_cast<am_types::am_Error_e::Literal>(error));
 }
 
@@ -179,17 +185,31 @@ void CAmRoutingService::registerDomain(const std::shared_ptr<CommonAPI::ClientId
 	assert(mpIAmRoutingReceive);
 	assert(mpLookpData);
 	assert(mpCAmCAPIWrapper);
-	am_Domain_s converted;
+
+	am_types::am_Error_e resultCode;
 	am_domainID_t domainID;
-	CAmConvertCAPI2AM(_domainData, converted);
-	converted.busname = CAmLookupData::BUS_NAME;
-	am_types::am_Error_e resultCode((am_types::am_Error_e::Literal)mpIAmRoutingReceive->registerDomain(converted, domainID));
-	if(E_OK==resultCode)
+	if(_returnBusname.empty())
+		CAmRoutingService::getDomainInstance(_domainData.getName(), _returnBusname);
+
+	if(!_returnBusname.empty())
 	{
-		std::shared_ptr<am_routing_interface::RoutingControlProxy<>> shpSenderProxy = mpCAmCAPIWrapper->buildProxy<am_routing_interface::RoutingControlProxy>("local", _returnBusname);
-		mpLookpData->addDomainLookup(domainID, shpSenderProxy);
-		if (domainID==2)
-			mpIAmRoutingReceive->confirmRoutingReady(mHandle,E_OK);
+		am_Domain_s converted;
+		convert_am_types(_domainData, converted);
+		converted.busname = CAmLookupData::BUS_NAME;
+
+		resultCode = ((am_types::am_Error_e::Literal)mpIAmRoutingReceive->registerDomain(converted, domainID));
+		if(E_OK==resultCode)
+		{
+			std::shared_ptr<am_routing_interface::RoutingControlProxy<>> shpSenderProxy = mpCAmCAPIWrapper->buildProxy<am_routing_interface::RoutingControlProxy>("local", _returnBusname);
+			mpLookpData->addDomainLookup(domainID, shpSenderProxy);
+			if (domainID==2)
+				mpIAmRoutingReceive->confirmRoutingReady(mHandle,E_OK);
+		}
+	}
+	else
+	{
+		resultCode = am_types::am_Error_e::E_NOT_POSSIBLE;
+		domainID = 0;
 	}
 	_reply(domainID, resultCode);
 }
@@ -207,7 +227,7 @@ void CAmRoutingService::registerGateway(const std::shared_ptr<CommonAPI::ClientI
 	assert(mpIAmRoutingReceive);
 	am_Gateway_s converted;
 	am_gatewayID_t gatewayID;
-	CAmConvertCAPI2AM(_gatewayData, converted);
+	convert_am_types(_gatewayData, converted);
 	am_types::am_Error_e error((am_types::am_Error_e::Literal)mpIAmRoutingReceive->registerGateway(converted, gatewayID));
 	_reply(gatewayID, error);
 }
@@ -221,7 +241,7 @@ void CAmRoutingService::registerConverter(const std::shared_ptr<CommonAPI::Clien
 	assert(mpIAmRoutingReceive);
 	am_Converter_s converted;
 	am_converterID_t converterID;
-	CAmConvertCAPI2AM(_converterData, converted);
+	convert_am_types(_converterData, converted);
 	am_types::am_Error_e error = static_cast<am_types::am_Error_e::Literal>(mpIAmRoutingReceive->registerConverter(converted, converterID));
 	_reply(converterID, error);
 }
@@ -243,7 +263,7 @@ void CAmRoutingService::registerSink(const std::shared_ptr<CommonAPI::ClientId>,
 	assert(mpLookpData);
 	am_Sink_s converted;
 	am_sinkID_t sinkID;
-	CAmConvertCAPI2AM(_sinkData, converted);
+	convert_am_types(_sinkData, converted);
 	am_Error_e result = mpIAmRoutingReceive->registerSink(converted, sinkID);
 	am_types::am_Error_e error((am_types::am_Error_e::Literal)result);
 	if(E_OK==result)
@@ -272,7 +292,7 @@ void CAmRoutingService::registerSource(const std::shared_ptr<CommonAPI::ClientId
 	assert(mpLookpData);
 	am_Source_s converted;
 	am_sourceID_t sourceID;
-	CAmConvertCAPI2AM(_sourceData, converted);
+	convert_am_types(_sourceData, converted);
 	am_types::am_Error_e error((am_types::am_Error_e::Literal)mpIAmRoutingReceive->registerSource(converted, sourceID));
 	if((int)error==E_OK)
 		mpLookpData->addSourceLookup(sourceID, _sourceData.getDomainID());
@@ -292,7 +312,7 @@ void CAmRoutingService::registerCrossfader(const std::shared_ptr<CommonAPI::Clie
 	assert(mpIAmRoutingReceive);
 	am_Crossfader_s converted;
 	am_crossfaderID_t crossfaderID;
-	CAmConvertCAPI2AM(_crossfaderData, converted);
+	convert_am_types(_crossfaderData, converted);
 	am_types::am_Error_e error((am_types::am_Error_e::Literal)mpIAmRoutingReceive->registerCrossfader(converted, crossfaderID));
 	if((int)error==E_OK)
 		mpLookpData->addCrossfaderLookup(crossfaderID, _crossfaderData.getSourceID());
@@ -335,7 +355,7 @@ void CAmRoutingService::hookDomainRegistrationComplete(const std::shared_ptr<Com
 void CAmRoutingService::hookSinkAvailablityStatusChange(const std::shared_ptr<CommonAPI::ClientId>, am_types::am_sinkID_t _sinkID, am_types::am_Availability_s _availability, hookSinkAvailablityStatusChangeReply_t _reply) {
 	assert(mpIAmRoutingReceive);
 	am_Availability_s am_avialabilty;
-	CAmConvertCAPI2AM(_availability, am_avialabilty);
+	convert_am_types(_availability, am_avialabilty);
 	mpIAmRoutingReceive->hookSinkAvailablityStatusChange(_sinkID, am_avialabilty);
 	_reply();
 }
@@ -343,7 +363,7 @@ void CAmRoutingService::hookSinkAvailablityStatusChange(const std::shared_ptr<Co
 void CAmRoutingService::hookSourceAvailablityStatusChange(const std::shared_ptr<CommonAPI::ClientId>, am_types::am_sourceID_t _sourceID, am_types::am_Availability_s _availability, hookSourceAvailablityStatusChangeReply_t _reply) {
 	assert(mpIAmRoutingReceive);
 	am_Availability_s am_availabilty;
-	CAmConvertCAPI2AM(_availability, am_availabilty);
+	convert_am_types(_availability, am_availabilty);
 	mpIAmRoutingReceive->hookSourceAvailablityStatusChange(_sourceID, am_availabilty);
 	_reply();
 }
@@ -365,7 +385,7 @@ void CAmRoutingService::sendChangedData(const std::shared_ptr<CommonAPI::ClientI
 
 	assert(mpIAmRoutingReceive);
 	std::vector<am_EarlyData_s> dest;
-	CAmConvertCAPIVector2AM(_earlyData,dest);
+	convert_am_types(_earlyData,dest);
 	mpIAmRoutingReceive->sendChangedData(dest);
 	_reply();
 }
@@ -374,10 +394,10 @@ void CAmRoutingService::updateGateway(const std::shared_ptr<CommonAPI::ClientId>
 
 	assert(mpIAmRoutingReceive);
 	std::vector<am_CustomConnectionFormat_t> destinationSourceConnectionFormats;
-	CAmConvertCAPIVector2AM(_listSourceFormats, destinationSourceConnectionFormats);
+	convert_am_types(_listSourceFormats, destinationSourceConnectionFormats);
 
 	std::vector<am_CustomConnectionFormat_t> destinationSinkConnectionFormats;
-	CAmConvertCAPIVector2AM(_listSinkFormats, destinationSinkConnectionFormats);
+	convert_am_types(_listSinkFormats, destinationSinkConnectionFormats);
 
 	am_types::am_Error_e error((am_types::am_Error_e::Literal)mpIAmRoutingReceive->updateGateway(_gatewayID, destinationSourceConnectionFormats, destinationSinkConnectionFormats, _convertionMatrix));
 	_reply(error);
@@ -387,10 +407,10 @@ void CAmRoutingService::updateConverter(const std::shared_ptr<CommonAPI::ClientI
 
 	assert(mpIAmRoutingReceive);
 	std::vector<am_CustomConnectionFormat_t> destinationSourceConnectionFormats;
-	CAmConvertCAPIVector2AM(_listSourceFormats, destinationSourceConnectionFormats);
+	convert_am_types(_listSourceFormats, destinationSourceConnectionFormats);
 
 	std::vector<am_CustomConnectionFormat_t> destinationSinkConnectionFormats;
-	CAmConvertCAPIVector2AM(_listSinkFormats, destinationSinkConnectionFormats);
+	convert_am_types(_listSinkFormats, destinationSinkConnectionFormats);
 
 	am_types::am_Error_e error((am_types::am_Error_e::Literal)mpIAmRoutingReceive->updateConverter(_converterID, destinationSourceConnectionFormats, destinationSinkConnectionFormats, _convertionMatrix));
 	_reply(error);
@@ -399,11 +419,11 @@ void CAmRoutingService::updateConverter(const std::shared_ptr<CommonAPI::ClientI
 void CAmRoutingService::updateSink(const std::shared_ptr<CommonAPI::ClientId>, am_types::am_sinkID_t _sinkID, am_types::am_sinkClass_t _sinkClassID, am_types::am_SoundProperty_L _listSoundProperties, am_types::am_ConnectionFormat_L _listConnectionFormats, am_types::am_MainSoundProperty_L _listMainSoundProperties, updateSinkReply_t _reply) {
 	assert(mpIAmRoutingReceive);
 	std::vector<am_SoundProperty_s> dstListSoundProperties;
-    CAmConvertCAPIVector2AM(_listSoundProperties, dstListSoundProperties);
+    convert_am_types(_listSoundProperties, dstListSoundProperties);
     std::vector<am_CustomConnectionFormat_t> dstListSinkConnectionFormats;
-    CAmConvertCAPIVector2AM(_listConnectionFormats, dstListSinkConnectionFormats);
+    convert_am_types(_listConnectionFormats, dstListSinkConnectionFormats);
     std::vector<am_MainSoundProperty_s> dstListMainSoundProperties;
-    CAmConvertCAPIVector2AM(_listMainSoundProperties, dstListMainSoundProperties);
+    convert_am_types(_listMainSoundProperties, dstListMainSoundProperties);
     am_types::am_Error_e error((am_types::am_Error_e::Literal)mpIAmRoutingReceive->updateSink( _sinkID, _sinkClassID, dstListSoundProperties,dstListSinkConnectionFormats,dstListMainSoundProperties));
 	_reply(error);
 }
@@ -411,11 +431,11 @@ void CAmRoutingService::updateSink(const std::shared_ptr<CommonAPI::ClientId>, a
 void CAmRoutingService::updateSource(const std::shared_ptr<CommonAPI::ClientId>, am_types::am_sourceID_t _sourceID, am_types::am_sourceClass_t _sourceClassID, am_types::am_SoundProperty_L _listSoundProperties, am_types::am_ConnectionFormat_L _listConnectionFormats, am_types::am_MainSoundProperty_L _listMainSoundProperties, updateSourceReply_t _reply) {
 	assert(mpIAmRoutingReceive);
 	std::vector<am_SoundProperty_s> dstListSoundProperties;
-    CAmConvertCAPIVector2AM(_listSoundProperties, dstListSoundProperties);
+    convert_am_types(_listSoundProperties, dstListSoundProperties);
     std::vector<am_CustomConnectionFormat_t> dstListSinkConnectionFormats;
-    CAmConvertCAPIVector2AM(_listConnectionFormats, dstListSinkConnectionFormats);
+    convert_am_types(_listConnectionFormats, dstListSinkConnectionFormats);
     std::vector<am_MainSoundProperty_s> dstListMainSoundProperties;
-    CAmConvertCAPIVector2AM(_listMainSoundProperties, dstListMainSoundProperties);
+    convert_am_types(_listMainSoundProperties, dstListMainSoundProperties);
     am_types::am_Error_e error = (am_types::am_Error_e::Literal)mpIAmRoutingReceive->updateSource( _sourceID, _sourceClassID, dstListSoundProperties,dstListSinkConnectionFormats,dstListMainSoundProperties);
 	_reply(error);
 }
@@ -423,7 +443,7 @@ void CAmRoutingService::updateSource(const std::shared_ptr<CommonAPI::ClientId>,
 void CAmRoutingService::hookSinkNotificationDataChange(const std::shared_ptr<CommonAPI::ClientId>, am_types::am_sinkID_t _sinkID, am_types::am_NotificationPayload_s _payload, hookSinkNotificationDataChangeReply_t _reply) {
 	assert(mpIAmRoutingReceive);
 	am_NotificationPayload_s converted;
-	CAmConvertCAPI2AM(_payload, converted);
+	convert_am_types(_payload, converted);
 	mpIAmRoutingReceive->hookSinkNotificationDataChange(_sinkID, converted);
 	_reply();
 }
@@ -431,7 +451,7 @@ void CAmRoutingService::hookSinkNotificationDataChange(const std::shared_ptr<Com
 void CAmRoutingService::hookSourceNotificationDataChange(const std::shared_ptr<CommonAPI::ClientId>, am_types::am_sourceID_t _sourceID, am_types::am_NotificationPayload_s _payload, hookSourceNotificationDataChangeReply_t _reply) {
 	assert(mpIAmRoutingReceive);
 	am_NotificationPayload_s converted;
-	CAmConvertCAPI2AM(_payload, converted);
+	convert_am_types(_payload, converted);
 	mpIAmRoutingReceive->hookSourceNotificationDataChange(_sourceID, converted);
 	_reply();
 }
@@ -449,6 +469,57 @@ void CAmRoutingService::gotRundown(int16_t numberDomains, uint16_t handle)
 	mReady=false;
     mNumberDomains=numberDomains;
     mHandle=handle;
+}
+
+
+void CAmRoutingService::parseConfigFile(std::istream & cfgfile, std::map<std::string, std::string> & options)
+{
+    for (std::string line; std::getline(cfgfile, line); )
+    {
+        std::istringstream iss(line);
+        std::string id, eq, val;
+
+        bool error = false;
+
+        if (!(iss >> id))
+            error = true;
+        else if (id[0] == '#')
+            continue;
+        else if (!(iss >> eq >> val >> std::ws) || eq != "=" || iss.get() != EOF)
+            error = true;
+
+        if (error)
+        	log(&GetDefaultRoutingDltContext(), DLT_LOG_ERROR, "config file is bad formatted!");
+        else
+            options[id] = val;
+    }
+}
+
+bool CAmRoutingService::getDomainInstance(const std::string & domainName, std::string & instanceID)
+{
+	static std::map<std::string, std::string> glDomainInstances;
+	static bool glDomainInstancesLoaded = false;
+	if(!glDomainInstancesLoaded)
+	{
+		std::string path(std::string(AM_SHARE_FOLDER)+std::string("/")+std::string(CAmRoutingService::DOMAIN_INSTANCES_FILENAME));
+		std::fstream fs(path, std::ios_base::in);
+		if(fs.good())
+		{
+			parseConfigFile(fs, glDomainInstances);
+		}
+		else
+		{
+			log(&GetDefaultRoutingDltContext(), DLT_LOG_ERROR, path, " doesn't exist");
+		}
+		glDomainInstancesLoaded = true;
+	}
+	auto it = glDomainInstances.find(domainName);
+	if(it!=glDomainInstances.end())
+	{
+		instanceID = it->second;
+		return true;
+	}
+	return false;
 }
 
 } /* namespace am */
