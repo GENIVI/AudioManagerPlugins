@@ -344,5 +344,10 @@ am_Error_e CAmRoutingSenderCAPI::asyncSetSourceNotificationConfiguration(const a
 	});
 }
 
+am_Error_e CAmRoutingSenderCAPI::resyncConnectionState(const am_domainID_t domainID, std::vector<am_Connection_s>& listOfExistingConnections)
+{
+	return am_Error_e::E_NOT_USED;
+}
+
 }
 
