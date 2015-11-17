@@ -75,7 +75,7 @@ if (WITH_CAPI_WRAPPER)
     file(GLOB PLUGINCAPI_SRCS_CXX "src/*.cpp" )
     SET(PLUGINCAPI_SRCS_CXX ${PLUGINCAPI_SRCS_CXX})
          
-    SET(COMMANDCONTROL_CAPI CommandControlGenericCommonAPI )
+    SET(COMMANDCONTROL_CAPI CommandInterfaceProviderSomeIpStub )
     SET(COMMANDCONTROL_CAPI_LIB lib${COMMANDCONTROL_CAPI}.so )
     SET(COMMANDCONTROL_CAPI_LIB ${COMMANDCONTROL_CAPI_LIB} PARENT_SCOPE)
     
@@ -147,9 +147,11 @@ if (WITH_CAPI_WRAPPER)
     ENDIF(WITH_DLT)    
         
     add_library(PluginCommandInterfaceCAPI MODULE ${PLUGINCAPI_SRCS_CXX})
-    set (AM_LINK_LIBS ${AM_LINK_LIBS} ${COMMANDCONTROL_CAPI})
     
-    TARGET_LINK_LIBRARIES(PluginCommandInterfaceCAPI ${AM_LINK_LIBS})
+    
+    set (AM_LINK_LIBS ${AM_LINK_LIBS} ${CC_LIBRARIES})
+    
+    TARGET_LINK_LIBRARIES(PluginCommandInterfaceCAPI ${CC_LIBRARIES})
                  
     install(TARGETS PluginCommandInterfaceCAPI          
             DESTINATION lib/${LIB_INSTALL_SUFFIX}/command
