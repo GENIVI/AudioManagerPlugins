@@ -914,6 +914,14 @@ am_Error_e am::CAmRoutingSenderAsync::asyncSetSourceNotificationConfiguration(co
     return (E_NOT_USED);
 }
 
+am_Error_e am::CAmRoutingSenderAsync::resyncConnectionState(const am_domainID_t domainID, std::vector<am_Connection_s>& listOfExistingConnections)
+{
+	(void)domainID;
+	(void)listOfExistingConnections;
+	//todo: implement
+	return (E_NOT_USED);
+}
+
 std::vector<am_Gateway_s> CAmRoutingSenderAsync::createGatewayTable()
 {
     std::vector<am_Gateway_s> table;
@@ -1324,6 +1332,8 @@ void syncRegisterWorker::start2work()
 void syncRegisterWorker::cancelWork()
 {
 }
+
+
 
 }
 

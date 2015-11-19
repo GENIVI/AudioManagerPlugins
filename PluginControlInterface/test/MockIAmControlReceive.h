@@ -217,6 +217,8 @@ class MockIAmControlReceive : public IAmControlReceive {
       am_Error_e(const am_sourceID_t sourceID, const am_CustomMainSoundPropertyType_t propertyType, int16_t& value));
   MOCK_CONST_METHOD3(getSourceSoundPropertyValue,
       am_Error_e(const am_sourceID_t sourceID, const am_CustomSoundPropertyType_t propertyType, int16_t& value));
+  MOCK_METHOD2(resyncConnectionState,
+       am_Error_e(const am_domainID_t domainID, std::vector<am_Connection_s>& listOfExistingConnections));
 };
 
 }  // namespace am
