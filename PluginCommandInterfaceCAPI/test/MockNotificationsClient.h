@@ -22,7 +22,7 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 #include "../include/CAmCommandSenderCommon.h"
-#include <v1_0/org/genivi/am/commandinterface/CommandControlProxy.hpp>
+#include <v1/org/genivi/am/commandinterface/CommandControlProxy.hpp>
 
 
 namespace am {

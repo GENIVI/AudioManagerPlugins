@@ -13,7 +13,7 @@ import "platform:/plugin/org.genivi.commonapi.someip/deployment/CommonAPI-SOMEIP
 import "AudioManagerTypes.fidl"
 
 define org.genivi.commonapi.someip.deployment for typeCollection
-org.genivi.am.audiomanagertypes as AudioManagerTypes_v1 {
+org.genivi.am.AudioManagerTypes as AudioManagerTypes_v1 {
 
     enumeration am_Availability_e {
         SomeIpEnumWidth = 1

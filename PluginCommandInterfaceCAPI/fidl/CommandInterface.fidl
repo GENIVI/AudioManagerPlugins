@@ -1,16 +1,17 @@
 package org.genivi.am.commandinterface
-import org.genivi.am.audiomanagertypes.* from "AudioManagerTypes.fidl"
+import org.genivi.am.* from "AudioManagerTypes.fidl"
 
 <**
-@description : The interface towards the Controlling Instance (e.g. HMI). It handles the communication towards the HMI and other system components who need to interact with the audio management.
-There are two rules that have to be kept in mind when implementing against this interface:
+@description : 
+    The interface towards the Controlling Instance (e.g. HMI). It handles the communication towards the HMI and other system components who need to interact with the audio management.
+    There are two rules that have to be kept in mind when implementing against this interface:
     @author : Christian Linke
 **>
 
 interface CommandControl {
     version {
         major 1
-        minor 0
+        minor 1
     }
 
     <**
@@ -18,7 +19,7 @@ interface CommandControl {
     **>
     broadcast newMainConnection {
         out {
-            am_MainConnectionType_s mainConnection
+            AudioManagerTypes.am_MainConnectionType_s mainConnection
         }
     }
 
@@ -27,7 +28,7 @@ interface CommandControl {
     **>
     broadcast removedMainConnection {
         out {
-            am_mainConnectionID_t mainConnection
+            AudioManagerTypes.am_mainConnectionID_t mainConnection
         }
     }
 
@@ -36,7 +37,7 @@ interface CommandControl {
     **>
     broadcast newSink {
         out {
-            am_SinkType_s sink
+            AudioManagerTypes.am_SinkType_s sink
         }
     }
 
@@ -45,7 +46,7 @@ interface CommandControl {
     **>
     broadcast removedSink {
         out {
-            am_sinkID_t sinkID
+            AudioManagerTypes.am_sinkID_t sinkID
         }
     }
 
@@ -54,7 +55,7 @@ interface CommandControl {
     **>
     broadcast newSource {
         out {
-            am_SourceType_s source
+            AudioManagerTypes.am_SourceType_s source
         }
     }
 
@@ -63,7 +64,7 @@ interface CommandControl {
     **>
     broadcast removedSource {
         out {
-            am_sourceID_t source
+            AudioManagerTypes.am_sourceID_t source
         }
     }
 
@@ -84,8 +85,8 @@ interface CommandControl {
     **>
     broadcast mainConnectionStateChanged {
         out {
-            am_mainConnectionID_t connectionID
-            am_ConnectionState_e connectionState
+            AudioManagerTypes.am_mainConnectionID_t connectionID
+            AudioManagerTypes.am_ConnectionState_e connectionState
         }
     }
 
@@ -94,8 +95,8 @@ interface CommandControl {
     **>
     broadcast mainSinkSoundPropertyChanged {
         out {
-            am_sinkID_t sinkID
-            am_MainSoundProperty_s soundProperty
+            AudioManagerTypes.am_sinkID_t sinkID
+            AudioManagerTypes.am_MainSoundProperty_s soundProperty
         }
     }
 
@@ -104,8 +105,8 @@ interface CommandControl {
     **>
     broadcast mainSourceSoundPropertyChanged {
         out {
-            am_sourceID_t sourceID
-            am_MainSoundProperty_s soundProperty
+            AudioManagerTypes.am_sourceID_t sourceID
+            AudioManagerTypes.am_MainSoundProperty_s soundProperty
         }
     }
 
@@ -114,8 +115,8 @@ interface CommandControl {
     **>
     broadcast sinkAvailabilityChanged {
         out {
-            am_sinkID_t sinkID
-            am_Availability_s availability
+            AudioManagerTypes.am_sinkID_t sinkID
+            AudioManagerTypes.am_Availability_s availability
         }
     }
 
@@ -124,8 +125,8 @@ interface CommandControl {
     **>
     broadcast sourceAvailabilityChanged {
         out {
-            am_sourceID_t sourceID
-            am_Availability_s availability
+            AudioManagerTypes.am_sourceID_t sourceID
+            AudioManagerTypes.am_Availability_s availability
         }
     }
 
@@ -134,8 +135,8 @@ interface CommandControl {
     **>
     broadcast volumeChanged {
         out {
-            am_sinkID_t sinkID
-            am_mainVolume_t volume
+            AudioManagerTypes.am_sinkID_t sinkID
+            AudioManagerTypes.am_mainVolume_t volume
         }
     }
 
@@ -144,8 +145,8 @@ interface CommandControl {
     **>
     broadcast sinkMuteStateChanged {
         out {
-            am_sinkID_t sinkID
-            am_MuteState_e muteState
+            AudioManagerTypes.am_sinkID_t sinkID
+            AudioManagerTypes.am_MuteState_e muteState
         }
     }
 
@@ -154,7 +155,7 @@ interface CommandControl {
     **>
     broadcast systemPropertyChanged {
         out {
-            am_SystemProperty_s systemProperty
+            AudioManagerTypes.am_SystemProperty_s systemProperty
         }
     }
 
@@ -163,8 +164,8 @@ interface CommandControl {
     **>
     broadcast timingInformationChanged {
         out {
-            am_mainConnectionID_t mainConnectionID
-            am_timeSync_t time
+            AudioManagerTypes.am_mainConnectionID_t mainConnectionID
+            AudioManagerTypes.am_timeSync_t time
         }
     }
 
@@ -177,17 +178,17 @@ interface CommandControl {
             <**
                 @description : The sink ID that is updated.
             **>
-            am_sinkID_t sinkID
+            AudioManagerTypes.am_sinkID_t sinkID
 
             <**
                 @description : The sink class ID of the updated sink. Gives the current value even if not updated.
             **>
-            am_sinkClass_t sinkClassID
+            AudioManagerTypes.am_sinkClass_t sinkClassID
 
             <**
                 @description : The list of main sound properties. Gives the current list of main sound properties even if not changed.
             **>
-            am_MainSoundProperty_L listMainSoundProperties
+            AudioManagerTypes.am_MainSoundProperty_L listMainSoundProperties
         }
     }
 
@@ -200,17 +201,17 @@ interface CommandControl {
             <**
                 @description : The source ID that is updated.
             **>
-            am_sourceID_t sourceID
+            AudioManagerTypes.am_sourceID_t sourceID
 
             <**
                 @description : The source class ID of the updated source. Gives the current value even if not updated.
             **>
-            am_sourceClass_t sourceClassID
+            AudioManagerTypes.am_sourceClass_t sourceClassID
 
             <**
                 @description : The list of main sound properties. Gives the current list of main sound properties even if not changed.
             **>
-            am_MainSoundProperty_L listMainSoundProperties
+            AudioManagerTypes.am_MainSoundProperty_L listMainSoundProperties
         }
     }
 
@@ -223,12 +224,12 @@ interface CommandControl {
             <**
                 @description : The sink ID.
             **>
-            am_sinkID_t sinkID
+            AudioManagerTypes.am_sinkID_t sinkID
 
             <**
                 @description : The payload of the notification.
             **>
-            am_NotificationPayload_s notification
+            AudioManagerTypes.am_NotificationPayload_s notification
         }
     }
 
@@ -241,12 +242,12 @@ interface CommandControl {
             <**
                 @description : The source ID.
             **>
-            am_sourceID_t sourceID
+            AudioManagerTypes.am_sourceID_t sourceID
 
             <**
                 @description : The payload of the notification.
             **>
-            am_NotificationPayload_s notification
+            AudioManagerTypes.am_NotificationPayload_s notification
         }
     }
 
@@ -255,12 +256,13 @@ interface CommandControl {
     **>
     broadcast mainSinkNotificationConfigurationChanged {
         out {
-            am_sinkID_t sinkID
+            AudioManagerTypes.am_sinkID_t sinkID
 
             <**
                 @description : The main notification configuration that changed.
             **>
-            am_NotificationConfiguration_s mainNotificationConfiguration
+            AudioManagerTypes.am_NotificationConfiguration_s
+            mainNotificationConfiguration
         }
     }
 
@@ -269,46 +271,50 @@ interface CommandControl {
     **>
     broadcast mainSourceNotificationConfigurationChanged {
         out {
-            am_sourceID_t sourceID
+            AudioManagerTypes.am_sourceID_t sourceID
 
             <**
                 @description : The main notification configuration that changed.
             **>
-            am_NotificationConfiguration_s mainNotificationConfiguration
+            AudioManagerTypes.am_NotificationConfiguration_s
+            mainNotificationConfiguration
         }
     }
 
     <**
-    @description : Connects a source to sink.
-(at)return E_OK on success, E_NOT_POSSIBLE on failure, E_ALREADY_EXISTS if the connection does already exists
+    @description : 
+        Connects a source to sink.
+        (at)return E_OK on success, E_NOT_POSSIBLE on failure, E_ALREADY_EXISTS if the connection does already exists
     **>
     method connect {
         in {
-            am_sourceID_t sourceID
-            am_sinkID_t sinkID
+            AudioManagerTypes.am_sourceID_t sourceID
+            AudioManagerTypes.am_sinkID_t sinkID
         }
         out {
-            am_mainConnectionID_t mainConnectionID
-            am_Error_e amError
+            AudioManagerTypes.am_mainConnectionID_t mainConnectionID
+            AudioManagerTypes.am_Error_e amError
         }
     }
 
     <**
-    @description : Disconnects a main connection.
-(at)return E_OK on successes, E_NON_EXISTENT if the connection does not exist, E_NOT_POSSIBLE on error.
+    @description : 
+        Disconnects a main connection.
+        (at)return E_OK on successes, E_NON_EXISTENT if the connection does not exist, E_NOT_POSSIBLE on error.
     **>
     method disconnect {
         in {
-            am_mainConnectionID_t mainConnectionID
+            AudioManagerTypes.am_mainConnectionID_t mainConnectionID
         }
         out {
-            am_Error_e amError
+            AudioManagerTypes.am_Error_e amError
         }
     }
 
     <**
-    @description : Sets the volume for a sink.
-(at)return E_OK on success, E_UNKNOWN on error, E_OUT_OF_RANGE in case the value is out of range
+    @description : 
+        Sets the volume for a sink.
+        (at)return E_OK on success, E_UNKNOWN on error, E_OUT_OF_RANGE in case the value is out of range
     **>
     method setVolume {
         in {
@@ -316,25 +322,26 @@ interface CommandControl {
             <**
                 @description : The sink.
             **>
-            am_sinkID_t sinkID
+            AudioManagerTypes.am_sinkID_t sinkID
 
             <**
                 @description : The volume.
             **>
-            am_mainVolume_t volume
+            AudioManagerTypes.am_mainVolume_t volume
         }
         out {
-            am_Error_e amError
+            AudioManagerTypes.am_Error_e amError
         }
     }
 
     <**
-    @description : This function is used to increment or decrement the current volume for a sink.
-(at)return E_OK on success, E_UNKNOWN on error and E_OUT_OF_RANGE if the value is not in the given volume range.
+    @description : 
+        This function is used to increment or decrement the current volume for a sink.
+        (at)return E_OK on success, E_UNKNOWN on error and E_OUT_OF_RANGE if the value is not in the given volume range.
     **>
     method volumeStep {
         in {
-            am_sinkID_t sinkID
+            AudioManagerTypes.am_sinkID_t sinkID
 
             <**
                 @description : Indicated the number of steps that should be incremented or decremented. Here, positive values increment, negative values decrement.
@@ -342,55 +349,74 @@ interface CommandControl {
             Int16 step
         }
         out {
-            am_Error_e amError
+            AudioManagerTypes.am_Error_e amError
         }
     }
 
     <**
-    @description : Sets the mute state of a sink.
-(at)return E_OK on success, E_UNKNOWN on error. If the mute state is already the desired one, the Daemon will return E_OK
+    @description : 
+        Requests the mute state of a sink.
+        (at)return E_OK on success, E_UNKNOWN on error
+    **>
+    method getSinkMuteState {
+        in {
+            AudioManagerTypes.am_sinkID_t sinkID
+        }
+        out {
+            AudioManagerTypes.am_MuteState_e muteState
+            AudioManagerTypes.am_Error_e amError
+        }
+    }
+
+    <**
+    @description : 
+        Sets the mute state of a sink.
+        (at)return E_OK on success, E_UNKNOWN on error. If the mute state is already the desired one, the Daemon will return E_OK
     **>
     method setSinkMuteState {
         in {
-            am_sinkID_t sinkID
-            am_MuteState_e muteState
+            AudioManagerTypes.am_sinkID_t sinkID
+            AudioManagerTypes.am_MuteState_e muteState
         }
         out {
-            am_Error_e amError
+            AudioManagerTypes.am_Error_e amError
         }
     }
 
     <**
-    @description : This method is used to set sound properties, e.g. equalizer values. Since the capabilities of the system can differ, the exact key value pairs can be extended in each product.
-(at)return E_OK on success, E_OUT_OF_RANGE if value exceeds range, E_UNKNOWN in case of an error
+    @description : 
+        This method is used to set sound properties, e.g. equalizer values. Since the capabilities of the system can differ, the exact key value pairs can be extended in each product.
+        (at)return E_OK on success, E_OUT_OF_RANGE if value exceeds range, E_UNKNOWN in case of an error
     **>
     method setMainSinkSoundProperty {
         in {
-            am_sinkID_t sinkID
-            am_MainSoundProperty_s soundProperty
+            AudioManagerTypes.am_sinkID_t sinkID
+            AudioManagerTypes.am_MainSoundProperty_s soundProperty
         }
         out {
-            am_Error_e amError
+            AudioManagerTypes.am_Error_e amError
         }
     }
 
     <**
-    @description : This method is used to set sound properties, e.g. equalizer values. Since the capabilities of the system can differ, the exact key value pairs can be extended in each product.
-(at)return E_OK on success, E_OUT_OF_RANGE if value exceeds range, E_UNKNOWN in case of an error
+    @description : 
+        This method is used to set sound properties, e.g. equalizer values. Since the capabilities of the system can differ, the exact key value pairs can be extended in each product.
+        (at)return E_OK on success, E_OUT_OF_RANGE if value exceeds range, E_UNKNOWN in case of an error
     **>
     method setMainSourceSoundProperty {
         in {
-            am_sourceID_t sourceID
-            am_MainSoundProperty_s soundProperty
+            AudioManagerTypes.am_sourceID_t sourceID
+            AudioManagerTypes.am_MainSoundProperty_s soundProperty
         }
         out {
-            am_Error_e amError
+            AudioManagerTypes.am_Error_e amError
         }
     }
 
     <**
-    @description : Sets a specific system property.
-(at)return E_OK on success, E_OUT_OF_RANGE if value exceeds range, E_UNKNOWN in case of an error
+    @description : 
+        Sets a specific system property.
+        (at)return E_OK on success, E_OUT_OF_RANGE if value exceeds range, E_UNKNOWN in case of an error
     **>
     method setSystemProperty {
         in {
@@ -398,16 +424,17 @@ interface CommandControl {
             <**
                 @description : The property that shall be set.
             **>
-            am_SystemProperty_s property
+            AudioManagerTypes.am_SystemProperty_s property
         }
         out {
-            am_Error_e amError
+            AudioManagerTypes.am_Error_e amError
         }
     }
 
     <**
-    @description : Returns the current list of main connections.
-(at)return E_OK on success, E_DATABASE_ERROR on error
+    @description : 
+        Returns the current list of main connections.
+        (at)return E_OK on success, E_DATABASE_ERROR on error
     **>
     method getListMainConnections {
         out {
@@ -415,14 +442,15 @@ interface CommandControl {
             <**
                 @description : Returns a list of all connections.
             **>
-            am_MainConnection_L listConnections
-            am_Error_e amError
+            AudioManagerTypes.am_MainConnection_L listConnections
+            AudioManagerTypes.am_Error_e amError
         }
     }
 
     <**
-    @description : Returns the current list of sinks.
-(at)return E_OK on success, E_DATABASE_ERROR on error
+    @description : 
+        Returns the current list of sinks.
+        (at)return E_OK on success, E_DATABASE_ERROR on error
     **>
     method getListMainSinks {
         out {
@@ -430,14 +458,15 @@ interface CommandControl {
             <**
                 @description : The list of the sinks.
             **>
-            am_SinkType_L listMainSinks
-            am_Error_e amError
+            AudioManagerTypes.am_SinkType_L listMainSinks
+            AudioManagerTypes.am_Error_e amError
         }
     }
 
     <**
-    @description : Returns the current list of sources.
-(at)return E_OK on success, E_DATABASE_ERROR on error
+    @description : 
+        Returns the current list of sources.
+        (at)return E_OK on success, E_DATABASE_ERROR on error
     **>
     method getListMainSources {
         out {
@@ -445,83 +474,89 @@ interface CommandControl {
             <**
                 @description : The list of sources.
             **>
-            am_SourceType_L listMainSources
-            am_Error_e amError
+            AudioManagerTypes.am_SourceType_L listMainSources
+            AudioManagerTypes.am_Error_e amError
         }
     }
 
     <**
-    @description : This is used to retrieve all sink sound properties related to a sink. Returns a vector of the sound properties and values as pair.
-(at)return E_OK on success, E_DATABASE_ERROR on error
+    @description : 
+        This is used to retrieve all sink sound properties related to a sink. Returns a vector of the sound properties and values as pair.
+        (at)return E_OK on success, E_DATABASE_ERROR on error
     **>
     method getListMainSinkSoundProperties {
         in {
-            am_sinkID_t sinkID
+            AudioManagerTypes.am_sinkID_t sinkID
         }
         out {
-            am_MainSoundProperty_L listSoundProperties
-            am_Error_e amError
+            AudioManagerTypes.am_MainSoundProperty_L listSoundProperties
+            AudioManagerTypes.am_Error_e amError
         }
     }
 
     <**
-    @description : This is used to retrieve all source sound properties related to a source. Returns a vector of the sound properties and values as pair.
-(at)return E_OK on success, E_DATABASE_ERROR on error
+    @description : 
+        This is used to retrieve all source sound properties related to a source. Returns a vector of the sound properties and values as pair.
+        (at)return E_OK on success, E_DATABASE_ERROR on error
     **>
     method getListMainSourceSoundProperties {
         in {
-            am_sourceID_t sourceID
+            AudioManagerTypes.am_sourceID_t sourceID
         }
         out {
-            am_MainSoundProperty_L listSoundProperties
-            am_Error_e amError
+            AudioManagerTypes.am_MainSoundProperty_L listSoundProperties
+            AudioManagerTypes.am_Error_e amError
         }
     }
 
     <**
-    @description : This is used to retrieve sink class information of all sink classes.
-(at)return E_OK on success, E_DATABASE_ERROR on error
+    @description : 
+        This is used to retrieve sink class information of all sink classes.
+        (at)return E_OK on success, E_DATABASE_ERROR on error
     **>
     method getListSinkClasses {
         out {
-            am_SinkClass_L listSinkClasses
-            am_Error_e amError
+            AudioManagerTypes.am_SinkClass_L listSinkClasses
+            AudioManagerTypes.am_Error_e amError
         }
     }
 
     <**
-    @description : This is used to retrieve source class information of all source classes.
-(at)return E_OK on success, E_DATABASE_ERROR on error
+    @description : 
+        This is used to retrieve source class information of all source classes.
+        (at)return E_OK on success, E_DATABASE_ERROR on error
     **>
     method getListSourceClasses {
         out {
-            am_SourceClass_L listSourceClasses
-            am_Error_e amError
+            AudioManagerTypes.am_SourceClass_L listSourceClasses
+            AudioManagerTypes.am_Error_e amError
         }
     }
 
     <**
-    @description : Retrieves a complete list of all system properties.
-(at)return E_OK on success, E_DATABASE_ERROR on error
+    @description : 
+        Retrieves a complete list of all system properties.
+        (at)return E_OK on success, E_DATABASE_ERROR on error
     **>
     method getListSystemProperties {
         out {
-            am_SystemProperty_L listSystemProperties
-            am_Error_e amError
+            AudioManagerTypes.am_SystemProperty_L listSystemProperties
+            AudioManagerTypes.am_Error_e amError
         }
     }
 
     <**
-    @description : Returns the delay in ms that the audio path for the given main connection.
-(at)return E_OK on success, E_NOT_POSSIBLE if timing information is not yet retrieved, E_DATABASE_ERROR on read error on the database
+    @description : 
+        Returns the delay in ms that the audio path for the given main connection.
+        (at)return E_OK on success, E_NOT_POSSIBLE if timing information is not yet retrieved, E_DATABASE_ERROR on read error on the database
     **>
     method getTimingInformation {
         in {
-            am_mainConnectionID_t mainConnectionID
+            AudioManagerTypes.am_mainConnectionID_t mainConnectionID
         }
         out {
-            am_timeSync_t delay
-            am_Error_e amError
+            AudioManagerTypes.am_timeSync_t delay
+            AudioManagerTypes.am_Error_e amError
         }
     }
 
@@ -534,11 +569,12 @@ interface CommandControl {
             <**
                 @description : The sink ID.
             **>
-            am_sinkID_t sinkID
+            AudioManagerTypes.am_sinkID_t sinkID
         }
         out {
-            am_NotificationConfiguration_L listMainNotificationConfigurations
-            am_Error_e amError
+            AudioManagerTypes.am_NotificationConfiguration_L
+            listMainNotificationConfigurations
+            AudioManagerTypes.am_Error_e amError
         }
     }
 
@@ -551,17 +587,19 @@ interface CommandControl {
             <**
                 @description : The source ID.
             **>
-            am_sourceID_t sourceID
+            AudioManagerTypes.am_sourceID_t sourceID
         }
         out {
-            am_NotificationConfiguration_L listMainNotificationConfigurations
-            am_Error_e amError
+            AudioManagerTypes.am_NotificationConfiguration_L
+            listMainNotificationConfigurations
+            AudioManagerTypes.am_Error_e amError
         }
     }
 
     <**
-    @description : Sets a MainNotificationConfiuration. This can be used to turn on an off notifications an to change the mode of the configuration.
-(at)return E_OK on success, E_NON_EXISTENT if sink ID does not exists, E_DATABASE_ERROR on error
+    @description : 
+        Sets a MainNotificationConfiuration. This can be used to turn on an off notifications an to change the mode of the configuration.
+        (at)return E_OK on success, E_NON_EXISTENT if sink ID does not exists, E_DATABASE_ERROR on error
     **>
     method setMainSinkNotificationConfiguration {
         in {
@@ -569,21 +607,23 @@ interface CommandControl {
             <**
                 @description : The sink ID of the main notification to be changed.
             **>
-            am_sinkID_t sinkID
+            AudioManagerTypes.am_sinkID_t sinkID
 
             <**
                 @description : The main notifiication that needs to be set.
             **>
-            am_NotificationConfiguration_s mainNotificationConfiguration
+            AudioManagerTypes.am_NotificationConfiguration_s
+            mainNotificationConfiguration
         }
         out {
-            am_Error_e amError
+            AudioManagerTypes.am_Error_e amError
         }
     }
 
     <**
-    @description : Sets a MainNotificationConfiuration. This can be used to turn on an off notifications an to change the mode of the configuration.
-(at)return E_OK on success, E_NON_EXISTENT if source ID does not exists, E_DATABASE_ERROR on error
+    @description : 
+        Sets a MainNotificationConfiuration. This can be used to turn on an off notifications an to change the mode of the configuration.
+        (at)return E_OK on success, E_NON_EXISTENT if source ID does not exists, E_DATABASE_ERROR on error
     **>
     method setMainSourceNotificationConfiguration {
         in {
@@ -591,22 +631,25 @@ interface CommandControl {
             <**
                 @description : The source ID of the main notification to be changed.
             **>
-            am_sourceID_t sourceID
+            AudioManagerTypes.am_sourceID_t sourceID
 
             <**
                 @description : The main notifiication that needs to be set.
             **>
-            am_NotificationConfiguration_s mainNotificationConfiguration
+            AudioManagerTypes.am_NotificationConfiguration_s
+            mainNotificationConfiguration
         }
         out {
-            am_Error_e amError
+            AudioManagerTypes.am_Error_e amError
         }
     }
 
     <**
-    @description : This attribute reflects the current State of all existing main connections. 
-You can notify on this attribute in order to get always a consistent update of all main connections in case of a change.
+    @description : 
+        This attribute reflects the current State of all existing main connections. 
+        You can notify on this attribute in order to get always a consistent update of all main connections in case of a change.
     **>
-    attribute am_MainConnection_L listOfMainConnections readonly
+    attribute AudioManagerTypes.am_MainConnection_L listOfMainConnections
+    readonly
 
 }

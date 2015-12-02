@@ -29,8 +29,8 @@
 #include "../include/CAmRoutingSenderCommon.h"
 #include "../include/CAmRoutingSenderCAPI.h"
 #include "MockIAmRoutingReceive.h"
-#include <v1_0/org/genivi/am/routinginterface/RoutingControlObserverProxy.hpp>
-#include <v1_0/org/genivi/am/routinginterface/RoutingControlProxy.hpp>
+#include <v1/org/genivi/am/routinginterface/RoutingControlObserverProxy.hpp>
+#include <v1/org/genivi/am/routinginterface/RoutingControlProxy.hpp>
 
 using namespace testing;
 

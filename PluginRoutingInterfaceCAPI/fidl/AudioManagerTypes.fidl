@@ -1,9 +1,9 @@
-package org.genivi.am.audiomanagertypes
+package org.genivi.am
 
 <**
     @author : Christian Linke
 **>
-typeCollection {
+typeCollection AudioManagerTypes {
     version {
         major 1
         minor 0
@@ -120,8 +120,9 @@ typeCollection {
     typedef am_mainConnectionID_t is UInt16
 
     <**
-    @description : This is the volume presented on the command interface. It is in the duty of the controller to change the volumes given here into meaningful values on the routing interface.
-The range of this type is customer specific.
+    @description : 
+        This is the volume presented on the command interface. It is in the duty of the controller to change the volumes given here into meaningful values on the routing interface.
+        The range of this type is customer specific.
     **>
     typedef am_mainVolume_t is Int16
 
@@ -176,8 +177,9 @@ The range of this type is customer specific.
     typedef am_ClassProperty_pe is UInt16
 
     <**
-    @description : For products, different ramp types can be defined here.
-It is in the responsibility of the product to make sure that the routing plugins are aware of the ramp types used.
+    @description : 
+        For products, different ramp types can be defined here.
+        It is in the responsibility of the product to make sure that the routing plugins are aware of the ramp types used.
     **>
     typedef am_RampType_pe is UInt16
 
@@ -202,20 +204,22 @@ It is in the responsibility of the product to make sure that the routing plugins
     typedef am_NotificationType_pe is UInt16
 
     <**
-    @description : Content of am_sinkSourceID_t depends of am_EarlyDataType_e in struct am_EarlyData_s:
-sourceID in case of ED_SOURCE_VOLUME, ED_SOURCE_PROPERTY
-sinkID in case of ED_SINK_VOLUME, ED_SINK_PROPERTY
+    @description : 
+        Content of am_sinkSourceID_t depends of am_EarlyDataType_e in struct am_EarlyData_s:
+        sourceID in case of ED_SOURCE_VOLUME, ED_SOURCE_PROPERTY
+        sinkID in case of ED_SINK_VOLUME, ED_SINK_PROPERTY
 
-Content of am_sinkSourceID_t depends of am_VolumeType_e in struct am_Volumes_s:
-sourceID in case of VT_SOURCE
-sinkID in case of VT_SINK
+        Content of am_sinkSourceID_t depends of am_VolumeType_e in struct am_Volumes_s:
+        sourceID in case of VT_SOURCE
+        sinkID in case of VT_SINK
     **>
     typedef am_SinkSourceID_t is UInt16
 
     <**
-    @description : Data type depends of am_EarlyDataType_e:
-am_volume_t in case of ED_SOURCE_VOLUME, ED_SINK_VOLUME 
-am_soundProperty_t in case of ED_SOURCE_PROPERTY, ED_SINK_PROPERTY 
+    @description : 
+        Data type depends of am_EarlyDataType_e:
+        am_volume_t in case of ED_SOURCE_VOLUME, ED_SINK_VOLUME 
+        am_soundProperty_t in case of ED_SOURCE_PROPERTY, ED_SINK_PROPERTY 
     **>
     union am_EarlyData_u {
         am_volume_t volume
@@ -316,10 +320,11 @@ am_soundProperty_t in case of ED_SOURCE_PROPERTY, ED_SINK_PROPERTY
         am_sourceID_t sourceID
 
         <**
-        @description : This enum can have 3 states:
-    HS_SINKA sink A is the current hot one, sink B is not audible
-    HS_SINKB sink B is the current hot one, sink B is not audible
-    HS_INTERMEDIATE the fader is stuck in between a cross-fading action. This could be due to an abort or an error. Before using the crossfader, it must be set to either HS_SINKA or HS_SINKB.
+        @description : 
+            This enum can have 3 states:
+                HS_SINKA sink A is the current hot one, sink B is not audible
+                HS_SINKB sink B is the current hot one, sink B is not audible
+                HS_INTERMEDIATE the fader is stuck in between a cross-fading action. This could be due to an abort or an error. Before using the crossfader, it must be set to either HS_SINKA or HS_SINKB.
         **>
         am_HotSink_e hotSink
     }
@@ -375,9 +380,10 @@ am_soundProperty_t in case of ED_SOURCE_PROPERTY, ED_SINK_PROPERTY
         am_ConnectionFormat_L listSinkFormats
 
         <**
-        @description : This is matrix holding information about the conversion capability of the gateway, it's length is defined by the length(listSinkFormats) x length(listSourceFormats).
-If a SinkFormat can be converted into a SourceFormat, the vector will hold a 1, if no conversion is possible, a 0.
-The data is stored row orientated, where the rows are related to the sinksFormats and the columns to the sourceFormats. The first value will hold the conversion information from the first sourceFormat to the first sinkFormat for example and the seventh value the information about the 3rd sinkFormat to the 1st sourceFormat in case we would have 3 sourceFormats.
+        @description : 
+            This is matrix holding information about the conversion capability of the gateway, it's length is defined by the length(listSinkFormats) x length(listSourceFormats).
+            If a SinkFormat can be converted into a SourceFormat, the vector will hold a 1, if no conversion is possible, a 0.
+            The data is stored row orientated, where the rows are related to the sinksFormats and the columns to the sourceFormats. The first value will hold the conversion information from the first sourceFormat to the first sinkFormat for example and the seventh value the information about the 3rd sinkFormat to the 1st sourceFormat in case we would have 3 sourceFormats.
         **>
         am_Convertion_L convertionMatrix
     }
@@ -498,9 +504,10 @@ The data is stored row orientated, where the rows are related to the sinksFormat
         String name
 
         <**
-        @description : This attribute reflects the availability of the sink. There are several reasons why a sink could be not available for the moment: for example the shutdown of a sink because of overtemperature or over- &amp; undervoltage. The availability consists of two pieces of information:
-- Availablility: the status itself, can be A_AVAILABLE, A_UNAVAILABLE or A_UNKNOWN
-- AvailabilityReason: this informs about the last reason for a change in availability. The reasons itself are product specific.
+        @description : 
+            This attribute reflects the availability of the sink. There are several reasons why a sink could be not available for the moment: for example the shutdown of a sink because of overtemperature or over- &amp; undervoltage. The availability consists of two pieces of information:
+            - Availablility: the status itself, can be A_AVAILABLE, A_UNAVAILABLE or A_UNKNOWN
+            - AvailabilityReason: this informs about the last reason for a change in availability. The reasons itself are product specific.
         **>
         am_Availability_s availability
 
@@ -611,13 +618,14 @@ The data is stored row orientated, where the rows are related to the sinksFormat
         am_NotificationStatus_e status
 
         <**
-        @description : This gives additional information to the notification status.
+        @description : 
+            This gives additional information to the notification status.
 
-Relation between notification status and the value:
-NS_PERIODIC - the period in ms
-NS_MINIMUM - the minimum value that triggers the notification
-NS_MAXIMUM - the maximum value that triggers the notification
-NS_CHANGE - the resolution of the change value
+            Relation between notification status and the value:
+            NS_PERIODIC - the period in ms
+            NS_MINIMUM - the minimum value that triggers the notification
+            NS_MAXIMUM - the maximum value that triggers the notification
+            NS_CHANGE - the resolution of the change value
         **>
         Int16 parameter
     }
@@ -658,9 +666,10 @@ NS_CHANGE - the resolution of the change value
         Boolean visible
 
         <**
-        @description : This attribute reflects the availability of the sink. There are several reasons why a sink could be not available for the moment: for example the shutdown of a sink because of overtemperature or over- &amp; undervoltage. The availability consists of two pieces of information:
-    Availablility: the status itself, can be A_AVAILABLE, A_UNAVAILABLE or A_UNKNOWN
-    AvailabilityReason: this informs about the last reason for a change in availability. The reasons itself are product specific.
+        @description : 
+            This attribute reflects the availability of the sink. There are several reasons why a sink could be not available for the moment: for example the shutdown of a sink because of overtemperature or over- &amp; undervoltage. The availability consists of two pieces of information:
+                Availablility: the status itself, can be A_AVAILABLE, A_UNAVAILABLE or A_UNKNOWN
+                AvailabilityReason: this informs about the last reason for a change in availability. The reasons itself are product specific.
         **>
         am_Availability_s available
 
@@ -726,10 +735,11 @@ NS_CHANGE - the resolution of the change value
         am_sourceClass_t sourceClassID
 
         <**
-        @description : The source state is an indication towards the source if it is actively heard or not. The source can use this information to implement features like automatic spin down of CD's in case the CD is not the active source or AF following of a tuner that is not actively heard. The source state is set by the AudioManagerController.There are 3 possible states:
-    SS_ON: the source is active
-    SS_OFF: the source is off
-    SS_PAUSED: the source is paused and not active.
+        @description : 
+            The source state is an indication towards the source if it is actively heard or not. The source can use this information to implement features like automatic spin down of CD's in case the CD is not the active source or AF following of a tuner that is not actively heard. The source state is set by the AudioManagerController.There are 3 possible states:
+                SS_ON: the source is active
+                SS_OFF: the source is off
+                SS_PAUSED: the source is paused and not active.
         **>
         am_SourceState_e sourceState
 
@@ -744,16 +754,18 @@ NS_CHANGE - the resolution of the change value
         Boolean visible
 
         <**
-        @description : This attribute reflects the availability of the source. There are several reasons why a source could be not available for the moment. For example a CD player which has no CD entered in the slot can be unavailable, or a USB player with no or unreadable stick attached. Other scenarios involve the shutdown of a source because of overtemperature or over- &amp; undervoltage. The availability consists of two information:
-    Availablility: the status itself, can be A_AVAILABLE, A_UNAVAILABLE or A_UNKNOWN
-    AvailabilityReason: this informs about the last reason for a change in availability. The reasons itself are product specific.
+        @description : 
+            This attribute reflects the availability of the source. There are several reasons why a source could be not available for the moment. For example a CD player which has no CD entered in the slot can be unavailable, or a USB player with no or unreadable stick attached. Other scenarios involve the shutdown of a source because of overtemperature or over- &amp; undervoltage. The availability consists of two information:
+                Availablility: the status itself, can be A_AVAILABLE, A_UNAVAILABLE or A_UNKNOWN
+                AvailabilityReason: this informs about the last reason for a change in availability. The reasons itself are product specific.
         **>
         am_Availability_s available
 
         <**
-        @description : Some special sources can have special behaviors, the are so called "Low Level Interrupts". Here the current status is documented. The information can be used by the AudioManagerController to react to the changes by for example lowering the volume of the main sources. The two states are
-    IS_OFF: the interrupt is not active at the moment
-    IS_INTERRUPTED: the interrupt is playing at the moment.
+        @description : 
+            Some special sources can have special behaviors, the are so called "Low Level Interrupts". Here the current status is documented. The information can be used by the AudioManagerController to react to the changes by for example lowering the volume of the main sources. The two states are
+                IS_OFF: the interrupt is not active at the moment
+                IS_INTERRUPTED: the interrupt is playing at the moment.
         **>
         am_InterruptState_e interruptState
 
@@ -874,9 +886,10 @@ NS_CHANGE - the resolution of the change value
         am_ConnectionFormat_L listSinkFormats
 
         <**
-        @description : This is matrix holding information about the conversion capability of the converter, it's length is defined by the length(listSinkFormats) x length(listSourceFormats).
-If a sink format can be converted into a source format, the vector will hold a 1, if no conversion is possible, a 0.
-The data is stored row orientated, where the rows are related to the sink formats and the columns to the source formats. The first value will hold the conversion information from the first source format to the first sink format for example and the seventh value the information about the 3rd sink format to the 1st source format in case we would have 3 source formats.
+        @description : 
+            This is matrix holding information about the conversion capability of the converter, it's length is defined by the length(listSinkFormats) x length(listSourceFormats).
+            If a sink format can be converted into a source format, the vector will hold a 1, if no conversion is possible, a 0.
+            The data is stored row orientated, where the rows are related to the sink formats and the columns to the source formats. The first value will hold the conversion information from the first source format to the first sink format for example and the seventh value the information about the 3rd sink format to the 1st source format in case we would have 3 source formats.
         **>
         am_Convertion_L convertionMatrix
     }

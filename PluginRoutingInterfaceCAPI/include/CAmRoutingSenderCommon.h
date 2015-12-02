@@ -21,12 +21,12 @@
 #include <memory>
 #include "audiomanagertypes.h"
 #include "CAmDltWrapper.h"
-#include <v1_0/org/genivi/am/audiomanagertypes/__Anonymous__.hpp>
+#include <v1/org/genivi/am/AudioManagerTypes.hpp>
 
 using namespace am;
 
-#define am_types v1_0::org::genivi::am::audiomanagertypes::__Anonymous__
-#define am_routing_interface v1_0::org::genivi::am::routinginterface
+#define am_types v1::org::genivi::am::AudioManagerTypes
+#define am_routing_interface v1::org::genivi::am::routinginterface
 
 DltContext & GetDefaultRoutingDltContext();
 

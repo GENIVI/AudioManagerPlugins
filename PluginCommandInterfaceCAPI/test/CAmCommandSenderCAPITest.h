@@ -26,7 +26,7 @@
 #include "../include/CAmCommandSenderCAPI.h"
 #include "MockIAmCommandReceive.h"
 #include "MockNotificationsClient.h"
-#include <v1_0/org/genivi/am/commandinterface/CommandControlProxy.hpp>
+#include <v1/org/genivi/am/commandinterface/CommandControlProxy.hpp>
 
 #define UNIT_TEST 1
 #define am_commandcontrol v1_0::org::genivi::am::commandinterface

@@ -18,7 +18,7 @@
 #ifndef CAMCOMMANDSENDERSERVICE_H_
 #define CAMCOMMANDSENDERSERVICE_H_
 
-#include "v1_0/org/genivi/am/commandinterface/CommandControlStubDefault.hpp"
+#include "v1/org/genivi/am/commandinterface/CommandControlStubDefault.hpp"
 #include "CAmCommandSenderCommon.h"
 #include "IAmCommand.h"
 
