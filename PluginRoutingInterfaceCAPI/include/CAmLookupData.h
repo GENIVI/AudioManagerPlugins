@@ -25,7 +25,7 @@
 #include "audiomanagertypes.h"
 #include "IAmRouting.h"
 #include "CAmRoutingSenderCommon.h"
-#include <v1/org/genivi/am/routinginterface/RoutingControlProxy.hpp>
+#include <v1_0/org/genivi/am/routinginterface/RoutingControlProxy.hpp>
 
 #ifdef UNIT_TEST
 #include "../test/IAmRoutingSenderBackdoor.h" //we need this for the unit test

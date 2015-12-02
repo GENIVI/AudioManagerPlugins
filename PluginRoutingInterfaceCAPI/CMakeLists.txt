@@ -79,14 +79,14 @@ IF(WITH_CAPI_WRAPPER)
     LOAD_COMMONAPI_LIB()
 
     IF(NOT WITH_ROUTING_INTERFACE_GENERIC_LIB ) 
-        pkg_check_modules(RC RoutingInterfaceProviderSomeIpProxy)
-        pkg_check_modules(RC1 RoutingInterfaceProviderSomeIpStub)
+        pkg_check_modules(RC RoutingInterfaceHUProviderSomeIpProxy)
+        pkg_check_modules(RC1 RoutingInterfaceHUProviderSomeIpStub)
         IF(NOT RC_FOUND)
             SET(WITH_ROUTING_INTERFACE_GENERIC_LIB ON)
         ELSE(NOT RC_FOUND)
            SET(ROUTING_GEN_INCLUDE_DIR ${RC_INCLUDEDIR}) 
-           INCLUDE_DIRECTORIES(${INCLUDE_DIRECTORIES} ${COMMONAPI_INCLUDE_DIRS} ${RC_INCLUDEDIR} ${RC1_INCLUDEDIR})  
-           link_directories(${RC_LIBDIR} ${RC1_LIBDIR})  
+           INCLUDE_DIRECTORIES(${INCLUDE_DIRECTORIES} ${COMMONAPI_INCLUDE_DIRS} ${RC_INCLUDE_DIRS} ${RC1_INCLUDE_DIRS})  
+           link_directories(${RC_LIBRARY_DIRS} ${RC1_LIBRARY_DIRS})  
         ENDIF(NOT RC_FOUND)
     ENDIF()
     
@@ -142,7 +142,9 @@ IF(WITH_CAPI_WRAPPER)
     add_library(PluginRoutingInterfaceCAPI MODULE ${PLUGINCAPI_SRCS_CXX})
     
     TARGET_LINK_LIBRARIES(PluginRoutingInterfaceCAPI 
-        ${ROUTINGCONTROL_CAPI}
+        #${ROUTINGCONTROL_CAPI}
+        ${RC_LIBRARIES}
+        ${RC1_LIBRARIES}
     )
         
     INSTALL(TARGETS PluginRoutingInterfaceCAPI 

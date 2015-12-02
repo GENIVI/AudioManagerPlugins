@@ -20,11 +20,12 @@
 
 #include <memory>
 #include "audiomanagertypes.h"
-#include <v1/org/genivi/am/AudioManagerTypes.hpp>
+#include <v1_0/org/genivi/am/AudioManagerTypes.hpp>
 
 using namespace am;
 
-#define  am_types v1::org::genivi::am::AudioManagerTypes
+#define  am_types v1_0::org::genivi::am::AudioManagerTypes
+
 
 /**
  * The following functions convert the basics AudiomManager types from/to CommonAPI types.

@@ -46,7 +46,7 @@ endif (NOT DAEMONVERSION)
 set(LIBRARY_OUTPUT_PATH ${PLUGINS_OUTPUT_PATH}/command)
 
 if (WITH_CAPI_WRAPPER)
-        
+       
     OPTION (WITH_COMMAND_INTERFACE_GENERIC_LIB
             "build command interface common-api glue code" OFF )
 
@@ -83,13 +83,13 @@ if (WITH_CAPI_WRAPPER)
     LOAD_COMMONAPI_LIB()
     
     IF(NOT WITH_COMMAND_INTERFACE_GENERIC_LIB ) 
-        pkg_check_modules(CC ${COMMANDCONTROL_CAPI})
+        pkg_check_modules(CC ${COMMANDCONTROL_CAPI} REQUIRED)
         IF(NOT CC_FOUND)
             SET(WITH_COMMAND_INTERFACE_GENERIC_LIB ON)
         ELSE(NOT CC_FOUND)
             SET(COMMAND_CTR_GEN_INCLUDE_DIR ${CC_INCLUDEDIR}) 
-            INCLUDE_DIRECTORIES(${INCLUDE_DIRECTORIES} ${COMMONAPI_INCLUDE_DIRS} ${CC_INCLUDEDIR})  
-            link_directories(${CC_LIBDIR}) 
+            INCLUDE_DIRECTORIES(${INCLUDE_DIRECTORIES} ${COMMONAPI_INCLUDE_DIRS} ${CC_INCLUDE_DIRS})  
+            link_directories(${CC_LIBRARY_DIRS}) 
         ENDIF(NOT CC_FOUND)
     ENDIF()
     
