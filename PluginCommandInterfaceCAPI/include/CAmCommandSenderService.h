@@ -19,7 +19,7 @@
 #define CAMCOMMANDSENDERSERVICE_H_
 
 
-#include "v1_1/org/genivi/am/commandinterface/CommandControlStubDefault.hpp"
+#include "v1/org/genivi/am/commandinterface/CommandControlStubDefault.hpp"
 #include "CAmCommandSenderCommon.h"
 #include "IAmCommand.h"
 
@@ -31,7 +31,7 @@ namespace am {
 /**
  * A concrete stub implementation used by the command sender plug-in.
  */
-class CAmCommandSenderService: public v1_1::org::genivi::am::commandinterface::CommandControlStubDefault {
+class CAmCommandSenderService: public v1::org::genivi::am::commandinterface::CommandControlStubDefault {
 	IAmCommandReceive* mpIAmCommandReceive;
 public:
 	CAmCommandSenderService();

@@ -46,7 +46,7 @@ endif (NOT DAEMONVERSION)
 set(LIBRARY_OUTPUT_PATH ${PLUGINS_OUTPUT_PATH}/command)
 
 if (WITH_CAPI_WRAPPER)
-       
+        
     OPTION (WITH_COMMAND_INTERFACE_GENERIC_LIB
             "build command interface common-api glue code" OFF )
 
@@ -71,29 +71,40 @@ if (WITH_CAPI_WRAPPER)
     	${AUDIOMANAGER_UTILITIES_INCLUDE}
     	${INCLUDE_FOLDER}
     )
+    
+    INCLUDE (cmake/CommonAPI.cmake)
+	LOAD_COMMONAPI_LIB()  
+	    
         # all source files go here
     file(GLOB PLUGINCAPI_SRCS_CXX "src/*.cpp" )
     SET(PLUGINCAPI_SRCS_CXX ${PLUGINCAPI_SRCS_CXX})
-         
-    SET(COMMANDCONTROL_CAPI CommandInterfaceProviderSomeIpStub )
-    SET(COMMANDCONTROL_CAPI_LIB lib${COMMANDCONTROL_CAPI}.so )
-    SET(COMMANDCONTROL_CAPI_LIB ${COMMANDCONTROL_CAPI_LIB} PARENT_SCOPE)
     
-    INCLUDE (cmake/CommonAPI.cmake)
-    LOAD_COMMONAPI_LIB()
+    pkg_check_modules(CC org.genivi.am.commandinterfaceStub)
     
-    IF(NOT WITH_COMMAND_INTERFACE_GENERIC_LIB ) 
-        pkg_check_modules(CC ${COMMANDCONTROL_CAPI} REQUIRED)
-        IF(NOT CC_FOUND)
-            SET(WITH_COMMAND_INTERFACE_GENERIC_LIB ON)
-        ELSE(NOT CC_FOUND)
-            SET(COMMAND_CTR_GEN_INCLUDE_DIR ${CC_INCLUDEDIR}) 
-            INCLUDE_DIRECTORIES(${INCLUDE_DIRECTORIES} ${COMMONAPI_INCLUDE_DIRS} ${CC_INCLUDE_DIRS})  
-            link_directories(${CC_LIBRARY_DIRS}) 
-        ENDIF(NOT CC_FOUND)
-    ENDIF()
-    
+    IF(NOT CC_FOUND)
+        SET(WITH_COMMAND_INTERFACE_GENERIC_LIB ON)
+	ELSE(NOT CC_FOUND)
+		SET(WITH_COMMAND_INTERFACE_GENERIC_LIB OFF)
+		INCLUDE_DIRECTORIES(
+			${INCLUDE_DIRECTORIES} 
+			${COMMONAPI_INCLUDE_DIRS} 
+			${CC_INCLUDE_DIRS}
+			)
+		set (AM_LINK_LIBS
+			${AM_LINK_LIBS}
+			${CC_LIBRARIES}
+			)
+		LINK_DIRECTORIES( ${LINK_DIRECTORIES} ${CC_LIBRARY_DIRS})
+	ENDIF(NOT CC_FOUND)
+            
+ 
     IF(WITH_COMMAND_INTERFACE_GENERIC_LIB )    
+    
+		SET(COMMANDCONTROL_CAPI CommandInterfaceProviderSomeIpStub )
+		SET(COMMANDCONTROL_CAPI_LIB lib${COMMANDCONTROL_CAPI}.so )
+		SET(COMMANDCONTROL_CAPI_LIB ${COMMANDCONTROL_CAPI_LIB} PARENT_SCOPE)
+    
+
         
         SET(SRC_GEN src-gen/v${COMMONAPI_VERSION_NUMBER}/Generic)
         
@@ -148,10 +159,7 @@ if (WITH_CAPI_WRAPPER)
         
     add_library(PluginCommandInterfaceCAPI MODULE ${PLUGINCAPI_SRCS_CXX})
     
-    
-    set (AM_LINK_LIBS ${AM_LINK_LIBS} ${CC_LIBRARIES})
-    
-    TARGET_LINK_LIBRARIES(PluginCommandInterfaceCAPI ${CC_LIBRARIES})
+    TARGET_LINK_LIBRARIES(PluginCommandInterfaceCAPI ${AM_LINK_LIBS})
                  
     install(TARGETS PluginCommandInterfaceCAPI          
             DESTINATION lib/${LIB_INSTALL_SUFFIX}/command
