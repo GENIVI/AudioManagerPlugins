@@ -25,18 +25,25 @@ OPTION (WITH_COMMAND_INTERFACE_CAPI
         "build with commandinterface common-api plugin" ON )
 OPTION (WITH_COMMAND_INTERFACE_DBUS
         "build with commandinterface dbus plugin" OFF )
-OPTION (WITH_TEST_CONTROLLER 
-        "Build with the test controller" ON)     
 OPTION (WITH_ROUTING_INTERFACE_ASYNC
         "build with routing interface async plugin" ON)
 OPTION(WITH_ROUTING_INTERFACE_CAPI
        "build with routing iterface common-api plugin" ON)   
 OPTION(WITH_ROUTING_INTERFACE_DBUS
        "build with routing iterface dbus plugin" OFF)        
-                    
+
 IF(USE_BUILD_LIBS) 
 	file(MAKE_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}/plugins")
 ENDIF(USE_BUILD_LIBS)
+
+OPTION (WITH_CONTROL_PLUGIN
+        "build with controller plugin" ON )
+
+IF (WITH_CONTROL_PLUGIN)
+    SET(WITH_ENABLED_CONTROLLER "" CACHE STRING "Enable Test Controller '' / Enable Generic Controller 'Generic'" )
+    SET_PROPERTY(CACHE WITH_ENABLED_CONTROLLER PROPERTY STRINGS "" "Generic")
+    ADD_SUBDIRECTORY("PluginControlInterface${WITH_ENABLED_CONTROLLER}")
+ENDIF ()
 
 IF (WITH_COMMAND_INTERFACE_CAPI)
 	add_subdirectory(PluginCommandInterfaceCAPI)
@@ -46,9 +53,6 @@ IF (WITH_COMMAND_INTERFACE_DBUS)
 	add_subdirectory(PluginCommandInterfaceDbus)
 ENDIF (WITH_COMMAND_INTERFACE_DBUS)
         
-IF (WITH_TEST_CONTROLLER)
-	add_subdirectory(PluginControlInterface)
-ENDIF (WITH_TEST_CONTROLLER)   
 
 IF (WITH_ROUTING_INTERFACE_ASYNC)
 	add_subdirectory(PluginRoutingInterfaceAsync)
