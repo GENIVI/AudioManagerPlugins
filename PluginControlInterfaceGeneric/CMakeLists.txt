@@ -23,8 +23,8 @@ IF (NOT DAEMONVERSION)
     ENDIF(AUDIOMANAGER_FOUND)
 ENDIF (NOT DAEMONVERSION)            
 
-#OPTION (WITH_DOCUMENTATION
-#        "build plugins with documentation" OFF )
+OPTION (WITH_DOCUMENTATION
+        "build plugins with documentation" OFF )
 OPTION (NSM_IFACE_PRESENT
         "Node state manager interface present in Generic Controller" OFF )
 
@@ -101,16 +101,16 @@ INSTALL(DIRECTORY conf/
     COMPONENT conf
 )
 
-# set(DOXY_FILE ${CMAKE_CURRENT_BINARY_DIR}/PluginControlGeneric.doxyfile)
-# set(DOC_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/doc
-#     CACHE STRINGS "The doxygen documentation will be placed here")  
+set(DOXY_FILE ${CMAKE_CURRENT_BINARY_DIR}/PluginControlGeneric.doxyfile)
+set(DOC_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/doc
+    CACHE STRINGS "The doxygen documentation will be placed here")  
 
-# if(WITH_DOCUMENTATION)
-#     find_package(Doxygen)
-#     configure_file(${CMAKE_SOURCE_DIR}/PluginControlInterfaceGeneric/doc/PluginControlGeneric.doxyfile ${CMAKE_CURRENT_BINARY_DIR}/doc/Doxyfile)
-#     add_custom_target (PluginControlGenericDoku ALL  
-#         COMMAND ${DOXYGEN_EXECUTABLE} ${DOC_OUTPUT_PATH}/Doxyfile WORKING_DIRECTORY ${DOC_OUTPUT_PATH}
-#         SOURCES ${CMAKE_SOURCE_DIR}/PluginControlInterfaceGeneric ${DOC_OUTPUT_PATH}/Doxyfile
-#     )
-#     file(COPY ${CMAKE_SOURCE_DIR}/PluginControlInterfaceGeneric/doc/images/ DESTINATION ${DOC_OUTPUT_PATH}/images/)    
-# endif(WITH_DOCUMENTATION)
+if(WITH_DOCUMENTATION)
+    find_package(Doxygen)
+    configure_file(${CMAKE_SOURCE_DIR}/PluginControlInterfaceGeneric/doc/PluginControlGeneric.doxyfile ${CMAKE_CURRENT_BINARY_DIR}/doc/Doxyfile)
+    add_custom_target (PluginControlGenericDoku ALL  
+        COMMAND ${DOXYGEN_EXECUTABLE} ${DOC_OUTPUT_PATH}/Doxyfile WORKING_DIRECTORY ${DOC_OUTPUT_PATH}
+        SOURCES ${CMAKE_SOURCE_DIR}/PluginControlInterfaceGeneric ${DOC_OUTPUT_PATH}/Doxyfile
+    )
+    file(COPY ${CMAKE_SOURCE_DIR}/PluginControlInterfaceGeneric/doc/images/ DESTINATION ${DOC_OUTPUT_PATH}/images/)    
+endif(WITH_DOCUMENTATION)

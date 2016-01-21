@@ -1,0 +1,345 @@
+/**
+\page functionTable Functions
+
+<table>
+ <tr height=20 style='height:15.0pt'>
+  <td height=20 class=xl6527240 align=left width=428 style='height:15.0pt;
+  width:321pt'><b>Function format</b></td>
+  <td class=xl6527240 align=left width=252 style='border-left:none;width:189pt'><b>Return
+  type</b></td>
+  <td class=xl6627240 align=left width=325 style='border-left:none;width:244pt'><b>Description</b></td>
+  <td class=xl6527240 align=left width=350 style='border-left:none;width:263pt'><b>Example
+  expression</b></td>
+ </tr>
+ <tr height=80 style='height:60.0pt'>
+  <td height=80 class=xl6727240 align=left width=428 style='height:60.0pt;
+  border-top:none;width:321pt'>name(elementType)</td>
+  <td class=xl6827240 align=left style='border-top:none;border-left:none'>string</td>
+  <td class=xl6727240 align=left width=325 style='border-top:none;border-left:
+  none;width:244pt'>returns name of particular element from trigger
+  parameter<br>
+    elementType = SOURCE, SINK, DOMAIN, CONNECTION, CLASS</td>
+  <td class=xl6727240 align=left width=350 style='border-top:none;border-left:
+  none;width:263pt'>name(SOURCE) EQ &quot;MediaPlayer&quot;<br>
+    name(SINK) EQ &quot;Speaker&quot;<br>
+    name(CLASS) NE &quot;INTERRUPT&quot;<br>
+    </td>
+ </tr>
+ <tr height=100 style='height:75.0pt'>
+  <td height=100 class=xl6427240 align=left width=428 style='height:75.0pt;
+  border-top:none;width:321pt'>name(elementTypeOfType)<br>
+    name(elementTypeOfType, elementName)</td>
+  <td class=xl6327240 align=left style='border-top:none;border-left:none'>string</td>
+  <td class=xl6427240 align=left width=325 style='border-top:none;border-left:
+  none;width:244pt'>returns name of particular element that source, sink
+  belongs to.<br>
+    If elementName is not specified or REQUESTING, trigger parameter is
+  automatically chosen by elementTypeOfType.<br>
+    elementTypeOfType = CLASSOFSOURCE, CLASSOFSINK, DOMAINOFSOURCE, DOMAINOFSINK</td>
+  <td class=xl6427240 align=left width=350 style='border-top:none;border-left:
+  none;width:263pt'>name(CLASSOFSOURCE) EQ &quot;BASE&quot;<br>
+    name(DOMAINOFSINK, &quot;Bluetooth&quot;) EQ
+  &quot;TestDomain&quot;<br>
+    name(DOMAINOFSINK) EQ name(DOMAINOFSINK, &quot;Bluetooth&quot;)</td>
+ </tr>
+ <tr height=100 style='height:75.0pt'>
+  <td height=100 class=xl6727240 align=left width=428 style='height:75.0pt;
+  border-top:none;width:321pt'>name(elementTypeOfType)<br>
+    name(elementTypeOfType, elementName)</td>
+  <td class=xl6827240 align=left style='border-top:none;border-left:none'>string[]</td>
+  <td class=xl6727240 align=left width=325 style='border-top:none;border-left:
+  none;width:244pt'>returns list of names of source, sink which belong to
+  elementType derived from trigger parameter.<br>
+    If elementName is not specified or REQUESTING, trigger parameter is
+  automatically chosen by elementTypeOfType.<br>
+    elementTypeOfType = SOURCEOFCLASS, SINKOFCLASS</td>
+  <td class=xl6727240 align=left width=350 style='border-top:none;border-left:
+  none;width:263pt'>name(SOURCEOFCLASS) INC &quot;Bluetooth&quot;<br>
+    name(SINKOFCLASS, &quot;Speaker&quot;) INC &quot;Headphone&quot;</td>
+ </tr>
+ <tr height=80 style='height:60.0pt'>
+  <td height=80 class=xl6427240 align=left width=428 style='height:60.0pt;
+  border-top:none;width:321pt'>priority(elementType)<br>
+    priority(elementType, elementName)</td>
+  <td class=xl6327240 align=left style='border-top:none;border-left:none'>integer</td>
+  <td class=xl6427240 align=left width=325 style='border-top:none;border-left:
+  none;width:244pt'>returns priority of particular element.<br>
+    If elementName is not specified or REQUESTING, trigger parameter is
+  automatically chosen by elementType.<br>
+    elementType = SOURCE, SINK, CONNECTION, CLASS</td>
+  <td class=xl6427240 align=left width=350 style='border-top:none;border-left:
+  none;width:263pt'>priority(SOURCE) LT 20<br>
+    priority(SOURCE, REQUESTING) GT priority(SOURCE,
+  &quot;RadioTuner&quot;)<br>
+    </td>
+ </tr>
+ <tr height=120 style='height:90.0pt'>
+  <td height=120 class=xl6727240 align=left width=428 style='height:90.0pt;
+  border-top:none;width:321pt'>volume()<br>
+    volume(elementType)<br>
+    volume(elementType, elementName)<br>
+    </td>
+  <td class=xl6827240 align=left style='border-top:none;border-left:none'>am_volume_t</td>
+  <td class=xl6727240 align=left width=325 style='border-top:none;border-left:
+  none;width:244pt'>returns volume.<br>
+    If both elementType and elementName are not specified it returns the value
+  updated by system.<br>
+    If elementType is not specified or REQUESTING, trigger parameter is
+  automatically chosen by elementType.<br>
+    elementType = SOURCE, SINK, CONNECTION, CLASS</td>
+  <td class=xl6727240 align=left width=350 style='border-top:none;border-left:
+  none;width:263pt'>volume() GT 40<br>
+    volume(SOURCE) LT 40<br>
+    volume(SINK) EQ 30<br>
+    volume(SOURCE) LT volume(SOURCE, &quot;MediaPlayer&quot;)</td>
+ </tr>
+ <tr height=120 style='height:90.0pt'>
+  <td height=120 class=xl6427240 align=left width=428 style='height:90.0pt;
+  border-top:none;width:321pt'>mainVolume()<br>
+    mainVolume(elementType)<br>
+    mainVolume(elementType, elementName)</td>
+  <td class=xl6327240 align=left style='border-top:none;border-left:none'>am_mainVolume_t</td>
+  <td class=xl6427240 align=left width=325 style='border-top:none;border-left:
+  none;width:244pt'>returns main volume.<br>
+    If both elementType and elementName are not specified it returns the value
+  set by user.<br>
+    If elementType is not specified or REQUESTING, trigger parameter is
+  automatically chosen by elementType.<br>
+    elementType = SINK, CONNECTION, CLASS</td>
+  <td class=xl6427240 align=left width=350 style='border-top:none;border-left:
+  none;width:263pt'>mainVolume() GT 40<br>
+    mainVolume(SINK) EQ 10<br>
+    mainVolume(SINK, &quot;Speaker&quot;) LT 40<br>
+    mainVolume(SINK) EQ mainVolume(CLASS, &quot;BASE&quot;)</td>
+ </tr>
+ <tr height=20 style='height:15.0pt'>
+  <td height=20 class=xl6827240 align=left style='height:15.0pt;border-top:
+  none'>systemPropertyType()</td>
+  <td class=xl6827240 align=left style='border-top:none;border-left:none'>am_CustomSystemPropertyType_t<span
+  style='mso-spacerun:yes'> </span></td>
+  <td class=xl6727240 align=left width=325 style='border-top:none;border-left:
+  none;width:244pt'>returns system property type set by user</td>
+  <td class=xl6827240 align=left style='border-top:none;border-left:none'>systemPropertyType()
+  NE SYP_UNKNOWN</td>
+ </tr>
+ <tr height=60 style='height:45.0pt'>
+  <td height=60 class=xl6427240 align=left width=428 style='height:45.0pt;
+  border-top:none;width:321pt'>systemPropertyValue()<br>
+    systemPropertyValue(SYSTEM)<br>
+    systemPropertyValue(SYSTEM, propertyType)</td>
+  <td class=xl6327240 align=left style='border-top:none;border-left:none'>int16_t</td>
+  <td class=xl6427240 align=left width=325 style='border-top:none;border-left:
+  none;width:244pt'>returns system property value.<br>
+    If nothing is specified, it returns the value set by user.<br>
+    If propertyType is not specified, trigger parameter is automatically
+  selected.</td>
+  <td class=xl6427240 align=left width=350 style='border-top:none;border-left:
+  none;width:263pt'>systemPropertyValue() EQ 100<br>
+    systemPropertyValue(SYSTEM, SYP_UNKNOWN) EQ 10</td>
+ </tr>
+ <tr height=20 style='height:15.0pt'>
+  <td height=20 class=xl6827240 align=left style='height:15.0pt;border-top:
+  none'>soundPropertyType()</td>
+  <td class=xl6827240 style='border-top:none;border-left:none'>&nbsp;</td>
+  <td class=xl6727240 align=left width=325 style='border-top:none;border-left:
+  none;width:244pt'>returns sound property type updated by routing side.</td>
+  <td class=xl6727240 align=left width=350 style='border-top:none;border-left:
+  none;width:263pt'>soundPropertyType() EQ SP_UNKOWN</td>
+ </tr>
+ <tr height=100 style='height:75.0pt'>
+  <td height=100 class=xl6427240 align=left width=428 style='height:75.0pt;
+  border-top:none;width:321pt'>soundPropertyValue()<br>
+    soundPropertyValue(elementType)<br>
+    soundPropertyValue(elementType, elementName, propertyType)</td>
+  <td class=xl6327240 align=left style='border-top:none;border-left:none'>int16_t</td>
+  <td class=xl6427240 align=left width=325 style='border-top:none;border-left:
+  none;width:244pt'>returns sound property value.<br>
+    If nothing is specified, it returns the value notified by system.<br>
+    If elementName and propertyType are not specified, trigger parameter is
+  automatically selected by elementType.<br>
+    elementType = SOURCE, SINK</td>
+  <td class=xl6427240 align=left width=350 style='border-top:none;border-left:
+  none;width:263pt'>soundPropertyValue() EQ -10<br>
+    soundPropertyValue(SOURCE) EQ 10<br>
+    soundPropertyValue(SINK, &quot;Speaker&quot;, SP_GENIVI_BASS) EQ 10</td>
+ </tr>
+ <tr height=20 style='height:15.0pt'>
+  <td height=20 class=xl6727240 align=left width=428 style='height:15.0pt;
+  border-top:none;width:321pt'>mainSoundPropertyType()</td>
+  <td class=xl6827240 align=left style='border-top:none;border-left:none'>am_CustomMainSoundPropertyType_t</td>
+  <td class=xl6727240 align=left width=325 style='border-top:none;border-left:
+  none;width:244pt'>returns main sound property type set by user, or updated by
+  routing side</td>
+  <td class=xl6827240 align=left style='border-top:none;border-left:none'>mainSoundPropertyType()
+  NE MSP_UNKOWN</td>
+ </tr>
+ <tr height=100 style='height:75.0pt'>
+  <td height=100 class=xl6427240 align=left width=428 style='height:75.0pt;
+  border-top:none;width:321pt'>mainSoundPropertyValue()<br>
+    mainSoundPropertyValue(elementType)<br>
+    mainSoundPropertyValue(elementType, elementName, propertyType)</td>
+  <td class=xl6327240 align=left style='border-top:none;border-left:none'>int16_t</td>
+  <td class=xl6427240 align=left width=325 style='border-top:none;border-left:
+  none;width:244pt'>returns main sound property value.<br>
+    If nothing is specified, it returns the value notified by system.<br>
+    If elementName and propertyType are not specified, trigger parameter is
+  automatically selected by elementType.<br>
+    elementType = SOURCE, SINK</td>
+  <td class=xl6427240 align=left width=350 style='border-top:none;border-left:
+  none;width:263pt'>mainSoundPropertyValue() EQ -10<br>
+    mainSoundPropertyValue(SOURCE) EQ 10<br>
+    mainSoudPropertyValue(SINK, &quot;Speaker&quot;, MSP_GENIVI_BASS) EQ 10</td>
+ </tr>
+ <tr height=120 style='height:90.0pt'>
+  <td height=120 class=xl6727240 align=left width=428 style='height:90.0pt;
+  border-top:none;width:321pt'>muteState()<br>
+    muteState(elementType)<br>
+    muteState(elementType, elementName)</td>
+  <td class=xl6827240 align=left style='border-top:none;border-left:none'>am_MuteState_e</td>
+  <td class=xl6727240 align=left width=325 style='border-top:none;border-left:
+  none;width:244pt'>returns mute state.<br>
+    If both elementType and elementName are not specified it returns the value
+  set by user or updated by routing side.<br>
+    If elementType is not specified or REQUESTING, trigger parameter is
+  automatically selected by elementType.<br>
+    elementType = SINK, CONNECTION, CLASS</td>
+  <td class=xl6727240 align=left width=350 style='border-top:none;border-left:
+  none;width:263pt'>muteState() EQ MS_MUTED<br>
+    muteState(SINK, &quot;Speaker&quot;) NE MS_UNKNOWN<br>
+    </td>
+ </tr>
+ <tr height=120 style='height:90.0pt'>
+  <td height=120 class=xl6427240 align=left width=428 style='height:90.0pt;
+  border-top:none;width:321pt'>availability()<br>
+    availability(elementType)<br>
+    availability(elementType, elementName)</td>
+  <td class=xl6327240 align=left style='border-top:none;border-left:none'>am_Availability_e</td>
+  <td class=xl6427240 align=left width=325 style='border-top:none;border-left:
+  none;width:244pt'>returns availability.<br>
+    If both elementType and elementName are not specified it returns the value
+  updated by system.<br>
+    If elementType is not specified or REQUESTING, trigger parameter is
+  automatically selected by elementType<br>
+    elementType = SOURCE, SINK</td>
+  <td class=xl6427240 align=left width=350 style='border-top:none;border-left:
+  none;width:263pt'>availability() EQ A_AVAILABLE<br>
+    availability(SOURCE) NE A_UNAVAILABLE<br>
+    availability(SINK, &quot;Speaker&quot;) EQ A_AVAILABLE</td>
+ </tr>
+ <tr height=120 style='height:90.0pt'>
+  <td height=120 class=xl6727240 align=left width=428 style='height:90.0pt;
+  border-top:none;width:321pt'>availabilityReason()<br>
+    availabilityReason(elementType)<br>
+    availabilityReason(elementType, elementName)</td>
+  <td class=xl6827240 align=left style='border-top:none;border-left:none'>am_CustomAvailabilityReason_t</td>
+  <td class=xl6727240 align=left width=325 style='border-top:none;border-left:
+  none;width:244pt'>returns availability reason.<br>
+    If both elementType and elementName are not specified it returns the value
+  updated by system.<br>
+    If elementType is not specified or REQUESTING, trigger parameter is
+  automatically selected by elementType<br>
+    elementType = SOURCE, SINK</td>
+  <td class=xl6727240 align=left width=350 style='border-top:none;border-left:
+  none;width:263pt'>availabilityReason() EQ AR_UNKOWN<br>
+    availabilityReason(SOURCE) NE AR_GENIVI_NEWMEDIA <br>
+    availabilityReason(SINK, &quot;Speaker&quot;) EQ AR_GENIVI_TEMPERATURE</td>
+ </tr>
+ <tr height=80 style='height:60.0pt'>
+  <td height=80 class=xl6427240 align=left width=428 style='height:60.0pt;
+  border-top:none;width:321pt'>connectionState(CONNECTION)<br>
+    connectionState(CONNECTION, elementName)<br>
+    </td>
+  <td class=xl6327240 align=left style='border-top:none;border-left:none'>am_ConnectionState_e</td>
+  <td class=xl6427240 align=left width=325 style='border-top:none;border-left:
+  none;width:244pt'>returns state of main connection.<br>
+    If elementType is not specified or REQUESTING, trigger parameter is
+  automatically selected by elementType<br>
+    elementType = CONNECTION</td>
+  <td class=xl6427240 align=left width=350 style='border-top:none;border-left:
+  none;width:263pt'>connectionState(CONNECTION) EQ CS_CONNECTED<br>
+    connectionState(CONNECTION, &quot;RadioTuner:Amp&quot;) EQ
+  CS_CONNECTED<br>
+    </td>
+ </tr>
+ <tr height=80 style='height:60.0pt'>
+  <td height=80 class=xl6727240 align=left width=428 style='height:60.0pt;
+  border-top:none;width:321pt'>connectionState(elementType)<br>
+    connectionState(elementType, elementName)</td>
+  <td class=xl6827240 align=left style='border-top:none;border-left:none'>am_ConnectionState_e[]</td>
+  <td class=xl6727240 align=left width=325 style='border-top:none;border-left:
+  none;width:244pt'>returns the list of state of main connections<br>
+    If elementType is not specified or REQUESTING, trigger parameter is
+  automatically selected by elementType<br>
+    elementType = SOURCE, SINK, CLASS</td>
+  <td class=xl6727240 align=left width=350 style='border-top:none;border-left:
+  none;width:263pt'>connectionState(SOURCE) INC CS_CONNECTED<br>
+    connectionState(SINK, &quot;Speaker&quot;) INC CS_SUSPENDED<br>
+    </td>
+ </tr>
+ <tr height=120 style='height:90.0pt'>
+  <td height=120 class=xl6427240 align=left width=428 style='height:90.0pt;
+  border-top:none;width:321pt'>interruptState()<br>
+    interruptState(elementType)<br>
+    interruptState(elementType, elementName)</td>
+  <td class=xl6327240 align=left style='border-top:none;border-left:none'>am_InterruptState_e</td>
+  <td class=xl6427240 align=left width=325 style='border-top:none;border-left:
+  none;width:244pt'>returns interrupt state.<br>
+    If both elementType and elementName are not specified it returns the value
+  updated by system.<br>
+    If elementType is not specified or REQUESTING, trigger parameter is
+  automatically selected by elementType<br>
+    elementType = SOURCE, CONNECTION</td>
+  <td class=xl6427240 align=left width=350 style='border-top:none;border-left:
+  none;width:263pt'>interruptState(SOURCE) EQ IS_INTERRUPTED<br>
+    interruptState(SOURCE, &quot;PDC&quot;) EQ IS_OFF<br>
+    interruptState(CONNECTION, &quot;PDC:Amp&quot;) EQ IS_OFF</td>
+ </tr>
+ <tr height=80 style='height:60.0pt'>
+  <td height=80 class=xl6727240 align=left width=428 style='height:60.0pt;
+  border-top:none;width:321pt'>state(elementType)<br>
+    state(elementType, elementType)</td>
+  <td class=xl6727240 align=left width=252 style='border-top:none;border-left:
+  none;width:189pt'>am_SourceState_e<br>
+    am_DomainState_e</td>
+  <td class=xl6727240 align=left width=325 style='border-top:none;border-left:
+  none;width:244pt'>returns state of particular element<br>
+    If elementType is not specified or REQUESTING, trigger parameter is
+  automatically selected by elementType<br>
+    elementType = SOURCE, DOMAIN</td>
+  <td class=xl6727240 align=left width=350 style='border-top:none;border-left:
+  none;width:263pt'>state(SOURCE) EQ SS_ON<br>
+    state(SOURCE, &quot;RadioTuner&quot;) NE SS_ON<br>
+    state(DOMAIN, &quot;TestDomian&quot;) EQ DS_CONTROLLED</td>
+ </tr>
+ <tr height=80 style='height:60.0pt'>
+  <td height=80 class=xl6427240 align=left width=428 style='height:60.0pt;
+  border-top:none;width:321pt'>isRegistered(elementType)<br>
+    isRegistered(elementType, elementName)</td>
+  <td class=xl6327240 align=left style='border-top:none;border-left:none'>boolean</td>
+  <td class=xl6427240 align=left width=325 style='border-top:none;border-left:
+  none;width:244pt'>returns result of registration of particular element.<br>
+    If elementType is not specified or REQUESTING, trigger parameter is
+  automatically selected by elementType<br>
+    elementType = SOURCE, SINK, GATEWAY, DOMAIN</td>
+  <td class=xl6427240 align=left width=350 style='border-top:none;border-left:
+  none;width:263pt'>isRegistered(SOURCE) EQ TRUE<br>
+    isRegistered(SOURCE, &quot;MediaPlayer&quot;) EQ TRUE<br>
+    isRegistered(SINK, &quot;Speaker&quot;) EQ TRUE</td>
+ </tr>
+ <tr height=40 style='height:30.0pt'>
+  <td height=40 class=xl6727240 align=left width=428 style='height:30.0pt;
+  border-top:none;width:321pt'>isRegistrationComplete(DOMAIN)<br>
+    isRegistrationComplete(DOMAIN, domainName)</td>
+  <td class=xl6827240 align=left style='border-top:none;border-left:none'>boolean</td>
+  <td class=xl6727240 align=left width=325 style='border-top:none;border-left:
+  none;width:244pt'>check if particular domain indicated by
+  &quot;domainName&quot; is registered<br>
+    If domainName is not specified, all domains are indicated.</td>
+  <td class=xl6727240 align=left width=350 style='border-top:none;border-left:
+  none;width:263pt'>isRegisterationComplete(DOMAIN) EQ TRUE<br>
+    isRegisterationComplete(DOMAIN, &quot;TestDomain&quot;) EQ FALSE</td>
+ </tr>
+</table>
+
+
+*/
