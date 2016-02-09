@@ -32,9 +32,7 @@ OPTION (WITH_ROUTING_INTERFACE_ASYNC
 OPTION(WITH_ROUTING_INTERFACE_CAPI
        "build with routing iterface common-api plugin" ON)   
 OPTION(WITH_ROUTING_INTERFACE_DBUS
-       "build with routing iterface dbus plugin" OFF)    
-option( WITH_TESTS
-	"Build together with all available unitTest" ON )    
+       "build with routing iterface dbus plugin" OFF)        
                     
 IF(USE_BUILD_LIBS) 
 	file(MAKE_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}/plugins")
@@ -76,5 +74,6 @@ add_custom_target(plugin-test-install
      "${CMAKE_COMMAND}" -DCMAKE_INSTALL_COMPONENT=plugin-tests
      -P "${CMAKE_BINARY_DIR}/cmake_install.cmake"
 )
+
 
 
