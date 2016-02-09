@@ -13,72 +13,45 @@
 #
 # For further information see http://www.genivi.org/.
 #
-cmake_minimum_required(VERSION 2.8.8)
+cmake_minimum_required(VERSION 3.0)
 
 include(CMakeDependentOption)
 find_package(PkgConfig)
 
-PROJECT(PluginRoutingInterfaceAsync)
+PROJECT(PluginRoutingInterfaceAsync VERSION 7.4.0)
 
-       
-if (NOT DAEMONVERSION)
-    message(STATUS "Building without AudioManager, searching for cmake definition")
-	set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
-    find_package(AudioManager)  
-    if (AUDIOMANAGER_FOUND)
-        include ("${AUDIOMANAGER_CMAKE_CONFIG_PATH}/audiomanagerConfig.cmake")
-        set(PLUGINS_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}) 
-        set(TEST_EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}) 
-        if(WITH_TESTS)
-            if(NOT TARGET gtest)
-                add_subdirectory(${GOOGLE_MOCK_PROJECT_FOLDER} ${CMAKE_CURRENT_BINARY_DIR}/gmock)
-            endif()
-        endif(WITH_TESTS)
-        
-        set(COMMONAPI_DBUS_CONFIGURATIONS "") 
-    else(AUDIOMANAGER_FOUND)
-        message(FATAL_ERROR "Could not find audiomanager cmake configuration")
-    endif(AUDIOMANAGER_FOUND)
-endif (NOT DAEMONVERSION)  
+find_package(AudioManager REQUIRED > 7.3.0)  
+find_package(AudioManagerUtilities REQUIRED > 7.3.0)
+find_package( Threads )
 
-	if(WITH_DLT)    
-	    pkg_check_modules(DLT REQUIRED automotive-dlt>=2.2.0)
-	    add_definitions(${DLT_CFLAGS_OTHER})
-	    include_directories(${DLT_INCLUDE_DIRS})
-	    link_directories(${DLT_LIBRARY_DIRS})
-	endif(WITH_DLT)      
-        
-    set(LIBRARY_OUTPUT_PATH ${PLUGINS_OUTPUT_PATH}/routing)
+set(PLUGINS_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR})      
+set(LIBRARY_OUTPUT_PATH ${PLUGINS_OUTPUT_PATH}/routing)
 
-    set(INCLUDE_FOLDER "include")
-    
-    find_package( Threads )
-    
-    INCLUDE_DIRECTORIES(
-     	${CMAKE_CURRENT_BINARY_DIR}
-    	${AUDIOMANAGER_INCLUDE_FOLDER}
-    	${AUDIO_INCLUDE_FOLDER}
-    	${AUDIOMANAGER_UTILITIES_INCLUDE}
-    	${INCLUDE_FOLDER}
-    )
-    
-    # all source files go here
-    file(GLOB PLUGINDBUS_SRCS_CXX "src/*.cpp")
-    
-    add_library(PluginRoutingInterfaceAsync MODULE ${PLUGINDBUS_SRCS_CXX})
-    
-    TARGET_LINK_LIBRARIES(PluginRoutingInterfaceAsync
-        ${DLT_LIBRARIES}
-        ${CMAKE_THREAD_LIBS_INIT}
-    )
-    
-    IF(WITH_TESTS)
-    	add_subdirectory (test)
-    ENDIF(WITH_TESTS)
-    
-   
-    INSTALL(TARGETS PluginRoutingInterfaceAsync 
-            DESTINATION lib/${LIB_INSTALL_SUFFIX}/routing
-            PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
-            COMPONENT plugins
-    )
+INCLUDE_DIRECTORIES(
+	${CMAKE_CURRENT_SOURCE_DIR}/include
+	${CMAKE_SOURCE_DIR} 
+	${CMAKE_CURRENT_BINARY_DIR}
+	${AudioManager_INCLUDE_DIRS}
+	${AudioManagerUtilities_INCLUDE_DIRS}
+)
+
+# all source files go here
+file(GLOB PLUGINDBUS_SRCS_CXX "src/*.cpp")
+
+add_library(PluginRoutingInterfaceAsync MODULE ${PLUGINDBUS_SRCS_CXX})
+
+TARGET_LINK_LIBRARIES(PluginRoutingInterfaceAsync
+${DLT_LIBRARIES}
+${CMAKE_THREAD_LIBS_INIT}
+)
+
+IF(WITH_TESTS)
+	add_subdirectory (test)
+ENDIF(WITH_TESTS)
+
+
+INSTALL(TARGETS PluginRoutingInterfaceAsync 
+    DESTINATION lib/${LIB_INSTALL_SUFFIX}/routing
+    PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
+    COMPONENT plugins
+)

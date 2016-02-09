@@ -14,86 +14,58 @@
 #
 # For further information see http://www.genivi.org/.
 #
-cmake_minimum_required(VERSION 2.8.8)
+cmake_minimum_required(VERSION 3.0)
 
-PROJECT(PluginRoutingInterfaceDbus)
+PROJECT(PluginRoutingInterfaceDbus VERSION 7.4.0)
 
-if (NOT DAEMONVERSION)
-    message(STATUS "Building without AudioManager, searching for cmake definition")
-	set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
-    find_package(AudioManager)  
-    if (AUDIOMANAGER_FOUND)
-        include ("${AUDIOMANAGER_CMAKE_CONFIG_PATH}/audiomanagerConfig.cmake")
-        set(PLUGINS_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}) 
-        set(TEST_EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}) 
-       
-        set(COMMONAPI_DBUS_CONFIGURATIONS "") 
-    else(AUDIOMANAGER_FOUND)
-        message(FATAL_ERROR "Could not find audiomanager cmake configuration")
-    endif(AUDIOMANAGER_FOUND)
-endif (NOT DAEMONVERSION)          
+find_package(AudioManager REQUIRED > 7.3.0)  
+find_package(AudioManagerUtilities REQUIRED > 7.3.0)   
+pkg_check_modules (DBUS "dbus-1 >= 1.4" REQUIRED)    
+
+set(PLUGINS_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR})   
 
 IF(NOT WITH_DBUS_WRAPPER)
 	message (FATAL_ERROR "For Dbus plugins you need to compile the AM WITH_DBUS_WRAPPER")
 ENDIF(NOT WITH_DBUS_WRAPPER)
 
-    set(LIBRARY_OUTPUT_PATH ${PLUGINS_OUTPUT_PATH}/routing)
-    set(INCLUDE_FOLDER "include")
-	if(WITH_DLT)    
-	    pkg_check_modules(DLT REQUIRED automotive-dlt>=2.2.0)
-	    add_definitions(${DLT_CFLAGS_OTHER})
-	    include_directories(${DLT_INCLUDE_DIRS})
-	    link_directories(${DLT_LIBRARY_DIRS})
-	endif(WITH_DLT)    
-    
-    IF(USE_BUILD_LIBS) 
-        SET(ROUTING_DBUS_INTROSPECTION_FOLDER ${EXECUTABLE_OUTPUT_PATH})
-        SET(ROUTING_DBUS_INTROSPECTION_FILE ${EXECUTABLE_OUTPUT_PATH}/RoutingReceiver.xml)
-    ELSE(USE_BUILD_LIBS) 
-        SET(ROUTING_DBUS_INTROSPECTION_FOLDER ${AM_SHARE_FOLDER}/${LIB_INSTALL_SUFFIX})
-        SET(ROUTING_DBUS_INTROSPECTION_FILE ${AM_SHARE_FOLDER}/${LIB_INSTALL_SUFFIX}/RoutingReceiver.xml)
-    ENDIF(USE_BUILD_LIBS)
-    
-    
-    CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/cmake/config.cmake ${CMAKE_CURRENT_SOURCE_DIR}/include/configRoutingDbus.h )
-    
-   	pkg_check_modules (DBUS "dbus-1 >= 1.4" REQUIRED)
-    
-    INCLUDE_DIRECTORIES(
-    	${CMAKE_SOURCE_DIR} 
-     	${CMAKE_CURRENT_BINARY_DIR}
-     	${DBUS_INCLUDE_DIRS}
-    	${AUDIO_INCLUDE_FOLDER}
-    	${AUDIOMANAGER_INCLUDE_FOLDER}
-    	${AUDIOMANAGER_UTILITIES_INCLUDE}
-    	${INCLUDE_FOLDER}
-    )
-    
-    # all source files go here
-    file(GLOB PLUGINDBUS_SRCS_CXX "src/*.cpp")
-    
-    add_library(PluginRoutingInterfaceDbus MODULE ${PLUGINDBUS_SRCS_CXX})
-    
-    TARGET_LINK_LIBRARIES(PluginRoutingInterfaceDbus 
-        ${DLT_LIBRARIES}
-        ${DBUS_LIBRARIES}
-    )
-    
-    IF(WITH_TESTS)
-    #	add_subdirectory (test)
-    ENDIF(WITH_TESTS)
-    
-    IF(USE_BUILD_LIBS) 
-        execute_process(
-        		COMMAND mkdir -p "${EXECUTABLE_OUTPUT_PATH}"
-        		COMMAND cp "${CMAKE_CURRENT_SOURCE_DIR}/${INCLUDE_FOLDER}/RoutingReceiver.xml" ${EXECUTABLE_OUTPUT_PATH}/RoutingReceiver.xml)
-        execute_process(
-        		COMMAND mkdir -p "${EXECUTABLE_OUTPUT_PATH}"
-        		COMMAND cp "${CMAKE_CURRENT_SOURCE_DIR}/${INCLUDE_FOLDER}/RoutingSender.xml" ${EXECUTABLE_OUTPUT_PATH}/RoutingSender.xml)
-    ENDIF(USE_BUILD_LIBS) 
-    
+set(LIBRARY_OUTPUT_PATH ${PLUGINS_OUTPUT_PATH}/routing)
 
-    
+SET(ROUTING_DBUS_INTROSPECTION_FOLDER ${AM_SHARE_FOLDER}/${LIB_INSTALL_SUFFIX})
+SET(ROUTING_DBUS_INTROSPECTION_FILE ${AM_SHARE_FOLDER}/${LIB_INSTALL_SUFFIX}/RoutingReceiver.xml)
+
+CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/cmake/config.cmake ${CMAKE_CURRENT_SOURCE_DIR}/include/configRoutingDbus.h )
+
+INCLUDE_DIRECTORIES(
+	${DBUS_INCLUDE_DIRS}
+	${CMAKE_CURRENT_SOURCE_DIR}/include
+	${CMAKE_SOURCE_DIR} 
+	${CMAKE_CURRENT_BINARY_DIR}
+	${AudioManager_INCLUDE_DIRS}
+	${AudioManagerUtilities_INCLUDE_DIRS}
+)
+
+# all source files go here
+file(GLOB PLUGINDBUS_SRCS_CXX "src/*.cpp")
+
+add_library(PluginRoutingInterfaceDbus MODULE ${PLUGINDBUS_SRCS_CXX})
+
+TARGET_LINK_LIBRARIES(PluginRoutingInterfaceDbus 
+${AudioManagerUtilities_LIBRARIES}  
+${DBUS_LIBRARIES}
+)
+
+
+IF(USE_BUILD_LIBS) 
+execute_process(
+		COMMAND mkdir -p "${EXECUTABLE_OUTPUT_PATH}"
+		COMMAND cp "${CMAKE_CURRENT_SOURCE_DIR}/${INCLUDE_FOLDER}/RoutingReceiver.xml" ${EXECUTABLE_OUTPUT_PATH}/RoutingReceiver.xml)
+execute_process(
+		COMMAND mkdir -p "${EXECUTABLE_OUTPUT_PATH}"
+		COMMAND cp "${CMAKE_CURRENT_SOURCE_DIR}/${INCLUDE_FOLDER}/RoutingSender.xml" ${EXECUTABLE_OUTPUT_PATH}/RoutingSender.xml)
+ENDIF(USE_BUILD_LIBS) 
+
+
+
     
     INSTALL(TARGETS PluginRoutingInterfaceDbus 
             DESTINATION lib/${LIB_INSTALL_SUFFIX}/routing

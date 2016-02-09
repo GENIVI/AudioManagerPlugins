@@ -32,7 +32,9 @@ OPTION (WITH_ROUTING_INTERFACE_ASYNC
 OPTION(WITH_ROUTING_INTERFACE_CAPI
        "build with routing iterface common-api plugin" ON)   
 OPTION(WITH_ROUTING_INTERFACE_DBUS
-       "build with routing iterface dbus plugin" OFF)        
+       "build with routing iterface dbus plugin" OFF)    
+option( WITH_TESTS
+	"Build together with all available unitTest" ON )    
                     
 IF(USE_BUILD_LIBS) 
 	file(MAKE_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}/plugins")

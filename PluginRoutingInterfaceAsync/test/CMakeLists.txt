@@ -15,49 +15,33 @@
 # For further information see http://www.genivi.org/.
 #
 
-cmake_minimum_required(VERSION 2.8.8)
+cmake_minimum_required(VERSION 3.0)
 
-PROJECT(AmRoutingReceiverAsync)
+PROJECT(AmRoutingReceiverAsync VERSION 7.4.0)
 
 set(EXECUTABLE_OUTPUT_PATH ${TEST_EXECUTABLE_OUTPUT_PATH})
 
 FIND_PACKAGE(Threads)
 FIND_PACKAGE(PkgConfig)
+find_package(AudioManager REQUIRED > 7.0.0)  
+find_package(AudioManagerUtilities REQUIRED > 7.0.0)
+pkg_check_modules (GTEST REQUIRED "gtest >= 1.6.0")
+pkg_check_modules (GMOCK REQUIRED "gmock >= 1.6.0")
 
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-local-typedefs -DUNIT_TEST=1 -DDLT_CONTEXT=AudioManager")
 
-
-IF(WITH_DLT)
-    pkg_check_modules(DLT REQUIRED automotive-dlt)
-ENDIF(WITH_DLT)
-
-IF(WITH_DATABASE_STORAGE)
-	pkg_check_modules(SQLITE REQUIRED sqlite3)
-ENDIF(WITH_DATABASE_STORAGE)
-
 INCLUDE_DIRECTORIES(   
-    ${STD_INCLUDE_DIRS}
+    ${AudioManagerUtilities_INCLUDE_DIRS} 
+    ${GMOCK_INCLUDE_DIRS}
+    ${GTEST_INCLUDE_DIRS}
     ${CMAKE_SOURCE_DIR} 
     ${CMAKE_CURRENT_BINARY_DIR}
-    ${AUDIO_INCLUDE_FOLDER}
-    ${CMAKE_SOURCE_DIR} 
-    ${INCLUDE_FOLDER}
-    ${GOOGLE_TEST_INCLUDE_DIR}
-    ${GMOCK_INCLUDE_DIR}
-    ${AUDIOMANAGER_UTILITIES_INCLUDE}
-    "${AUDIOMANAGER_DAEMON_FOLDER}/include"
+    ${COMMON_API_INCLUDE_DIRS}
+    ${COMMON_API_GEN_INCLUDE_DIR}
 )
-
-IF(WITH_DLT)
-INCLUDE_DIRECTORIES(${INCLUDE_DIRECTORIES}
-    ${DLT_INCLUDE_DIRS}
-)
-ENDIF(WITH_DLT)
 
  
 file(GLOB ASYNC_PLUGIN_INTERFACE_SRCS_CXX 
-     "${AUDIOMANAGER_UTILITIES_SRC}/CAmSocketHandler.cpp"
-     "${AUDIOMANAGER_UTILITIES_SRC}/CAmDltWrapper.cpp"
      "../src/*.cpp"  
      "CAmRoutingReceiverAsync.cpp" 
 )
@@ -68,18 +52,11 @@ ADD_EXECUTABLE(AmRoutingReceiveAsyncTest ${ASYNC_PLUGIN_INTERFACE_SRCS_CXX})
 TARGET_LINK_LIBRARIES(AmRoutingReceiveAsyncTest 
     ${CMAKE_DL_LIBS}
     ${CMAKE_THREAD_LIBS_INIT}
-    rt
-    gtest
-    gmock
+    ${CommonAPI_LIBRARY}
+    ${GMOCK_LIBRARIES}
+    ${GTEST_LIBRARIES}
+    ${AudioManagerUtilities_LIBRARIES}
 )
-
-ADD_DEPENDENCIES(AmRoutingReceiveAsyncTest gtest gmock)
-
-IF(WITH_DLT)
-    TARGET_LINK_LIBRARIES(AmRoutingReceiveAsyncTest
-        ${DLT_LIBRARIES} 
-    )
-ENDIF(WITH_DLT) 
 
 INSTALL(TARGETS AmRoutingReceiveAsyncTest 
         DESTINATION ${TEST_EXECUTABLE_INSTALL_PATH}

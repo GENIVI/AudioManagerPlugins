@@ -15,71 +15,59 @@
 # For further information see http://www.genivi.org/.
 #
 
-cmake_minimum_required(VERSION 2.8.8)
+cmake_minimum_required(VERSION 3.0)
 
-PROJECT(CAmRoutingInterfaceCAPITests)
-
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-local-typedefs -DUNIT_TEST=1 -DDLT_CONTEXT=AudioManager")
-
-set(STD_INCLUDE_DIRS "/usr/include")
+PROJECT(CAmRoutingInterfaceCAPITests VERSION 7.4.0)
 
 FIND_PACKAGE(Threads)
 FIND_PACKAGE(PkgConfig)
 FIND_PACKAGE(PythonLibs REQUIRED)
+find_package(AudioManager REQUIRED > 7.0.0)  
+find_package(AudioManagerUtilities REQUIRED > 7.0.0)
+pkg_check_modules (GTEST REQUIRED "gtest >= 1.6.0")
+pkg_check_modules (GMOCK REQUIRED "gmock >= 1.6.0")
 
 
-IF(WITH_DLT)    
-    pkg_check_modules(DLT REQUIRED automotive-dlt>=2.2.0)   
-ENDIF(WITH_DLT)
 
-INCLUDE_DIRECTORIES(   
-    ${STD_INCLUDE_DIRS}
+INCLUDE_DIRECTORIES(  
+    ${AudioManagerUtilities_INCLUDE_DIRS} 
+    ${GMOCK_INCLUDE_DIRS}
+    ${GTEST_INCLUDE_DIRS}
     ${CMAKE_SOURCE_DIR} 
     ${CMAKE_CURRENT_BINARY_DIR}
-    ${AUDIO_INCLUDE_FOLDER}
-    ${CMAKE_SOURCE_DIR} 
-    ${DLT_INCLUDE_DIRS}
-	${COMMON_API_INCLUDE_DIRS}
-	${COMMON_API_GEN_INCLUDE_DIR}
-    ${INCLUDE_FOLDER}
-    ${PYTHON_INCLUDE_DIRS}
-    ${GOOGLE_TEST_INCLUDE_DIR}
-    ${GMOCK_INCLUDE_DIR}
-    "${AUDIOMANAGER_DAEMON_FOLDER}/include"
-    "../include"
-)
+    ${COMMON_API_INCLUDE_DIRS}
+    ${COMMON_API_GEN_INCLUDE_DIR}
+    ${PYTHON_INCLUDE_DIRS})
 
 link_directories(
-        ${LINK_DIRECTORIES}
-#        ${CMAKE_INSTALL_PREFIX}/lib/${LIB_INSTALL_SUFFIX}
         ${CMAKE_BINARY_DIR}
         ${RC_LIBDIR}
 )
    
 file(GLOB CAPI_PLUGIN_INTERFACE_SRCS_CXX 
-	 ${ROUTING_GEN_SOURCES}
-     "${AUDIOMANAGER_UTILITIES_SRC}/CAmCommonAPIWrapper.cpp"
-     "${AUDIOMANAGER_UTILITIES_SRC}/CAmSocketHandler.cpp"
-     "${AUDIOMANAGER_UTILITIES_SRC}/CAmDltWrapper.cpp"
-     "../src/*.cpp"  
-     "CAmRoutingInterfaceCAPITests.cpp"
-     "CAmTestCAPIWrapper.cpp"
-     "CAmCommandSenderCommon.cpp"
-     "CAmTestRoutingSenderService.cpp"
-     "IAmRoutingSenderBackdoor.cpp"
-)
+	 "../src/*.cpp"  
+	 "CAmRoutingInterfaceCAPITests.cpp"
+	 "CAmTestCAPIWrapper.cpp"
+	 "CAmCommandSenderCommon.cpp"
+	 "CAmTestRoutingSenderService.cpp"
+	 "IAmRoutingSenderBackdoor.cpp"
+) 
+
+message (STATUS "${ROUTINGCONTROL_CAPI}")
+
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-local-typedefs -DUNIT_TEST=1 -DDLT_CONTEXT=AudioManager")
 
 ADD_EXECUTABLE(AmRoutingInterfaceCAPITests ${CAPI_PLUGIN_INTERFACE_SRCS_CXX})
 
 TARGET_LINK_LIBRARIES(AmRoutingInterfaceCAPITests 
-    ${DLT_LIBRARIES}
     ${CMAKE_DL_LIBS}
     ${CMAKE_THREAD_LIBS_INIT}
     ${PYTHON_LIBRARY}
     ${CommonAPI_LIBRARY}
-    gtest
-    gmock
-    ${ROUTINGCONTROL_CAPI} 
+    ${GMOCK_LIBRARIES}
+    ${GTEST_LIBRARIES}
+    ${AudioManagerUtilities_LIBRARIES}
+    ${ROUTINGCONTROL_CAPI}
     )
 
 INSTALL(TARGETS AmRoutingInterfaceCAPITests 

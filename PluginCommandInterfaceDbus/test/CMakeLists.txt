@@ -15,45 +15,33 @@
 # For further information see http://www.genivi.org/.
 #
 
-cmake_minimum_required(VERSION 2.8.8)
+cmake_minimum_required(VERSION 3.0)
 
-PROJECT(CAmCommandSenderDbusTests)
-
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-local-typedefs -DUNIT_TEST=1 -DDLT_CONTEXT=AudioManager")
-
-set(STD_INCLUDE_DIRS "/usr/include")
-set(EXECUTABLE_OUTPUT_PATH ${TEST_EXECUTABLE_OUTPUT_PATH})
+PROJECT(CAmCommandSenderDbusTests VERSION 7.4.0)
 
 FIND_PACKAGE(Threads)
 FIND_PACKAGE(PkgConfig)
 FIND_PACKAGE(PythonLibs REQUIRED)
+find_package(AudioManager REQUIRED > 7.0.0)  
+find_package(AudioManagerUtilities REQUIRED > 7.0.0)
+pkg_check_modules (GTEST REQUIRED "gtest >= 1.6.0")
+pkg_check_modules (GMOCK REQUIRED "gmock >= 1.6.0")
 pkg_check_modules (DBUS "dbus-1 >= 1.4" REQUIRED)
 
-IF(WITH_DLT)    
-    pkg_check_modules(DLT REQUIRED automotive-dlt>=2.2.0)   
-ENDIF(WITH_DLT)
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-local-typedefs -DUNIT_TEST=1 -DDLT_CONTEXT=AudioManager")
 
 INCLUDE_DIRECTORIES(   
-    ${STD_INCLUDE_DIRS}
+    ${AudioManagerUtilities_INCLUDE_DIRS} 
+    ${GMOCK_INCLUDE_DIRS}
+    ${GTEST_INCLUDE_DIRS}
     ${CMAKE_SOURCE_DIR} 
     ${CMAKE_CURRENT_BINARY_DIR}
-    ${AUDIO_INCLUDE_FOLDER}
-    ${DBUS_ARCH_INCLUDE_DIR}
-    ${DBUS_INCLUDE_FOLDER} 
-    ${CMAKE_SOURCE_DIR} 
-    ${DLT_INCLUDE_DIRS}
-    ${INCLUDE_FOLDER}
+    ${COMMON_API_INCLUDE_DIRS}
+    ${COMMON_API_GEN_INCLUDE_DIR}
     ${PYTHON_INCLUDE_DIRS}
-    ${GOOGLE_TEST_INCLUDE_DIR}
-    ${GMOCK_INCLUDE_DIR}
-    "${AUDIOMANAGER_DAEMON_FOLDER}/include"
-    "../include"
 )
    
 file(GLOB DBUS_PLUGIN_INTERFACE_SRCS_CXX 
-     "${AUDIOMANAGER_UTILITIES_SRC}/CAmDbusWrapper.cpp"
-     "${AUDIOMANAGER_UTILITIES_SRC}/CAmSocketHandler.cpp"
-     "${AUDIOMANAGER_UTILITIES_SRC}/CAmDltWrapper.cpp"
      "../src/*.cpp"  
      "CAmCommandSenderDbusBackdoor.cpp"
      "CAmCommandSenderDbusTest.cpp"
@@ -61,9 +49,6 @@ file(GLOB DBUS_PLUGIN_INTERFACE_SRCS_CXX
 )
 
 file(GLOB DBUS_SIGNAL_INTERFACE_SRCS_CXX 
-     "${AUDIOMANAGER_UTILITIES_SRC}/CAmDbusWrapper.cpp"
-     "${AUDIOMANAGER_UTILITIES_SRC}/CAmSocketHandler.cpp"
-     "${AUDIOMANAGER_UTILITIES_SRC}/CAmDltWrapper.cpp"
      "../src/*.cpp"  
      "CAmCommandSenderDbusBackdoor.cpp"
      "CAmCommandSenderDbusSignalTest.cpp"
@@ -74,24 +59,22 @@ ADD_EXECUTABLE(AmCommandSenderDbusTest ${DBUS_PLUGIN_INTERFACE_SRCS_CXX})
 ADD_EXECUTABLE(AmCommandSenderDbusSignalTest ${DBUS_SIGNAL_INTERFACE_SRCS_CXX})
 
 TARGET_LINK_LIBRARIES(AmCommandSenderDbusTest 
-    ${DLT_LIBRARIES}
-    ${DBUS_LIBRARIES}
     ${CMAKE_DL_LIBS}
     ${CMAKE_THREAD_LIBS_INIT}
     ${PYTHON_LIBRARY}
-    gtest
-    gmock
+    ${GMOCK_LIBRARIES}
+    ${GTEST_LIBRARIES}
+    ${AudioManagerUtilities_LIBRARIES}  
 )
 
 
 TARGET_LINK_LIBRARIES(AmCommandSenderDbusSignalTest 
-    ${DLT_LIBRARIES}
-    ${DBUS_LIBRARIES}
     ${CMAKE_DL_LIBS}
     ${CMAKE_THREAD_LIBS_INIT}
     ${PYTHON_LIBRARY}
-    gtest
-    gmock
+    ${GMOCK_LIBRARIES}
+    ${GTEST_LIBRARIES}
+    ${AudioManagerUtilities_LIBRARIES}
 )
 
 INSTALL(TARGETS AmCommandSenderDbusTest 
