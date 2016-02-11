@@ -23,9 +23,6 @@ find_package(PkgConfig)
 find_package(AudioManager REQUIRED > 7.3.0)  
 find_package(AudioManagerUtilities REQUIRED > 7.3.0)   
 
-set(PLUGINS_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR})   	
-set(LIBRARY_OUTPUT_PATH ${PLUGINS_OUTPUT_PATH}/control)
-
 INCLUDE_DIRECTORIES(
 	${CMAKE_CURRENT_SOURCE_DIR}/include
 	${CMAKE_SOURCE_DIR} 
@@ -40,8 +37,7 @@ file(GLOB PLUGIN_CONTROL_SRCS_CXX "src/*.cpp")
 add_library(PluginControlInterface MODULE ${PLUGIN_CONTROL_SRCS_CXX})
 
 
-TARGET_LINK_LIBRARIES(PluginControlInterface 
-    ${DLT_LIBRARIES})
+TARGET_LINK_LIBRARIES(PluginControlInterface)
 
 IF(WITH_TESTS)
 	#add_subdirectory (test)
@@ -49,7 +45,7 @@ ENDIF(WITH_TESTS)
 
 
 INSTALL(TARGETS PluginControlInterface   
-        DESTINATION lib/${LIB_INSTALL_SUFFIX}/control
+        DESTINATION ${CONTROLLER_PLUGIN_DIR}
         PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
         COMPONENT plugin
 )

@@ -25,9 +25,6 @@ project(PluginCommandInterfaceCAPI VERSION 7.4.0)
 find_package(AudioManager REQUIRED > 7.3.0)  
 find_package(AudioManagerUtilities REQUIRED > 7.3.0) 
 
-set(PLUGINS_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}) 
-set(LIBRARY_OUTPUT_PATH ${PLUGINS_OUTPUT_PATH}/command)
-
 if (AudioManager_FOUND)
 	message(STATUS "Audiomanager version: ${AudioManager_VERSION}")
 endif (AudioManager_FOUND)
@@ -63,13 +60,9 @@ ELSE(NOT CC_FOUND)
 	SET(WITH_COMMAND_INTERFACE_GENERIC_LIB OFF)
 	INCLUDE_DIRECTORIES(
 		${INCLUDE_DIRECTORIES} 
-		${COMMONAPI_INCLUDE_DIRS} 
-		${CC_INCLUDE_DIRS}
-		)
+		${CC_INCLUDE_DIRS})
 	set (AM_LINK_LIBS
-		${AM_LINK_LIBS}
-		${CC_LIBRARIES}
-		)
+		${CC_LIBRARIES})
 	LINK_DIRECTORIES( ${LINK_DIRECTORIES} ${CC_LIBRARY_DIRS})
 ENDIF(NOT CC_FOUND)
     
@@ -82,63 +75,58 @@ IF(WITH_COMMAND_INTERFACE_GENERIC_LIB )
 
 
 
-SET(SRC_GEN src-gen/v${COMMONAPI_VERSION_NUMBER}/Generic)
+	SET(SRC_GEN src-gen/v${COMMONAPI_VERSION_NUMBER}/Generic)
 
-# Find the common-api sources. 
-# The sources can be placed in the build directory (DESTINATION) or in the source tree (ALT_DESTINATION). 
-# The ALT_DESTINATION is used as fall back if the DESTINATION directory dosen't contain the sources or you just don't want to use the generator.
-COMMON_API_GENERATE_SOURCES(
-                            # Prefix.
-                            TARGET COMMAND_CTR 
-                            # A list with fidls for the generic generator. Leave this parameter empty if you won't generic code.
-                            FIDLS_GENERIC fidl/CommandInterface.fidl
-                            # A list with fidls for the binding generator. Leave this parameter empty if you won't binding code.
-                            FIDLS_BINDING #Empty
-                            # A relative path to the build directory or an absolute path.
-                            DESTINATION ${SRC_GEN} 
-                            # An alternative relative/absolute path with common-api sources, usually in the source tree.
-                            ALT_DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/src-gen
-                            )
+	# Find the common-api sources. 
+	# The sources can be placed in the build directory (DESTINATION) or in the source tree (ALT_DESTINATION). 
+	# The ALT_DESTINATION is used as fall back if the DESTINATION directory dosen't contain the sources or you just don't want to use the generator.
+	COMMON_API_GENERATE_SOURCES(
+								# Prefix.
+								TARGET COMMAND_CTR 
+								# A list with fidls for the generic generator. Leave this parameter empty if you won't generic code.
+								FIDLS_GENERIC fidl/CommandInterface.fidl
+								# A list with fidls for the binding generator. Leave this parameter empty if you won't binding code.
+								FIDLS_BINDING #Empty
+								# A relative path to the build directory or an absolute path.
+								DESTINATION ${SRC_GEN} 
+								# An alternative relative/absolute path with common-api sources, usually in the source tree.
+								ALT_DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/src-gen
+								)
 
-INCLUDE_DIRECTORIES(	${INCLUDE_DIRECTORIES}
-			${COMMAND_CTR_GEN_INCLUDE_DIR}
-			${COMMONAPI_INCLUDE_DIRS}
-			)
+	INCLUDE_DIRECTORIES(	${INCLUDE_DIRECTORIES}
+				${COMMAND_CTR_GEN_INCLUDE_DIR}
+				${COMMONAPI_INCLUDE_DIRS}
+				)
 
 
-add_library (${COMMANDCONTROL_CAPI} SHARED ${COMMAND_CTR_GEN_COMMON_SOURCES} )        
-target_link_libraries(${COMMANDCONTROL_CAPI} ${CommonAPI_LIBRARY}  )
+	add_library (${COMMANDCONTROL_CAPI} SHARED ${COMMAND_CTR_GEN_COMMON_SOURCES} )        
+	target_link_libraries(${COMMANDCONTROL_CAPI} ${CommonAPI_LIBRARY}  )
 
-set_target_properties(${COMMANDCONTROL_CAPI} PROPERTIES 
-                            LINKER_LANGUAGE CXX 
-                            LIBRARY_OUTPUT_DIRECTORY ${PLUGINS_OUTPUT_PATH})
-                                      
-INSTALL (TARGETS ${COMMANDCONTROL_CAPI}
-          PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
-          LIBRARY DESTINATION lib
-          COMPONENT plugin)    
-set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-link_directories(${CMAKE_CURRENT_BINARY_DIR}) 
+	set_target_properties(${COMMANDCONTROL_CAPI} PROPERTIES 
+								LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+										  
+	INSTALL (TARGETS ${COMMANDCONTROL_CAPI}
+			  PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
+			  LIBRARY DESTINATION lib
+			  COMPONENT plugin)    
+	set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+	link_directories(${CMAKE_CURRENT_BINARY_DIR}) 
 
-INSTALL( DIRECTORY ${COMMAND_CTR_GEN_INCLUDE_DIR} DESTINATION include/${LIB_INSTALL_SUFFIX} COMPONENT plugin)
+	INSTALL( DIRECTORY ${COMMAND_CTR_GEN_INCLUDE_DIR} DESTINATION include/${LIB_INSTALL_SUFFIX} COMPONENT plugin)
 
-configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/cmake/plugin.pc.in ${CMAKE_BINARY_DIR}/${COMMANDCONTROL_CAPI}.pc @ONLY )  
-install(FILES ${CMAKE_BINARY_DIR}/${COMMANDCONTROL_CAPI}.pc DESTINATION lib/pkgconfig COMPONENT plugin)             
+	configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/cmake/plugin.pc.in ${CMAKE_BINARY_DIR}/${COMMANDCONTROL_CAPI}.pc @ONLY )  
+	install(FILES ${CMAKE_BINARY_DIR}/${COMMANDCONTROL_CAPI}.pc DESTINATION lib/pkgconfig COMPONENT plugin)             
 ENDIF()
 
-IF(WITH_DLT)
-INCLUDE_DIRECTORIES(${INCLUDE_DIRECTORIES} ${DLT_INCLUDE_DIRS})
-set (AM_LINK_LIBS ${AM_LINK_LIBS} ${DLT_LIBRARIES})
-ENDIF(WITH_DLT)    
-
+  
 add_library(PluginCommandInterfaceCAPI MODULE ${PLUGINCAPI_SRCS_CXX})
 
-TARGET_LINK_LIBRARIES(PluginCommandInterfaceCAPI ${AM_LINK_LIBS})
+TARGET_LINK_LIBRARIES(PluginCommandInterfaceCAPI ${AM_LINK_LIBS} ${AudioManagerUtilities_LIBRARIES})
          
 install(TARGETS PluginCommandInterfaceCAPI          
-    DESTINATION lib/${LIB_INSTALL_SUFFIX}/command
+    DESTINATION ${DEFAULT_PLUGIN_COMMAND_DIR}
     PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
-    COMPONENT plugin
+    COMPONENT lib
 )
 
 IF(WITH_TESTS)

@@ -37,12 +37,12 @@ namespace am {
 namespace gc {
 extern "C" IAmPolicySend* createPolicySendInterface();
 
-extern "C" IAmControlSend* PluginControlInterfaceFactory()
+extern "C" IAmControlSend* PluginControlInterfaceGenericFactory()
 {
     return (new CAmControlSend());
 }
 
-extern "C" void destroyControlPluginInterface(IAmControlSend* controlSendInterface)
+extern "C" void destroyPluginControlInterfaceGeneric(IAmControlSend* controlSendInterface)
 {
     delete controlSendInterface;
 }

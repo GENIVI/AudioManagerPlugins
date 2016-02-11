@@ -23,9 +23,8 @@ PROJECT(PluginRoutingInterfaceAsync VERSION 7.4.0)
 find_package(AudioManager REQUIRED > 7.3.0)  
 find_package(AudioManagerUtilities REQUIRED > 7.3.0)
 find_package( Threads )
-
-set(PLUGINS_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR})      
-set(LIBRARY_OUTPUT_PATH ${PLUGINS_OUTPUT_PATH}/routing)
+ 
+set(LIBRARY_OUTPUT_PATH ${DEFAULT_PLUGIN_ROUTING_DIR})
 
 INCLUDE_DIRECTORIES(
 	${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -41,7 +40,6 @@ file(GLOB PLUGINDBUS_SRCS_CXX "src/*.cpp")
 add_library(PluginRoutingInterfaceAsync MODULE ${PLUGINDBUS_SRCS_CXX})
 
 TARGET_LINK_LIBRARIES(PluginRoutingInterfaceAsync
-${DLT_LIBRARIES}
 ${CMAKE_THREAD_LIBS_INIT}
 )
 

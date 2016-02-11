@@ -22,28 +22,31 @@ find_package(PkgConfig)
 
 
 OPTION (WITH_COMMAND_INTERFACE_CAPI
-        "build with commandinterface common-api plugin" ON )
+        "build with commandinterface common-api plugin" OFF )
 OPTION (WITH_COMMAND_INTERFACE_DBUS
         "build with commandinterface dbus plugin" OFF )
 OPTION (WITH_ROUTING_INTERFACE_ASYNC
-        "build with routing interface async plugin" ON)
+        "build with routing interface async plugin" OFF)
 OPTION(WITH_ROUTING_INTERFACE_CAPI
-       "build with routing iterface common-api plugin" ON)   
+       "build with routing iterface common-api plugin" OFF)   
 OPTION(WITH_ROUTING_INTERFACE_DBUS
-       "build with routing iterface dbus plugin" OFF)        
+       "build with routing iterface dbus plugin" OFF)  
+OPTION (WITH_TEST_CONTROLLER 
+        "Build with the test controller" OFF)  
+OPTION (WITH_GENERIC_CONTROLLER 
+        "Build with the generic controller" OFF)     
 
-IF(USE_BUILD_LIBS) 
-	file(MAKE_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}/plugins")
-ENDIF(USE_BUILD_LIBS)
+if (NOT WITH_TEST_CONTROLLER AND NOT WITH_ROUTING_INTERFACE_DBUS AND NOT WITH_GENERIC_CONTROLLER AND NOT WITH_ROUTING_INTERFACE_CAPI AND NOT WITH_ROUTING_INTERFACE_ASYNC AND NOT WITH_COMMAND_INTERFACE_DBUS AND NOT WITH_COMMAND_INTERFACE_CAPI)
+	message (FATAL_ERROR "No option selected. please choose the plugins you want")
+endif (NOT WITH_TEST_CONTROLLER AND NOT WITH_ROUTING_INTERFACE_DBUS AND NOT WITH_GENERIC_CONTROLLER AND NOT WITH_ROUTING_INTERFACE_CAPI AND NOT WITH_ROUTING_INTERFACE_ASYNC AND NOT WITH_COMMAND_INTERFACE_DBUS AND NOT WITH_COMMAND_INTERFACE_CAPI)
 
-OPTION (WITH_CONTROL_PLUGIN
-        "build with controller plugin" ON )
+IF (WITH_GENERIC_CONTROLLER)
+	add_subdirectory(PluginControlInterfaceGeneric)
+ENDIF(WITH_GENERIC_CONTROLLER)
 
-IF (WITH_CONTROL_PLUGIN)
-    SET(WITH_ENABLED_CONTROLLER "" CACHE STRING "Enable Test Controller '' / Enable Generic Controller 'Generic'" )
-    SET_PROPERTY(CACHE WITH_ENABLED_CONTROLLER PROPERTY STRINGS "" "Generic")
-    ADD_SUBDIRECTORY("PluginControlInterface${WITH_ENABLED_CONTROLLER}")
-ENDIF ()
+IF (WITH_TEST_CONTROLLER)
+	add_subdirectory(PluginControlInterface)
+ENDIF (WITH_TEST_CONTROLLER) 
 
 IF (WITH_COMMAND_INTERFACE_CAPI)
 	add_subdirectory(PluginCommandInterfaceCAPI)
