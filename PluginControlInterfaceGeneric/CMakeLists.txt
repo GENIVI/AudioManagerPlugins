@@ -19,6 +19,8 @@ SET(PLUGIN_LIB_NAME PluginControlInterfaceGeneric)
 
 SET(INCLUDE_FOLDER "include")
 
+SET(CONF_ROOT "${CMAKE_INSTALL_PREFIX}/etc/controllerconf")
+
 IF(NSM_IFACE_PRESENT)
     FIND_PACKAGE(NSM REQUIRED)
 ENDIF(NSM_IFACE_PRESENT)
@@ -47,6 +49,8 @@ INCLUDE_DIRECTORIES(
 LINK_DIRECTORIES(${AudioManagerUtilities_LIB_DIRECTORIES})
 
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11 -Wno-variadic-macro")
+
+add_definitions(-DGENERIC_CONTROLLER_DEFAULT_CONF_ROOT="${CONF_ROOT}")
 
 ENDIF(NSM_IFACE_PRESENT)
 # all source files go here
@@ -77,7 +81,7 @@ INSTALL(TARGETS ${PLUGIN_LIB_NAME}
 )
 
 INSTALL(DIRECTORY conf/
-    DESTINATION /etc/controllerconf
+	DESTINATION ${CONF_ROOT}
     COMPONENT conf
 )
 
