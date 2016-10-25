@@ -43,6 +43,11 @@ INCLUDE_DIRECTORIES(
 	${AudioManagerUtilities_INCLUDE_DIRS}
 	${LIBXML2_INCLUDE_DIR}
 )
+
+LINK_DIRECTORIES(${AudioManagerUtilities_LIB_DIRECTORIES})
+
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11 -Wno-variadic-macro")
+
 ENDIF(NSM_IFACE_PRESENT)
 # all source files go here
 FILE(GLOB PLUGIN_CONTROL_GENERIC_SRCS_CXX "src/*.cpp")
