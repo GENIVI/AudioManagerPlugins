@@ -47,7 +47,7 @@ void* run_the_loop(void* wrapper)
 CAmCommandSenderDbusTest::CAmCommandSenderDbusTest() :
         ppCommandSend(NULL) //
 {
-    CAmDltWrapper::instance()->registerApp("dbusTest", "dbusTest");
+    CAmDltWrapper::instanctiateOnce("dbusTest", "dbusTest");
 }
 
 CAmCommandSenderDbusTest::~CAmCommandSenderDbusTest()

@@ -37,7 +37,7 @@ using namespace testing;
 CAmCommandSenderDbusSignalTest::CAmCommandSenderDbusSignalTest() :
         ppCommandSend(NULL) //
 {
-    CAmDltWrapper::instance()->registerApp("dbusTest", "dbusTest");
+    CAmDltWrapper::instanctiateOnce("dbusTest", "dbusTest");
     logInfo("dbusCommandInterfaceSignalTest started");
 }
 
@@ -226,8 +226,7 @@ TEST_F(CAmCommandSenderDbusSignalTest,cbSourceAvailabilityChanged)
 
     IAmCommandSend* (*createFunc)();
     void* tempLibHandle = NULL;
-    std::string libname(LIBRARY_OUTPUT_PATH);
-    libname.append("/libPluginCommandInterfaceDbus.so");
+    std::string libname("../plugins/libPluginCommandInterfaceDbus.so");
     createFunc = getCreateFunction<IAmCommandSend*()>(libname, tempLibHandle);
 
     if (!createFunc)

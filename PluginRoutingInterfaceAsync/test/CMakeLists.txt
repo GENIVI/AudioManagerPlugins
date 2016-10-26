@@ -25,6 +25,7 @@ FIND_PACKAGE(Threads)
 FIND_PACKAGE(PkgConfig)
 find_package(AudioManager REQUIRED > 7.0.0)  
 find_package(AudioManagerUtilities REQUIRED > 7.0.0)
+find_package(AudioManagerCore REQUIRED > 7.0.0)
 pkg_check_modules (GTEST REQUIRED "gtest >= 1.6.0")
 pkg_check_modules (GMOCK REQUIRED "gmock >= 1.6.0")
 
@@ -32,6 +33,7 @@ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-local-typedefs -DUNIT_TEST=
 
 INCLUDE_DIRECTORIES(   
     ${AudioManagerUtilities_INCLUDE_DIRS} 
+    ${AudioManagerCore_INCLUDE_DIRS}
     ${GMOCK_INCLUDE_DIRS}
     ${GTEST_INCLUDE_DIRS}
     ${CMAKE_SOURCE_DIR} 

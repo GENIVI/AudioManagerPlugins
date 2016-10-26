@@ -270,7 +270,7 @@ CAmTestsEnvironment::CAmTestsEnvironment() :
 				mDomainService(NULL)
 {
     env=this;
-	CAmDltWrapper::instance()->registerApp("capiTest", "capiTest");
+     CAmDltWrapper::instanctiateOnce("capiTest", "capiTest");
 	pthread_create(&mListenerThread, NULL, run_listener, NULL);
     pthread_create(&mServicePThread, NULL, run_service, NULL);
     pthread_create(&mClientPThread, NULL, run_client, NULL);
