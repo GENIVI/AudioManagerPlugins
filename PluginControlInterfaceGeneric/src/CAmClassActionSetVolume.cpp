@@ -188,6 +188,12 @@ int CAmClassActionSetVolume::_CreateSetVolumeActionList(
         {
             pRequestedElement = pSetVolumeAction;
         }
+
+        limitVolumeParam.setParam(itListLimitElement->second.limitVolume);
+        limitTypeParam.setParam(itListLimitElement->second.limitType);
+        pSetVolumeAction->setParam(ACTION_PARAM_LIMIT_VOLUME, &limitVolumeParam);
+        pSetVolumeAction->setParam(ACTION_PARAM_LIMIT_TYPE, &limitTypeParam);
+
         listActions.push_back(pSetVolumeAction);
     }
     if (listActions.size() != listLimitElement.size())
