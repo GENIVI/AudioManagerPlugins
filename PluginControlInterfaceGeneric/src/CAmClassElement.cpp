@@ -693,19 +693,22 @@ am_Error_e CAmClassElement::_register(void)
     if (E_OK != mpControlReceive->enterSinkClassDB(sinkClassInstance,
                                                    sinkClassInstance.sinkClassID))
     {
-        setID(sinkClassInstance.sinkClassID);
         LOG_FN_ERROR(" Error while registering sink Class");
         return E_DATABASE_ERROR;
+    } else {
+        setID(sinkClassInstance.sinkClassID);
     }
     // store source class in DB
 
     if (E_OK != mpControlReceive->enterSourceClassDB(sourceClassInstance.sourceClassID,
                                                      sourceClassInstance))
     {
-        setID(sourceClassInstance.sourceClassID);
         LOG_FN_ERROR(" Error while registering source Class");
         return E_DATABASE_ERROR;
+    } else {
+        setID(sourceClassInstance.sourceClassID);
     }
+
     return E_OK;
 }
 

@@ -25,9 +25,13 @@
 namespace am {
 namespace gc {
 
-#define DEFAULT_USER_CONFIGURATION_PATH   "/etc/controllerconf/configuration.xml"
-#define DEFAULT_SCHEMA_PATH               "/etc/controllerconf/audiomanagertypes.xsd"
-#define DEFAULT_CUSTOM_SCHEMA_PATH        "/etc/controllerconf/customtypes.xsd"
+#ifndef GENERIC_CONTROLLER_DEFAULT_CONF_ROOT
+#define GENERIC_CONTROLLER_DEFAULT_CONF_ROOT "/etc/controllerconf"
+#endif
+
+#define DEFAULT_USER_CONFIGURATION_PATH   GENERIC_CONTROLLER_DEFAULT_CONF_ROOT"/configuration.xml"
+#define DEFAULT_SCHEMA_PATH               GENERIC_CONTROLLER_DEFAULT_CONF_ROOT"/audiomanagertypes.xsd"
+#define DEFAULT_CUSTOM_SCHEMA_PATH        GENERIC_CONTROLLER_DEFAULT_CONF_ROOT"/customtypes.xsd"
 #define CONFIGURATION_FILE_ENV_VARNAME    "GENERIC_CONTROLLER_CONFIGURATION"
 
 // sysmbols used in topology to seperate elements

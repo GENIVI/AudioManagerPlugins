@@ -45,6 +45,10 @@ INCLUDE_DIRECTORIES(
 	${AudioManagerUtilities_INCLUDE_DIRS}
 )
 
+LINK_DIRECTORIES(${LINK_DIRECTORIES} ${AudioManagerUtilities_LIB_DIRECTORIES})
+
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11 -Wno-variadic-macro")
+
 INCLUDE (cmake/CommonAPI.cmake)
 LOAD_COMMONAPI_LIB()  
     

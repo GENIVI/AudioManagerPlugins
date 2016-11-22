@@ -23,6 +23,7 @@
 #include "CAmSourceElement.h"
 #include "CAmSinkElement.h"
 #include "CAmGatewayElement.h"
+#include "CAmClassElement.h"
 
 #include <algorithm>
 namespace am {
@@ -56,8 +57,16 @@ int CAmSystemActionRegister::_execute(void)
     mListSinks.getParam(listSinks);
     mListSources.getParam(listSources);
     mListGateways.getParam(listGateways);
+    CAmClassElement *klass;
+
     for (itListSinks = listSinks.begin(); itListSinks != listSinks.end(); ++itListSinks)
     {
+        klass = CAmClassFactory::getElement((*itListSinks).className);
+
+        if (klass) {
+          (*itListSinks).sinkClassID = klass->getID();
+        }
+
         itmapDomainIDs = mapDomainIDs.find((*itListSinks).domainName);
         if (itmapDomainIDs != mapDomainIDs.end())
         {
@@ -78,6 +87,12 @@ int CAmSystemActionRegister::_execute(void)
     }
     for (itListSources = listSources.begin(); itListSources != listSources.end(); ++itListSources)
     {
+        klass = CAmClassFactory::getElement((*itListSources).className);
+
+        if (klass) {
+          (*itListSources).sourceClassID = klass->getID();
+        }
+
         itmapDomainIDs = mapDomainIDs.find((*itListSources).domainName);
         if (itmapDomainIDs != mapDomainIDs.end())
         {
