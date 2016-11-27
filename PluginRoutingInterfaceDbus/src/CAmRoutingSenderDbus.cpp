@@ -110,19 +110,24 @@ am_Error_e CAmRoutingSenderDbus::asyncAbort(const am_Handle_s handle)
 am_Error_e CAmRoutingSenderDbus::asyncConnect(const am_Handle_s handle, const am_connectionID_t connectionID, const am_sourceID_t sourceID, const am_sinkID_t sinkID, const am_CustomAvailabilityReason_t connectionFormat)
 {
     log(&routingDbus, DLT_LOG_INFO, "CAmRoutingSenderDbus::asyncConnect called");
-    mapSources_t::iterator iter = mMapSources.begin();
-    iter = mMapSources.find(sourceID);
-    if (iter != mMapSources.end())
+    am_domainID_t domainID;
+    am_Error_e err = mpIAmRoutingReceive->getDomainOfSource(sourceID,domainID);
+    if(err == E_OK)
     {
-        CAmRoutingDbusSend send(mpDBusConnection, iter->second.busname, iter->second.path, iter->second.interface, "asyncConnect");
-        send.append(handle.handle);
-        send.append(connectionID);
-        send.append(sourceID);
-        send.append(sinkID);
-        send.append(static_cast<int32_t>(connectionFormat));
-        mMapConnections.insert(std::make_pair(connectionID, (iter->second)));
-        mMapHandles.insert(std::make_pair(+handle.handle, iter->second));
-        return (send.sendAsync());
+        mapDomain_t::iterator iter = mMapDomains.begin();
+        iter = mMapDomains.find(domainID);
+        if (iter != mMapDomains.end())
+        {
+            CAmRoutingDbusSend send(mpDBusConnection, iter->second.busname, iter->second.path, iter->second.interface, "asyncConnect");
+            send.append(handle.handle);
+            send.append(connectionID);
+            send.append(sourceID);
+            send.append(sinkID);
+            send.append(static_cast<int32_t>(connectionFormat));
+            mMapConnections.insert(std::make_pair(connectionID, (iter->second)));
+            mMapHandles.insert(std::make_pair(+handle.handle, iter->second));
+            return (send.sendAsync());
+        }
     }
     log(&routingDbus, DLT_LOG_ERROR, "CAmRoutingSenderDbus::asyncConnect could not find interface");
     return (E_UNKNOWN);
@@ -147,19 +152,24 @@ am_Error_e CAmRoutingSenderDbus::asyncDisconnect(const am_Handle_s handle, const
 
 am_Error_e CAmRoutingSenderDbus::asyncSetSinkVolume(const am_Handle_s handle, const am_sinkID_t sinkID, const am_volume_t volume, const am_CustomRampType_t ramp, const am_time_t time)
 {
-    log(&routingDbus, DLT_LOG_INFO, "CAmRoutingSenderDbus::asyncSetSinkVolume called");
-    mapSinks_t::iterator iter = mMapSinks.begin();
-    iter = mMapSinks.find(sinkID);
-    if (iter != mMapSinks.end())
+    log(&routingDbus, DLT_LOG_INFO, "CAmRoutingSenderDbus::asyncSetSinkVolume called, sinkID=",sinkID);
+    am_domainID_t domainID;
+    am_Error_e err = mpIAmRoutingReceive->getDomainOfSink(sinkID,domainID);
+    if(err == E_OK)
     {
-        CAmRoutingDbusSend send(mpDBusConnection, iter->second.busname, iter->second.path, iter->second.interface, "asyncSetSinkVolume");
-        send.append(handle.handle);
-        send.append(sinkID);
-        send.append(volume);
-        send.append(static_cast<int16_t>(ramp));
-        send.append(time);
-        mMapHandles.insert(std::make_pair(+handle.handle, iter->second));
-        return (send.sendAsync());
+        mapDomain_t::iterator iter = mMapDomains.begin();
+        iter = mMapDomains.find(domainID);
+        if (iter != mMapDomains.end())
+        {
+            CAmRoutingDbusSend send(mpDBusConnection, iter->second.busname, iter->second.path, iter->second.interface, "asyncSetSinkVolume");
+            send.append(handle.handle);
+            send.append(sinkID);
+            send.append(volume);
+            send.append(static_cast<int16_t>(ramp));
+            send.append(time);
+            mMapHandles.insert(std::make_pair(+handle.handle, iter->second));
+            return (send.sendAsync());
+        }
     }
     log(&routingDbus, DLT_LOG_ERROR, "CAmRoutingSenderDbus::asyncSetSinkVolume could not find interface");
     return (E_UNKNOWN);
@@ -168,18 +178,23 @@ am_Error_e CAmRoutingSenderDbus::asyncSetSinkVolume(const am_Handle_s handle, co
 am_Error_e CAmRoutingSenderDbus::asyncSetSourceVolume(const am_Handle_s handle, const am_sourceID_t sourceID, const am_volume_t volume, const am_CustomRampType_t ramp, const am_time_t time)
 {
     log(&routingDbus, DLT_LOG_INFO, "CAmRoutingSenderDbus::asyncSetSourceVolume called");
-    mapSources_t::iterator iter = mMapSources.begin();
-    iter = mMapSources.find(sourceID);
-    if (iter != mMapSources.end())
+    am_domainID_t domainID;
+    am_Error_e err = mpIAmRoutingReceive->getDomainOfSource(sourceID,domainID);
+    if(err == E_OK)
     {
-        CAmRoutingDbusSend send(mpDBusConnection, iter->second.busname, iter->second.path, iter->second.interface, "asyncSetSourceVolume");
-        send.append(handle.handle);
-        send.append(sourceID);
-        send.append(volume);
-        send.append(static_cast<int16_t>(ramp));
-        send.append(time);
-        mMapHandles.insert(std::make_pair(+handle.handle, iter->second));
-        return (send.sendAsync());
+        mapDomain_t::iterator iter = mMapDomains.begin();
+        iter = mMapDomains.find(domainID);
+        if (iter != mMapDomains.end())
+        {
+            CAmRoutingDbusSend send(mpDBusConnection, iter->second.busname, iter->second.path, iter->second.interface, "asyncSetSourceVolume");
+            send.append(handle.handle);
+            send.append(sourceID);
+            send.append(volume);
+            send.append(static_cast<int16_t>(ramp));
+            send.append(time);
+            mMapHandles.insert(std::make_pair(+handle.handle, iter->second));
+            return (send.sendAsync());
+        }
     }
     log(&routingDbus, DLT_LOG_ERROR, "CAmRoutingSenderDbus::asyncSetSourceVolume could not find interface");
     return (E_UNKNOWN);
@@ -188,16 +203,21 @@ am_Error_e CAmRoutingSenderDbus::asyncSetSourceVolume(const am_Handle_s handle, 
 am_Error_e CAmRoutingSenderDbus::asyncSetSourceState(const am_Handle_s handle, const am_sourceID_t sourceID, const am_SourceState_e state)
 {
     log(&routingDbus, DLT_LOG_INFO, "CAmRoutingSenderDbus::asyncSetSourceState called");
-    mapSources_t::iterator iter = mMapSources.begin();
-    iter = mMapSources.find(sourceID);
-    if (iter != mMapSources.end())
+    am_domainID_t domainID;
+    am_Error_e err = mpIAmRoutingReceive->getDomainOfSource(sourceID,domainID);
+    if(err == E_OK)
     {
-        CAmRoutingDbusSend send(mpDBusConnection, iter->second.busname, iter->second.path, iter->second.interface, "asyncSetSourceState");
-        send.append(handle.handle);
-        send.append(sourceID);
-        send.append(static_cast<int32_t>(state));
-        mMapHandles.insert(std::make_pair(+handle.handle, iter->second));
-        return (send.sendAsync());
+        mapDomain_t::iterator iter = mMapDomains.begin();
+        iter = mMapDomains.find(domainID);
+        if (iter != mMapDomains.end())
+        {
+            CAmRoutingDbusSend send(mpDBusConnection, iter->second.busname, iter->second.path, iter->second.interface, "asyncSetSourceState");
+            send.append(handle.handle);
+            send.append(sourceID);
+            send.append(static_cast<int32_t>(state));
+            mMapHandles.insert(std::make_pair(+handle.handle, iter->second));
+            return (send.sendAsync());
+        }
     }
     log(&routingDbus, DLT_LOG_ERROR, "CAmRoutingSenderDbus::asyncSetSourceState could not find interface");
     return (E_UNKNOWN);
@@ -206,16 +226,21 @@ am_Error_e CAmRoutingSenderDbus::asyncSetSourceState(const am_Handle_s handle, c
 am_Error_e CAmRoutingSenderDbus::asyncSetSinkSoundProperties(const am_Handle_s handle, const am_sinkID_t sinkID, const std::vector<am_SoundProperty_s>& listSoundProperties)
 {
     log(&routingDbus, DLT_LOG_INFO, "CAmRoutingSenderDbus::asyncSetSinkSoundProperties called");
-    mapSinks_t::iterator iter = mMapSinks.begin();
-    iter = mMapSinks.find(sinkID);
-    if (iter != mMapSinks.end())
+    am_domainID_t domainID;
+    am_Error_e err = mpIAmRoutingReceive->getDomainOfSink(sinkID,domainID);
+    if(err == E_OK)
     {
-        CAmRoutingDbusSend send(mpDBusConnection, iter->second.busname, iter->second.path, iter->second.interface, "asyncSetSinkSoundProperties");
-        send.append(handle.handle);
-        send.append(sinkID);
-        send.append(listSoundProperties);
-        mMapHandles.insert(std::make_pair(+handle.handle, iter->second));
-        return (send.sendAsync());
+        mapDomain_t::iterator iter = mMapDomains.begin();
+        iter = mMapDomains.find(domainID);
+        if (iter != mMapDomains.end())
+        {
+            CAmRoutingDbusSend send(mpDBusConnection, iter->second.busname, iter->second.path, iter->second.interface, "asyncSetSinkSoundProperties");
+            send.append(handle.handle);
+            send.append(sinkID);
+            send.append(listSoundProperties);
+            mMapHandles.insert(std::make_pair(+handle.handle, iter->second));
+            return (send.sendAsync());
+        }
     }
     log(&routingDbus, DLT_LOG_ERROR, "CAmRoutingSenderDbus::asyncSetSinkSoundProperties could not find interface");
     return (E_UNKNOWN);
@@ -224,16 +249,21 @@ am_Error_e CAmRoutingSenderDbus::asyncSetSinkSoundProperties(const am_Handle_s h
 am_Error_e CAmRoutingSenderDbus::asyncSetSinkSoundProperty(const am_Handle_s handle, const am_sinkID_t sinkID, const am_SoundProperty_s& soundProperty)
 {
     log(&routingDbus, DLT_LOG_INFO, "CAmRoutingSenderDbus::asyncSetSinkSoundProperty called");
-    mapSinks_t::iterator iter = mMapSinks.begin();
-    iter = mMapSinks.find(sinkID);
-    if (iter != mMapSinks.end())
+    am_domainID_t domainID;
+    am_Error_e err = mpIAmRoutingReceive->getDomainOfSink(sinkID,domainID);
+    if(err == E_OK)
     {
-        CAmRoutingDbusSend send(mpDBusConnection, iter->second.busname, iter->second.path, iter->second.interface, "asyncSetSinkSoundProperty");
-        send.append(handle.handle);
-        send.append(sinkID);
-        send.append(soundProperty);
-        mMapHandles.insert(std::make_pair(+handle.handle, iter->second));
-        return (send.sendAsync());
+        mapDomain_t::iterator iter = mMapDomains.begin();
+        iter = mMapDomains.find(domainID);
+        if (iter != mMapDomains.end())
+            {
+            CAmRoutingDbusSend send(mpDBusConnection, iter->second.busname, iter->second.path, iter->second.interface, "asyncSetSinkSoundProperty");
+            send.append(handle.handle);
+            send.append(sinkID);
+            send.append(soundProperty);
+            mMapHandles.insert(std::make_pair(+handle.handle, iter->second));
+            return (send.sendAsync());
+        }
     }
     log(&routingDbus, DLT_LOG_ERROR, "CAmRoutingSenderDbus::asyncSetSinkSoundProperty could not find interface");
     return (E_UNKNOWN);
@@ -242,16 +272,21 @@ am_Error_e CAmRoutingSenderDbus::asyncSetSinkSoundProperty(const am_Handle_s han
 am_Error_e CAmRoutingSenderDbus::asyncSetSourceSoundProperties(const am_Handle_s handle, const am_sourceID_t sourceID, const std::vector<am_SoundProperty_s>& listSoundProperties)
 {
     log(&routingDbus, DLT_LOG_INFO, "CAmRoutingSenderDbus::asyncSetSourceSoundProperties called");
-    mapSources_t::iterator iter = mMapSources.begin();
-    iter = mMapSources.find(sourceID);
-    if (iter != mMapSources.end())
+    am_domainID_t domainID;
+    am_Error_e err = mpIAmRoutingReceive->getDomainOfSource(sourceID,domainID);
+    if(err == E_OK)
     {
-        CAmRoutingDbusSend send(mpDBusConnection, iter->second.busname, iter->second.path, iter->second.interface, "asyncSetSourceSoundProperties");
-        send.append(handle.handle);
-        send.append(sourceID);
-        send.append(listSoundProperties);
-        mMapHandles.insert(std::make_pair(+handle.handle, iter->second));
-        return (send.sendAsync());
+        mapDomain_t::iterator iter = mMapDomains.begin();
+        iter = mMapDomains.find(domainID);
+        if (iter != mMapDomains.end())
+        {
+            CAmRoutingDbusSend send(mpDBusConnection, iter->second.busname, iter->second.path, iter->second.interface, "asyncSetSourceSoundProperties");
+            send.append(handle.handle);
+            send.append(sourceID);
+            send.append(listSoundProperties);
+            mMapHandles.insert(std::make_pair(+handle.handle, iter->second));
+            return (send.sendAsync());
+        }
     }
     log(&routingDbus, DLT_LOG_ERROR, "CAmRoutingSenderDbus::asyncSetSourceSoundProperties could not find interface");
     return (E_UNKNOWN);
@@ -260,16 +295,21 @@ am_Error_e CAmRoutingSenderDbus::asyncSetSourceSoundProperties(const am_Handle_s
 am_Error_e CAmRoutingSenderDbus::asyncSetSourceSoundProperty(const am_Handle_s handle, const am_sourceID_t sourceID, const am_SoundProperty_s& soundProperty)
 {
     log(&routingDbus, DLT_LOG_INFO, "CAmRoutingSenderDbus::asyncSetSourceSoundProperty called");
-    mapSources_t::iterator iter = mMapSources.begin();
-    iter = mMapSources.find(sourceID);
-    if (iter != mMapSources.end())
+    am_domainID_t domainID;
+    am_Error_e err = mpIAmRoutingReceive->getDomainOfSource(sourceID,domainID);
+    if(err == E_OK)
     {
-        CAmRoutingDbusSend send(mpDBusConnection, iter->second.busname, iter->second.path, iter->second.interface, "asyncSetSourceSoundProperty");
-        send.append(handle.handle);
-        send.append(sourceID);
-        send.append(soundProperty);
-        mMapHandles.insert(std::make_pair(+handle.handle, iter->second));
-        return (send.sendAsync());
+        mapDomain_t::iterator iter = mMapDomains.begin();
+        iter = mMapDomains.find(domainID);
+        if (iter != mMapDomains.end())
+        {
+            CAmRoutingDbusSend send(mpDBusConnection, iter->second.busname, iter->second.path, iter->second.interface, "asyncSetSourceSoundProperty");
+            send.append(handle.handle);
+            send.append(sourceID);
+            send.append(soundProperty);
+            mMapHandles.insert(std::make_pair(+handle.handle, iter->second));
+            return (send.sendAsync());
+        }
     }
     log(&routingDbus, DLT_LOG_ERROR, "CAmRoutingSenderDbus::asyncSetSourceSoundProperty could not find interface");
     return (E_UNKNOWN);
@@ -318,26 +358,6 @@ void CAmRoutingSenderDbus::addDomainLookup(am_domainID_t domainID, rs_lookupData
     mMapDomains.insert(std::make_pair(domainID, lookupData));
 }
 
-void CAmRoutingSenderDbus::addSourceLookup(am_sourceID_t sourceID, am_domainID_t domainID)
-{
-    mapDomain_t::iterator iter(mMapDomains.begin());
-    iter = mMapDomains.find(domainID);
-    if (iter != mMapDomains.end())
-    {
-        mMapSources.insert(std::make_pair(sourceID, iter->second));
-    }
-}
-
-void CAmRoutingSenderDbus::addSinkLookup(am_sinkID_t sinkID, am_domainID_t domainID)
-{
-    mapDomain_t::iterator iter(mMapDomains.begin());
-    iter = mMapDomains.find(domainID);
-    if (iter != mMapDomains.end())
-    {
-        mMapSinks.insert(std::make_pair(sinkID, iter->second));
-    }
-}
-
 template <typename TKey> void  CAmRoutingSenderDbus::removeEntriesForValue(const rs_lookupData_s & value, std::map<TKey,rs_lookupData_s> & map)
 {
 	typename std::map<TKey,rs_lookupData_s>::iterator it = map.begin();
@@ -362,22 +382,10 @@ void CAmRoutingSenderDbus::removeDomainLookup(am_domainID_t domainID)
     iter = mMapDomains.find(domainID);
     if (iter != mMapDomains.end())
     {
-    	CAmRoutingSenderDbus::removeEntriesForValue(iter->second, mMapSources);
-    	CAmRoutingSenderDbus::removeEntriesForValue(iter->second, mMapSinks);
     	CAmRoutingSenderDbus::removeEntriesForValue(iter->second, mMapHandles);
     	CAmRoutingSenderDbus::removeEntriesForValue(iter->second, mMapConnections);
 		mMapDomains.erase(domainID);
     }
-}
-
-void CAmRoutingSenderDbus::removeSourceLookup(am_sourceID_t sourceID)
-{
-	mMapSources.erase(sourceID);
-}
-
-void CAmRoutingSenderDbus::removeSinkLookup(am_sinkID_t sinkID)
-{
-    mMapSinks.erase(sinkID);
 }
 
 am_Error_e CAmRoutingSenderDbus::asyncSetVolumes(const am_Handle_s handle, const std::vector<am_Volumes_s>& listVolumes)

@@ -103,7 +103,6 @@ void IAmRoutingReceiverShadowDbus::registerSource(DBusConnection* conn, DBusMess
         log(&routingDbus, DLT_LOG_INFO, "error registering source");
         return;
     }
-    mpRoutingSenderDbus->addSourceLookup(sourceData.sourceID, sourceData.domainID);
 }
 
 void IAmRoutingReceiverShadowDbus::registerSink(DBusConnection* conn, DBusMessage* msg)
@@ -123,7 +122,6 @@ void IAmRoutingReceiverShadowDbus::registerSink(DBusConnection* conn, DBusMessag
         log(&routingDbus, DLT_LOG_INFO, "error registering sink");
         return;
     }
-    mpRoutingSenderDbus->addSinkLookup(sinkData.sinkID, sinkData.domainID);
 }
 
 void IAmRoutingReceiverShadowDbus::registerGateway(DBusConnection* conn, DBusMessage* msg)
