@@ -160,6 +160,8 @@ int CAmClassActionSetVolume::_CreateSetVolumeActionList(
 {
     am_mainVolume_t mainVolume;
     am_volume_t volume;
+    am_time_t rampTime;
+    am_CustomRampType_t rampType;
     IAmActionCommand * pRequestedElement = NULL;
     std::vector<std::pair<CAmElement*, gc_LimitVolume_s > >::iterator itListLimitElement;
     for (itListLimitElement = listLimitElement.begin();
@@ -246,6 +248,16 @@ int CAmClassActionSetVolume::_CreateSetVolumeActionList(
         actualVolume += volume;
         mVolumeParam.setParam(actualVolume);
         pRequestedElement->setParam(ACTION_PARAM_VOLUME, &mVolumeParam);
+    }
+    if (true == mRampTimeParam.getParam(rampTime))
+    {
+        mRampTimeParam.setParam(rampTime);
+        pRequestedElement->setParam(ACTION_PARAM_RAMP_TIME, &mRampTimeParam);
+    }
+    if (true == mRampTypeParam.getParam(rampType))
+    {
+        mRampTypeParam.setParam(rampType);
+        pRequestedElement->setParam(ACTION_PARAM_RAMP_TYPE, &mRampTypeParam);
     }
 
     return E_OK;

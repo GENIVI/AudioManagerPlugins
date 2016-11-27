@@ -296,8 +296,8 @@ void CAmPolicyAction::_setActionParameters(std::map<std::string, std::string >& 
         pAction->setParam(ACTION_PARAM_PATTERN, &pattern);
     }
     checkAndSetStringParam(mapParams, ACTION_PARAM_CLASS_NAME, pAction);
-    checkAndSetNumericParam(mapParams, ACTION_PARAM_RAMP_TYPE, int, pAction);
-    checkAndSetNumericParam(mapParams, ACTION_PARAM_RAMP_TIME, int, pAction);
+    checkAndSetNumericParam(mapParams, ACTION_PARAM_RAMP_TYPE, am_CustomRampType_t, pAction);
+    checkAndSetNumericParam(mapParams, ACTION_PARAM_RAMP_TIME, am_time_t, pAction);
     checkAndSetNumericParam(mapParams, ACTION_PARAM_MAIN_VOLUME, am_mainVolume_t, pAction);
     checkAndSetNumericParam(mapParams, ACTION_PARAM_MAIN_VOLUME_STEP, am_mainVolume_t, pAction);
     checkAndSetNumericParam(mapParams, ACTION_PARAM_VOLUME, am_volume_t, pAction);
