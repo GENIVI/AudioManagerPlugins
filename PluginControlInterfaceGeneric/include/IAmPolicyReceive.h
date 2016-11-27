@@ -67,6 +67,12 @@ public:
     virtual am_Error_e getListMainConnections(const gc_Element_e elementType,
                                               const std::string& name,
                                               std::vector<gc_ConnectionInfo_s >& connectionInfo) =0;
+    virtual am_Error_e getListNotificationConfigurations(const gc_Element_e elementType,
+                                                         const std::string& name,
+                                                         std::vector<am_NotificationConfiguration_s >& listNotificationConfigurations) =0;
+    virtual am_Error_e getListMainNotificationConfigurations(const gc_Element_e elementType,
+                                                             const std::string& name,
+                                                             std::vector<am_NotificationConfiguration_s >& listMainNotificationConfigurations) =0;
 };
 
 } /* namespace gc */

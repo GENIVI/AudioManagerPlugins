@@ -208,6 +208,68 @@ am_Error_e CAmPolicyReceive::getMainVolume(const gc_Element_e elementType,
     return result;
 }
 
+am_Error_e CAmPolicyReceive::getListNotificationConfigurations(
+                const gc_Element_e elementType, const std::string& name,
+                std::vector<am_NotificationConfiguration_s >& listNotificationConfigurations)
+{
+    am_Error_e result(E_NOT_POSSIBLE);
+    switch(elementType)
+    {
+    case ET_SOURCE:
+    {
+        CAmSourceElement* pElement = (CAmSourceElement*)_getElement(elementType, name);
+        if (pElement != NULL)
+        {
+            result = pElement->getListNotificationConfigurations(listNotificationConfigurations);
+        }
+    }
+    break;
+    case ET_SINK:
+    {
+        CAmSinkElement* pElement = (CAmSinkElement*)_getElement(elementType, name);
+        if (pElement != NULL)
+        {
+            result = pElement->getListNotificationConfigurations(listNotificationConfigurations);
+        }
+    }
+    break;
+    default:
+        break;
+    }
+    return result;
+}
+
+am_Error_e CAmPolicyReceive::getListMainNotificationConfigurations(
+                const gc_Element_e elementType, const std::string& name,
+                std::vector<am_NotificationConfiguration_s >& listMainNotificationConfigurations)
+{
+    am_Error_e result(E_NOT_POSSIBLE);
+    switch(elementType)
+    {
+    case ET_SOURCE:
+    {
+        CAmSourceElement* pElement = (CAmSourceElement*)_getElement(elementType, name);
+        if (pElement != NULL)
+        {
+            result = pElement->getListMainNotificationConfigurations(listMainNotificationConfigurations);
+        }
+    }
+    break;
+    case ET_SINK:
+    {
+        CAmSinkElement* pElement = (CAmSinkElement*)_getElement(elementType, name);
+        if (pElement != NULL)
+        {
+            result = pElement->getListMainNotificationConfigurations(listMainNotificationConfigurations);
+        }
+    }
+    break;
+    default:
+        break;
+    }
+    return result;
+}
+
 am_Error_e CAmPolicyReceive::getListMainConnections(
                 const gc_Element_e elementType, const std::string& elementName,
                 std::vector<gc_ConnectionInfo_s >& listConnectionInfo)

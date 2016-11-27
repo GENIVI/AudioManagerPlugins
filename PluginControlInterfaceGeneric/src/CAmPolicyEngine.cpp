@@ -51,7 +51,30 @@ CAmPolicyEngine::CAmPolicyEngine() :
     mMapFunctionReturnValue[FUNCTION_INTERRUPT_STATE] = false;
     mMapFunctionReturnValue[FUNCTION_IS_REGISTERED] = false;
     mMapFunctionReturnValue[FUNCTION_STATE] = false;
-    mMapFunctionReturnValue[FUNCTION_CONNECTION_ERROR] = false;
+    mMapFunctionReturnValue[FUNCTION_NOTIFICATION_CONFIGURATION_STATUS] = false;
+    mMapFunctionReturnValue[FUNCTION_NOTIFICATION_CONFIGURATION_PARAM] = false;
+    mMapFunctionReturnValue[FUNCTION_NOTIFICATION_DATA_VALUE] = false;
+    mMapFunctionReturnValue[FUNCTION_MAIN_NOTIFICATION_CONFIGURATION_TYPE] = false;
+    mMapFunctionReturnValue[FUNCTION_MAIN_NOTIFICATION_CONFIGURATION_STATUS] = false;
+    mMapFunctionReturnValue[FUNCTION_MAIN_NOTIFICATION_CONFIGURATION_PARAM] = false;
+
+    mMapNotificationStatusFunctions[CATEGORY_SINK] = &CAmPolicyEngine::_findSinkNTStatus;
+    mMapNotificationStatusFunctions[CATEGORY_SOURCE] = &CAmPolicyEngine::_findSourceNTStatus;
+
+    mMapNotificationParamFunctions[CATEGORY_SINK] = &CAmPolicyEngine::_findSinkNTParam;
+    mMapNotificationParamFunctions[CATEGORY_SOURCE] = &CAmPolicyEngine::_findSourceNTParam;
+
+    mMapNotificationValueFunctions[CATEGORY_USER] = &CAmPolicyEngine::_findUserNotificationValue;
+
+    mMapMainNotificationTypeFunctions[CATEGORY_USER] = &CAmPolicyEngine::_findUserNotificationType;
+
+    mMapMainNotificationStatusFunctions[CATEGORY_SINK] = &CAmPolicyEngine::_findSinkMainNTStatus;
+    mMapMainNotificationStatusFunctions[CATEGORY_SOURCE] = &CAmPolicyEngine::_findSourceMainNTStatus;
+    mMapNotificationStatusFunctions[CATEGORY_USER] = &CAmPolicyEngine::_findUserNotificationStatus;
+
+    mMapMainNotificationParamFunctions[CATEGORY_SINK] = &CAmPolicyEngine::_findSinkMainNTParam;
+    mMapMainNotificationParamFunctions[CATEGORY_SOURCE] = &CAmPolicyEngine::_findSourceMainNTParam;
+    mMapNotificationParamFunctions[CATEGORY_USER] = &CAmPolicyEngine::__findUserNotificationParam;
 
     mMapNameFunctions[CATEGORY_SINK] = &CAmPolicyEngine::_findSinkName;
     mMapNameFunctions[CATEGORY_SOURCE] = &CAmPolicyEngine::_findSourceName;
@@ -148,7 +171,12 @@ CAmPolicyEngine::CAmPolicyEngine() :
     mMapFunctionNameToFunctionMaps[FUNCTION_IS_REGISTERED] = mMapIsRegisteredFunctions;
     mMapFunctionNameToFunctionMaps[FUNCTION_STATE] = mMapStateFunctions;
     mMapFunctionNameToFunctionMaps[FUNCTION_CONNECTION_FORMAT] = mMapConnectionFormatFunctions;
-    mMapFunctionNameToFunctionMaps[FUNCTION_CONNECTION_ERROR] = mMapErrorFunctions;
+    mMapFunctionNameToFunctionMaps[FUNCTION_NOTIFICATION_CONFIGURATION_STATUS] = mMapNotificationStatusFunctions;
+    mMapFunctionNameToFunctionMaps[FUNCTION_NOTIFICATION_CONFIGURATION_PARAM] = mMapNotificationParamFunctions;
+    mMapFunctionNameToFunctionMaps[FUNCTION_NOTIFICATION_DATA_VALUE] = mMapNotificationValueFunctions;
+    mMapFunctionNameToFunctionMaps[FUNCTION_MAIN_NOTIFICATION_CONFIGURATION_TYPE] = mMapMainNotificationTypeFunctions;
+    mMapFunctionNameToFunctionMaps[FUNCTION_MAIN_NOTIFICATION_CONFIGURATION_STATUS] = mMapMainNotificationStatusFunctions;
+    mMapFunctionNameToFunctionMaps[FUNCTION_MAIN_NOTIFICATION_CONFIGURATION_PARAM] = mMapMainNotificationParamFunctions;
 
     mMapActions[CONFIG_ACTION_NAME_CONNECT] = ACTION_NAME_CONNECT;
     mMapActions[CONFIG_ACTION_NAME_POP] = ACTION_NAME_CONNECT;
@@ -164,6 +192,197 @@ CAmPolicyEngine::CAmPolicyEngine() :
     mMapActions[CONFIG_ACTION_NAME_SET_PROPERTY] = ACTION_NAME_SET_PROPERTY;
     mMapActions[CONFIG_ACTION_NAME_REGISTER] = ACTION_NAME_REGISTER;
     mMapActions[CONFIG_ACTION_NAME_DEBUG] = ACTION_DEBUG;
+    mMapActions[CONFIG_ACTION_NAME_NOTIFICATION_CONFIGURATION] = ACTION_NAME_SET_NOTIFICATION_CONFIGURATION;
+}
+
+am_Error_e CAmPolicyEngine::_findUserNotificationType(const gc_ConditionStruct_s &conditionInstance,
+                                          std::vector<std::string > &listOutputs,
+                                          const gc_triggerParams_s &parameters, const bool isLHS)
+{
+    char outputData[5];
+    // store the value in std::string format
+    sprintf(outputData, "%d", parameters.notificatonConfiguration.type);
+    listOutputs.push_back(outputData);
+    return E_OK;
+}
+
+am_Error_e CAmPolicyEngine::_findUserNotificationValue(const gc_ConditionStruct_s &conditionInstance,
+                                          std::vector<std::string > &listOutputs,
+                                          const gc_triggerParams_s &parameters, const bool isLHS)
+{
+    char outputData[5];
+    // store the value in std::string format
+    sprintf(outputData, "%d", parameters.notificatonPayload.value);
+    listOutputs.push_back(outputData);
+    return E_OK;
+}
+
+am_Error_e CAmPolicyEngine::_findUserNotificationStatus(const gc_ConditionStruct_s &conditionInstance,
+                                          std::vector<std::string > &listOutputs,
+                                          const gc_triggerParams_s &parameters, const bool isLHS)
+{
+    char outputData[5];
+    // store the value in std::string format
+    sprintf(outputData, "%d", parameters.notificatonConfiguration.status);
+    listOutputs.push_back(outputData);
+    return E_OK;
+}
+
+am_Error_e CAmPolicyEngine::__findUserNotificationParam(const gc_ConditionStruct_s &conditionInstance,
+                                          std::vector<std::string > &listOutputs,
+                                          const gc_triggerParams_s &parameters, const bool isLHS)
+{
+    char outputData[5];
+    // store the value in std::string format
+    sprintf(outputData, "%d", parameters.notificatonConfiguration.parameter);
+    listOutputs.push_back(outputData);
+    return E_OK;
+}
+
+am_Error_e CAmPolicyEngine::_findMainNTStatusParam(const gc_ConditionStruct_s &conditionInstance,
+                                          std::vector<std::string > &listOutputs,const bool isLHS,
+                                          std::string& mandatoryParameter, gc_Element_e elementType,
+                                          am_CustomNotificationType_t ntType,const bool isStatusReq)
+{
+    std::string optionalParameter;
+    am_Error_e result = E_UNKNOWN;
+    std::vector<am_NotificationConfiguration_s> listNotificationConfigurations;
+    _getValueOfParameter(conditionInstance,isLHS,mandatoryParameter,optionalParameter);
+    if(E_OK == mpPolicyReceive->getListMainNotificationConfigurations(elementType,mandatoryParameter,listNotificationConfigurations))
+    {
+        am_CustomNotificationType_t type;
+        if(FUNCTION_MACRO_SUPPORTED_REQUESTING == optionalParameter)
+        {
+            type = ntType;
+        }
+        else
+        {
+            type = (am_CustomNotificationType_t)atoi(optionalParameter.data());
+        }
+        std::vector<am_NotificationConfiguration_s>::iterator itListNotificationConfigurations;
+        for(itListNotificationConfigurations = listNotificationConfigurations.begin();itListNotificationConfigurations!= listNotificationConfigurations.end(); itListNotificationConfigurations++)
+        {
+            if(type == (*itListNotificationConfigurations).type)
+            {
+                char outputData[5];
+                if( true == isStatusReq)
+                {
+                    // store the status in std::string format
+                    sprintf(outputData, "%d", (*itListNotificationConfigurations).status);
+                }
+                else
+                {
+                    // store the parameter in std::string format
+                    sprintf(outputData, "%d", (*itListNotificationConfigurations).parameter);
+                }
+                listOutputs.push_back(outputData);
+                result = E_OK;
+                break;
+            }
+        }
+    }
+    return result;
+}
+
+am_Error_e CAmPolicyEngine::_findSinkMainNTStatus(const gc_ConditionStruct_s &conditionInstance,
+                                          std::vector<std::string > &listOutputs,
+                                          const gc_triggerParams_s &parameters, const bool isLHS)
+{
+    std::string mandatoryParameter = parameters.sinkName;
+    return _findMainNTStatusParam(conditionInstance,listOutputs,isLHS,mandatoryParameter,ET_SINK,parameters.notificatonConfiguration.type,true);
+}
+
+am_Error_e CAmPolicyEngine::_findSourceMainNTStatus(const gc_ConditionStruct_s &conditionInstance,
+                                          std::vector<std::string > &listOutputs,
+                                          const gc_triggerParams_s &parameters, const bool isLHS)
+{
+    std::string mandatoryParameter = parameters.sourceName;
+    return _findMainNTStatusParam(conditionInstance,listOutputs,isLHS,mandatoryParameter,ET_SOURCE,parameters.notificatonConfiguration.type,true);
+}
+
+am_Error_e CAmPolicyEngine::_findSinkMainNTParam(const gc_ConditionStruct_s &conditionInstance,
+                                          std::vector<std::string > &listOutputs,
+                                          const gc_triggerParams_s &parameters, const bool isLHS)
+{
+    std::string mandatoryParameter = parameters.sinkName;
+    return _findMainNTStatusParam(conditionInstance,listOutputs,isLHS,mandatoryParameter,ET_SINK,parameters.notificatonConfiguration.type,false);
+}
+
+am_Error_e CAmPolicyEngine::_findSourceMainNTParam(const gc_ConditionStruct_s &conditionInstance,
+                                          std::vector<std::string > &listOutputs,
+                                          const gc_triggerParams_s &parameters, const bool isLHS)
+{
+    std::string mandatoryParameter = parameters.sourceName;
+    return _findMainNTStatusParam(conditionInstance,listOutputs,isLHS,mandatoryParameter,ET_SOURCE,parameters.notificatonConfiguration.type,false);
+}
+
+am_Error_e CAmPolicyEngine::_findNTStatusParam(const gc_ConditionStruct_s &conditionInstance,
+                                          std::vector<std::string > &listOutputs,const bool isLHS,
+                                          std::string& mandatoryParameter, gc_Element_e elementType,
+                                          am_CustomNotificationType_t ntType,const bool isStatusReq)
+{
+    std::string optionalParameter;
+    am_Error_e result = E_UNKNOWN;
+    std::vector<am_NotificationConfiguration_s> listNotificationConfigurations;
+    _getValueOfParameter(conditionInstance,isLHS,mandatoryParameter,optionalParameter);
+    if(E_OK == mpPolicyReceive->getListNotificationConfigurations(elementType,mandatoryParameter,listNotificationConfigurations))
+    {
+        am_CustomNotificationType_t type;
+        type = (am_CustomNotificationType_t)atoi(optionalParameter.data());
+        std::vector<am_NotificationConfiguration_s>::iterator itListNotificationConfigurations;
+        for(itListNotificationConfigurations = listNotificationConfigurations.begin();itListNotificationConfigurations!= listNotificationConfigurations.end(); itListNotificationConfigurations++)
+        {
+            if(type == (*itListNotificationConfigurations).type)
+            {
+                char outputData[5];
+                if( true == isStatusReq)
+                {
+                    // store the status in std::string format
+                    sprintf(outputData, "%d", (*itListNotificationConfigurations).status);
+                }
+                else
+                {
+                    // store the parameter in std::string format
+                    sprintf(outputData, "%d", (*itListNotificationConfigurations).parameter);
+                }
+                listOutputs.push_back(outputData);
+                result = E_OK;
+                break;
+            }
+        }
+    }
+    return result;
+}
+am_Error_e CAmPolicyEngine::_findSinkNTStatus(const gc_ConditionStruct_s &conditionInstance,
+                                          std::vector<std::string > &listOutputs,
+                                          const gc_triggerParams_s &parameters, const bool isLHS)
+{
+    std::string mandatoryParameter = parameters.sinkName;
+    return _findNTStatusParam(conditionInstance,listOutputs,isLHS,mandatoryParameter,ET_SINK,parameters.notificatonConfiguration.type,true);
+}
+
+am_Error_e CAmPolicyEngine::_findSourceNTStatus(const gc_ConditionStruct_s &conditionInstance,
+                                          std::vector<std::string > &listOutputs,
+                                          const gc_triggerParams_s &parameters, const bool isLHS)
+{
+    std::string mandatoryParameter = parameters.sourceName;
+    return _findNTStatusParam(conditionInstance,listOutputs,isLHS,mandatoryParameter,ET_SOURCE,parameters.notificatonConfiguration.type,true);
+}
+
+am_Error_e CAmPolicyEngine::_findSinkNTParam(const gc_ConditionStruct_s &conditionInstance,
+                                          std::vector<std::string > &listOutputs,
+                                          const gc_triggerParams_s &parameters, const bool isLHS)
+{
+    std::string mandatoryParameter = parameters.sinkName;
+    return _findNTStatusParam(conditionInstance,listOutputs,isLHS,mandatoryParameter,ET_SINK,parameters.notificatonConfiguration.type,false);
+}
+
+am_Error_e CAmPolicyEngine::_findSourceNTParam(const gc_ConditionStruct_s &conditionInstance,
+                                          std::vector<std::string > &listOutputs,
+                                          const gc_triggerParams_s &parameters, const bool isLHS)
+{
+    std::string mandatoryParameter = parameters.sourceName;
+    return _findNTStatusParam(conditionInstance,listOutputs,isLHS,mandatoryParameter,ET_SOURCE,parameters.notificatonConfiguration.type,false);
 }
 
 am_Error_e CAmPolicyEngine::startPolicyEngine(IAmPolicyReceive* pPolicyReceive)
@@ -325,6 +544,24 @@ am_Error_e CAmPolicyEngine::_updateActionParameters(std::vector<gc_Action_s >& l
             {
                 sprintf(data, "%d", triggerParams.systemProperty.value);
                 (*itListActions).mapParameters[ACTION_PARAM_DEBUG_VALUE] = data;
+            }
+        }
+        else if ((*itListActions).actionName == CONFIG_ACTION_NAME_NOTIFICATION_CONFIGURATION)
+        {
+            sprintf(data, "%d", triggerParams.notificatonConfiguration.type);
+            if (false == isParameterSet(ACTION_PARAM_NOTIFICATION_CONFIGURATION_TYPE, (*itListActions).mapParameters))
+            {
+                (*itListActions).mapParameters[ACTION_PARAM_NOTIFICATION_CONFIGURATION_TYPE] = data;
+            }
+            sprintf(data, "%d", triggerParams.notificatonConfiguration.parameter);
+            if (false == isParameterSet(ACTION_PARAM_NOTIFICATION_CONFIGURATION_PARAM, (*itListActions).mapParameters))
+            {
+                (*itListActions).mapParameters[ACTION_PARAM_NOTIFICATION_CONFIGURATION_PARAM] = data;
+            }
+            sprintf(data, "%d", triggerParams.notificatonConfiguration.status);
+            if (false == isParameterSet(ACTION_PARAM_NOTIFICATION_CONFIGURATION_STATUS, (*itListActions).mapParameters))
+            {
+                (*itListActions).mapParameters[ACTION_PARAM_NOTIFICATION_CONFIGURATION_STATUS] = data;
             }
         }
 
@@ -641,23 +878,6 @@ am_Error_e CAmPolicyEngine::_getActions(const gc_Trigger_e trigger,
     return E_OK;
 }
 
-//used in functions returning the name for source, sink, class, connection and domain category
-bool CAmPolicyEngine::_isMacroOfNameAllowed(const gc_ConditionStruct_s& conditionInstance,
-                                            const bool isLHS) const
-{
-    bool result = true;
-    bool isValueMacro;
-    std::string mandatoryParameter;
-    isValueMacro = (isLHS == true) ? conditionInstance.leftObject.isValueMacro : conditionInstance.rightObject.functionObject.isValueMacro;
-    mandatoryParameter =
-                    (isLHS == true) ? conditionInstance.leftObject.mandatoryParameter : conditionInstance.rightObject.functionObject.mandatoryParameter;
-    if ((FUNCTION_MACRO_SUPPORTED_REQUESTING != mandatoryParameter) || (false == isValueMacro))
-    {
-        result = false;
-    }
-    return result;
-}
-
 // return the value of mandatory and optional parameter
 void CAmPolicyEngine::_getValueOfParameter(const gc_ConditionStruct_s& conditionInstance,
                                            const bool isLHS, std::string& mandatoryParameter,
@@ -860,13 +1080,19 @@ am_Error_e CAmPolicyEngine::_findElementName(const gc_ConditionStruct_s &conditi
                                              const std::string& name, const bool isLHS)
 {
     am_Error_e result = E_UNKNOWN;
-    if (true == _isMacroOfNameAllowed(conditionInstance, isLHS))
+    bool isValueMacro;
+    std::string mandatoryParameter;
+    isValueMacro = (isLHS == true) ? conditionInstance.leftObject.isValueMacro : conditionInstance.rightObject.functionObject.isValueMacro;
+    mandatoryParameter =
+                    (isLHS == true) ? conditionInstance.leftObject.mandatoryParameter : conditionInstance.rightObject.functionObject.mandatoryParameter;
+    if ((FUNCTION_MACRO_SUPPORTED_REQUESTING == mandatoryParameter) && (true == isValueMacro))
     {
         result = E_OK;
         listOutputs.push_back(name);
     }
     return result;
 }
+
 // find the name of sink
 am_Error_e CAmPolicyEngine::_findSinkName(const gc_ConditionStruct_s &conditionInstance,
                                           std::vector<std::string > &listOutputs,

@@ -190,6 +190,13 @@ public:
     am_Error_e getListMainConnections(const gc_Element_e elementType,
                                       const std::string& elementName,
                                       std::vector<gc_ConnectionInfo_s >& listConnectionInfo);
+    am_Error_e getListNotificationConfigurations(
+                    const gc_Element_e elementType, const std::string& name,
+                    std::vector<am_NotificationConfiguration_s >& listNotificationConfigurations);
+    am_Error_e getListMainNotificationConfigurations(
+                    const gc_Element_e elementType,
+                    const std::string& name,
+                    std::vector<am_NotificationConfiguration_s >& listMainNotificationConfigurations);
 private:
     /**
      * @brief It is the internal function used to store the list of connection belonging to class

@@ -68,6 +68,11 @@ struct gc_triggerParams_s
         systemProperty.value = 0;
         availability.availability = A_UNKNOWN;
         availability.availabilityReason = AR_UNKNOWN;
+        notificatonPayload.type = NT_UNKNOWN;
+        notificatonPayload.value = 0;
+        notificatonConfiguration.type = NT_UNKNOWN;
+        notificatonConfiguration.status = NS_UNKNOWN;
+        notificatonConfiguration.parameter = 0;
     }
     gc_Trigger_e triggerType;
     std::string sinkName;
@@ -84,6 +89,8 @@ struct gc_triggerParams_s
     am_Availability_s availability;
     am_MuteState_e muteState;
     am_InterruptState_e interruptState;
+    am_NotificationPayload_s notificatonPayload;
+    am_NotificationConfiguration_s notificatonConfiguration;
 };
 class IAmPolicyReceive;
 class CAmPolicyEngine
@@ -831,15 +838,6 @@ private:
                                   std::vector<gc_ConnectionInfo_s > &listConnectionInfo,
                                   const gc_triggerParams_s &parameters) const;
     /**
-     * @brief It is the supporting internal function used to find whether macro is used as mandatory parameter in name related functions
-     * @param conditionInstance: condition which need to be evaluated
-     *        isLHS: to indicate whether RHS or LHS side function of condition need to be evaluated
-     * @return true if macro is used
-     *         false if direct value is given
-     */
-    bool _isMacroOfNameAllowed(const gc_ConditionStruct_s &conditionInstance,
-                               const bool isLHS) const;
-    /**
      * @brief It is the supporting internal function used to find the value of mandatory and optional parameter of condition
      * @param conditionInstance: condition which need to be evaluated
      *        isLHS: to indicate whether RHS or LHS side function of condition need to be evaluated
@@ -966,6 +964,44 @@ private:
                               std::vector<std::string > &listOutputs,
                               std::string& mandatoryParameter, const bool isLHS,
                               const gc_Element_e elementType);
+
+
+    am_Error_e _findSinkNTStatus(const gc_ConditionStruct_s &conditionInstance,
+                                 std::vector<std::string > &listOutputs,
+                                 const gc_triggerParams_s &parameters, const bool isLHS);
+    am_Error_e _findSourceNTStatus(const gc_ConditionStruct_s &conditionInstance,
+                                 std::vector<std::string > &listOutputs,
+                                 const gc_triggerParams_s &parameters, const bool isLHS);
+    am_Error_e _findUserNotificationStatus(const gc_ConditionStruct_s &conditionInstance,
+                                     std::vector<std::string > &listOutputs,
+                                     const gc_triggerParams_s &parameters, const bool isLHS);
+    am_Error_e _findSinkNTParam(const gc_ConditionStruct_s &conditionInstance,
+                                 std::vector<std::string > &listOutputs,
+                                 const gc_triggerParams_s &parameters, const bool isLHS);
+    am_Error_e _findSourceNTParam(const gc_ConditionStruct_s &conditionInstance,
+                                 std::vector<std::string > &listOutputs,
+                                 const gc_triggerParams_s &parameters, const bool isLHS);
+    am_Error_e __findUserNotificationParam(const gc_ConditionStruct_s &conditionInstance,
+                                    std::vector<std::string > &listOutputs,
+                                    const gc_triggerParams_s &parameters, const bool isLHS);
+    am_Error_e _findUserNotificationValue(const gc_ConditionStruct_s &conditionInstance,
+                                 std::vector<std::string > &listOutputs,
+                                 const gc_triggerParams_s &parameters, const bool isLHS);
+    am_Error_e _findUserNotificationType(const gc_ConditionStruct_s &conditionInstance,
+                                 std::vector<std::string > &listOutputs,
+                                 const gc_triggerParams_s &parameters, const bool isLHS);
+    am_Error_e _findSinkMainNTStatus(const gc_ConditionStruct_s &conditionInstance,
+                                 std::vector<std::string > &listOutputs,
+                                 const gc_triggerParams_s &parameters, const bool isLHS);
+    am_Error_e _findSourceMainNTStatus(const gc_ConditionStruct_s &conditionInstance,
+                                 std::vector<std::string > &listOutputs,
+                                 const gc_triggerParams_s &parameters, const bool isLHS);
+    am_Error_e _findSinkMainNTParam(const gc_ConditionStruct_s &conditionInstance,
+                                 std::vector<std::string > &listOutputs,
+                                 const gc_triggerParams_s &parameters, const bool isLHS);
+    am_Error_e _findSourceMainNTParam(const gc_ConditionStruct_s &conditionInstance,
+                                 std::vector<std::string > &listOutputs,
+                                 const gc_triggerParams_s &parameters, const bool isLHS);
     /**
      * @brief It is the supporting internal function used to find the name of element from connection list
      * @param mandatoryParameter: mandatory parameter of condition
@@ -1054,7 +1090,14 @@ private:
      */
     am_Error_e _getActions(const gc_Trigger_e triggerType, std::vector<gc_Action_s > &listActions,
                            const gc_triggerParams_s& parameters);
-
+    am_Error_e _findNTStatusParam(const gc_ConditionStruct_s &conditionInstance,
+                                              std::vector<std::string > &listOutputs,const bool isLHS,
+                                              std::string& mandatoryParameter, gc_Element_e elementType,
+                                              am_CustomNotificationType_t ntType,const bool isStatusReq);
+    am_Error_e _findMainNTStatusParam(const gc_ConditionStruct_s &conditionInstance,
+                                              std::vector<std::string > &listOutputs,const bool isLHS,
+                                              std::string& mandatoryParameter, gc_Element_e elementType,
+                                              am_CustomNotificationType_t ntType,const bool isStatusReq);
     void _removeDoubleQuotes(std::string& inputString,const std::string& replaceString);
     void _getImplicitActions(gc_Trigger_e trigger, std::vector<gc_Action_s >& listActions,
                              const gc_triggerParams_s& parameters);
@@ -1108,6 +1151,18 @@ private:
     std::map<std::string, functionPtr > mMapStateFunctions;
     //map to store function pointers of error category function of condition set as defined in policy
     std::map<std::string, functionPtr > mMapErrorFunctions;
+    //map to store function pointers of notification configuration status category function of condition set as defined in policy
+    std::map<std::string, functionPtr > mMapNotificationStatusFunctions;
+    //map to store function pointers of notification configuration param category function of condition set as defined in policy
+    std::map<std::string, functionPtr > mMapNotificationParamFunctions;
+    //map to store function pointers of notification configuration value category function of condition set as defined in policy
+    std::map<std::string, functionPtr > mMapNotificationValueFunctions;
+    //map to store function pointers of main notification configuration type category function of condition set as defined in policy
+    std::map<std::string, functionPtr > mMapMainNotificationTypeFunctions;
+    //map to store function pointers of main notification configuration status category function of condition set as defined in policy
+    std::map<std::string, functionPtr > mMapMainNotificationStatusFunctions;
+    //map to store function pointers of main notification configuration param category function of condition set as defined in policy
+    std::map<std::string, functionPtr > mMapMainNotificationParamFunctions;
     //map to store map of function pointers
     std::map<std::string, std::map<std::string, functionPtr > > mMapFunctionNameToFunctionMaps;
     std::map<std::string, std::string > mMapActions;

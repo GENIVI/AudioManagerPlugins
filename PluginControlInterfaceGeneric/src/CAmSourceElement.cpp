@@ -388,5 +388,90 @@ bool CAmSourceElement::isVolumeChangeSupported() const
     return mSource.isVolumeChangeSupported;
 }
 
+am_Error_e CAmSourceElement::setMainNotificationConfiguration(
+                const am_NotificationConfiguration_s& mainNotificationConfiguraton)
+{
+    return mpControlReceive->changeMainSourceNotificationConfigurationDB(
+                    getID(), mainNotificationConfiguraton);
+}
+
+am_Error_e CAmSourceElement::notificationDataUpdate(const am_NotificationPayload_s& payload)
+{
+    mpControlReceive->sendMainSourceNotificationPayload(getID(), payload);
+    return E_OK;
+}
+
+am_Error_e CAmSourceElement::getListMainNotificationConfigurations(
+                std::vector<am_NotificationConfiguration_s >& listMainNotificationConfigurations)
+{
+    am_Source_s sourceData;
+    am_Error_e result;
+    //get the source Info from Database
+    result = mpControlReceive->getSourceInfoDB(getID(), sourceData);
+    listMainNotificationConfigurations = sourceData.listMainNotificationConfigurations;
+    return result;
+}
+
+am_Error_e CAmSourceElement::getListNotificationConfigurations(
+                std::vector<am_NotificationConfiguration_s >& listNotificationConfigurations)
+{
+    am_Source_s sourceData;
+    am_Error_e result;
+    //get the source Info from Database
+    result = mpControlReceive->getSourceInfoDB(getID(), sourceData);
+    listNotificationConfigurations = sourceData.listNotificationConfigurations;
+    return result;
+}
+
+am_Error_e CAmSourceElement::getNotificationConfigurations(
+                am_CustomNotificationType_t type,
+                am_NotificationConfiguration_s& notificationConfiguration)
+{
+    std::vector < am_NotificationConfiguration_s > listNotificationConfigurations;
+    std::vector<am_NotificationConfiguration_s >::iterator itListNotificationConfigurations;
+    am_Error_e result = getListNotificationConfigurations(listNotificationConfigurations);
+    if (result == E_OK)
+    {
+        result = E_UNKNOWN;
+        for (itListNotificationConfigurations = listNotificationConfigurations.begin();
+                        itListNotificationConfigurations != listNotificationConfigurations.end();
+                        ++itListNotificationConfigurations)
+        {
+            if (itListNotificationConfigurations->type == type)
+            {
+                notificationConfiguration = *itListNotificationConfigurations;
+                result = E_OK;
+                break;
+            }
+        }
+    }
+    return result;
+}
+
+am_Error_e CAmSourceElement::getMainNotificationConfigurations(
+                am_CustomNotificationType_t type,
+                am_NotificationConfiguration_s& mainNotificationConfiguration)
+{
+    std::vector < am_NotificationConfiguration_s > listMainNotificationConfigurations;
+    std::vector<am_NotificationConfiguration_s >::iterator itListMainNotificationConfigurations;
+    am_Error_e result = getListMainNotificationConfigurations(listMainNotificationConfigurations);
+    if (result == E_OK)
+    {
+        result = E_UNKNOWN;
+        for (itListMainNotificationConfigurations = listMainNotificationConfigurations.begin();
+                        itListMainNotificationConfigurations != listMainNotificationConfigurations.end();
+                        ++itListMainNotificationConfigurations)
+        {
+            if (itListMainNotificationConfigurations->type == type)
+            {
+                mainNotificationConfiguration = *itListMainNotificationConfigurations;
+                result = E_OK;
+                break;
+            }
+        }
+    }
+    return result;
+}
+
 } /* namespace gc */
 } /* namespace am */

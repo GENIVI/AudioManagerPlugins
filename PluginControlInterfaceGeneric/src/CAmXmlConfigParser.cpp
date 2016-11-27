@@ -1566,6 +1566,8 @@ public:
         mOrder = -1;
         mPropertyType = -1;
         mDebugType = -1;
+        mNotificationType = -1;
+        mNotificationStatus = -1;
 
     }
     void expand(void)
@@ -1610,6 +1612,11 @@ public:
                      new CAmStringNode(ACTION_PARAM_EXCEPT_SINK_NAME, &mExceptSink));
         addChildNode(ACTION_PARAM_EXCEPT_CLASS_NAME,
                      new CAmStringNode(ACTION_PARAM_EXCEPT_CLASS_NAME, &mExceptClass));
+        addChildNode(ACTION_PARAM_NOTIFICATION_CONFIGURATION_TYPE, new CAmEnumerationintNode(ACTION_PARAM_NOTIFICATION_CONFIGURATION_TYPE, &mNotificationType));
+        addChildNode(ACTION_PARAM_NOTIFICATION_CONFIGURATION_STATUS, new CAmEnumerationintNode(ACTION_PARAM_NOTIFICATION_CONFIGURATION_STATUS, &mNotificationStatus));
+        addChildNode(ACTION_PARAM_NOTIFICATION_CONFIGURATION_PARAM,
+                             new CAmStringNode(ACTION_PARAM_NOTIFICATION_CONFIGURATION_PARAM, &mNotificationParam));
+
     }
     void _copyData(void)
     {
@@ -1658,6 +1665,17 @@ public:
         copyStringInMap(ACTION_PARAM_EXCEPT_SOURCE_NAME, mExceptSource);
         copyStringInMap(ACTION_PARAM_EXCEPT_SINK_NAME, mExceptSink);
         copyStringInMap(ACTION_PARAM_EXCEPT_CLASS_NAME, mExceptClass);
+        if (mNotificationType != -1)
+        {
+            sprintf(outputData, "%d", mNotificationType);
+            copyStringInMap(ACTION_PARAM_NOTIFICATION_CONFIGURATION_TYPE, outputData);
+        }
+        if (mNotificationStatus != -1)
+        {
+            sprintf(outputData, "%d", mNotificationStatus);
+            copyStringInMap(ACTION_PARAM_NOTIFICATION_CONFIGURATION_STATUS, outputData);
+        }
+        copyStringInMap(ACTION_PARAM_NOTIFICATION_CONFIGURATION_PARAM, mNotificationParam);
     }
 private:
     void copyStringInMap(std::string keyName, std::string value)
@@ -1684,12 +1702,15 @@ private:
     std::string mExceptSink;
     std::string mExceptClass;
     std::string mConnectionState;
+    std::string mNotificationParam;
 
     int mDebugType;
     int mRampType;
     int mMuteState;
     int mOrder;
     int mPropertyType;
+    int mNotificationType;
+    int mNotificationStatus;
     std::map<std::string, std::string > *mpMapParameters;
 }
 ;
@@ -1814,7 +1835,8 @@ private:
         }
         if ((false == functionInstance.optionalParameter.empty()) && (FUNCTION_MACRO_SUPPORTED_ALL
                         != functionInstance.optionalParameter)
-            && (FUNCTION_MACRO_SUPPORTED_OTHERS != functionInstance.optionalParameter))
+            && (FUNCTION_MACRO_SUPPORTED_OTHERS != functionInstance.optionalParameter)
+            && (FUNCTION_MACRO_SUPPORTED_REQUESTING != functionInstance.optionalParameter))
         {
             // As it is map it can store only one entry for given pKey value
             if (mValidFunctionNames.end() == std::find(mValidFunctionNames.begin(),
@@ -1977,6 +1999,16 @@ private:
         {
             startPosition++;
             optionalParameter = _findElement(startPosition, ')', inputString, '"');
+        }
+		else
+        {
+            // this is needed for main notification configuration param/status function because 3 parameter can be left empty.
+            //In that case REQUESTING type need to be considered as configuration type
+            if((FUNCTION_MAIN_NOTIFICATION_CONFIGURATION_PARAM == functionName)
+              || (FUNCTION_MAIN_NOTIFICATION_CONFIGURATION_STATUS == functionName))
+            {
+                optionalParameter = FUNCTION_MACRO_SUPPORTED_REQUESTING;
+            }
         }
         startPosition++;
         if (true == isLHS)

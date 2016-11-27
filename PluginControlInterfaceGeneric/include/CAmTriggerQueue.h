@@ -110,6 +110,20 @@ struct gc_ConnectionStateChangeTrigger_s : public gc_TriggerElement_s
     am_Error_e status;
 };
 
+struct gc_NotificationConfigurationTrigger_s : public gc_TriggerElement_s
+{
+    std::string name;
+    am_NotificationConfiguration_s notificatonConfiguration;
+
+};
+
+struct gc_NotificationDataTrigger_s : public gc_TriggerElement_s
+{
+    std::string name;
+    am_NotificationPayload_s notificatonPayload;
+
+};
+
 class CAmTriggerQueue
 {
 public:

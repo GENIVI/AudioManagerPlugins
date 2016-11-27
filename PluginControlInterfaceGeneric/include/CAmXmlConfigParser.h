@@ -185,6 +185,13 @@ namespace gc {
 #define FUNCTION_SOURCE_STATE				"sourceState"
 #define FUNCTION_CONNECTION_FORMAT			"connectionFormat"
 #define FUNCTION_CONNECTION_ERROR           "connectionError"
+#define FUNCTION_NOTIFICATION_CONFIGURATION_STATUS  "notificationConfigurationStatus"
+#define FUNCTION_NOTIFICATION_CONFIGURATION_PARAM   "notificationConfigurationParam"
+#define FUNCTION_NOTIFICATION_DATA_VALUE            "notificationDataValue"
+#define FUNCTION_MAIN_NOTIFICATION_CONFIGURATION_TYPE    "mainNotificationConfigurationType"
+#define FUNCTION_MAIN_NOTIFICATION_CONFIGURATION_STATUS  "mainNotificationConfigurationStatus"
+#define FUNCTION_MAIN_NOTIFICATION_CONFIGURATION_PARAM   "mainNotificationConfigurationParam"
+
 
 // macros supported in functions
 #define FUNCTION_MACRO_SUPPORTED_REQUESTING	"REQUESTING"
@@ -223,6 +230,7 @@ namespace gc {
 #define CONFIG_ACTION_NAME_SET_PROPERTY        "ACTION_SET_PROPERTY"
 #define CONFIG_ACTION_NAME_REGISTER            "ACTION_REGISTER"
 #define CONFIG_ACTION_NAME_DEBUG               "ACTION_DEBUG"
+#define CONFIG_ACTION_NAME_NOTIFICATION_CONFIGURATION    "ACTION_SET_NOTIFICATION_CONFIGURATION"
 
 // store the function and its parameter as given in policy
 struct gc_FunctionElement_s

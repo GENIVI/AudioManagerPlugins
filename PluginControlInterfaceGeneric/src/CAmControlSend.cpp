@@ -1059,7 +1059,7 @@ void CAmControlSend::cbAckConnect(const am_Handle_s handle, const am_Error_e err
                 " errorID=", errorID);
     assert(NULL != mpControlReceive);
 
-    mpControlReceive->cbAckConnect(handle, errorID);
+    mpControlReceive->notifyAsyncResult(handle, errorID);
     iterateActions();
 }
 
@@ -1069,7 +1069,7 @@ void CAmControlSend::cbAckDisconnect(const am_Handle_s handle, const am_Error_e 
                 " errorID=", errorID);
     assert(NULL != mpControlReceive);
 
-    mpControlReceive->cbAckDisconnect(handle, errorID);
+    mpControlReceive->notifyAsyncResult(handle, errorID);
     iterateActions();
 }
 
@@ -1080,7 +1080,7 @@ void CAmControlSend::cbAckCrossFade(const am_Handle_s handle, const am_HotSink_e
                 " hostsink=", hotSink, " errorID=", errorID);
     assert(NULL != mpControlReceive);
 
-    mpControlReceive->cbAckCrossFade(handle, hotSink, errorID);
+    mpControlReceive->notifyAsyncResult(handle, errorID);
     iterateActions();
 }
 
@@ -1091,7 +1091,7 @@ void CAmControlSend::cbAckSetSinkVolumeChange(const am_Handle_s handle, const am
                 volume, " errorID", errorID);
     assert(NULL != mpControlReceive);
 
-    mpControlReceive->cbAckSetSinkVolumeChange(handle, volume, errorID);
+    mpControlReceive->notifyAsyncResult(handle, errorID);
     iterateActions();
 }
 
@@ -1103,18 +1103,18 @@ void CAmControlSend::cbAckSetSourceVolumeChange(const am_Handle_s handle, const 
                 volume, " errorID", errorID);
     assert(NULL != mpControlReceive);
 
-    mpControlReceive->cbAckSetSourceVolumeChange(handle, volume, errorID);
+    mpControlReceive->notifyAsyncResult(handle, errorID);
     iterateActions();
 }
 
 void CAmControlSend::cbAckSetSourceState(const am_Handle_s handle, const am_Error_e errorID)
 {
 
-    LOG_FN_INFO("  IN  handle.Type=", (int)handle.handleType, " handle.Type=", (int)handle.handle,
+    LOG_FN_INFO("  IN  handle.Type=", (int)handle.handleType, " handle.handle=", (int)handle.handle,
                 " errorID=", errorID);
     assert(NULL != mpControlReceive);
 
-    mpControlReceive->cbAckSetSourceState(handle, errorID);
+    mpControlReceive->notifyAsyncResult(handle, errorID);
     iterateActions();
 }
 
@@ -1122,43 +1122,43 @@ void CAmControlSend::cbAckSetSourceSoundProperties(const am_Handle_s handle,
                                                    const am_Error_e errorID)
 {
 
-    LOG_FN_INFO("  IN  handle.Type=", (int)handle.handleType, " handle.Type=", (int)handle.handle,
+    LOG_FN_INFO("  IN  handle.Type=", (int)handle.handleType, " handle.handle=", (int)handle.handle,
                 " errorID=", errorID);
     assert(NULL != mpControlReceive);
 
-    mpControlReceive->cbAckSetSourceSoundProperties(handle, errorID);
+    mpControlReceive->notifyAsyncResult(handle, errorID);
     iterateActions();
 }
 
 void CAmControlSend::cbAckSetSourceSoundProperty(const am_Handle_s handle, const am_Error_e errorID)
 {
-    LOG_FN_INFO("  IN  handle.Type=", (int)handle.handleType, " handle.Type=", (int)handle.handle,
+    LOG_FN_INFO("  IN  handle.Type=", (int)handle.handleType, " handle.handle=", (int)handle.handle,
                 " errorID=", errorID);
     assert(NULL != mpControlReceive);
 
-    mpControlReceive->cbAckSetSourceSoundProperty(handle, errorID);
+    mpControlReceive->notifyAsyncResult(handle, errorID);
     iterateActions();
 }
 
 void CAmControlSend::cbAckSetSinkSoundProperties(const am_Handle_s handle, const am_Error_e errorID)
 {
 
-    LOG_FN_INFO("  IN  handle.Type=", (int)handle.handleType, " handle.Type=", (int)handle.handle,
+    LOG_FN_INFO("  IN  handle.Type=", (int)handle.handleType, " handle.handle=", (int)handle.handle,
                 " errorID=", errorID);
     assert(NULL != mpControlReceive);
 
-    mpControlReceive->cbAckSetSinkSoundProperties(handle, errorID);
+    mpControlReceive->notifyAsyncResult(handle, errorID);
     iterateActions();
 }
 
 void CAmControlSend::cbAckSetSinkSoundProperty(const am_Handle_s handle, const am_Error_e errorID)
 {
 
-    LOG_FN_INFO("  IN  handle.Type=", (int)handle.handleType, " handle.Type=", (int)handle.handle,
+    LOG_FN_INFO("  IN  handle.Type=", (int)handle.handleType, " handle.handle=", (int)handle.handle,
                 " errorID=", errorID);
     assert(NULL != mpControlReceive);
 
-    mpControlReceive->cbAckSetSinkSoundProperty(handle, errorID);
+    mpControlReceive->notifyAsyncResult(handle, errorID);
     iterateActions();
 }
 
@@ -1260,47 +1260,131 @@ void CAmControlSend::cbAckSetVolumes(const am_Handle_s handle,
 void CAmControlSend::cbAckSetSinkNotificationConfiguration(const am_Handle_s handle,
                                                            const am_Error_e error)
 {
-    (void)handle;
-    (void)error;
+    LOG_FN_INFO("  IN  handle.Type/Handle=", (int)handle.handleType, " handle.handle=", (int)handle.handle,
+                " errorID=", error);
+    assert(NULL != mpControlReceive);
+    mpControlReceive->notifyAsyncResult(handle, error);
+    iterateActions();
 }
-
 void CAmControlSend::cbAckSetSourceNotificationConfiguration(const am_Handle_s handle,
                                                              const am_Error_e error)
 {
-    (void)handle;
-    (void)error;
-}
+    LOG_FN_INFO("  IN  handle.Type/Handle=", (int)handle.handleType, " handle.handle=", (int)handle.handle,
+                " errorID=", error);
+    assert(NULL != mpControlReceive);
 
+    mpControlReceive->notifyAsyncResult(handle, error);
+    iterateActions();
+}
 void CAmControlSend::hookSinkNotificationDataChanged(const am_sinkID_t sinkID,
                                                      const am_NotificationPayload_s& payload)
 {
-    (void)sinkID;
-    (void)payload;
+    CAmSinkElement* pElement;
+    LOG_FN_ENTRY(sinkID);
+
+    // check if the sinkID is valid
+    pElement = CAmSinkFactory::getElement(sinkID);
+    if (NULL == pElement)
+    {
+        LOG_FN_ERROR("  Not able to get sink element");
+        return;
+    }
+    pElement->notificationDataUpdate(payload);
+    // Store the trigger in a Queue
+    gc_NotificationDataTrigger_s* triggerData = new gc_NotificationDataTrigger_s;
+    if (NULL == triggerData)
+    {
+        LOG_FN_ERROR("  bad memory state:");
+        return;
+    }
+    triggerData->name = pElement->getName();
+    triggerData->notificatonPayload = payload;
+    CAmTriggerQueue::getInstance()->queue(SYSTEM_SINK_NOTIFICATION_DATA_CHANGED, triggerData);
+    iterateActions();
 }
 
 void CAmControlSend::hookSourceNotificationDataChanged(const am_sourceID_t sourceID,
                                                        const am_NotificationPayload_s& payload)
 {
-    (void)sourceID;
-    (void)payload;
+    CAmSourceElement* pElement;
+    LOG_FN_ENTRY(sourceID);
+
+    // check if the sourceID is valid
+    pElement = CAmSourceFactory::getElement(sourceID);
+    if (NULL == pElement)
+    {
+        LOG_FN_ERROR("  Not able to get source element");
+        return;
+    }
+    pElement->notificationDataUpdate(payload);
+    // Store the trigger in a Queue
+    gc_NotificationDataTrigger_s* triggerData = new gc_NotificationDataTrigger_s;
+    if (NULL == triggerData)
+    {
+        LOG_FN_ERROR("  bad memory state:");
+        return;
+    }
+    triggerData->name = pElement->getName();
+    triggerData->notificatonPayload = payload;
+    CAmTriggerQueue::getInstance()->queue(SYSTEM_SOURCE_NOTIFICATION_DATA_CHANGED, triggerData);
+    iterateActions();
+    LOG_FN_EXIT();
+    return;
+
 }
 
 am_Error_e CAmControlSend::hookUserSetMainSinkNotificationConfiguration(
                 const am_sinkID_t sinkID,
                 const am_NotificationConfiguration_s& notificationConfiguration)
 {
-    (void)sinkID;
-    (void)notificationConfiguration;
-    return (E_NOT_USED);
+    CAmSinkElement* pElement;
+    LOG_FN_ENTRY(sinkID,notificationConfiguration.parameter,notificationConfiguration.type,notificationConfiguration.status);
+    // check if the sinkID is valid
+    pElement = CAmSinkFactory::getElement(sinkID);
+    if (NULL == pElement)
+        LOG_FN_ERROR("  Not able to get sink element");
+        return (E_OUT_OF_RANGE);
+    // Store the trigger in a Queue
+    gc_NotificationConfigurationTrigger_s* triggerData = new gc_NotificationConfigurationTrigger_s;
+    if (NULL == triggerData)
+        LOG_FN_ERROR("  bad memory state:");
+        return E_NOT_POSSIBLE;
+    triggerData->name = pElement->getName();
+    triggerData->notificatonConfiguration = notificationConfiguration;
+    CAmTriggerQueue::getInstance()->queue(USER_SET_SINK_MAIN_NOTIFICATION_CONFIGURATION, triggerData);
+    iterateActions();
+    LOG_FN_EXIT();
+    return E_OK;
 }
 
 am_Error_e CAmControlSend::hookUserSetMainSourceNotificationConfiguration(
                 const am_sourceID_t sourceID,
                 const am_NotificationConfiguration_s& notificationConfiguration)
 {
-    (void)sourceID;
-    (void)notificationConfiguration;
-    return (E_NOT_USED);
+    CAmSourceElement* pElement;
+    LOG_FN_ENTRY(sourceID);
+
+    // check if the sourceID is valid
+    pElement = CAmSourceFactory::getElement(sourceID);
+    if (NULL == pElement)
+    {
+        LOG_FN_ERROR("  Not able to get source element");
+        return (E_OUT_OF_RANGE);
+    }
+
+    // Store the trigger in a Queue
+    gc_NotificationConfigurationTrigger_s* triggerData = new gc_NotificationConfigurationTrigger_s;
+    if (NULL == triggerData)
+    {
+        LOG_FN_ERROR("  bad memory state:");
+        return E_NOT_POSSIBLE;
+    }
+    triggerData->name = pElement->getName();
+    triggerData->notificatonConfiguration = notificationConfiguration;
+    CAmTriggerQueue::getInstance()->queue(USER_SET_SOURCE_MAIN_NOTIFICATION_CONFIGURATION, triggerData);
+    iterateActions();
+    LOG_FN_EXIT();
+    return E_OK;
 }
 #ifdef NSM_IFACE_PRESENT
 void CAmControlSend::hookSystemNodeStateChanged(const NsmNodeState_e nodeStateId)
@@ -1586,6 +1670,36 @@ am_Error_e CAmControlSend::_forwardTriggertoPolicyEngine(gc_Trigger_e triggerTyp
         result = mpPolicySend->hookConnectionStateChange(pConnectionStateTrigger_t->connectionName,
                                                          pConnectionStateTrigger_t->connectionState,
                                                          pConnectionStateTrigger_t->status);
+    }
+        break;
+    case USER_SET_SINK_MAIN_NOTIFICATION_CONFIGURATION:
+    {
+        gc_NotificationConfigurationTrigger_s* pNotificationConfiguration = (gc_NotificationConfigurationTrigger_s*)triggerData;
+        result = mpPolicySend->hookSetMainSinkNotificationConfiguration(
+                        pNotificationConfiguration->name,
+                        pNotificationConfiguration->notificatonConfiguration);
+    }
+        break;
+    case USER_SET_SOURCE_MAIN_NOTIFICATION_CONFIGURATION:
+    {
+        gc_NotificationConfigurationTrigger_s* pNotificationConfiguration = (gc_NotificationConfigurationTrigger_s*)triggerData;
+        result = mpPolicySend->hookSetMainSourceNotificationConfiguration(
+                        pNotificationConfiguration->name,
+                        pNotificationConfiguration->notificatonConfiguration);
+    }
+        break;
+    case SYSTEM_SINK_NOTIFICATION_DATA_CHANGED:
+    {
+        gc_NotificationDataTrigger_s* pNotificationData = (gc_NotificationDataTrigger_s*)triggerData;
+        result = mpPolicySend->hookSinkNotificationDataChanged(
+                        pNotificationData->name, pNotificationData->notificatonPayload);
+    }
+        break;
+    case SYSTEM_SOURCE_NOTIFICATION_DATA_CHANGED:
+    {
+        gc_NotificationDataTrigger_s* pNotificationData = (gc_NotificationDataTrigger_s*)triggerData;
+        result = mpPolicySend->hookSourceNotificationDataChanged(
+                        pNotificationData->name, pNotificationData->notificatonPayload);
     }
         break;
     default:

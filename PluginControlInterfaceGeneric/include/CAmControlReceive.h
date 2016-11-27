@@ -166,10 +166,10 @@ public:
                     const std::vector<am_CustomConnectionFormat_t >& listSinkConnectionFormats,
                     const std::vector<bool >& convertionMatrix);
     am_Error_e setSinkNotificationConfiguration(
-                    am_Handle_s& handle, const am_sinkID_t sinkID,
+                    const am_sinkID_t sinkID,
                     const am_NotificationConfiguration_s& notificationConfiguration);
     am_Error_e setSourceNotificationConfiguration(
-                    am_Handle_s& handle, const am_sourceID_t sourceID,
+                    const am_sourceID_t sourceID,
                     const am_NotificationConfiguration_s& notificationConfiguration);
     am_Error_e changeMainSinkNotificationConfigurationDB(
                     const am_sinkID_t sinkID,
@@ -232,24 +232,9 @@ public:
     am_Error_e getSourceSoundPropertyValue(const am_sourceID_t sourceID,
                                            const am_CustomSoundPropertyType_t propertyType,
                                            int16_t& value) const;
-
-    // for acknowledge
-    void cbAckConnect(const am_Handle_s handle, const am_Error_e errorID);
-    void cbAckDisconnect(const am_Handle_s handle, const am_Error_e errorID);
-    void cbAckCrossFade(const am_Handle_s handle, const am_HotSink_e hostsink,
-                        const am_Error_e error);
-    void cbAckSetSinkVolumeChange(const am_Handle_s handle, const am_volume_t volume,
-                                  const am_Error_e error);
-    void cbAckSetSourceVolumeChange(const am_Handle_s handle, const am_volume_t voulme,
-                                    const am_Error_e error);
-    void cbAckSetSourceState(const am_Handle_s handle, const am_Error_e error);
-    void cbAckSetSourceSoundProperties(const am_Handle_s handle, const am_Error_e error);
-    void cbAckSetSourceSoundProperty(const am_Handle_s handle, const am_Error_e error);
-    void cbAckSetSinkSoundProperties(const am_Handle_s handle, const am_Error_e error);
-    void cbAckSetSinkSoundProperty(const am_Handle_s handle, const am_Error_e error);
-private:
-    void saveHandle(am_Handle_s Handle);
     void notifyAsyncResult(am_Handle_s Handle, am_Error_e Error);
+private:
+    void _saveHandle(am_Handle_s Handle);
     // private values
     IAmControlReceive* mpControlReceive;
     am_Handle_s mHandle;

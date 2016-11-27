@@ -416,6 +416,8 @@ For details of the topology writing rules refer the topology writing rules secti
                 </xsd:annotation>
             </xsd:enumeration>
             <xsd:enumeration value="USER_SET_SYSTEM_PROPERTY"/>
+            <xsd:enumeration value="USER_SET_SINK_MAIN_NOTIFICATION_CONFIGURATION"/>
+            <xsd:enumeration value="USER_SET_SOURCE_MAIN_NOTIFICATION_CONFIGURATION"/>
             <xsd:enumeration value="SYSTEM_SOURCE_AVAILABILITY_CHANGED">
                 <xsd:annotation>
                     <xsd:documentation>This trigger occurs when a source availability status change is called by routing adaptor. </xsd:documentation>
@@ -435,10 +437,11 @@ For details of the topology writing rules refer the topology writing rules secti
             <xsd:enumeration value="SYSTEM_SINK_MAIN_SOUND_PROPERTY_CHANGED"/>
             <xsd:enumeration value="SYSTEM_SOURCE_MAIN_SOUND_PROPERTY_CHANGED"/>
             <xsd:enumeration value="SYSTEM_VOLUME_CHANGED"/>
-            <xsd:enumeration value="SYSTEM_NOTIFICATION_CONFIGURATION_CHANGED"/>
+            <xsd:enumeration value="SYSTEM_SINK_NOTIFICATION_DATA_CHANGED"/>
+            <xsd:enumeration value="SYSTEM_SOURCE_NOTIFICATION_DATA_CHANGED"/>
             <xsd:enumeration value="SYSTEM_REGISTER_DOMAIN"/>
             <xsd:enumeration value="SYSTEM_REGISTER_SOURCE">
-                <xsd:annotation>
+            <xsd:annotation>
                     <xsd:documentation>This trigger occurs when a new source is registered by routing adaptor.</xsd:documentation>
                 </xsd:annotation>
             </xsd:enumeration>
@@ -651,6 +654,7 @@ For example lets take a real life policy, "when I go out , if its raining , I wi
 			</xsd:enumeration>
 			<xsd:enumeration value="ACTION_REGISTER"/>
 			<xsd:enumeration value="ACTION_DEBUG"/>
+			<xsd:enumeration value="ACTION_SET_NOTIFICATION_CONFIGURATION"/>
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:element name="configuration" type="c:configuration"/>
@@ -814,6 +818,9 @@ For example lets take a real life policy, "when I go out , if its raining , I wi
 			<xsd:element name="exceptSource" type="c:stringListType" minOccurs="0" maxOccurs="1" />
 			<xsd:element name="exceptSink" type="c:stringListType" minOccurs="0" maxOccurs="1" />
 			<xsd:element name="exceptClass" type="c:stringListType" minOccurs="0" maxOccurs="1" />
+			<xsd:element name="notificationConfigurationType" type="c:am_NotificationType_t" minOccurs="0" maxOccurs="1" />
+			<xsd:element name="notificationConfigurationStatus" type="c:am_NotificationStatus_e" minOccurs="0" maxOccurs="1" />
+			<xsd:element name="notificationConfigurationParam" type="xsd:short" minOccurs="0" maxOccurs="1" />
 		</xsd:all>
 	</xsd:complexType>
 	<xsd:simpleType name="gc_Operator_e">

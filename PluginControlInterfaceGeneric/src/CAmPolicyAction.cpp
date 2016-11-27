@@ -30,6 +30,7 @@
 #include "CAmClassActionInterrupt.h"
 #include "CAmClassActionSuspend.h"
 #include "CAmSourceSinkActionSetSoundProperty.h"
+#include "CAmSourceSinkActionSetNotificationConfiguration.h"
 #include "CAmSystemActionRegister.h"
 #include "CAmSystemActionDebug.h"
 #include "CAmClassElement.h"
@@ -40,7 +41,23 @@
 namespace am {
 namespace gc {
 
-#define isParameterSet(A,B) (1 == B.count(A))
+#define isParameterSet(mapParams,paramName) (1 == mapParams.count(paramName))
+
+#define checkAndSetStringParam(mapParams , paramName, pAction) {\
+    if (isParameterSet(mapParams ,paramName ))\
+    {\
+        CAmActionParam<std::string> actionParam(mapParams[paramName]);\
+        pAction->setParam(paramName, &actionParam);\
+    }\
+}
+
+#define checkAndSetNumericParam(mapParams , paramName, paramType,pAction) {\
+    if (isParameterSet(mapParams ,paramName))\
+    {\
+        CAmActionParam < paramType > actionParam((paramType)atoi(mapParams[paramName].data()));\
+        pAction->setParam(paramName, &actionParam);\
+    }\
+}
 
 CAmPolicyAction::CAmPolicyAction(const std::vector<gc_Action_s > &listPolicyActions,
                                  IAmPolicySend* pPolicySend, CAmControlReceive* pControlReceive) :
@@ -121,19 +138,19 @@ am_Error_e CAmPolicyAction::_getListNames(std::string name, std::vector<std::str
     return E_OK;
 }
 
-void CAmPolicyAction::_setActionParameters(gc_Action_s &policyAction,
-                                           IAmActionCommand *pFrameworkAction)
+void CAmPolicyAction::_setActionParameters(std::map<std::string, std::string >& mapParams,
+                                           IAmActionCommand *pAction)
 {
-    if (isParameterSet(ACTION_PARAM_SOURCE_NAME, policyAction.mapParameters))
+    if (isParameterSet(mapParams, ACTION_PARAM_SOURCE_NAME))
     {
-        std::string sourceName = policyAction.mapParameters[ACTION_PARAM_SOURCE_NAME];
+        std::string sourceName = mapParams[ACTION_PARAM_SOURCE_NAME];
         /*
          * If no whitespace is found then its a single name
          */
         if (sourceName.find(" ") == std::string::npos)
         {
             CAmActionParam < std::string > sourceNameParam(sourceName);
-            pFrameworkAction->setParam(ACTION_PARAM_SOURCE_NAME, &sourceNameParam);
+            pAction->setParam(ACTION_PARAM_SOURCE_NAME, &sourceNameParam);
         }
         else
         {
@@ -145,19 +162,19 @@ void CAmPolicyAction::_setActionParameters(gc_Action_s &policyAction,
             _getListNames(sourceName, listNames);
             mpPolicySend->getListElements(listNames, listSources);
             CAmActionParam < std::vector<gc_Source_s > > listSourcesParameter(listSources);
-            pFrameworkAction->setParam(ACTION_PARAM_SOURCE_INFO, &listSourcesParameter);
+            pAction->setParam(ACTION_PARAM_SOURCE_INFO, &listSourcesParameter);
         }
     }
-    if (isParameterSet(ACTION_PARAM_SINK_NAME, policyAction.mapParameters))
+    if (isParameterSet(mapParams, ACTION_PARAM_SINK_NAME))
     {
-        std::string sinkName = policyAction.mapParameters[ACTION_PARAM_SINK_NAME];
+        std::string sinkName = mapParams[ACTION_PARAM_SINK_NAME];
         /*
          * If no whitespace is found then its a single name
          */
         if (sinkName.find(" ") == std::string::npos)
         {
             CAmActionParam < std::string > sinkNameParam(sinkName);
-            pFrameworkAction->setParam(ACTION_PARAM_SINK_NAME, &sinkNameParam);
+            pAction->setParam(ACTION_PARAM_SINK_NAME, &sinkNameParam);
         }
         else
         {
@@ -169,19 +186,19 @@ void CAmPolicyAction::_setActionParameters(gc_Action_s &policyAction,
             _getListNames(sinkName, listNames);
             mpPolicySend->getListElements(listNames, listSinks);
             CAmActionParam < std::vector<gc_Sink_s > > listSinksParameter(listSinks);
-            pFrameworkAction->setParam(ACTION_PARAM_SINK_INFO, &listSinksParameter);
+            pAction->setParam(ACTION_PARAM_SINK_INFO, &listSinksParameter);
         }
     }
-    if (isParameterSet(ACTION_PARAM_GATEWAY_NAME, policyAction.mapParameters))
+    if (isParameterSet(mapParams, ACTION_PARAM_GATEWAY_NAME))
     {
-        std::string gatewayName = policyAction.mapParameters[ACTION_PARAM_GATEWAY_NAME];
+        std::string gatewayName = mapParams[ACTION_PARAM_GATEWAY_NAME];
         /*
          * If no whitespace is found then its a single name
          */
         if (gatewayName.find(" ") == std::string::npos)
         {
             CAmActionParam < std::string > sinkNameParam(gatewayName);
-            pFrameworkAction->setParam(ACTION_PARAM_GATEWAY_NAME, &sinkNameParam);
+            pAction->setParam(ACTION_PARAM_GATEWAY_NAME, &sinkNameParam);
         }
         else
         {
@@ -193,127 +210,57 @@ void CAmPolicyAction::_setActionParameters(gc_Action_s &policyAction,
             _getListNames(gatewayName, listNames);
             mpPolicySend->getListElements(listNames, listGateways);
             CAmActionParam < std::vector<gc_Gateway_s > > listGatewaysParameter(listGateways);
-            pFrameworkAction->setParam(ACTION_PARAM_GATEWAY_INFO, &listGatewaysParameter);
+            pAction->setParam(ACTION_PARAM_GATEWAY_INFO, &listGatewaysParameter);
         }
     }
-
-    if (isParameterSet(ACTION_PARAM_CLASS_NAME, policyAction.mapParameters))
-    {
-        CAmActionParam < std::string > className(
-                        policyAction.mapParameters[ACTION_PARAM_CLASS_NAME]);
-        pFrameworkAction->setParam(ACTION_PARAM_CLASS_NAME, &className);
-    }
-    if (isParameterSet(ACTION_PARAM_RAMP_TYPE, policyAction.mapParameters))
-    {
-        CAmActionParam<int > rampType(
-                        atoi(policyAction.mapParameters[ACTION_PARAM_RAMP_TYPE].data()));
-        pFrameworkAction->setParam(ACTION_PARAM_RAMP_TYPE, &rampType);
-    }
-    if (isParameterSet(ACTION_PARAM_RAMP_TIME, policyAction.mapParameters))
-    {
-        CAmActionParam<int > rampTime(
-                        atoi(policyAction.mapParameters[ACTION_PARAM_RAMP_TIME].data()));
-        pFrameworkAction->setParam(ACTION_PARAM_RAMP_TIME, &rampTime);
-    }
-    if (isParameterSet(ACTION_PARAM_PATTERN, policyAction.mapParameters))
-    {
-        CAmActionParam < uint32_t > pattern(
-                        strtol(policyAction.mapParameters[ACTION_PARAM_PATTERN].data(), NULL, 16));
-        pFrameworkAction->setParam(ACTION_PARAM_PATTERN, &pattern);
-    }
-    if (isParameterSet(ACTION_PARAM_TIMEOUT, policyAction.mapParameters))
-    {
-        pFrameworkAction->setTimeout(atoi(policyAction.mapParameters[ACTION_PARAM_TIMEOUT].data()));
-
-    }
-    if (isParameterSet(ACTION_PARAM_MAIN_VOLUME, policyAction.mapParameters))
-    {
-        CAmActionParam < am_mainVolume_t > mainVolume(
-                        atoi(policyAction.mapParameters[ACTION_PARAM_MAIN_VOLUME].data()));
-        pFrameworkAction->setParam(ACTION_PARAM_MAIN_VOLUME, &mainVolume);
-    }
-    if (isParameterSet(ACTION_PARAM_MAIN_VOLUME_STEP, policyAction.mapParameters))
-    {
-        CAmActionParam < am_mainVolume_t > mainVolume(
-                        atoi(policyAction.mapParameters[ACTION_PARAM_MAIN_VOLUME_STEP].data()));
-        pFrameworkAction->setParam(ACTION_PARAM_MAIN_VOLUME_STEP, &mainVolume);
-    }
-    if (isParameterSet(ACTION_PARAM_VOLUME, policyAction.mapParameters))
-    {
-        CAmActionParam < am_volume_t > targetVolume(
-                        atoi(policyAction.mapParameters[ACTION_PARAM_VOLUME].data()));
-        pFrameworkAction->setParam(ACTION_PARAM_VOLUME, &targetVolume);
-    }
-    if (isParameterSet(ACTION_PARAM_VOLUME_STEP, policyAction.mapParameters))
-    {
-        CAmActionParam < am_volume_t > offsetVolume(
-                        atoi(policyAction.mapParameters[ACTION_PARAM_VOLUME_STEP].data()));
-        pFrameworkAction->setParam(ACTION_PARAM_VOLUME_STEP, &offsetVolume);
-    }
-    if (isParameterSet(ACTION_PARAM_ORDER, policyAction.mapParameters))
-    {
-        CAmActionParam < gc_Order_e > order(
-                        (gc_Order_e)atoi(policyAction.mapParameters[ACTION_PARAM_ORDER].data()));
-        pFrameworkAction->setParam(ACTION_PARAM_ORDER, &order);
-    }
-    if (isParameterSet(ACTION_PARAM_PROPERTY_TYPE, policyAction.mapParameters))
-    {
-        CAmActionParam < am_CustomMainSoundPropertyType_t > propertyType(
-                        (am_CustomMainSoundPropertyType_t)atoi(
-                                        policyAction.mapParameters[ACTION_PARAM_PROPERTY_TYPE].data()));
-        pFrameworkAction->setParam(ACTION_PARAM_PROPERTY_TYPE, &propertyType);
-    }
-    if (isParameterSet(ACTION_PARAM_PROPERTY_VALUE, policyAction.mapParameters))
-    {
-        CAmActionParam < int16_t > propertyValue(
-                        atoi(policyAction.mapParameters[ACTION_PARAM_PROPERTY_VALUE].data()));
-        pFrameworkAction->setParam(ACTION_PARAM_PROPERTY_VALUE, &propertyValue);
-    }
-    if (isParameterSet(ACTION_PARAM_EXCEPT_SOURCE_NAME, policyAction.mapParameters))
+    if (isParameterSet(mapParams, ACTION_PARAM_EXCEPT_SOURCE_NAME))
     {
         std::vector < std::string > listNames;
-        _getListNames(policyAction.mapParameters[ACTION_PARAM_EXCEPT_SOURCE_NAME], listNames);
+        _getListNames(mapParams[ACTION_PARAM_EXCEPT_SOURCE_NAME], listNames);
         CAmActionParam < std::vector<std::string > > listExceptSourcesParameter(listNames);
-        pFrameworkAction->setParam(ACTION_PARAM_EXCEPT_SOURCE_NAME, &listExceptSourcesParameter);
+        pAction->setParam(ACTION_PARAM_EXCEPT_SOURCE_NAME, &listExceptSourcesParameter);
     }
-    if (isParameterSet(ACTION_PARAM_EXCEPT_SINK_NAME, policyAction.mapParameters))
+    if (isParameterSet(mapParams, ACTION_PARAM_EXCEPT_SINK_NAME))
     {
         std::vector < std::string > listNames;
-        _getListNames(policyAction.mapParameters[ACTION_PARAM_EXCEPT_SINK_NAME], listNames);
+        _getListNames(mapParams[ACTION_PARAM_EXCEPT_SINK_NAME], listNames);
         CAmActionParam < std::vector<std::string > > listExceptSinkParameter(listNames);
-        pFrameworkAction->setParam(ACTION_PARAM_EXCEPT_SINK_NAME, &listExceptSinkParameter);
+        pAction->setParam(ACTION_PARAM_EXCEPT_SINK_NAME, &listExceptSinkParameter);
     }
-    if (isParameterSet(ACTION_PARAM_CONNECTION_STATE, policyAction.mapParameters))
+    if (isParameterSet(mapParams,ACTION_PARAM_CONNECTION_STATE))
     {
         /*
          * convert the connection state filter from string to list connection states
          * here
          */
-        std::string filter(policyAction.mapParameters[ACTION_PARAM_CONNECTION_STATE]);
-        if ((policyAction.mapParameters[ACTION_PARAM_SOURCE_NAME] != "") && (policyAction.mapParameters[ACTION_PARAM_SINK_NAME]
+        std::string filter(mapParams[ACTION_PARAM_CONNECTION_STATE]);
+        if ((mapParams[ACTION_PARAM_SOURCE_NAME] != "") && (mapParams[ACTION_PARAM_SINK_NAME]
                         != ""))
         {
             filter = "ALL";
         }
         CAmActionParam < std::vector<am_ConnectionState_e > > listConnectionStatesParam(
                         mMapConnectionStates[filter]);
-        pFrameworkAction->setParam(ACTION_PARAM_CONNECTION_STATE, &listConnectionStatesParam);
+        pAction->setParam(ACTION_PARAM_CONNECTION_STATE, &listConnectionStatesParam);
     }
     else
     {
-        if ((policyAction.mapParameters[ACTION_PARAM_SOURCE_NAME] != "") && (policyAction.mapParameters[ACTION_PARAM_SINK_NAME]
+        if ((mapParams[ACTION_PARAM_SOURCE_NAME] != "") && (mapParams[ACTION_PARAM_SINK_NAME]
                         != ""))
         {
             CAmActionParam < std::vector<am_ConnectionState_e > > listConnectionStatesParam(
                             mMapConnectionStates["ALL"]);
-            pFrameworkAction->setParam(ACTION_PARAM_CONNECTION_STATE, &listConnectionStatesParam);
+            pAction->setParam(ACTION_PARAM_CONNECTION_STATE, &listConnectionStatesParam);
         }
     }
-    if (isParameterSet(ACTION_PARAM_MUTE_STATE, policyAction.mapParameters))
+ if (isParameterSet(mapParams, ACTION_PARAM_TIMEOUT))
+    {
+        pAction->setTimeout(atoi(mapParams[ACTION_PARAM_TIMEOUT].data()));
+    }
+    if (isParameterSet(mapParams, ACTION_PARAM_MUTE_STATE))
     {
         am_MuteState_e muteState;
-        muteState = (am_MuteState_e)atoi(
-                        policyAction.mapParameters[ACTION_PARAM_MUTE_STATE].c_str());
+        muteState = (am_MuteState_e)atoi(mapParams[ACTION_PARAM_MUTE_STATE].c_str());
         CAmActionParam < gc_LimitState_e > limitStateParam;
         CAmActionParam < am_volume_t > targetVolumeParam;
         CAmActionParam < uint32_t > patternParam;
@@ -329,39 +276,47 @@ void CAmPolicyAction::_setActionParameters(gc_Action_s &policyAction,
             targetVolumeParam.setParam(0);
         }
         patternParam.setParam(0xFFFF0000);
-        pFrameworkAction->setParam(ACTION_PARAM_LIMIT_STATE, &limitStateParam);
-        pFrameworkAction->setParam(ACTION_PARAM_VOLUME, &targetVolumeParam);
-        pFrameworkAction->setParam(ACTION_PARAM_PATTERN, &patternParam);
+        pAction->setParam(ACTION_PARAM_LIMIT_STATE, &limitStateParam);
+        pAction->setParam(ACTION_PARAM_VOLUME, &targetVolumeParam);
+        pAction->setParam(ACTION_PARAM_PATTERN, &patternParam);
     }
-    if (isParameterSet(ACTION_PARAM_LIMIT_STATE, policyAction.mapParameters))
+    if (isParameterSet(mapParams, ACTION_PARAM_LIMIT_STATE))
     {
         CAmActionParam < uint32_t > patternParam;
         CAmActionParam < gc_LimitState_e > volumeOperationParam(
-                        (gc_LimitState_e)atoi(
-                                        policyAction.mapParameters[ACTION_PARAM_LIMIT_STATE].c_str()));
+                        (gc_LimitState_e)atoi(mapParams[ACTION_PARAM_LIMIT_STATE].c_str()));
         patternParam.setParam(0xFFFF);
-        pFrameworkAction->setParam(ACTION_PARAM_LIMIT_STATE, &volumeOperationParam);
-        pFrameworkAction->setParam(ACTION_PARAM_PATTERN, &patternParam);
+        pAction->setParam(ACTION_PARAM_LIMIT_STATE, &volumeOperationParam);
+        pAction->setParam(ACTION_PARAM_PATTERN, &patternParam);
     }
-    if (isParameterSet(ACTION_PARAM_DEBUG_TYPE, policyAction.mapParameters))
+    if (isParameterSet(mapParams, ACTION_PARAM_PATTERN))
     {
-        CAmActionParam < uint16_t > debugTypeParam(
-                        atoi(policyAction.mapParameters[ACTION_PARAM_DEBUG_TYPE].c_str()));
+        CAmActionParam < uint32_t > pattern(
+                        strtol(mapParams[ACTION_PARAM_PATTERN].data(), NULL, 16));
+        pAction->setParam(ACTION_PARAM_PATTERN, &pattern);
+    }
+    checkAndSetStringParam(mapParams, ACTION_PARAM_CLASS_NAME, pAction);
+    checkAndSetNumericParam(mapParams, ACTION_PARAM_RAMP_TYPE, int, pAction);
+    checkAndSetNumericParam(mapParams, ACTION_PARAM_RAMP_TIME, int, pAction);
+    checkAndSetNumericParam(mapParams, ACTION_PARAM_MAIN_VOLUME, am_mainVolume_t, pAction);
+    checkAndSetNumericParam(mapParams, ACTION_PARAM_MAIN_VOLUME_STEP, am_mainVolume_t, pAction);
+    checkAndSetNumericParam(mapParams, ACTION_PARAM_VOLUME, am_volume_t, pAction);
+    checkAndSetNumericParam(mapParams, ACTION_PARAM_VOLUME_STEP, am_volume_t, pAction);
+    checkAndSetNumericParam(mapParams, ACTION_PARAM_ORDER, gc_Order_e, pAction);
+    checkAndSetNumericParam(mapParams, ACTION_PARAM_PROPERTY_TYPE, am_CustomSoundPropertyType_t,
+                            pAction);
+    checkAndSetNumericParam(mapParams, ACTION_PARAM_PROPERTY_VALUE, int16_t, pAction);
+    checkAndSetNumericParam(mapParams, ACTION_PARAM_DEBUG_TYPE, uint16_t, pAction);
+    checkAndSetNumericParam(mapParams, ACTION_PARAM_DEBUG_VALUE, int16_t, pAction);
+    checkAndSetNumericParam(mapParams, ACTION_PARAM_CONNECTION_FORMAT, am_CustomConnectionFormat_t,
+                            pAction);
+    checkAndSetNumericParam(mapParams, ACTION_PARAM_NOTIFICATION_CONFIGURATION_TYPE,
+                            am_CustomNotificationType_t, pAction);
+    checkAndSetNumericParam(mapParams, ACTION_PARAM_NOTIFICATION_CONFIGURATION_STATUS,
+                            am_NotificationStatus_e, pAction);
+    checkAndSetNumericParam(mapParams, ACTION_PARAM_NOTIFICATION_CONFIGURATION_PARAM, int16_t,
+                            pAction);
 
-        pFrameworkAction->setParam(ACTION_PARAM_DEBUG_TYPE, &debugTypeParam);
-    }
-    if (isParameterSet(ACTION_PARAM_DEBUG_VALUE, policyAction.mapParameters))
-    {
-        CAmActionParam < int16_t > debugValueParam(
-                        atoi(policyAction.mapParameters[ACTION_PARAM_DEBUG_VALUE].c_str()));
-        pFrameworkAction->setParam(ACTION_PARAM_DEBUG_VALUE, &debugValueParam);
-    }
-    if (isParameterSet(ACTION_PARAM_CONNECTION_FORMAT, policyAction.mapParameters))
-    {
-        CAmActionParam < am_CustomConnectionFormat_t > connectionFormatParam(
-                        atoi(policyAction.mapParameters[ACTION_PARAM_CONNECTION_FORMAT].c_str()));
-        pFrameworkAction->setParam(ACTION_PARAM_CONNECTION_FORMAT, &connectionFormatParam);
-    }
 }
 
 void CAmPolicyAction::_getClassList(gc_Action_s& policyAction,
@@ -374,7 +329,7 @@ void CAmPolicyAction::_getClassList(gc_Action_s& policyAction,
     std::vector<std::string >::iterator itListClassNames;
     std::vector<CAmClassElement * > listTempClasses;
     std::vector<CAmClassElement * >::iterator itlistTempClasses;
-    if (isParameterSet(ACTION_PARAM_EXCEPT_CLASS_NAME, policyAction.mapParameters))
+    if (isParameterSet(policyAction.mapParameters, ACTION_PARAM_EXCEPT_CLASS_NAME))
     {
         _getListNames(policyAction.mapParameters[ACTION_PARAM_EXCEPT_CLASS_NAME], listClassNames);
     }
@@ -474,7 +429,7 @@ void CAmPolicyAction::_getActions(gc_Action_s& policyAction,
             }
             if (NULL != pAction)
             {
-                _setActionParameters(policyAction, pAction);
+                _setActionParameters(policyAction.mapParameters, pAction);
                 listFrameworkActions.push_back(pAction);
             }
         }
@@ -500,44 +455,59 @@ void CAmPolicyAction::_createActions(gc_Action_s& policyAction,
     else if (policyAction.actionName == ACTION_NAME_REGISTER)
     {
         pFrameworkAction = new CAmSystemActionRegister(mpControlReceive);
-        if (pFrameworkAction != NULL)
-        {
-            _setActionParameters(policyAction, pFrameworkAction);
-            listFrameworkActions.push_back(pFrameworkAction);
-        }
     }
     else if (policyAction.actionName == ACTION_DEBUG)
     {
         pFrameworkAction = new CAmSystemActionDebug(mpControlReceive);
-        if (pFrameworkAction != NULL)
-        {
-            _setActionParameters(policyAction, pFrameworkAction);
-            listFrameworkActions.push_back(pFrameworkAction);
-        }
-    }
-    else if (policyAction.actionName == ACTION_NAME_SET_PROPERTY)
-    {
-        std::string sourceName = _getParam(policyAction.mapParameters, ACTION_PARAM_SOURCE_NAME);
-        std::string sinkName = _getParam(policyAction.mapParameters, ACTION_PARAM_SINK_NAME);
-        if (false == sourceName.empty())
-        {
-            CAmSourceElement* pElement = CAmSourceFactory::getElement(sourceName);
-            pFrameworkAction = new CAmSourceSinkActionSetSoundProperty<CAmSourceElement >(pElement);
-        }
-        else if (false == sinkName.empty())
-        {
-            CAmSinkElement* pElement = CAmSinkFactory::getElement(sinkName);
-            pFrameworkAction = new CAmSourceSinkActionSetSoundProperty<CAmSinkElement >(pElement);
-        }
-        if (NULL != pFrameworkAction)
-        {
-            _setActionParameters(policyAction, pFrameworkAction);
-            listFrameworkActions.push_back(pFrameworkAction);
-        }
     }
     else
     {
-        pFrameworkAction = NULL;
+        if ((policyAction.actionName == ACTION_NAME_SET_PROPERTY) || (policyAction.actionName
+                        == ACTION_NAME_SET_NOTIFICATION_CONFIGURATION))
+        {
+            std::string sourceName = _getParam(policyAction.mapParameters,
+                                               ACTION_PARAM_SOURCE_NAME);
+            std::string sinkName = _getParam(policyAction.mapParameters, ACTION_PARAM_SINK_NAME);
+            if (false == sourceName.empty())
+            {
+                CAmSourceElement* pSourceElement = CAmSourceFactory::getElement(sourceName);
+                if (pSourceElement != NULL)
+                {
+                    if (policyAction.actionName == ACTION_NAME_SET_PROPERTY)
+                    {
+                        pFrameworkAction = new CAmSourceSinkActionSetSoundProperty<CAmSourceElement >(
+                                        pSourceElement);
+                    }
+                    else
+                    {
+                        pFrameworkAction = new CAmSourceSinkActionSetNotificationConfiguration<
+                                        CAmSourceElement >(pSourceElement);
+                    }
+                }
+            }
+            else if (false == sinkName.empty())
+            {
+                CAmSinkElement* pSinkElement = CAmSinkFactory::getElement(sinkName);
+                if (pSinkElement != NULL)
+                {
+                    if (policyAction.actionName == ACTION_NAME_SET_PROPERTY)
+                    {
+                        pFrameworkAction = new CAmSourceSinkActionSetSoundProperty<CAmSinkElement >(
+                                        pSinkElement);
+                    }
+                    else
+                    {
+                        pFrameworkAction = new CAmSourceSinkActionSetNotificationConfiguration<
+                                        CAmSinkElement >(pSinkElement);
+                    }
+                }
+            }
+        }
+    }
+    if (NULL != pFrameworkAction)
+    {
+        _setActionParameters(policyAction.mapParameters, pFrameworkAction);
+        listFrameworkActions.push_back(pFrameworkAction);
     }
 }
 

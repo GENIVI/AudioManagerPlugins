@@ -76,6 +76,61 @@ public:
     am_Error_e setMainSoundPropertyValue(const am_CustomMainSoundPropertyType_t type,
                                          const int16_t value);
     /**
+     * @brief This API is used to set the main notification configuration of sink element in database.
+     * @param mainNotificationConfiguraton: Notification configuration
+     * @return E_OK on success
+     *         errors as return by AM
+     */
+    am_Error_e setMainNotificationConfiguration(
+                    const am_NotificationConfiguration_s& mainNotificationConfiguraton);
+
+    /**
+     * @brief This API is used to update the notification data
+     * @param payload: Notification Payload
+     * @return E_OK on success
+     *         errors as return by AM
+     */
+    am_Error_e notificationDataUpdate(const am_NotificationPayload_s& payload);
+
+    /**
+     * @brief This API is used to get list of Notification Configuration
+     * @param listMainNotificationConfigurations: list of Main Notification Configuration
+     * @return E_OK on success
+     *         errors as return by AM
+     */
+    am_Error_e getListMainNotificationConfigurations(
+                    std::vector<am_NotificationConfiguration_s >& listMainNotificationConfigurations);
+
+    /**
+     * @brief This API is used to get list of Main Notification Configuration
+     * @param listNotificationConfigurations: list of Notification Configuration
+     * @return E_OK on success
+     *         errors as return by AM
+     */
+    am_Error_e getListNotificationConfigurations(
+                    std::vector<am_NotificationConfiguration_s >& listNotificationConfigurations);
+
+    /**
+     * @brief This API is used to get Notification Configuration
+     * @param notificationConfiguration: Notification configuration
+     * @return E_OK on success
+     *         errors as return by AM
+     */
+    am_Error_e getNotificationConfigurations(
+                    am_CustomNotificationType_t type,
+                    am_NotificationConfiguration_s& notificationConfiguration);
+
+    /**
+     * @brief This API is used to get Main Notification Configuration
+     * @param mainNotificationConfiguration: Main Notification configuration
+     * @return E_OK on success
+     *         errors as return by AM
+     */
+    am_Error_e getMainNotificationConfigurations(
+                    am_CustomNotificationType_t type,
+                    am_NotificationConfiguration_s& mainNotificationConfiguration);
+
+    /**
      * @brief This API is used to get the sound property value of sink element as in database.
      * @param soundPropertyType: type of property whose value is required
      *        soundPropertyValue: variable in which value will be returned
