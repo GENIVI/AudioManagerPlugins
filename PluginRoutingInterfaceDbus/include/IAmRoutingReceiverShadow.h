@@ -87,6 +87,8 @@ public:
     void hookSinkNotificationDataChange(DBusConnection *conn, DBusMessage *msg);
     void hookSourceNotificationDataChange(DBusConnection *conn, DBusMessage *msg);
     void getRoutingReadyStatus(DBusConnection* conn, DBusMessage* msg);
+    void getDomainOfSource(DBusConnection* conn, DBusMessage* msg);
+    void getDomainOfSink(DBusConnection* conn, DBusMessage* msg);
 
     /**
      * sets the pointer to the CommandReceiveInterface and registers Callback

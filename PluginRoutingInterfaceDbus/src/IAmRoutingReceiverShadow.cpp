@@ -544,6 +544,38 @@ void IAmRoutingReceiverShadowDbus::peekSourceClassID(DBusConnection* conn, DBusM
     mDBUSMessageHandler.sendMessage();
 }
 
+void IAmRoutingReceiverShadowDbus::getDomainOfSource(DBusConnection* conn, DBusMessage* msg)
+{
+    (void) ((conn));
+    assert(mRoutingReceiveInterface != NULL);
+    am_domainID_t domainID=0;
+    mDBUSMessageHandler.initReceive(msg);
+    am_sourceID_t sourceID = mDBUSMessageHandler.getUInt();
+    log(&routingDbus, DLT_LOG_INFO, "IAmRoutingReceiverShadow::getDomainOfSource called, ID", sourceID);
+    am_Error_e returnCode = mRoutingReceiveInterface->getDomainOfSource(sourceID, domainID);
+    mDBUSMessageHandler.initReply(msg);
+    mDBUSMessageHandler.append(domainID);
+    mDBUSMessageHandler.append(returnCode);
+    mDBUSMessageHandler.sendMessage();
+}
+
+void IAmRoutingReceiverShadowDbus::getDomainOfSink(DBusConnection* conn, DBusMessage* msg)
+{
+    (void) ((conn));
+    am_domainID_t domainID=0;
+
+    assert(mRoutingReceiveInterface != NULL);
+    mDBUSMessageHandler.initReceive(msg);
+    am_sinkID_t sinkID = mDBUSMessageHandler.getUInt();
+    log(&routingDbus, DLT_LOG_INFO, "IAmRoutingReceiverShadow::getDomainOfSource called, ID", sinkID);
+    am_Error_e returnCode = mRoutingReceiveInterface->getDomainOfSource(sinkID, domainID);
+    mDBUSMessageHandler.initReply(msg);
+    mDBUSMessageHandler.append(domainID);
+    mDBUSMessageHandler.append(returnCode);
+    mDBUSMessageHandler.sendMessage();
+
+}
+
 void IAmRoutingReceiverShadowDbus::peekSinkClassID(DBusConnection* conn, DBusMessage* msg)
 {
     (void) ((conn));
@@ -970,6 +1002,9 @@ IAmRoutingReceiverShadowDbus::functionMap_t IAmRoutingReceiverShadowDbus::create
     m["hookSinkNotificationDataChange"] = &IAmRoutingReceiverShadowDbus::hookSinkNotificationDataChange;
     m["hookSourceNotificationDataChange"] = &IAmRoutingReceiverShadowDbus::hookSourceNotificationDataChange;
     m["getRoutingReadyState"] = &IAmRoutingReceiverShadowDbus::getRoutingReadyStatus;
+    m["getDomainOfSource"] = &IAmRoutingReceiverShadowDbus::getDomainOfSource;
+    m["getDomainOfSink"] = &IAmRoutingReceiverShadowDbus::getDomainOfSink;
+
     return (m);
 }
 }

@@ -117,6 +117,16 @@
 		<arg name="sourceID" type="q" direction="out" />
 		<arg name="error" type="q" direction="out" />		
 	</method>
+	<method name="getDomainOfSource">
+		<arg name="sourceID" type="q" direction="in" />
+		<arg name="domainID" type="q" direction="out" />
+        <arg name="error" type="q" direction="out" />
+	</method>	
+	<method name="getDomainOfSink">
+		<arg name="sinkID" type="q" direction="in" />
+		<arg name="domainID" type="q" direction="out" />
+        <arg name="error" type="q" direction="out" />
+	</method>	
 	<method name="registerSource">      
 		<arg name="sourceData" type="(qqsqinb(ii)qa(in)aia(in)a(iin)a(iin))" direction="in" />  <!-- am_sourceID_t sourceID; am_domainID_t domainID; std::string name; am_sourceClass_t sourceClassID; am_SourceState_e sourceState; am_volume_t volume; bool visible; am_Availability_s available; am_InterruptState_e interruptState; std::vector<am_SoundProperty_s> listSoundProperties; std::vector<am_CustomAvailabilityReason_t> listConnectionFormats; std::vector<am_MainSoundProperty_s> listMainSoundProperties; -->    
 		<arg name="sourceID" type="q" direction="out" /> 
