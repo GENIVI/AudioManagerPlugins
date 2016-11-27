@@ -113,7 +113,8 @@ public:
     am_domainID_t getDomainID(void);
     am_Error_e getListConnectionFormats(
                     std::vector<am_CustomConnectionFormat_t >& listConnectionFormats);
-    am_Error_e upadateDB(am_sourceClass_t classId, std::vector<am_SoundProperty_s > listSoundProperties,
+    am_Error_e upadateDB(am_sourceClass_t classId,
+                         std::vector<am_SoundProperty_s > listSoundProperties,
                          std::vector<am_CustomConnectionFormat_t > listConnectionFormats,
                          std::vector<am_MainSoundProperty_s > listMainSoundProperties);
 
@@ -130,6 +131,9 @@ private:
     am_Error_e _saturateSoundProperty(const TPropertyType soundPropertyType,
                                       const std::vector<Tlisttype >& listGCSoundProperties,
                                       int16_t& soundPropertyValue);
+    template <typename TPropertyType, typename Tlisttype>
+    bool _isSoundPropertyConfigured(const TPropertyType soundPropertyType,
+                                    const std::vector<Tlisttype >& listGCSoundProperties);
     gc_Source_s mSource;
     CAmControlReceive* mpControlReceive;
     uint16_t mNumInUse;

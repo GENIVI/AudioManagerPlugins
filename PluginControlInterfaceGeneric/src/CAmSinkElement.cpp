@@ -211,6 +211,25 @@ am_Error_e CAmSinkElement::saturateSoundPropertyRange(
                     soundPropertyType, mSink.listGCSoundProperties, soundPropertyValue);
 }
 
+template <typename TPropertyType, typename Tlisttype>
+bool CAmSinkElement::_isSoundPropertyConfigured(
+                const TPropertyType soundPropertyType,
+                const std::vector<Tlisttype >& listGCSoundProperties)
+{
+    bool soundPropertyConfigured = false;
+    typename std::vector<Tlisttype >::const_iterator itListSoundProperties;
+    for (itListSoundProperties = listGCSoundProperties.begin();
+                    itListSoundProperties != listGCSoundProperties.end(); ++itListSoundProperties)
+    {
+        if ((*itListSoundProperties).type == soundPropertyType)
+        {
+            soundPropertyConfigured = true;
+            break;
+        }
+    }
+    return soundPropertyConfigured;
+}
+
 am_Error_e CAmSinkElement::getSoundPropertyValue(const am_CustomSoundPropertyType_t type,
                                                  int16_t& value) const
 {
@@ -443,7 +462,7 @@ am_Error_e CAmSinkElement::soundPropertyToMainSoundProperty(
                 const am_SoundProperty_s &soundProperty, am_MainSoundProperty_s& mainSoundProperty)
 {
     am_Error_e error = E_DATABASE_ERROR;
-    if (mSink.mapMSPTOSP[MD_SP_TO_MSP].find(mainSoundProperty.type) != mSink.mapMSPTOSP[MD_SP_TO_MSP].end())
+    if (mSink.mapMSPTOSP[MD_SP_TO_MSP].find(soundProperty.type) != mSink.mapMSPTOSP[MD_SP_TO_MSP].end())
     {
         mainSoundProperty.type = mSink.mapMSPTOSP[MD_SP_TO_MSP][soundProperty.type];
         mainSoundProperty.value = soundProperty.value;
@@ -481,18 +500,17 @@ am_Error_e CAmSinkElement::upadateDB(
 
     /*
      * sound properties update. The strategy is as follows
-     * 1. Get the sound properties from the audio manager database
-     * 2. for each property present in the list from routing side saturate the values and update
-     * in the list.
-     * 3. If the new list has a sound property type which is not present in the configuration list
-     * then ignore it.
+     * 1. Get the list of sound properties from the audio manager database
+     * 2. for each property present in the list from routing side update in the list returned from
+     * AudioManager Daemon.
+     * 3. If the sound property is not present in the configuration ignore it
      */
     for (itListSoundProperties = listSoundProperties.begin();
                     itListSoundProperties != listSoundProperties.end(); itListSoundProperties++)
     {
         am_SoundProperty_s soundProperty = *itListSoundProperties;
         am_MainSoundProperty_s mainSoundProperty;
-        if (E_OK == saturateSoundPropertyRange(soundProperty.type, soundProperty.value))
+        if (_isSoundPropertyConfigured(soundProperty.type, mSink.listGCSoundProperties))
         {
             for (itListUpdatedSoundProperties = listUpdatedSoundProperties.begin();
                             itListUpdatedSoundProperties != listUpdatedSoundProperties.end();
@@ -508,7 +526,8 @@ am_Error_e CAmSinkElement::upadateDB(
             {
                 listUpdatedSoundProperties.push_back(soundProperty);
             }
-            LOG_FN_INFO("converting SP TO MSP", soundProperty.type);
+            LOG_FN_INFO("converting SP TO MSP type:value=", soundProperty.type,
+                        soundProperty.value);
             if (E_OK != soundPropertyToMainSoundProperty(soundProperty, mainSoundProperty))
             {
                 continue;
@@ -528,32 +547,21 @@ am_Error_e CAmSinkElement::upadateDB(
                 listUpdatedMainSoundProperties.push_back(mainSoundProperty);
             }
         }
-        else
-        {
-            /*
-             * TODO : This is a new sound property found not present in the list in configuration
-             * we have two options here either
-             * 1. ignore the update
-             * 2. add it to the list of ranges with no range
-             */
-            continue;
-        }
     }
     /*
      * main sound properties update. The strategy is as follows
      * 1. Get the main sound properties from the audio manager database
-     * 2. For each main sound property present in the new list update the MSP
-     * 3. If the new list has a main sound property type which is not present in the
+     * 2. Perform the SP to MSP conversion and update the MSP type:values.
+     * 3. For each main sound property present in the new list update the MSP value
+     * 4. If the new list has a main sound property type which is not present in the
      * configuration list then ignore it.
-     * 4. Finally perform the SP to MSP conversion and update the MSP type:values after saturation
-     *  if present in the list else add new type:value after saturation.
      */
     for (itListMainSoundProperties = listMainSoundProperties.begin();
                     itListMainSoundProperties != listMainSoundProperties.end();
                     itListMainSoundProperties++)
     {
         am_MainSoundProperty_s mainSoundProperty = *itListMainSoundProperties;
-        if (E_OK == saturateMainSoundPropertyRange(mainSoundProperty.type, mainSoundProperty.value))
+        if (_isSoundPropertyConfigured(mainSoundProperty.type, mSink.listGCMainSoundProperties))
         {
             for (itListUpdatedMainSoundProperties = listUpdatedMainSoundProperties.begin();
                             itListUpdatedMainSoundProperties != listUpdatedMainSoundProperties.end();
@@ -569,11 +577,6 @@ am_Error_e CAmSinkElement::upadateDB(
             {
                 listUpdatedMainSoundProperties.push_back(mainSoundProperty);
             }
-        }
-        else
-        {
-            //TODO : this is a new main sound property found not present in the original list.
-            continue;
         }
     }
     /*

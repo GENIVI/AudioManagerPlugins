@@ -107,7 +107,8 @@ public:
                     int16_t& soundPropertyValue);
     am_Error_e saturateSoundPropertyRange(const am_CustomSoundPropertyType_t soundPropertyType,
                                           int16_t& soundPropertyValue);
-    am_Error_e upadateDB(am_sinkClass_t classId, std::vector<am_SoundProperty_s > listSoundProperties,
+    am_Error_e upadateDB(am_sinkClass_t classId,
+                         std::vector<am_SoundProperty_s > listSoundProperties,
                          std::vector<am_CustomConnectionFormat_t > listConnectionFormats,
                          std::vector<am_MainSoundProperty_s > listMainSoundProperties);
     /**
@@ -163,6 +164,10 @@ private:
     am_Error_e _saturateSoundProperty(const TPropertyType soundPropertyType,
                                       const std::vector<Tlisttype >& listGCSoundProperties,
                                       int16_t& soundPropertyValue);
+    template <typename TPropertyType, typename Tlisttype>
+    bool _isSoundPropertyConfigured(const TPropertyType soundPropertyType,
+                                    const std::vector<Tlisttype >& listGCSoundProperties);
+
     gc_Sink_s mSink;
     CAmControlReceive* mpControlReceive;
     std::map<int16_t, float > mMapUserToNormalizedVolume;
