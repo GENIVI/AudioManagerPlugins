@@ -53,6 +53,8 @@ CAmPolicyAction::CAmPolicyAction(const std::vector<gc_Action_s > &listPolicyActi
     {   CS_UNKNOWN, CS_CONNECTING, CS_CONNECTED, CS_DISCONNECTING, CS_DISCONNECTED, CS_SUSPENDED};
     mMapConnectionStates["CS_CONNECTED"] =
     {   CS_CONNECTED};
+    mMapConnectionStates[""] =
+    {   CS_CONNECTED};
     mMapConnectionStates["CS_DISCONNECTED"] =
     {   CS_DISCONNECTED};
     mMapConnectionStates["CS_SUSPENDED"] =
@@ -299,11 +301,13 @@ void CAmPolicyAction::_setActionParameters(gc_Action_s &policyAction,
     }
     else
     {
-        std::string filter(policyAction.mapParameters[ACTION_PARAM_CONNECTION_STATE]);
-        CAmActionParam < std::vector<am_ConnectionState_e > > listConnectionStatesParam(
-                        mMapConnectionStates[filter]);
-        pFrameworkAction->setParam(ACTION_PARAM_CONNECTION_STATE, &listConnectionStatesParam);
-
+        if ((policyAction.mapParameters[ACTION_PARAM_SOURCE_NAME] != "") && (policyAction.mapParameters[ACTION_PARAM_SINK_NAME]
+                        != ""))
+        {
+            CAmActionParam < std::vector<am_ConnectionState_e > > listConnectionStatesParam(
+                            mMapConnectionStates["ALL"]);
+            pFrameworkAction->setParam(ACTION_PARAM_CONNECTION_STATE, &listConnectionStatesParam);
+        }
     }
     if (isParameterSet(ACTION_PARAM_MUTE_STATE, policyAction.mapParameters))
     {
