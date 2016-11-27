@@ -1140,7 +1140,7 @@ am_Error_e CAmPolicyEngine::_findConnectionName(const gc_ConditionStruct_s &cond
                                                 const gc_triggerParams_s &parameters,
                                                 const bool isLHS)
 {
-    if(parameters.connectionName.empty() == false)
+    if(parameters.connectionName.empty() == true)
     {
         return _findElementName(conditionInstance, listOutputs,
                                     parameters.sourceName + ":" + parameters.sinkName, isLHS);

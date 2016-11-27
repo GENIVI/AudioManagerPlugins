@@ -40,6 +40,21 @@
             </xsd:enumeration>
         </xsd:restriction>
     </xsd:simpleType>
+    <xsd:simpleType name="am_Error_e">
+        <xsd:restriction base="xsd:string">
+            <xsd:enumeration value="E_OK"/>
+            <xsd:enumeration value="E_UNKNOWN"/>
+            <xsd:enumeration value="E_OUT_OF_RANGE"/>
+            <xsd:enumeration value="E_NOT_USED"/>
+            <xsd:enumeration value="E_DATABASE_ERROR"/>
+            <xsd:enumeration value="E_ALREADY_EXISTS"/>
+            <xsd:enumeration value="E_NO_CHANGE"/>
+			<xsd:enumeration value="E_NOT_POSSIBLE"/>
+			<xsd:enumeration value="E_NON_EXISTENT"/>
+			<xsd:enumeration value="E_ABORTED"/>
+			<xsd:enumeration value="E_WRONG_FORMAT"/>
+        </xsd:restriction>
+    </xsd:simpleType>
     <xsd:simpleType name="am_AvailabilityReason_t">
         <xsd:union memberTypes="c:am_GeniviAvailabilityReason_t c:am_CustomAvailabilityReason_t"/>
     </xsd:simpleType>

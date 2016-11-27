@@ -119,9 +119,12 @@ int CAmMainConnectionActionConnect::_update(const int result)
         connectionState = CS_DISCONNECTED;
     }
 
-    // update main connection state in Audio Manager daemon
-    mpMainConnection->setState(connectionState);
-    _setConnectionStateChangeTrigger();
+    if(connectionState != CS_UNKNOWN)
+    {
+        // update main connection state in Audio Manager daemon
+        mpMainConnection->setState(connectionState);
+        _setConnectionStateChangeTrigger();
+    }
     return E_OK;
 }
 

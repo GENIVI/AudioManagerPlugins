@@ -27,6 +27,7 @@ namespace am {
 
 namespace gc {
 
+CAmTriggerQueue* CAmTriggerQueue::mpTriggerQueue = NULL;
 CAmTriggerQueue::CAmTriggerQueue()
 {
     mlistTrigger.clear();

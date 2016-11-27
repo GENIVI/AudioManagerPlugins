@@ -1500,6 +1500,10 @@ void CAmControlSend::iterateActions(void)
                     _forwardTriggertoPolicyEngine(triggerType, triggerData);
                     delete triggerData;
                 }
+                else
+                {
+                    break;
+                }
             }
             else
             {

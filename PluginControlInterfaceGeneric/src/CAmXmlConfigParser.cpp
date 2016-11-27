@@ -1764,8 +1764,7 @@ public:
         mValidFunctionNames.push_back(FUNCTION_IS_REGISTERED);
         mValidFunctionNames.push_back(FUNCTION_STATE);
         mValidFunctionNames.push_back(FUNCTION_CONNECTION_FORMAT);
-        mValidFunctionNames.push_back(FUNCTION_PEEK);
-
+        mValidFunctionNames.push_back(FUNCTION_CONNECTION_ERROR);
         mValidCategory.push_back(CATEGORY_SINK);
         mValidCategory.push_back(CATEGORY_SOURCE);
         mValidCategory.push_back(CATEGORY_CLASS);
@@ -1940,6 +1939,7 @@ private:
         if (mValidFunctionNames.end() == std::find(mValidFunctionNames.begin(),
                                                    mValidFunctionNames.end(), functionName))
         {
+            LOG_FN_ERROR("Function name is not supported");
             return E_UNKNOWN;
         }
         startPosition++;
@@ -2769,6 +2769,7 @@ void CAmXmlConfigParser::printListPolicies(gc_Configuration_s* pConfiguration)
         "SYSTEM_DEREGISTER_SOURCE",
         "SYSTEM_DEREGISTER_GATEWAY",
         "SYSTEM_DOMAIN_REGISTRATION_COMPLETE",
+        "SYSTEM_CONNECTION_STATE_CHANGE",
         "USER_ALL_TRIGGER",
         "TRIGGER_MAX"
     };
