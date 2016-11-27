@@ -14,7 +14,13 @@ first Queued by the action framework. Only when the action Queue is empty, singl
 and forwarded along with the trigger parameters to policy engine. policy engine evaluates the 
 policies and gives the set of actions which are added in action Queue. After which the action 
 framework executes the actions till all the actions are executed successfully. 
-    
+
+@section triggerDesc Trigger Descriptions
+
+    The triggers which are generated from command interface have a prefix "USER" whereas the triggers
+from the routing interface have prefix "SYSTEM"
+\image html TriggerDesc.png
+
 @section triggerParams Trigger Parameters
      The trigger parameters are the parameter which are part of the trigger. Example a connect 
 request from the command side would have source ID and sink ID as the trigger parameter. Each  
