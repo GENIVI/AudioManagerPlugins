@@ -74,6 +74,7 @@ CAmPolicyEngine::CAmPolicyEngine() :
     mMapConnectionStateFunctions[CATEGORY_CONNECTION_OF_CLASS] = &CAmPolicyEngine::_findConnectionOfClassState;
     mMapConnectionStateFunctions[CATEGORY_CONNECTION_OF_SOURCE] = &CAmPolicyEngine::_findSourceConnectionState;
     mMapConnectionStateFunctions[CATEGORY_CONNECTION_OF_SINK] = &CAmPolicyEngine::_findSinkConnectionState;
+    mMapConnectionStateFunctions[CATEGORY_USER] = &CAmPolicyEngine::_findUserConnectionState;
 
     mMapVolumeFunctions[CATEGORY_SINK] = &CAmPolicyEngine::_findSinkDeviceVolume;
     mMapVolumeFunctions[CATEGORY_SOURCE] = &CAmPolicyEngine::_findSourceDeviceVolume;
@@ -904,8 +905,17 @@ am_Error_e CAmPolicyEngine::_findConnectionName(const gc_ConditionStruct_s &cond
                                                 const gc_triggerParams_s &parameters,
                                                 const bool isLHS)
 {
-    return _findElementName(conditionInstance, listOutputs,
-                            parameters.sourceName + ":" + parameters.sinkName, isLHS);
+    if(parameters.connectionName.empty() == false)
+    {
+        return _findElementName(conditionInstance, listOutputs,
+                                    parameters.sourceName + ":" + parameters.sinkName, isLHS);
+    }
+    else
+    {
+        return _findElementName(conditionInstance, listOutputs,
+                                            parameters.connectionName, isLHS);
+    }
+
 }
 
 // find the name of domain from source name
@@ -1369,6 +1379,19 @@ am_Error_e CAmPolicyEngine::_findUserMainVolume(const gc_ConditionStruct_s &cond
     char outputData[5];
     // store the value in std::string format
     sprintf(outputData, "%d", parameters.mainVolume);
+    listOutputs.push_back(outputData);
+    return E_OK;
+}
+
+//find the trigger connection state value
+am_Error_e CAmPolicyEngine::_findUserConnectionState(const gc_ConditionStruct_s &conditionInstance,
+                                                std::vector<std::string > &listOutputs,
+                                                const gc_triggerParams_s &parameters,
+                                                const bool isLHS)
+{
+    char outputData[5];
+    // store the value in std::string format
+    sprintf(outputData, "%d", parameters.connectionState);
     listOutputs.push_back(outputData);
     return E_OK;
 }
