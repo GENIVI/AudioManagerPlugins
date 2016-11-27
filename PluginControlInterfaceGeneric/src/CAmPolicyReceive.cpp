@@ -254,7 +254,7 @@ am_Error_e CAmPolicyReceive::getListMainConnections(
     {
         std::vector<CAmMainConnectionElement* > listConnections;
         std::vector<CAmMainConnectionElement* >::iterator itListMainConnections;
-        pClassElement = CAmClassFactory::getClassElement(elementName);
+        pClassElement = CAmClassFactory::getElementByConnection(elementName);
         if (NULL != pClassElement)
         {
             pClassElement->getListMainConnections(listConnections);

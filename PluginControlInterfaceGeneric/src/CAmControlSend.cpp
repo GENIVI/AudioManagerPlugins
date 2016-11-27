@@ -200,8 +200,7 @@ am_Error_e CAmControlSend::hookUserConnectionRequest(const am_sourceID_t sourceI
         return E_NON_EXISTENT;
     }
     mainConnectionID = 0;
-    pClassElement = CAmClassFactory::getClassElement(pSourceElement->getName(),
-                                                     pSinkElement->getName());
+    pClassElement = CAmClassFactory::getElement(pSourceElement->getName(), pSinkElement->getName());
     if (NULL == pClassElement)
     {
         LOG_FN_ERROR("  got failed.");
@@ -253,7 +252,7 @@ am_Error_e CAmControlSend::hookUserDisconnectionRequest(const am_mainConnectionI
         return E_NOT_POSSIBLE;
     }
     LOG_FN_INFO(pMainConnection->getName(), pMainConnection->getID());
-    pClassElement = CAmClassFactory::getClassElement(pMainConnection->getName());
+    pClassElement = CAmClassFactory::getElementByConnection(pMainConnection->getName());
     if (NULL == pClassElement)
     {
         LOG_FN_ERROR("  no such class:", connectionID);

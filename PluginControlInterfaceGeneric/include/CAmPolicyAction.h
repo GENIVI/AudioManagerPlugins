@@ -48,6 +48,7 @@ private:
 
     std::vector<gc_Action_s > mListActions;
     IAmPolicySend* mpPolicySend;
+    std::map<std::string, std::vector<am_ConnectionState_e > > mMapConnectionStates;
     CAmControlReceive* mpControlReceive;
 };
 }

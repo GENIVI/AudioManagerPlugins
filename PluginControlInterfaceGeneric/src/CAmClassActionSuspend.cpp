@@ -48,8 +48,11 @@ int CAmClassActionSuspend::_execute(void)
     std::vector<CAmMainConnectionElement* > listMainConnections;
     std::vector<CAmMainConnectionElement* >::iterator itListMainConnections;
     std::vector < am_ConnectionState_e > listConnectionStates {CS_CONNECTED};
-    mpClassElement->getListMainConnections(sourceName, sinkName, listConnectionStates,
-                                           listMainConnections);
+    CAmConnectionListFilter filterObject;
+    filterObject.setSourceName(sourceName);
+    filterObject.setSinkName(sinkName);
+    filterObject.setListConnectionStates(listConnectionStates);
+    mpClassElement->getListMainConnections(listMainConnections,filterObject);
     for (itListMainConnections = listMainConnections.begin();
                     itListMainConnections != listMainConnections.end(); itListMainConnections++)
     {

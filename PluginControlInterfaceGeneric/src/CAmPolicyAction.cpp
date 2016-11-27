@@ -49,6 +49,17 @@ CAmPolicyAction::CAmPolicyAction(const std::vector<gc_Action_s > &listPolicyActi
                                 mpPolicySend(pPolicySend),
                                 mpControlReceive(pControlReceive)
 {
+    mMapConnectionStates["ALL"] =
+    {   CS_UNKNOWN, CS_CONNECTING, CS_CONNECTED, CS_DISCONNECTING, CS_DISCONNECTED, CS_SUSPENDED};
+    mMapConnectionStates["CS_CONNECTED"] =
+    {   CS_CONNECTED};
+    mMapConnectionStates["CS_DISCONNECTED"] =
+    {   CS_DISCONNECTED};
+    mMapConnectionStates["CS_SUSPENDED"] =
+    {   CS_SUSPENDED};
+    mMapConnectionStates["OTHERS"] =
+    {   CS_UNKNOWN, CS_CONNECTING, CS_DISCONNECTING,
+        CS_DISCONNECTED, CS_SUSPENDED};
 }
 
 CAmPolicyAction::~CAmPolicyAction()
@@ -272,9 +283,27 @@ void CAmPolicyAction::_setActionParameters(gc_Action_s &policyAction,
     }
     if (isParameterSet(ACTION_PARAM_CONNECTION_STATE, policyAction.mapParameters))
     {
-        CAmActionParam < std::string > filter(
-                        policyAction.mapParameters[ACTION_PARAM_CONNECTION_STATE]);
-        pFrameworkAction->setParam(ACTION_PARAM_CONNECTION_STATE, &filter);
+        /*
+         * convert the connection state filter from string to list connection states
+         * here
+         */
+        std::string filter(policyAction.mapParameters[ACTION_PARAM_CONNECTION_STATE]);
+        if ((policyAction.mapParameters[ACTION_PARAM_SOURCE_NAME] != "") && (policyAction.mapParameters[ACTION_PARAM_SINK_NAME]
+                        != ""))
+        {
+            filter = "ALL";
+        }
+        CAmActionParam < std::vector<am_ConnectionState_e > > listConnectionStatesParam(
+                        mMapConnectionStates[filter]);
+        pFrameworkAction->setParam(ACTION_PARAM_CONNECTION_STATE, &listConnectionStatesParam);
+    }
+    else
+    {
+        std::string filter(policyAction.mapParameters[ACTION_PARAM_CONNECTION_STATE]);
+        CAmActionParam < std::vector<am_ConnectionState_e > > listConnectionStatesParam(
+                        mMapConnectionStates[filter]);
+        pFrameworkAction->setParam(ACTION_PARAM_CONNECTION_STATE, &listConnectionStatesParam);
+
     }
     if (isParameterSet(ACTION_PARAM_MUTE_STATE, policyAction.mapParameters))
     {
@@ -313,7 +342,7 @@ void CAmPolicyAction::_setActionParameters(gc_Action_s &policyAction,
     if (isParameterSet(ACTION_PARAM_DEBUG_TYPE, policyAction.mapParameters))
     {
         CAmActionParam < uint16_t > debugTypeParam(
-                       atoi(policyAction.mapParameters[ACTION_PARAM_DEBUG_TYPE].c_str()));
+                        atoi(policyAction.mapParameters[ACTION_PARAM_DEBUG_TYPE].c_str()));
 
         pFrameworkAction->setParam(ACTION_PARAM_DEBUG_TYPE, &debugTypeParam);
     }
@@ -352,8 +381,8 @@ void CAmPolicyAction::_getClassList(gc_Action_s& policyAction,
     }
     else if ((false == sourceName.empty()) && (false == sinkName.empty())) // the source and sink is specified explicitly
     {
-        CAmClassElement *pClassElement = (CAmClassElement*)CAmClassFactory::getClassElement(
-                        sourceName, sinkName);
+        CAmClassElement *pClassElement = (CAmClassElement*)CAmClassFactory::getElement(sourceName,
+                                                                                       sinkName);
         if (NULL != pClassElement)
         {
             listClasses.push_back(pClassElement);

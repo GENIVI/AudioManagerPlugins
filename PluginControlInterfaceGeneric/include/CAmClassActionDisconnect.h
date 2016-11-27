@@ -81,10 +81,6 @@ protected:
      */
     int _update(const int result);
 private:
-    bool _isNameInExceptList(const std::vector<std::string >& listExceptions,
-                             const std::string& exceptName);
-    bool _isConnectionFilter(CAmMainConnectionElement* pMainConnection);
-    void _runExceptionList(void);
     /**
      * @brief This API is used to set the parameters for its child action.
      * @param pMainConnection: pointer to connection which need to be disconnected
@@ -97,8 +93,7 @@ private:
      * @param listMainConnections: list of connection to be disconnected
      * @return none
      */
-    void _findMainConnection(void);
-
+    //void _findMainConnection(void);
     IAmActionCommand* _createActionSetLimitState(CAmMainConnectionElement* pMainConnection);
 
     CAmClassElement *mpClassElement;
@@ -106,9 +101,9 @@ private:
     // Variables in which policy engine will set the parameters.
     CAmActionParam<std::string > mSourceNameParam;
     CAmActionParam<std::string > mSinkNameParam;
-    CAmActionParam<std::string > mConnectionFilter;
-    CAmActionParam<std::vector<std::string > > mlistSinkExceptions;
-    CAmActionParam<std::vector<std::string > > mlistSourceExceptions;
+    CAmActionParam<std::vector<am_ConnectionState_e > > mListConnectionStatesParam;
+    CAmActionParam<std::vector<std::string > > mListSinkExceptionsParam;
+    CAmActionParam<std::vector<std::string > > mlistSourceExceptionsParam;
 };
 
 } /* namespace gc */
