@@ -184,6 +184,7 @@ namespace gc {
 #define FUNCTION_DOMAIN_STATE				"domainState"
 #define FUNCTION_SOURCE_STATE				"sourceState"
 #define FUNCTION_CONNECTION_FORMAT			"connectionFormat"
+#define FUNCTION_CONNECTION_ERROR           "connectionError"
 
 // macros supported in functions
 #define FUNCTION_MACRO_SUPPORTED_REQUESTING	"REQUESTING"

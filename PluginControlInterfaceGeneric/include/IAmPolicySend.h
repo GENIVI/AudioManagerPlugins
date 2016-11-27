@@ -73,6 +73,9 @@ public:
                                         const am_mainVolume_t mainVolume) =0;
     virtual am_Error_e hookSetSinkMuteState(const std::string& sinkName,
                                             const am_MuteState_e muteState) =0;
+    virtual am_Error_e hookConnectionStateChange(const std::string& connectionName,
+                                                   const am_ConnectionState_e& connectionState,
+                                                   am_Error_e& status) =0;
     virtual am_Error_e getListElements(const std::vector<std::string >& listNames,
                                        std::vector<gc_Sink_s >& listSinks)=0;
     virtual am_Error_e getListElements(const std::vector<std::string >& listNames,

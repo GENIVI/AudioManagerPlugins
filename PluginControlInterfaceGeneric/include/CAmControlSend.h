@@ -108,6 +108,13 @@ struct gc_SystemPropertyTrigger_s : public gc_TriggerElement_s
     am_SystemProperty_s systemProperty;
 };
 
+struct gc_ConnectionStateChangeTrigger_s : public gc_TriggerElement_s
+{
+    std::string connectionName;
+    am_ConnectionState_e connectionState;
+    am_Error_e status;
+};
+
 class CAmControlSend : public IAmControlSend
 {
 public:

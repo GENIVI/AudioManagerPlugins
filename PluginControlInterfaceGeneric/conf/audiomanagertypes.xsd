@@ -461,6 +461,7 @@ For details of the topology writing rules refer the topology writing rules secti
             </xsd:enumeration>
             <xsd:enumeration value="SYSTEM_DEREGISTER_GATEWAY"/>
             <xsd:enumeration value="SYSTEM_DOMAIN_REGISTRATION_COMPLETE"/>
+            <xsd:enumeration value="SYSTEM_CONNECTION_STATE_CHANGE"/>
             <xsd:enumeration value="USER_ALL_TRIGGER"/>
             <xsd:enumeration value="TRIGGER_MAX"/>
             </xsd:restriction>

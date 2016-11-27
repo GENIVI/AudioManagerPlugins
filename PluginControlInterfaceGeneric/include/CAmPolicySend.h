@@ -228,6 +228,9 @@ public:
      *         E_OK on success
      */
     am_Error_e hookSetSinkMuteState(const std::string& sinkName, const am_MuteState_e muteState);
+    am_Error_e hookConnectionStateChange(const std::string& connectionName,
+                                                   const am_ConnectionState_e& connectionState,
+                                                   am_Error_e& status);
     /**
      * @brief This API returns the list of configuration data of a sink by list of names.
      * @param listNames The list of the sink names

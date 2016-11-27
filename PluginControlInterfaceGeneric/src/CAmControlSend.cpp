@@ -1584,6 +1584,14 @@ am_Error_e CAmControlSend::_forwardTriggertoPolicyEngine(gc_Trigger_e triggerTyp
         gc_SystemPropertyTrigger_s* pSystemPropertyTrigger_t = (gc_SystemPropertyTrigger_s*)triggerData;
         result = mpPolicySend->hookSetSystemProperty(pSystemPropertyTrigger_t->systemProperty);
     }
+    break;
+    case SYSTEM_CONNECTION_STATE_CHANGE:
+    {
+        gc_ConnectionStateChangeTrigger_s* pConnectionStateTrigger_t = (gc_ConnectionStateChangeTrigger_s*)triggerData;
+        result = mpPolicySend->hookConnectionStateChange(pConnectionStateTrigger_t->connectionName,
+                                                         pConnectionStateTrigger_t->connectionState,
+                                                         pConnectionStateTrigger_t->status);
+    }
         break;
     default:
         break;

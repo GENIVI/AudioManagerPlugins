@@ -56,7 +56,10 @@ struct gc_triggerParams_s
         domainName.clear();
         gatewayName.clear();
         className.clear();
+        connectionName.clear();
         mainVolume = 0;
+        status = E_OK;
+        connectionState = CS_UNKNOWN;
         muteState = MS_UNKNOWN;
         interruptState = IS_UNKNOWN;
         mainSoundProperty.type = MSP_UNKNOWN;
@@ -72,6 +75,9 @@ struct gc_triggerParams_s
     std::string domainName;
     std::string gatewayName;
     std::string className;
+    std::string connectionName;
+    am_ConnectionState_e connectionState;
+    am_Error_e status;
     am_mainVolume_t mainVolume;
     am_MainSoundProperty_s mainSoundProperty;
     am_SystemProperty_s systemProperty;
@@ -457,6 +463,10 @@ private:
                                                       std::vector<std::string > &listOutputs,
                                                       const gc_triggerParams_s &parameters,
                                                       const bool isLHS);
+    am_Error_e _findUserErrorValue(const gc_ConditionStruct_s &conditionInstance,
+                                                          std::vector<std::string > &listOutputs,
+                                                          const gc_triggerParams_s &parameters,
+                                                          const bool isLHS);
     /**
      * @brief It is the internal function used to find the sink device property value as per current scenario and condition
      * @param conditionInstance: condition which need to be evaluated
@@ -1093,6 +1103,8 @@ private:
     std::map<std::string, functionPtr > mMapIsRegisteredFunctions;
     //map to store function pointers of element state category function of condition set as defined in policy
     std::map<std::string, functionPtr > mMapStateFunctions;
+    //map to store function pointers of error category function of condition set as defined in policy
+    std::map<std::string, functionPtr > mMapErrorFunctions;
     //map to store map of function pointers
     std::map<std::string, std::map<std::string, functionPtr > > mMapFunctionNameToFunctionMaps;
     std::map<std::string, std::string > mMapActions;

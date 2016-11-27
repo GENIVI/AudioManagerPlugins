@@ -51,6 +51,7 @@ CAmPolicyEngine::CAmPolicyEngine() :
     mMapFunctionReturnValue[FUNCTION_INTERRUPT_STATE] = false;
     mMapFunctionReturnValue[FUNCTION_IS_REGISTERED] = false;
     mMapFunctionReturnValue[FUNCTION_STATE] = false;
+    mMapFunctionReturnValue[FUNCTION_CONNECTION_ERROR] = false;
 
     mMapNameFunctions[CATEGORY_SINK] = &CAmPolicyEngine::_findSinkName;
     mMapNameFunctions[CATEGORY_SOURCE] = &CAmPolicyEngine::_findSourceName;
@@ -81,6 +82,8 @@ CAmPolicyEngine::CAmPolicyEngine() :
 
     mMapMainVolumeFunctions[CATEGORY_SINK] = &CAmPolicyEngine::_findSinkMainVolume;
     mMapMainVolumeFunctions[CATEGORY_SOURCE] = &CAmPolicyEngine::_findSourceMainVolume;
+
+    mMapErrorFunctions[CATEGORY_USER] = &CAmPolicyEngine::_findUserErrorValue;
 
     mMapMainVolumeFunctions[CATEGORY_USER] = &CAmPolicyEngine::_findUserMainVolume;
 
@@ -144,6 +147,7 @@ CAmPolicyEngine::CAmPolicyEngine() :
     mMapFunctionNameToFunctionMaps[FUNCTION_IS_REGISTERED] = mMapIsRegisteredFunctions;
     mMapFunctionNameToFunctionMaps[FUNCTION_STATE] = mMapStateFunctions;
     mMapFunctionNameToFunctionMaps[FUNCTION_CONNECTION_FORMAT] = mMapConnectionFormatFunctions;
+    mMapFunctionNameToFunctionMaps[FUNCTION_CONNECTION_ERROR] = mMapErrorFunctions;
 
     mMapActions[CONFIG_ACTION_NAME_CONNECT] = ACTION_NAME_CONNECT;
     mMapActions[CONFIG_ACTION_NAME_POP] = ACTION_NAME_CONNECT;
@@ -1365,6 +1369,19 @@ am_Error_e CAmPolicyEngine::_findUserMainVolume(const gc_ConditionStruct_s &cond
     char outputData[5];
     // store the value in std::string format
     sprintf(outputData, "%d", parameters.mainVolume);
+    listOutputs.push_back(outputData);
+    return E_OK;
+}
+
+//find the trigger error value
+am_Error_e CAmPolicyEngine::_findUserErrorValue(const gc_ConditionStruct_s &conditionInstance,
+                                                std::vector<std::string > &listOutputs,
+                                                const gc_triggerParams_s &parameters,
+                                                const bool isLHS)
+{
+    char outputData[5];
+    // store the value in std::string format
+    sprintf(outputData, "%d", parameters.status);
     listOutputs.push_back(outputData);
     return E_OK;
 }
