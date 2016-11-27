@@ -2329,7 +2329,9 @@ void CAmPolicyEngine::_getListStaticSources(const std::string& domainName,
     }
 }
 
-void CAmPolicyEngine::_getListStaticGateways(std::vector<std::string >& listGateways)
+void CAmPolicyEngine::_getListStaticGateways(std::vector<std::string >& listGateways,
+                                             std::string& listSources,
+                                             std::string& listSinks)
 {
     std::vector<gc_Gateway_s >::iterator itListGateways;
     std::vector<gc_Gateway_s > listConfiguredGateways;
@@ -2337,21 +2339,18 @@ void CAmPolicyEngine::_getListStaticGateways(std::vector<std::string >& listGate
     for (itListGateways = listConfiguredGateways.begin();
                     itListGateways != listConfiguredGateways.end(); itListGateways++)
     {
-        if (itListGateways->registrationType == REG_CONTROLLER)
+        if ((false == mpPolicyReceive->isRegistered(ET_GATEWAY, itListGateways->name)) &&
+            (itListGateways->registrationType == REG_CONTROLLER))
         {
-            if (false == mpPolicyReceive->isRegistered(ET_SOURCE, itListGateways->sourceName))
+            if ((true == mpPolicyReceive->isRegistered(ET_SOURCE, itListGateways->sourceName)) ||
+                (std::string::npos != listSources.find(itListGateways->sourceName)))
             {
-                continue;
+                if ((true == mpPolicyReceive->isRegistered(ET_SINK, itListGateways->sinkName)) ||
+                    (std::string::npos != listSinks.find(itListGateways->sinkName)))
+                {
+                    listGateways.push_back(itListGateways->name);
+                }
             }
-            if (false == mpPolicyReceive->isRegistered(ET_SINK, itListGateways->sinkName))
-            {
-                continue;
-            }
-            if (true == mpPolicyReceive->isRegistered(ET_GATEWAY, itListGateways->name))
-            {
-                continue;
-            }
-            listGateways.push_back(itListGateways->name);
         }
     }
 }
@@ -2367,6 +2366,9 @@ void CAmPolicyEngine::_getImplicitActions(gc_Trigger_e trigger,
     std::vector<gc_Source_s >::iterator itListStaticSources;
     std::vector<std::string > listStaticGateways;
     std::vector<std::string >::iterator itListStaticGateways;
+    std::map<std::string, std::string >::iterator itMapParam;
+    std::string sinkList("");
+    std::string sourceList("");
     gc_Action_s actionRegister;
     if ((trigger != SYSTEM_REGISTER_DOMAIN) && (trigger != SYSTEM_REGISTER_SINK)
         && (trigger != SYSTEM_REGISTER_SOURCE) && (trigger != SYSTEM_DOMAIN_REGISTRATION_COMPLETE))
@@ -2389,10 +2391,6 @@ void CAmPolicyEngine::_getImplicitActions(gc_Trigger_e trigger,
     {
         _getListStaticSources(parameters.domainName, listStaticSources);
     }
-    if (flags & SEARCH_STATIC_GATEWAY)
-    {
-        _getListStaticGateways(listStaticGateways);
-    }
     actionRegister.actionName = CONFIG_ACTION_NAME_REGISTER;
     for (itListStaticSources = listStaticSources.begin();
                     itListStaticSources != listStaticSources.end(); ++itListStaticSources)
@@ -2403,6 +2401,20 @@ void CAmPolicyEngine::_getImplicitActions(gc_Trigger_e trigger,
                     ++itListStaticSinks)
     {
         actionRegister.mapParameters[ACTION_PARAM_SINK_NAME] += (*itListStaticSinks).name + " ";
+    }
+    if (flags & SEARCH_STATIC_GATEWAY)
+    {
+        itMapParam = actionRegister.mapParameters.find(ACTION_PARAM_SINK_NAME);
+        if(itMapParam!= actionRegister.mapParameters.end())
+        {
+            sinkList = itMapParam->second;
+        }
+        itMapParam = actionRegister.mapParameters.find(ACTION_PARAM_SOURCE_NAME);
+        if(itMapParam!= actionRegister.mapParameters.end())
+        {
+            sourceList = itMapParam->second;
+        }
+        _getListStaticGateways(listStaticGateways,sourceList, sinkList);
     }
     for (itListStaticGateways = listStaticGateways.begin();
                     itListStaticGateways != listStaticGateways.end(); ++itListStaticGateways)

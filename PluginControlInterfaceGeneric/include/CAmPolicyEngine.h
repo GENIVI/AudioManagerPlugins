@@ -1130,7 +1130,8 @@ private:
                              std::vector<gc_Sink_s >& listStaticSinks);
     void _getListStaticSources(const std::string& domainName,
                                std::vector<gc_Source_s >& listStaticSources);
-    void _getListStaticGateways(std::vector<std::string >& listGateways);
+    void _getListStaticGateways(std::vector<std::string >& listGateways,
+                                std::string& listSources,std::string& listSinks);
     am_Error_e _updateActionParameters(std::vector<gc_Action_s >& listActions,
                                        gc_triggerParams_s& triggerParams);
     typedef am_Error_e (CAmPolicyEngine::*functionPtr)(const gc_ConditionStruct_s &condition,
