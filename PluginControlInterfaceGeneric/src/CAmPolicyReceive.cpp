@@ -18,6 +18,7 @@
  *
  *****************************************************************************/
 
+#include <algorithm>
 #include "CAmPolicyReceive.h"
 #include "CAmPolicyAction.h"
 #include "CAmLogger.h"
@@ -208,6 +209,58 @@ am_Error_e CAmPolicyReceive::getMainVolume(const gc_Element_e elementType,
     return result;
 }
 
+bool CAmPolicyReceive::_sortingLowest(gc_ConnectionInfo_s i, gc_ConnectionInfo_s j)
+{
+    return (i.priority > j.priority);
+}
+
+bool CAmPolicyReceive::_sortingHighest(gc_ConnectionInfo_s i, gc_ConnectionInfo_s j)
+{
+    return (i.priority < j.priority);
+}
+
+am_Error_e CAmPolicyReceive::getListMainConnections(const std::string& name,
+                                                    std::vector<gc_ConnectionInfo_s >& listConnectionInfos,gc_Order_e order)
+{
+    am_Error_e result = E_NOT_POSSIBLE;
+    CAmClassElement* pClassElement;
+    pClassElement = CAmClassFactory::getElement(name);
+    if (NULL != pClassElement)
+    {
+        _getConnectionInfo(pClassElement, listConnectionInfos);
+        switch(order)
+        {
+        case O_HIGH_PRIORITY:
+            std::stable_sort(listConnectionInfos.begin(), listConnectionInfos.end(), _sortingHighest);
+            result = E_OK;
+            break;
+        case O_LOW_PRIORITY:
+            std::stable_sort(listConnectionInfos.begin(), listConnectionInfos.end(), _sortingLowest);
+            result = E_OK;
+            break;
+        case O_NEWEST:
+        {
+            std::vector<gc_ConnectionInfo_s > listTempConnectionInfos;
+            std::vector<gc_ConnectionInfo_s >::reverse_iterator itListRevTempConnectionInfos;
+            listTempConnectionInfos = listConnectionInfos;
+            listConnectionInfos.clear();
+            for(itListRevTempConnectionInfos = listTempConnectionInfos.rbegin();itListRevTempConnectionInfos!= listTempConnectionInfos.rend();itListRevTempConnectionInfos++)
+            {
+                listConnectionInfos.push_back(*itListRevTempConnectionInfos);
+            }
+            result = E_OK;
+        }
+        break;
+        case O_OLDEST:
+            result = E_OK;
+            break;
+        default:
+            break;
+        }
+    }
+    return result;
+}
+
 am_Error_e CAmPolicyReceive::getListNotificationConfigurations(
                 const gc_Element_e elementType, const std::string& name,
                 std::vector<am_NotificationConfiguration_s >& listNotificationConfigurations)
@@ -272,7 +325,7 @@ am_Error_e CAmPolicyReceive::getListMainNotificationConfigurations(
 
 am_Error_e CAmPolicyReceive::getListMainConnections(
                 const gc_Element_e elementType, const std::string& elementName,
-                std::vector<gc_ConnectionInfo_s >& listConnectionInfo)
+                std::vector<gc_ConnectionInfo_s >& listConnectionInfos)
 {
     CAmClassElement* pClassElement;
     std::vector<CAmClassElement* > listClasses;
@@ -287,7 +340,7 @@ am_Error_e CAmPolicyReceive::getListMainConnections(
         pClassElement = CAmClassFactory::getElement(elementName);
         if (NULL != pClassElement)
         {
-            _getConnectionInfo(pClassElement, listConnectionInfo);
+            _getConnectionInfo(pClassElement, listConnectionInfos);
             result = E_OK;
         }
         break;
@@ -307,7 +360,7 @@ am_Error_e CAmPolicyReceive::getListMainConnections(
             for (itListClasses = listClasses.begin(); itListClasses != listClasses.end();
                             itListClasses++)
             {
-                _getConnectionInfo(*itListClasses, listConnectionInfo);
+                _getConnectionInfo(*itListClasses, listConnectionInfos);
             }
             result = E_OK;
         }
@@ -338,7 +391,7 @@ am_Error_e CAmPolicyReceive::getListMainConnections(
                     connection.connectionState = (am_ConnectionState_e)state;
                     (*itListMainConnections)->getVolume(volume);
                     connection.volume = volume;
-                    listConnectionInfo.push_back(connection);
+                    listConnectionInfos.push_back(connection);
                     result = E_OK;
                     break;
                 }

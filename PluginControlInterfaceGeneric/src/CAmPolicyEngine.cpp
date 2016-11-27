@@ -51,6 +51,11 @@ CAmPolicyEngine::CAmPolicyEngine() :
     mMapFunctionReturnValue[FUNCTION_INTERRUPT_STATE] = false;
     mMapFunctionReturnValue[FUNCTION_IS_REGISTERED] = false;
     mMapFunctionReturnValue[FUNCTION_STATE] = false;
+    mMapFunctionReturnValue[FUNCTION_PEEK] = true;
+
+    mMapPeekFunctions[CATEGORY_SOURCE_OF_CLASS] = &CAmPolicyEngine::_findSourcePeek;
+    mMapPeekFunctions[CATEGORY_SINK_OF_CLASS] = &CAmPolicyEngine::_findSinkPeek;
+
     mMapFunctionReturnValue[FUNCTION_NOTIFICATION_CONFIGURATION_STATUS] = false;
     mMapFunctionReturnValue[FUNCTION_NOTIFICATION_CONFIGURATION_PARAM] = false;
     mMapFunctionReturnValue[FUNCTION_NOTIFICATION_DATA_VALUE] = false;
@@ -171,6 +176,7 @@ CAmPolicyEngine::CAmPolicyEngine() :
     mMapFunctionNameToFunctionMaps[FUNCTION_IS_REGISTERED] = mMapIsRegisteredFunctions;
     mMapFunctionNameToFunctionMaps[FUNCTION_STATE] = mMapStateFunctions;
     mMapFunctionNameToFunctionMaps[FUNCTION_CONNECTION_FORMAT] = mMapConnectionFormatFunctions;
+    mMapFunctionNameToFunctionMaps[FUNCTION_PEEK] = mMapPeekFunctions;
     mMapFunctionNameToFunctionMaps[FUNCTION_NOTIFICATION_CONFIGURATION_STATUS] = mMapNotificationStatusFunctions;
     mMapFunctionNameToFunctionMaps[FUNCTION_NOTIFICATION_CONFIGURATION_PARAM] = mMapNotificationParamFunctions;
     mMapFunctionNameToFunctionMaps[FUNCTION_NOTIFICATION_DATA_VALUE] = mMapNotificationValueFunctions;
@@ -1316,6 +1322,80 @@ am_Error_e CAmPolicyEngine::_findSourceOfClassName(const gc_ConditionStruct_s &c
                                      false);
     }
     return result;
+}
+
+am_Error_e CAmPolicyEngine::_findElementPeek(const gc_ConditionStruct_s &conditionInstance,
+                                             std::vector<std::string > &listOutputs,
+                                             const std::string clasName,
+                                             const bool isLHS,const bool isSinkRequired)
+{
+    std::string optionalParameter;
+    std::string mandatoryParameter = clasName;
+    am_Error_e result = E_UNKNOWN;
+    gc_Order_e order = O_HIGH_PRIORITY;
+    std::vector<gc_ConnectionInfo_s > listConnectionInfo;
+
+    _getValueOfParameter(conditionInstance, isLHS, mandatoryParameter, optionalParameter);
+    std::string tempOptionalParameter2 =
+                    (isLHS == true) ? conditionInstance.leftObject.optionalParameter2 : conditionInstance.rightObject.functionObject.optionalParameter2;
+
+    if(false == optionalParameter.empty())
+    {
+        order = (gc_Order_e)atoi(optionalParameter.data());
+    }
+    if (E_OK == mpPolicyReceive->getListMainConnections(mandatoryParameter,
+                                                        listConnectionInfo,order))
+    {
+        if(false == listConnectionInfo.empty())
+        {
+            if(true == tempOptionalParameter2.empty())
+            {
+                if(true == isSinkRequired)
+                {
+                    listOutputs.push_back(listConnectionInfo[0].sinkName);
+                }
+                else
+                {
+                    listOutputs.push_back(listConnectionInfo[0].sourceName);
+                }
+                result = E_OK;
+            }
+            else
+            {
+                int index = atoi(tempOptionalParameter2.data());
+                if(listConnectionInfo.size() >= index)
+                {
+                    if(true == isSinkRequired)
+                    {
+                        listOutputs.push_back(listConnectionInfo[index].sinkName);
+                    }
+                    else
+                    {
+                        listOutputs.push_back(listConnectionInfo[index].sourceName);
+                    }
+                    result = E_OK;
+                }
+            }
+        }
+    }
+    return result;
+}
+
+am_Error_e CAmPolicyEngine::_findSinkPeek(const gc_ConditionStruct_s &conditionInstance,
+                                            std::vector<std::string > &listOutputs,
+                                            const gc_triggerParams_s &parameters,
+                                            const bool isLHS)
+{
+    return _findElementPeek(conditionInstance,listOutputs,parameters.className,isLHS,true);
+}
+
+//peek the source belonging to class using class name
+am_Error_e CAmPolicyEngine::_findSourcePeek(const gc_ConditionStruct_s &conditionInstance,
+                                            std::vector<std::string > &listOutputs,
+                                            const gc_triggerParams_s &parameters,
+                                            const bool isLHS)
+{
+    return _findElementPeek(conditionInstance,listOutputs,parameters.className,isLHS,false);
 }
 
 template <typename Telement>

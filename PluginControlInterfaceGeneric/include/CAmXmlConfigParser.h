@@ -191,7 +191,7 @@ namespace gc {
 #define FUNCTION_MAIN_NOTIFICATION_CONFIGURATION_TYPE    "mainNotificationConfigurationType"
 #define FUNCTION_MAIN_NOTIFICATION_CONFIGURATION_STATUS  "mainNotificationConfigurationStatus"
 #define FUNCTION_MAIN_NOTIFICATION_CONFIGURATION_PARAM   "mainNotificationConfigurationParam"
-
+#define FUNCTION_PEEK                       "peek"
 
 // macros supported in functions
 #define FUNCTION_MACRO_SUPPORTED_REQUESTING	"REQUESTING"
@@ -239,6 +239,7 @@ struct gc_FunctionElement_s
     std::string category;
     std::string mandatoryParameter;
     std::string optionalParameter;
+    std::string optionalParameter2;
     bool isValueMacro;
 };
 

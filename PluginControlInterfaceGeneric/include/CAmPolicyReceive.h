@@ -189,7 +189,9 @@ public:
      */
     am_Error_e getListMainConnections(const gc_Element_e elementType,
                                       const std::string& elementName,
-                                      std::vector<gc_ConnectionInfo_s >& listConnectionInfo);
+                                      std::vector<gc_ConnectionInfo_s >& listConnectionInfos);
+    am_Error_e getListMainConnections(const std::string& name,
+                                      std::vector<gc_ConnectionInfo_s >& listConnectionInfos,gc_Order_e order);
     am_Error_e getListNotificationConfigurations(
                     const gc_Element_e elementType, const std::string& name,
                     std::vector<am_NotificationConfiguration_s >& listNotificationConfigurations);
@@ -215,6 +217,8 @@ private:
     template <class T>
     bool _isElementRegistered(const std::vector<T >& listElements, const std::string& name);
     CAmElement* _getElement(const gc_Element_e type, const std::string& name);
+    static bool _sortingLowest(gc_ConnectionInfo_s i, gc_ConnectionInfo_s j);
+    static bool _sortingHighest(gc_ConnectionInfo_s i, gc_ConnectionInfo_s j);
     CAmControlReceive* mpControlReceive;
     IAmPolicySend* mpPolicySend;
 };

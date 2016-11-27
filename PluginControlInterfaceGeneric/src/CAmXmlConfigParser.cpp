@@ -1764,6 +1764,8 @@ public:
         mValidFunctionNames.push_back(FUNCTION_IS_REGISTERED);
         mValidFunctionNames.push_back(FUNCTION_STATE);
         mValidFunctionNames.push_back(FUNCTION_CONNECTION_FORMAT);
+        mValidFunctionNames.push_back(FUNCTION_PEEK);
+
         mValidCategory.push_back(CATEGORY_SINK);
         mValidCategory.push_back(CATEGORY_SOURCE);
         mValidCategory.push_back(CATEGORY_CLASS);
@@ -1929,6 +1931,7 @@ private:
         std::string category;
         std::string mandatoryParameter;
         std::string optionalParameter;
+        std::string optionalParameter2;
         bool isValueMacro = false;
 
         //find function name
@@ -1998,7 +2001,7 @@ private:
         if (inputString[startPosition] == ',')
         {
             startPosition++;
-            optionalParameter = _findElement(startPosition, ')', inputString, '"');
+            optionalParameter = _findElement(startPosition, ')', inputString, ',');
         }
 		else
         {
@@ -2010,13 +2013,21 @@ private:
                 optionalParameter = FUNCTION_MACRO_SUPPORTED_REQUESTING;
             }
         }
+        //find the 2nd optional value
+        if (inputString[startPosition] == ',')
+        {
+            startPosition++;
+            optionalParameter2 = _findElement(startPosition, ')', inputString, ',');
+        }
         startPosition++;
+
         if (true == isLHS)
         {
             conditionInstance.leftObject.functionName = functionName;
             conditionInstance.leftObject.category = category;
             conditionInstance.leftObject.mandatoryParameter = mandatoryParameter;
             conditionInstance.leftObject.optionalParameter = optionalParameter;
+            conditionInstance.leftObject.optionalParameter2 = optionalParameter2;
             conditionInstance.leftObject.isValueMacro = isValueMacro;
         }
         else
@@ -2025,6 +2036,7 @@ private:
             conditionInstance.rightObject.functionObject.category = category;
             conditionInstance.rightObject.functionObject.mandatoryParameter = mandatoryParameter;
             conditionInstance.rightObject.functionObject.optionalParameter = optionalParameter;
+            conditionInstance.rightObject.functionObject.optionalParameter2 = optionalParameter2;
             conditionInstance.rightObject.functionObject.isValueMacro = isValueMacro;
         }
         return E_OK;

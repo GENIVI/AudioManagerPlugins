@@ -152,6 +152,16 @@ private:
                                     const gc_triggerParams_s& parameters);
 
     //function pointer for function used in policy
+    am_Error_e _findElementPeek(const gc_ConditionStruct_s &conditionInstance,
+                                                std::vector<std::string > &listOutputs,
+                                                const std::string clasName,
+                                                const bool isLHS,const bool isSinkRequired);
+    am_Error_e _findSourcePeek(const gc_ConditionStruct_s &conditionInstance,
+                                 std::vector<std::string > &listOutputs,
+                                 const gc_triggerParams_s &parameters, const bool isLHS);
+    am_Error_e _findSinkPeek(const gc_ConditionStruct_s &conditionInstance,
+                                 std::vector<std::string > &listOutputs,
+                                 const gc_triggerParams_s &parameters, const bool isLHS);
     /**
      * @brief It is the internal function used to find the sink name as per current scenario and condition
      * @param conditionInstance: condition which need to be evaluated
@@ -1163,6 +1173,8 @@ private:
     std::map<std::string, functionPtr > mMapMainNotificationStatusFunctions;
     //map to store function pointers of main notification configuration param category function of condition set as defined in policy
     std::map<std::string, functionPtr > mMapMainNotificationParamFunctions;
+    //map to store function pointers of peek category function of condition set as defined in policy
+    std::map<std::string, functionPtr > mMapPeekFunctions;
     //map to store map of function pointers
     std::map<std::string, std::map<std::string, functionPtr > > mMapFunctionNameToFunctionMaps;
     std::map<std::string, std::string > mMapActions;
