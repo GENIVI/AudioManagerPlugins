@@ -398,6 +398,10 @@ private:
     am_Error_e _findUserConnectionState(const gc_ConditionStruct_s &conditionInstance,
                                         std::vector<std::string > &listOutputs,
                                         const gc_triggerParams_s &parameters,const bool isLHS);
+    am_Error_e _findConnectionConnectionState(const gc_ConditionStruct_s &conditionInstance,
+                                            std::vector<std::string > &listOutputs,
+                                            const gc_triggerParams_s &parameters,const bool isLHS);
+
     /**
      * @brief It is the internal function used to find the volume of sink as per current scenario and condition
      * @param conditionInstance: condition which need to be evaluated

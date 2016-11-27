@@ -52,16 +52,16 @@ CAmPolicyEngine::CAmPolicyEngine() :
     mMapFunctionReturnValue[FUNCTION_IS_REGISTERED] = false;
     mMapFunctionReturnValue[FUNCTION_STATE] = false;
     mMapFunctionReturnValue[FUNCTION_PEEK] = true;
-
-    mMapPeekFunctions[CATEGORY_SOURCE_OF_CLASS] = &CAmPolicyEngine::_findSourcePeek;
-    mMapPeekFunctions[CATEGORY_SINK_OF_CLASS] = &CAmPolicyEngine::_findSinkPeek;
-
+    mMapFunctionReturnValue[FUNCTION_CONNECTION_ERROR] = false;
     mMapFunctionReturnValue[FUNCTION_NOTIFICATION_CONFIGURATION_STATUS] = false;
     mMapFunctionReturnValue[FUNCTION_NOTIFICATION_CONFIGURATION_PARAM] = false;
     mMapFunctionReturnValue[FUNCTION_NOTIFICATION_DATA_VALUE] = false;
     mMapFunctionReturnValue[FUNCTION_MAIN_NOTIFICATION_CONFIGURATION_TYPE] = false;
     mMapFunctionReturnValue[FUNCTION_MAIN_NOTIFICATION_CONFIGURATION_STATUS] = false;
     mMapFunctionReturnValue[FUNCTION_MAIN_NOTIFICATION_CONFIGURATION_PARAM] = false;
+
+    mMapPeekFunctions[CATEGORY_SOURCE_OF_CLASS] = &CAmPolicyEngine::_findSourcePeek;
+    mMapPeekFunctions[CATEGORY_SINK_OF_CLASS] = &CAmPolicyEngine::_findSinkPeek;
 
     mMapNotificationStatusFunctions[CATEGORY_SINK] = &CAmPolicyEngine::_findSinkNTStatus;
     mMapNotificationStatusFunctions[CATEGORY_SOURCE] = &CAmPolicyEngine::_findSourceNTStatus;
@@ -102,6 +102,7 @@ CAmPolicyEngine::CAmPolicyEngine() :
     mMapConnectionStateFunctions[CATEGORY_CONNECTION_OF_CLASS] = &CAmPolicyEngine::_findConnectionOfClassState;
     mMapConnectionStateFunctions[CATEGORY_CONNECTION_OF_SOURCE] = &CAmPolicyEngine::_findSourceConnectionState;
     mMapConnectionStateFunctions[CATEGORY_CONNECTION_OF_SINK] = &CAmPolicyEngine::_findSinkConnectionState;
+    mMapConnectionStateFunctions[CATEGORY_CONNECTION] = &CAmPolicyEngine::_findConnectionConnectionState;
     mMapConnectionStateFunctions[CATEGORY_USER] = &CAmPolicyEngine::_findUserConnectionState;
 
     mMapVolumeFunctions[CATEGORY_SINK] = &CAmPolicyEngine::_findSinkDeviceVolume;
@@ -1551,6 +1552,7 @@ am_Error_e CAmPolicyEngine::_findElementConnectionState(
     std::vector<gc_ConnectionInfo_s > listConnectionInfo;
     std::vector<gc_ConnectionInfo_s >::iterator itlistConnectionInfo;
     char outputData[5];
+    std::string connectionName;
     _getValueOfParameter(conditionInstance, isLHS, mandatoryParameter);
 
     // get list of connection based on source name
@@ -1577,6 +1579,16 @@ am_Error_e CAmPolicyEngine::_findElementConnectionState(
                     // store the connection state in std::string format
                     sprintf(outputData, "%d", (*itlistConnectionInfo).connectionState);
                     listOutputs.push_back(outputData);
+                }
+                break;
+            case ET_CONNECTION:
+                connectionName = (*itlistConnectionInfo).sourceName + ":"+(*itlistConnectionInfo).sinkName;
+                if (connectionName == mandatoryParameter)
+                {
+                    // store the connection state in std::string format
+                    sprintf(outputData, "%d", (*itlistConnectionInfo).connectionState);
+                    listOutputs.push_back(outputData);
+                    itlistConnectionInfo = listConnectionInfo.end();
                 }
                 break;
             default:
@@ -1606,6 +1618,16 @@ am_Error_e CAmPolicyEngine::_findSinkConnectionState(const gc_ConditionStruct_s 
     std::string mandatoryParameter = parameters.sinkName;
     return _findElementConnectionState(conditionInstance, listOutputs, mandatoryParameter, isLHS,
                                        ET_SINK);
+}
+
+am_Error_e CAmPolicyEngine::_findConnectionConnectionState(const gc_ConditionStruct_s &conditionInstance,
+                                                     std::vector<std::string > &listOutputs,
+                                                     const gc_triggerParams_s &parameters,
+                                                     const bool isLHS)
+{
+    std::string mandatoryParameter;
+    return _findElementConnectionState(conditionInstance, listOutputs, mandatoryParameter, isLHS,
+                                       ET_CONNECTION);
 }
 
 //find the sink device volume
