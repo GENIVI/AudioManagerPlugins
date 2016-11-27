@@ -99,24 +99,25 @@ void CAmCommandSenderDbus::cbNewMainConnection(const am_MainConnectionType_s& ma
 {
     (void)mainConnection;
     //todo: change xml and interface to differetiate between new connection and removed one
-    log(&commandDbus, DLT_LOG_INFO, "cbNumberOfMainConnectionsChanged called");
+    log(&commandDbus, DLT_LOG_INFO, "cbNewMainConnection called");
 
     if (mReady)
     {
-        mCAmDbusMessageHandler.initSignal(std::string(MY_NODE), std::string("NumberOfMainConnectionsChanged"));
+        mCAmDbusMessageHandler.initSignal(std::string(MY_NODE), std::string("NewMainConnection"));
+        mCAmDbusMessageHandler.append(mainConnection);
         mCAmDbusMessageHandler.sendMessage();
     }
 }
 
-void CAmCommandSenderDbus::cbRemovedMainConnection(const am_mainConnectionID_t mainConnection)
+void CAmCommandSenderDbus::cbRemovedMainConnection(const am_mainConnectionID_t mainConnectionId)
 {
-    (void)mainConnection;
-//todo: change xml and interface to differetiate between new connection and removed one
-    log(&commandDbus, DLT_LOG_INFO, "cbNumberOfMainConnectionsChanged called");
+    //todo: change xml and interface to differetiate between new connection and removed one
+    log(&commandDbus, DLT_LOG_INFO, "cbRemovedMainConnection called");
 
     if (mReady)
     {
-        mCAmDbusMessageHandler.initSignal(std::string(MY_NODE), std::string("NumberOfMainConnectionsChanged"));
+        mCAmDbusMessageHandler.initSignal(std::string(MY_NODE), std::string("RemovedMainConnection"));
+        mCAmDbusMessageHandler.append(mainConnectionId);
         mCAmDbusMessageHandler.sendMessage();
     }
 }
