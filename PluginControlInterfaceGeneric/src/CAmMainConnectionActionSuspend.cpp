@@ -21,6 +21,7 @@
 #include "CAmMainConnectionActionSuspend.h"
 #include "CAmSourceActionSetState.h"
 #include "CAmLogger.h"
+#include "CAmTriggerQueue.h"
 
 namespace am {
 namespace gc {
@@ -65,6 +66,11 @@ int CAmMainConnectionActionSuspend::_update(const int result)
     if (AS_COMPLETED == getStatus())
     {
         mpMainConnection->updateState();
+        gc_ConnectionStateChangeTrigger_s* ptrigger = new gc_ConnectionStateChangeTrigger_s;
+        ptrigger->connectionName = mpMainConnection->getName();
+        mpMainConnection->getState((int&)(ptrigger->connectionState));
+        ptrigger->status = (am_Error_e)getError();
+        CAmTriggerQueue::getInstance()->pushTop(SYSTEM_CONNECTION_STATE_CHANGE,ptrigger);
     }
     return E_OK;
 }

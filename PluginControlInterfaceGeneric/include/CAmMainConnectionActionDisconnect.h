@@ -68,6 +68,7 @@ protected:
 private:
     IAmActionCommand* _createActionSetSourceState(CAmMainConnectionElement* pMainConnetion,
                                                   const am_SourceState_e sourceState);
+    void _setConnectionStateChangeTrigger(void);
     // connection to be disconnected
     CAmMainConnectionElement* mpMainConnection;
     //maximum time by which its child action should be completed

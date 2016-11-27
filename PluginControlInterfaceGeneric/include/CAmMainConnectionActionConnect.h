@@ -70,6 +70,7 @@ protected:
 private:
     IAmActionCommand* _createActionSetSourceState(CAmMainConnectionElement *pMainConnection,
                                                   const am_SourceState_e sourceState);
+    void _setConnectionStateChangeTrigger(void);
     CAmMainConnectionElement* mpMainConnection;
     CAmActionParam<am_CustomConnectionFormat_t> mConnectionFormatParam;
 };
