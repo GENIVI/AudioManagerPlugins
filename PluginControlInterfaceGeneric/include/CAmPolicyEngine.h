@@ -656,6 +656,9 @@ private:
     am_Error_e _findSourceAvailability(const gc_ConditionStruct_s &conditionInstance,
                                        std::vector<std::string > &listOutputs,
                                        const gc_triggerParams_s &parameters, const bool isLHS);
+    am_Error_e _findUserAvailability(const gc_ConditionStruct_s &conditionInstance,
+                                           std::vector<std::string > &listOutputs,
+                                           const gc_triggerParams_s &parameters, const bool isLHS);
     /**
      * @brief It is the internal function used to find the sink availability reason as per current scenario and condition
      * @param conditionInstance: condition which need to be evaluated
@@ -681,6 +684,10 @@ private:
                                              std::vector<std::string > &listOutputs,
                                              const gc_triggerParams_s &parameters,
                                              const bool isLHS);
+    am_Error_e _findUserAvailabilityReason(const gc_ConditionStruct_s &conditionInstance,
+                                                 std::vector<std::string > &listOutputs,
+                                                 const gc_triggerParams_s &parameters,
+                                                 const bool isLHS);
     /**
      * @brief It is the internal function used to find the connection format as per current scenario and condition
      * @param conditionInstance: condition which need to be evaluated
@@ -731,6 +738,10 @@ private:
                                              std::vector<std::string > &listOutputs,
                                              const gc_triggerParams_s &parameters,
                                              const bool isLHS);
+    am_Error_e _findUserInterruptState(const gc_ConditionStruct_s &conditionInstance,
+                                                 std::vector<std::string > &listOutputs,
+                                                 const gc_triggerParams_s &parameters,
+                                                 const bool isLHS);
     /**
      * @brief It is the internal function used to find the sink is registered or not as per current scenario and condition
      * @param conditionInstance: condition which need to be evaluated

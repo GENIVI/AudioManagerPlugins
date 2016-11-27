@@ -1946,11 +1946,12 @@ private:
 
         //find category
         category = _findElement(startPosition, ',', inputString, ')');
-        //validate category name
-        if (mValidCategory.end() == std::find(mValidCategory.begin(), mValidCategory.end(),
-                                              category))
+        if(inputString[startPosition] == ')') // end of condition part
         {
-            return E_UNKNOWN;
+            if(true == category.empty())
+            {
+                category = CATEGORY_USER;
+            }
         }
         startPosition++;
 
@@ -2018,6 +2019,12 @@ private:
         {
             startPosition++;
             optionalParameter2 = _findElement(startPosition, ')', inputString, ',');
+        }
+        //validate category name
+        if (mValidCategory.end() == std::find(mValidCategory.begin(), mValidCategory.end(),
+                                              category))
+        {
+            return E_UNKNOWN;
         }
         startPosition++;
 

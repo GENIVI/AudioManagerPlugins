@@ -139,12 +139,15 @@ CAmPolicyEngine::CAmPolicyEngine() :
 
     mMapAvailabilityFunctions[CATEGORY_SINK] = &CAmPolicyEngine::_findSinkAvailability;
     mMapAvailabilityFunctions[CATEGORY_SOURCE] = &CAmPolicyEngine::_findSourceAvailability;
+    mMapAvailabilityFunctions[CATEGORY_USER] = &CAmPolicyEngine::_findUserAvailability;
 
     mMapAvailabilityReasonFunctions[CATEGORY_SINK] = &CAmPolicyEngine::_findSinkAvailabilityReason;
     mMapAvailabilityReasonFunctions[CATEGORY_SOURCE] = &CAmPolicyEngine::_findSourceAvailabilityReason;
+    mMapAvailabilityReasonFunctions[CATEGORY_USER] = &CAmPolicyEngine::_findUserAvailabilityReason;
 
     mMapInterruptStateFunctions[CATEGORY_SOURCE] = &CAmPolicyEngine::_findSourceInterruptState;
     mMapInterruptStateFunctions[CATEGORY_CONNECTION] = &CAmPolicyEngine::_findConnectionInterruptState;
+    mMapInterruptStateFunctions[CATEGORY_USER] = &CAmPolicyEngine::_findUserInterruptState;
 
     mMapIsRegisteredFunctions[CATEGORY_SINK] = &CAmPolicyEngine::_findSinkIsRegistered;
     mMapIsRegisteredFunctions[CATEGORY_SOURCE] = &CAmPolicyEngine::_findSourceIsRegistered;
@@ -1958,6 +1961,17 @@ am_Error_e CAmPolicyEngine::_findSourceAvailability(const gc_ConditionStruct_s &
                              false);
 }
 
+am_Error_e CAmPolicyEngine::_findUserAvailability(const gc_ConditionStruct_s &conditionInstance,
+                                               std::vector<std::string > &listOutputs,
+                                               const gc_triggerParams_s &parameters,
+                                               const bool isLHS)
+{
+    char outputData[5];
+    sprintf(outputData, "%d", parameters.availability.availability);
+    listOutputs.push_back(outputData);
+    return E_OK;
+}
+
 //find the sink availability reason
 am_Error_e CAmPolicyEngine::_findSinkAvailabilityReason(
                 const gc_ConditionStruct_s &conditionInstance,
@@ -1978,6 +1992,17 @@ am_Error_e CAmPolicyEngine::_findSourceAvailabilityReason(
     std::string mandatoryParameter = parameters.sourceName;
     return _findAvailability(conditionInstance, listOutputs, mandatoryParameter, isLHS, ET_SOURCE,
                              true);
+}
+
+am_Error_e CAmPolicyEngine::_findUserAvailabilityReason(const gc_ConditionStruct_s &conditionInstance,
+                                               std::vector<std::string > &listOutputs,
+                                               const gc_triggerParams_s &parameters,
+                                               const bool isLHS)
+{
+    char outputData[5];
+    sprintf(outputData, "%d", parameters.availability.availabilityReason);
+    listOutputs.push_back(outputData);
+    return E_OK;
 }
 
 //Reserved for future use
@@ -2050,6 +2075,17 @@ am_Error_e CAmPolicyEngine::_findConnectionInterruptState(
     std::string mandatoryParameter;
     return _findInterruptState(conditionInstance, listOutputs, mandatoryParameter, isLHS,
                                ET_CONNECTION);
+}
+
+am_Error_e CAmPolicyEngine::_findUserInterruptState(const gc_ConditionStruct_s &conditionInstance,
+                                               std::vector<std::string > &listOutputs,
+                                               const gc_triggerParams_s &parameters,
+                                               const bool isLHS)
+{
+    char outputData[5];
+    sprintf(outputData, "%d", parameters.interruptState);
+    listOutputs.push_back(outputData);
+    return E_OK;
 }
 
 //check sink is registered or not
