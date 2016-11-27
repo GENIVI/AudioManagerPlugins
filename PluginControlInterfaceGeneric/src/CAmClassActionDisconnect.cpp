@@ -74,7 +74,7 @@ int CAmClassActionDisconnect::_execute(void)
             append(pAction);
         }
 
-        if(mpClassElement->getLimitState()==LS_LIMITED)
+        if (mpClassElement->getLimitState() == LS_LIMITED)
         {
             pAction = _createActionSetLimitState(*itListMainConnections);
             if (NULL != pAction)
@@ -102,35 +102,51 @@ void CAmClassActionDisconnect::_findMainConnection(void)
                     itListTempMainConnections != listTempMainConenctions.end();
                     ++itListTempMainConnections)
     {
-        if ((sourceName == (*itListTempMainConnections)->getMainSourceName()) && (sinkName
-                        == (*itListTempMainConnections)->getMainSinkName()))
+
+        if ((true == sourceName.empty()) || (true == sinkName.empty()))
         {
             /*
-             * If explicit source and sink name are present then only one connection is
-             * possible so we can break the loop.
+             * In case either sink or source or none are specified apply the connectionState
+             * filter, if connection  passes through filter then based on sourceName or sinkName
+             * select the connection.
              */
-            mpListMainConnections.push_back(*itListTempMainConnections);
-            break;
-        }
-        else if ((sourceName == (*itListTempMainConnections)->getMainSourceName()) && (sinkName
-                        == ""))
-        {
-            mpListMainConnections.push_back(*itListTempMainConnections);
-        }
-        else if ((sinkName == (*itListTempMainConnections)->getMainSinkName()) && (sourceName == ""))
-        {
-            mpListMainConnections.push_back(*itListTempMainConnections);
-        }
-        else
-        {
             if (false == _isConnectionFilter(*itListTempMainConnections))
             {
                 continue;
             }
+            if ((true == sourceName.empty()) && (true == sinkName.empty()))
+            {
+                /*
+                 * if neither source nor sink name are given then add all connection to disconnection
+                 * list
+                 */
+                mpListMainConnections.push_back(*itListTempMainConnections);
+            }
+            else
+            {
+                /*
+                 * if either source or sink name are given then then match the name and add to
+                 * disconncetion list
+                 */
+                if ((sinkName == (*itListTempMainConnections)->getMainSinkName()) || (sourceName
+                                == (*itListTempMainConnections)->getMainSourceName()))
+                {
+                    mpListMainConnections.push_back(*itListTempMainConnections);
+                }
+            }
+        }
+        else
+        {
             /*
-             * if no source or sink names are specified push all the connections
+             * Since both source and sink name are present only one connection is
+             * possible and in this case ignore the connectionState filter.
              */
-            mpListMainConnections.push_back(*itListTempMainConnections);
+            if ((sourceName == (*itListTempMainConnections)->getMainSourceName()) && (sinkName
+                            == (*itListTempMainConnections)->getMainSinkName()))
+            {
+                mpListMainConnections.push_back(*itListTempMainConnections);
+                break;
+            }
         }
     }
 }
@@ -143,7 +159,7 @@ bool CAmClassActionDisconnect::_isConnectionFilter(CAmMainConnectionElement* pMa
     mConnectionFilter.getParam(connectionFilter);
     int state;
     pMainConnection->getState(state);
-    LOG_FN_ENTRY(connectionFilter,state);
+    LOG_FN_ENTRY(connectionFilter, state);
     if (connectionFilter == "ALL")
     {
         retvalue = true;
@@ -152,8 +168,7 @@ bool CAmClassActionDisconnect::_isConnectionFilter(CAmMainConnectionElement* pMa
     {
         retvalue = true;
     }
-    else if ((connectionFilter == "CS_DISCONNECTED") && (CS_DISCONNECTED
-                    == state))
+    else if ((connectionFilter == "CS_DISCONNECTED") && (CS_DISCONNECTED == state))
     {
         return true;
     }
@@ -182,10 +197,10 @@ bool CAmClassActionDisconnect::_isNameInExceptList(const std::vector<std::string
 
 void CAmClassActionDisconnect::_runExceptionList(void)
 {
-    std::vector<std::string> listSinkExceptions;
-    std::vector<std::string> listSourceExceptions;
-    std::vector<CAmMainConnectionElement*> listTempMainConnections;
-    std::vector<CAmMainConnectionElement*>::iterator itlistTempMainConnections;
+    std::vector < std::string > listSinkExceptions;
+    std::vector < std::string > listSourceExceptions;
+    std::vector<CAmMainConnectionElement* > listTempMainConnections;
+    std::vector<CAmMainConnectionElement* >::iterator itlistTempMainConnections;
 
     mlistSourceExceptions.getParam(listSourceExceptions);
     mlistSinkExceptions.getParam(listSinkExceptions);
@@ -208,16 +223,15 @@ void CAmClassActionDisconnect::_runExceptionList(void)
 
 int CAmClassActionDisconnect::_update(const int result)
 {
-    std::vector<CAmMainConnectionElement*>::iterator itListMainConnections;
+    std::vector<CAmMainConnectionElement* >::iterator itListMainConnections;
     int state;
     for (itListMainConnections = mpListMainConnections.begin();
-                    itListMainConnections != mpListMainConnections.end();
-                    ++itListMainConnections)
+                    itListMainConnections != mpListMainConnections.end(); ++itListMainConnections)
     {
         if ((*itListMainConnections) != NULL)
         {
             (*itListMainConnections)->getState(state);
-            if(state == CS_DISCONNECTED)
+            if (state == CS_DISCONNECTED)
             {
                 mpClassElement->disposeConnection((*itListMainConnections)->getID());
                 *itListMainConnections = NULL;
@@ -233,7 +247,7 @@ IAmActionCommand* CAmClassActionDisconnect::_createActionSetLimitState(
     IAmActionCommand* pAction = new CAmMainConnectionActionSetLimitState(pMainConnection);
     if (NULL != pAction)
     {
-        CAmActionParam<gc_LimitType_e> limitTypeParam(LT_UNKNOWN);
+        CAmActionParam < gc_LimitType_e > limitTypeParam(LT_UNKNOWN);
         pAction->setParam(ACTION_PARAM_LIMIT_TYPE, &limitTypeParam);
         pAction->setUndoRequried(true);
     }
