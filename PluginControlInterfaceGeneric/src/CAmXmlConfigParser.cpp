@@ -153,6 +153,16 @@ public:
                                     mTagName(tagname)
     {
     }
+    ~CAmSimpleNode()
+    {
+        std::vector<IAmXmlNodeAttribute* >::iterator itListAttributes;
+        for (itListAttributes = mListAttributes.begin(); itListAttributes != mListAttributes.end();
+                        ++itListAttributes)
+        {
+            delete *itListAttributes;
+        }
+        mListAttributes.clear();
+    }
     int parse(xmlDocPtr pDocument, xmlNodePtr* pCurrent)
     {
         int returnValue = PARSE_TAG_MISMATCH;
@@ -267,7 +277,6 @@ public:
         addAttribute(new CAmint16Attribute(SOUND_PROPERTY_TAG_MAX_VALUE, pmaxValue));
     }
 };
-
 class CAmUint16Node : public CAmSimpleNode
 {
 public:
@@ -441,6 +450,13 @@ public:
             delete *itListChilds;
         }
         mListChildNodes.clear();
+        std::vector<IAmXmlNodeAttribute* >::iterator itListAttributes;
+        for (itListAttributes = mListAttributes.begin(); itListAttributes != mListAttributes.end();
+                        ++itListAttributes)
+        {
+            delete *itListAttributes;
+        }
+        mListAttributes.clear();
     }
     virtual void expand(void)=0;
     int parse(xmlDocPtr pDocument, xmlNodePtr* pCurrent)
@@ -519,6 +535,14 @@ public:
     }
     ~CAmAllNode()
     {
+        std::map<std::string, IAmXmlNode* >::iterator itMapChildNodes;
+        for(itMapChildNodes = mMapChildNodes.begin();itMapChildNodes!=mMapChildNodes.end();++itMapChildNodes)
+        {
+            if(itMapChildNodes->second !=NULL)
+            {
+                delete itMapChildNodes->second;
+            }
+        }
     }
     int parse(xmlDocPtr pDocument, xmlNodePtr* pCurrent)
     {
@@ -1204,7 +1228,6 @@ public:
         mpGateway->sinkName = "";
         mpGateway->sourceName = "";
         mpGateway->convertionMatrix.clear();
-
     }
     void expand()
     {
@@ -2321,7 +2344,6 @@ am_Error_e CAmXmlConfigParser::_parseXSDFile(const std::string& XSDFilename)
     if (pDocument == NULL)
     {
         LOG_FN_ERROR(" Document not parsed successfully. ");
-        xmlFreeDoc(pDocument);
         return E_UNKNOWN;
     }
     pCurrent = xmlDocGetRootElement(pDocument);
@@ -2342,7 +2364,7 @@ am_Error_e CAmXmlConfigParser::_parseXSDFile(const std::string& XSDFilename)
     return E_OK;
 }
 
-void CAmXmlConfigParser::_parseSimpleType(const xmlDocPtr& pDocument, xmlNodePtr& pCurrent)
+void CAmXmlConfigParser::_parseSimpleType(const xmlDocPtr pDocument, xmlNodePtr pCurrent)
 {
     xmlNodePtr pChildNode;
     while (pCurrent != NULL)
@@ -2356,8 +2378,8 @@ void CAmXmlConfigParser::_parseSimpleType(const xmlDocPtr& pDocument, xmlNodePtr
     }
 }
 
-am_Error_e CAmXmlConfigParser::_parseEnumInitialiser(const xmlDocPtr& pDocument,
-                                                     xmlNodePtr& pCurrent, int& value)
+am_Error_e CAmXmlConfigParser::_parseEnumInitialiser(const xmlDocPtr pDocument,
+                                                     xmlNodePtr pCurrent, int& value)
 {
     am_Error_e result = E_UNKNOWN;
     xmlChar * pKey;
@@ -2389,7 +2411,7 @@ am_Error_e CAmXmlConfigParser::_parseEnumInitialiser(const xmlDocPtr& pDocument,
     return result;
 }
 
-void CAmXmlConfigParser::_parseEnumeration(const xmlDocPtr& pDocument, xmlNodePtr& pCurrent)
+void CAmXmlConfigParser::_parseEnumeration(const xmlDocPtr pDocument, xmlNodePtr pCurrent)
 {
     xmlChar * pKey;
     xmlNodePtr pChild;
