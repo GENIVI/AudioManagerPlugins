@@ -6,6 +6,8 @@ FIND_PACKAGE(PkgConfig)
 PROJECT(PluginControlInterfaceGeneric VERSION 7.4.0)
 
 include(CMakeDependentOption)
+include(GNUInstallDirs)
+
 find_package(PkgConfig)
 find_package(AudioManager REQUIRED > 7.3.0)  
 find_package(AudioManagerUtilities REQUIRED > 7.3.0)   
@@ -17,9 +19,8 @@ OPTION (NSM_IFACE_PRESENT
 
 SET(PLUGIN_LIB_NAME PluginControlInterfaceGeneric)
 
-SET(INCLUDE_FOLDER "include")
-
-SET(CONF_ROOT "${CMAKE_INSTALL_PREFIX}/etc/controllerconf")
+set(CONTROLLER_CONFIG_DIR "${CMAKE_INSTALL_FULL_SYSCONFDIR}/${LIB_INSTALL_SUFFIX}/control"
+  CACHE STRINGS "The configuration for Generic Controller will be placed here")
 
 IF(NSM_IFACE_PRESENT)
     FIND_PACKAGE(NSM REQUIRED)
@@ -50,7 +51,7 @@ LINK_DIRECTORIES(${AudioManagerUtilities_LIB_DIRECTORIES})
 
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11 -Wno-variadic-macro")
 
-add_definitions(-DGENERIC_CONTROLLER_DEFAULT_CONF_ROOT="${CONF_ROOT}")
+add_definitions(-DGENERIC_CONTROLLER_DEFAULT_CONF_ROOT="${CONTROLLER_CONFIG_DIR}")
 
 ENDIF(NSM_IFACE_PRESENT)
 # all source files go here
@@ -81,13 +82,14 @@ INSTALL(TARGETS ${PLUGIN_LIB_NAME}
 )
 
 INSTALL(DIRECTORY conf/
-	DESTINATION ${CONF_ROOT}
+	DESTINATION ${CONTROLLER_CONFIG_DIR}
     COMPONENT conf
 )
 
 set(DOXY_FILE ${CMAKE_CURRENT_BINARY_DIR}/PluginControlGeneric.doxyfile)
 set(DOC_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/doc
-    CACHE STRINGS "The doxygen documentation will be placed here")  
+  CACHE STRINGS "The doxygen documentation will be placed here")
+
 
 if(WITH_DOCUMENTATION)
     find_package(Doxygen)
