@@ -1265,7 +1265,10 @@ void CAmControlSend::cbAckSetSinkNotificationConfiguration(const am_Handle_s han
     assert(NULL != mpControlReceive);
     mpControlReceive->notifyAsyncResult(handle, error);
     iterateActions();
+    LOG_FN_EXIT();
+    return;
 }
+
 void CAmControlSend::cbAckSetSourceNotificationConfiguration(const am_Handle_s handle,
                                                              const am_Error_e error)
 {
@@ -1275,6 +1278,8 @@ void CAmControlSend::cbAckSetSourceNotificationConfiguration(const am_Handle_s h
 
     mpControlReceive->notifyAsyncResult(handle, error);
     iterateActions();
+    LOG_FN_EXIT();
+    return;
 }
 void CAmControlSend::hookSinkNotificationDataChanged(const am_sinkID_t sinkID,
                                                      const am_NotificationPayload_s& payload)
@@ -1301,6 +1306,8 @@ void CAmControlSend::hookSinkNotificationDataChanged(const am_sinkID_t sinkID,
     triggerData->notificatonPayload = payload;
     CAmTriggerQueue::getInstance()->queue(SYSTEM_SINK_NOTIFICATION_DATA_CHANGED, triggerData);
     iterateActions();
+    LOG_FN_EXIT();
+    return;
 }
 
 void CAmControlSend::hookSourceNotificationDataChanged(const am_sourceID_t sourceID,
@@ -1339,16 +1346,22 @@ am_Error_e CAmControlSend::hookUserSetMainSinkNotificationConfiguration(
 {
     CAmSinkElement* pElement;
     LOG_FN_ENTRY(sinkID,notificationConfiguration.parameter,notificationConfiguration.type,notificationConfiguration.status);
+
     // check if the sinkID is valid
     pElement = CAmSinkFactory::getElement(sinkID);
     if (NULL == pElement)
+    {
         LOG_FN_ERROR("  Not able to get sink element");
         return (E_OUT_OF_RANGE);
+    }
+
     // Store the trigger in a Queue
     gc_NotificationConfigurationTrigger_s* triggerData = new gc_NotificationConfigurationTrigger_s;
     if (NULL == triggerData)
+    {
         LOG_FN_ERROR("  bad memory state:");
         return E_NOT_POSSIBLE;
+    }
     triggerData->name = pElement->getName();
     triggerData->notificatonConfiguration = notificationConfiguration;
     CAmTriggerQueue::getInstance()->queue(USER_SET_SINK_MAIN_NOTIFICATION_CONFIGURATION, triggerData);

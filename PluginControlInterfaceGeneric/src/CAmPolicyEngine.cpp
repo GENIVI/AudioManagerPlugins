@@ -181,6 +181,7 @@ CAmPolicyEngine::CAmPolicyEngine() :
     mMapFunctionNameToFunctionMaps[FUNCTION_STATE] = mMapStateFunctions;
     mMapFunctionNameToFunctionMaps[FUNCTION_CONNECTION_FORMAT] = mMapConnectionFormatFunctions;
     mMapFunctionNameToFunctionMaps[FUNCTION_PEEK] = mMapPeekFunctions;
+    mMapFunctionNameToFunctionMaps[FUNCTION_CONNECTION_ERROR] = mMapErrorFunctions;
     mMapFunctionNameToFunctionMaps[FUNCTION_NOTIFICATION_CONFIGURATION_STATUS] = mMapNotificationStatusFunctions;
     mMapFunctionNameToFunctionMaps[FUNCTION_NOTIFICATION_CONFIGURATION_PARAM] = mMapNotificationParamFunctions;
     mMapFunctionNameToFunctionMaps[FUNCTION_NOTIFICATION_DATA_VALUE] = mMapNotificationValueFunctions;

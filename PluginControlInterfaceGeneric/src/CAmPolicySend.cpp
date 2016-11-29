@@ -315,6 +315,20 @@ am_Error_e CAmPolicySend::hookSetMainSinkNotificationConfiguration(
     return mpPolicyEngine->processTrigger(triggerParams);
 }
 
+am_Error_e CAmPolicySend::hookConnectionStateChange(const std::string& connectionName,
+                                               const am_ConnectionState_e& connectionState,
+                                               am_Error_e& status)
+{
+    gc_triggerParams_s triggerParams;
+    // store the triggerParams in member variable
+    triggerParams.connectionName = connectionName;
+    triggerParams.connectionState = connectionState;
+    triggerParams.status = status;
+    //get the action based on the trigger
+    triggerParams.triggerType = SYSTEM_CONNECTION_STATE_CHANGE;
+    return mpPolicyEngine->processTrigger(triggerParams);
+}
+
 am_Error_e CAmPolicySend::hookSetMainSourceNotificationConfiguration(
                     const std::string& sourceName,
                     const am_NotificationConfiguration_s& notificationConfiguration)

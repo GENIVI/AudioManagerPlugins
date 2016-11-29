@@ -1764,7 +1764,9 @@ public:
         mValidFunctionNames.push_back(FUNCTION_IS_REGISTERED);
         mValidFunctionNames.push_back(FUNCTION_STATE);
         mValidFunctionNames.push_back(FUNCTION_CONNECTION_FORMAT);
+        mValidFunctionNames.push_back(FUNCTION_PEEK);
         mValidFunctionNames.push_back(FUNCTION_CONNECTION_ERROR);
+
         mValidCategory.push_back(CATEGORY_SINK);
         mValidCategory.push_back(CATEGORY_SOURCE);
         mValidCategory.push_back(CATEGORY_CLASS);
