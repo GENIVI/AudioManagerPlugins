@@ -65,8 +65,6 @@ public:
     void removeHandle(uint16_t handle);
     void addDomainLookup(am_domainID_t domainID, rs_lookupData_s lookupData);
     void removeDomainLookup(am_domainID_t domainID);
-    void removeSourceLookup(am_sourceID_t sourceID);
-    void removeSinkLookup(am_sinkID_t sinkID);
 
 private:
     CAmDbusWrapper* mpCAmDBusWrapper;

@@ -463,7 +463,6 @@ void IAmRoutingReceiverShadowDbus::deregisterSink(DBusConnection* conn, DBusMess
     mDBUSMessageHandler.initReply(msg);
     mDBUSMessageHandler.append(returnCode);
     mDBUSMessageHandler.sendMessage();
-    mpRoutingSenderDbus->removeSinkLookup(sinkID);
 }
 
 void IAmRoutingReceiverShadowDbus::peekSource(DBusConnection* conn, DBusMessage* msg)
@@ -492,7 +491,6 @@ void IAmRoutingReceiverShadowDbus::deregisterSource(DBusConnection* conn, DBusMe
     mDBUSMessageHandler.initReply(msg);
     mDBUSMessageHandler.append(returnCode);
     mDBUSMessageHandler.sendMessage();
-    mpRoutingSenderDbus->removeSourceLookup(sourceID);
 }
 
 void IAmRoutingReceiverShadowDbus::registerCrossfader(DBusConnection* conn, DBusMessage* msg)
