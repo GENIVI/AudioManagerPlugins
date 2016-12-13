@@ -111,8 +111,8 @@ enum gc_ClassTopologyCodeID_e
 enum gc_Class_e
 {
     C_UNKNOWN = 0,
-    C_CAPTURE,
     C_PLAYBACK,
+    C_CAPTURE,
     C_MAX
 };
 
