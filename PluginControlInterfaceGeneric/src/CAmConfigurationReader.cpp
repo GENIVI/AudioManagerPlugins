@@ -176,7 +176,6 @@ void CAmConfigurationReader::_prepareSinkMap(gc_Configuration_s* pConfiguration)
                         != REG_NONE))
         {
             _prepareElementSet(pConfiguration, itListSinks);
-            itListSinks->sinkClassID = 1;
             mMapSinks[itListSinks->name] = *itListSinks;
         }
     }
@@ -192,7 +191,6 @@ void CAmConfigurationReader::_prepareSourceMap(gc_Configuration_s* pConfiguratio
                         != REG_NONE))
         {
             _prepareElementSet(pConfiguration, itListSources);
-            itListSources->sourceClassID = 1;
             mMapSources[itListSources->name] = *itListSources;
         }
     }
