@@ -525,43 +525,44 @@ void CAmClassElement::pushMainConnectionInQueue(CAmMainConnectionElement* pMainC
 
 am_Error_e CAmClassElement::_register(void)
 {
-	if (mClass.type == C_PLAYBACK)
-	{
-		am_SourceClass_s sourceClassInstance;
-		sourceClassInstance.sourceClassID = 0;
-		sourceClassInstance.name = mClass.name;
-		
-		// store source class in DB
-		if (E_OK == mpControlReceive->enterSourceClassDB(sourceClassInstance.sourceClassID,
-														 sourceClassInstance))
-		{
-			setID(sourceClassInstance.sourceClassID);
-		}
-		else
-		{
-			LOG_FN_ERROR(" Error while registering source Class");
-			return E_DATABASE_ERROR;
-		}
-	}
-	else if (mClass.type == C_CAPTURE)
-	{
-		am_SinkClass_s sinkClassInstance;
-		sinkClassInstance.sinkClassID = 0;
-		sinkClassInstance.name = mClass.name;
-		
-		// store sink class in DB
-		if (E_OK == mpControlReceive->enterSinkClassDB(sinkClassInstance,
-													   sinkClassInstance.sinkClassID))
-		{
-			setID(sinkClassInstance.sinkClassID);
-		}
-		else
-		{
-			LOG_FN_ERROR(" Error while registering sink Class");
-			return E_DATABASE_ERROR;
-		}
-	}
+    am_SourceClass_s sourceClassInstance;
+    sourceClassInstance.sourceClassID = 0;
+    sourceClassInstance.name = mClass.name;
+
+    // store source class in DB
+    if (E_OK == mpControlReceive->enterSourceClassDB(sourceClassInstance.sourceClassID,
+            sourceClassInstance))
+    {
+        if (mClass.type == C_PLAYBACK)
+        {
+            setID(sourceClassInstance.sourceClassID);
+        }
+    }
+    else
+    {
+        LOG_FN_ERROR(" Error while registering source Class");
+        return E_DATABASE_ERROR;
+    }
+    am_SinkClass_s sinkClassInstance;
+    sinkClassInstance.sinkClassID = 0;
+    sinkClassInstance.name = mClass.name;
+
+    // store sink class in DB
+    if (E_OK == mpControlReceive->enterSinkClassDB(sinkClassInstance,
+            sinkClassInstance.sinkClassID))
+    {
+        if (mClass.type == C_CAPTURE)
+        {
+            setID(sinkClassInstance.sinkClassID);
+        }
+    }
+    else
+    {
+        LOG_FN_ERROR(" Error while registering source Class");
+        return E_DATABASE_ERROR;
+    }
     return E_OK;
+
 }
 
 am_Error_e CAmClassElement::_unregister(void)
