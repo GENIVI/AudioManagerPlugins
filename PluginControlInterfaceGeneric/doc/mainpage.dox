@@ -36,6 +36,7 @@
                                 <LI> \ref actionSetMute
                             </UL>
                         <LI> \ref actionSetProperty
+                        <LI> \ref actionSetNotifictionConfiguration
                         <LI> \ref actionDebug
                     </UL>
             </UL>

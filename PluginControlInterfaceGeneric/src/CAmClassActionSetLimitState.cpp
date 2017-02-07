@@ -66,7 +66,8 @@ int CAmClassActionSetLimitState::_execute(void)
     gc_LimitVolume_s limitVolume;
     CAmMainConnectionElement* pMainConnection = NULL;
     CAmSinkElement* pSinkElement;
-    pMainConnection = mpClassElement->getMainConnection(CS_CONNECTED);
+    std::vector < am_ConnectionState_e > listConnectionStates {CS_CONNECTED};
+    pMainConnection = mpClassElement->getMainConnection("", "", listConnectionStates);
 
     limitVolume.limitType = LT_UNKNOWN;
     limitVolume.limitVolume = 0;

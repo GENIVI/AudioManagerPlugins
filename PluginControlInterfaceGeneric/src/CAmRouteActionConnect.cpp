@@ -43,19 +43,25 @@ int CAmRouteActionConnect::_execute(void)
         return E_NOT_POSSIBLE;
     }
 
+	int result = E_OK;
     am_connectionID_t connectionID(0);
-    CAmControlReceive* pControlReceive = mpRouteElement->getControlReceive();
-    int result = pControlReceive->connect(connectionID,
-                                          mpRouteElement->getConnectionFormat(),
-                                          mpRouteElement->getSourceID(),
-                                          mpRouteElement->getSinkID());
-    if (E_OK == result)
-    {
-        pControlReceive->registerObserver(this);
-        mpRouteElement->setID(connectionID);
-        mpRouteElement->setState(CS_CONNECTING);
-        result = E_WAIT_FOR_CHILD_COMPLETION;
-    }
+	am_ConnectionState_e connectionState;
+	mpRouteElement->getState((int&)connectionState);
+	if (connectionState != CS_CONNECTED)
+	{
+		CAmControlReceive* pControlReceive = mpRouteElement->getControlReceive();
+		result = pControlReceive->connect(connectionID,
+										  mpRouteElement->getConnectionFormat(),
+										  mpRouteElement->getSourceID(),
+										  mpRouteElement->getSinkID());
+		if (E_OK == result)
+		{
+			pControlReceive->registerObserver(this);
+			mpRouteElement->setID(connectionID);
+			mpRouteElement->setState(CS_CONNECTING);
+			result = E_WAIT_FOR_CHILD_COMPLETION;
+		}
+	}
     return result;
 }
 

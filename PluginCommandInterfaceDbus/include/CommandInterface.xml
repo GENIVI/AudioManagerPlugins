@@ -123,7 +123,13 @@
 			<arg type="n" name="error" direction="out"/>
         </method>
 
-        <signal name="NumberOfMainConnectionsChanged"></signal>
+        <signal name="NewMainConnection">
+            <arg type="(qqqnn)" name="mainConnection" direction="out"/>
+        </signal>
+
+        <signal name="RemovedMainConnection">
+            <arg type="q" name="mainConnectionId" direction="out"/>
+        </signal>
 
 		<signal name="SinkAdded">
             	<arg type="(qs(nn)nnq)" name="newSink" direction="out"/> <!-- am_sinkID_t sinkID; std::string name; am_Availability_s availability; am_mainVolume_t volume; am_MuteState_e muteState; am_sinkClass_t sinkClassID; -->

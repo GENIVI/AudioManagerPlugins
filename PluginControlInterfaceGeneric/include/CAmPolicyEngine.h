@@ -56,7 +56,10 @@ struct gc_triggerParams_s
         domainName.clear();
         gatewayName.clear();
         className.clear();
+        connectionName.clear();
         mainVolume = 0;
+        status = E_OK;
+        connectionState = CS_UNKNOWN;
         muteState = MS_UNKNOWN;
         interruptState = IS_UNKNOWN;
         mainSoundProperty.type = MSP_UNKNOWN;
@@ -65,6 +68,11 @@ struct gc_triggerParams_s
         systemProperty.value = 0;
         availability.availability = A_UNKNOWN;
         availability.availabilityReason = AR_UNKNOWN;
+        notificatonPayload.type = NT_UNKNOWN;
+        notificatonPayload.value = 0;
+        notificatonConfiguration.type = NT_UNKNOWN;
+        notificatonConfiguration.status = NS_UNKNOWN;
+        notificatonConfiguration.parameter = 0;
     }
     gc_Trigger_e triggerType;
     std::string sinkName;
@@ -72,12 +80,17 @@ struct gc_triggerParams_s
     std::string domainName;
     std::string gatewayName;
     std::string className;
+    std::string connectionName;
+    am_ConnectionState_e connectionState;
+    am_Error_e status;
     am_mainVolume_t mainVolume;
     am_MainSoundProperty_s mainSoundProperty;
     am_SystemProperty_s systemProperty;
     am_Availability_s availability;
     am_MuteState_e muteState;
     am_InterruptState_e interruptState;
+    am_NotificationPayload_s notificatonPayload;
+    am_NotificationConfiguration_s notificatonConfiguration;
 };
 class IAmPolicyReceive;
 class CAmPolicyEngine
@@ -139,6 +152,16 @@ private:
                                     const gc_triggerParams_s& parameters);
 
     //function pointer for function used in policy
+    am_Error_e _findElementPeek(const gc_ConditionStruct_s &conditionInstance,
+                                                std::vector<std::string > &listOutputs,
+                                                const std::string clasName,
+                                                const bool isLHS,const bool isSinkRequired);
+    am_Error_e _findSourcePeek(const gc_ConditionStruct_s &conditionInstance,
+                                 std::vector<std::string > &listOutputs,
+                                 const gc_triggerParams_s &parameters, const bool isLHS);
+    am_Error_e _findSinkPeek(const gc_ConditionStruct_s &conditionInstance,
+                                 std::vector<std::string > &listOutputs,
+                                 const gc_triggerParams_s &parameters, const bool isLHS);
     /**
      * @brief It is the internal function used to find the sink name as per current scenario and condition
      * @param conditionInstance: condition which need to be evaluated
@@ -372,6 +395,13 @@ private:
     am_Error_e _findSinkConnectionState(const gc_ConditionStruct_s &conditionInstance,
                                         std::vector<std::string > &listOutputs,
                                         const gc_triggerParams_s &parameters, const bool isLHS);
+    am_Error_e _findUserConnectionState(const gc_ConditionStruct_s &conditionInstance,
+                                        std::vector<std::string > &listOutputs,
+                                        const gc_triggerParams_s &parameters,const bool isLHS);
+    am_Error_e _findConnectionConnectionState(const gc_ConditionStruct_s &conditionInstance,
+                                            std::vector<std::string > &listOutputs,
+                                            const gc_triggerParams_s &parameters,const bool isLHS);
+
     /**
      * @brief It is the internal function used to find the volume of sink as per current scenario and condition
      * @param conditionInstance: condition which need to be evaluated
@@ -457,6 +487,10 @@ private:
                                                       std::vector<std::string > &listOutputs,
                                                       const gc_triggerParams_s &parameters,
                                                       const bool isLHS);
+    am_Error_e _findUserErrorValue(const gc_ConditionStruct_s &conditionInstance,
+                                                          std::vector<std::string > &listOutputs,
+                                                          const gc_triggerParams_s &parameters,
+                                                          const bool isLHS);
     /**
      * @brief It is the internal function used to find the sink device property value as per current scenario and condition
      * @param conditionInstance: condition which need to be evaluated
@@ -626,6 +660,9 @@ private:
     am_Error_e _findSourceAvailability(const gc_ConditionStruct_s &conditionInstance,
                                        std::vector<std::string > &listOutputs,
                                        const gc_triggerParams_s &parameters, const bool isLHS);
+    am_Error_e _findUserAvailability(const gc_ConditionStruct_s &conditionInstance,
+                                           std::vector<std::string > &listOutputs,
+                                           const gc_triggerParams_s &parameters, const bool isLHS);
     /**
      * @brief It is the internal function used to find the sink availability reason as per current scenario and condition
      * @param conditionInstance: condition which need to be evaluated
@@ -651,6 +688,10 @@ private:
                                              std::vector<std::string > &listOutputs,
                                              const gc_triggerParams_s &parameters,
                                              const bool isLHS);
+    am_Error_e _findUserAvailabilityReason(const gc_ConditionStruct_s &conditionInstance,
+                                                 std::vector<std::string > &listOutputs,
+                                                 const gc_triggerParams_s &parameters,
+                                                 const bool isLHS);
     /**
      * @brief It is the internal function used to find the connection format as per current scenario and condition
      * @param conditionInstance: condition which need to be evaluated
@@ -701,6 +742,10 @@ private:
                                              std::vector<std::string > &listOutputs,
                                              const gc_triggerParams_s &parameters,
                                              const bool isLHS);
+    am_Error_e _findUserInterruptState(const gc_ConditionStruct_s &conditionInstance,
+                                                 std::vector<std::string > &listOutputs,
+                                                 const gc_triggerParams_s &parameters,
+                                                 const bool isLHS);
     /**
      * @brief It is the internal function used to find the sink is registered or not as per current scenario and condition
      * @param conditionInstance: condition which need to be evaluated
@@ -817,15 +862,6 @@ private:
                                   const std::string& optionalParameter,
                                   std::vector<gc_ConnectionInfo_s > &listConnectionInfo,
                                   const gc_triggerParams_s &parameters) const;
-    /**
-     * @brief It is the supporting internal function used to find whether macro is used as mandatory parameter in name related functions
-     * @param conditionInstance: condition which need to be evaluated
-     *        isLHS: to indicate whether RHS or LHS side function of condition need to be evaluated
-     * @return true if macro is used
-     *         false if direct value is given
-     */
-    bool _isMacroOfNameAllowed(const gc_ConditionStruct_s &conditionInstance,
-                               const bool isLHS) const;
     /**
      * @brief It is the supporting internal function used to find the value of mandatory and optional parameter of condition
      * @param conditionInstance: condition which need to be evaluated
@@ -953,6 +989,44 @@ private:
                               std::vector<std::string > &listOutputs,
                               std::string& mandatoryParameter, const bool isLHS,
                               const gc_Element_e elementType);
+
+
+    am_Error_e _findSinkNTStatus(const gc_ConditionStruct_s &conditionInstance,
+                                 std::vector<std::string > &listOutputs,
+                                 const gc_triggerParams_s &parameters, const bool isLHS);
+    am_Error_e _findSourceNTStatus(const gc_ConditionStruct_s &conditionInstance,
+                                 std::vector<std::string > &listOutputs,
+                                 const gc_triggerParams_s &parameters, const bool isLHS);
+    am_Error_e _findUserNotificationStatus(const gc_ConditionStruct_s &conditionInstance,
+                                     std::vector<std::string > &listOutputs,
+                                     const gc_triggerParams_s &parameters, const bool isLHS);
+    am_Error_e _findSinkNTParam(const gc_ConditionStruct_s &conditionInstance,
+                                 std::vector<std::string > &listOutputs,
+                                 const gc_triggerParams_s &parameters, const bool isLHS);
+    am_Error_e _findSourceNTParam(const gc_ConditionStruct_s &conditionInstance,
+                                 std::vector<std::string > &listOutputs,
+                                 const gc_triggerParams_s &parameters, const bool isLHS);
+    am_Error_e __findUserNotificationParam(const gc_ConditionStruct_s &conditionInstance,
+                                    std::vector<std::string > &listOutputs,
+                                    const gc_triggerParams_s &parameters, const bool isLHS);
+    am_Error_e _findUserNotificationValue(const gc_ConditionStruct_s &conditionInstance,
+                                 std::vector<std::string > &listOutputs,
+                                 const gc_triggerParams_s &parameters, const bool isLHS);
+    am_Error_e _findUserNotificationType(const gc_ConditionStruct_s &conditionInstance,
+                                 std::vector<std::string > &listOutputs,
+                                 const gc_triggerParams_s &parameters, const bool isLHS);
+    am_Error_e _findSinkMainNTStatus(const gc_ConditionStruct_s &conditionInstance,
+                                 std::vector<std::string > &listOutputs,
+                                 const gc_triggerParams_s &parameters, const bool isLHS);
+    am_Error_e _findSourceMainNTStatus(const gc_ConditionStruct_s &conditionInstance,
+                                 std::vector<std::string > &listOutputs,
+                                 const gc_triggerParams_s &parameters, const bool isLHS);
+    am_Error_e _findSinkMainNTParam(const gc_ConditionStruct_s &conditionInstance,
+                                 std::vector<std::string > &listOutputs,
+                                 const gc_triggerParams_s &parameters, const bool isLHS);
+    am_Error_e _findSourceMainNTParam(const gc_ConditionStruct_s &conditionInstance,
+                                 std::vector<std::string > &listOutputs,
+                                 const gc_triggerParams_s &parameters, const bool isLHS);
     /**
      * @brief It is the supporting internal function used to find the name of element from connection list
      * @param mandatoryParameter: mandatory parameter of condition
@@ -1041,7 +1115,14 @@ private:
      */
     am_Error_e _getActions(const gc_Trigger_e triggerType, std::vector<gc_Action_s > &listActions,
                            const gc_triggerParams_s& parameters);
-
+    am_Error_e _findNTStatusParam(const gc_ConditionStruct_s &conditionInstance,
+                                              std::vector<std::string > &listOutputs,const bool isLHS,
+                                              std::string& mandatoryParameter, gc_Element_e elementType,
+                                              am_CustomNotificationType_t ntType,const bool isStatusReq);
+    am_Error_e _findMainNTStatusParam(const gc_ConditionStruct_s &conditionInstance,
+                                              std::vector<std::string > &listOutputs,const bool isLHS,
+                                              std::string& mandatoryParameter, gc_Element_e elementType,
+                                              am_CustomNotificationType_t ntType,const bool isStatusReq);
     void _removeDoubleQuotes(std::string& inputString,const std::string& replaceString);
     void _getImplicitActions(gc_Trigger_e trigger, std::vector<gc_Action_s >& listActions,
                              const gc_triggerParams_s& parameters);
@@ -1049,7 +1130,8 @@ private:
                              std::vector<gc_Sink_s >& listStaticSinks);
     void _getListStaticSources(const std::string& domainName,
                                std::vector<gc_Source_s >& listStaticSources);
-    void _getListStaticGateways(std::vector<std::string >& listGateways);
+    void _getListStaticGateways(std::vector<std::string >& listGateways,
+                                std::string& listSources,std::string& listSinks);
     am_Error_e _updateActionParameters(std::vector<gc_Action_s >& listActions,
                                        gc_triggerParams_s& triggerParams);
     typedef am_Error_e (CAmPolicyEngine::*functionPtr)(const gc_ConditionStruct_s &condition,
@@ -1093,6 +1175,22 @@ private:
     std::map<std::string, functionPtr > mMapIsRegisteredFunctions;
     //map to store function pointers of element state category function of condition set as defined in policy
     std::map<std::string, functionPtr > mMapStateFunctions;
+    //map to store function pointers of error category function of condition set as defined in policy
+    std::map<std::string, functionPtr > mMapErrorFunctions;
+    //map to store function pointers of notification configuration status category function of condition set as defined in policy
+    std::map<std::string, functionPtr > mMapNotificationStatusFunctions;
+    //map to store function pointers of notification configuration param category function of condition set as defined in policy
+    std::map<std::string, functionPtr > mMapNotificationParamFunctions;
+    //map to store function pointers of notification configuration value category function of condition set as defined in policy
+    std::map<std::string, functionPtr > mMapNotificationValueFunctions;
+    //map to store function pointers of main notification configuration type category function of condition set as defined in policy
+    std::map<std::string, functionPtr > mMapMainNotificationTypeFunctions;
+    //map to store function pointers of main notification configuration status category function of condition set as defined in policy
+    std::map<std::string, functionPtr > mMapMainNotificationStatusFunctions;
+    //map to store function pointers of main notification configuration param category function of condition set as defined in policy
+    std::map<std::string, functionPtr > mMapMainNotificationParamFunctions;
+    //map to store function pointers of peek category function of condition set as defined in policy
+    std::map<std::string, functionPtr > mMapPeekFunctions;
     //map to store map of function pointers
     std::map<std::string, std::map<std::string, functionPtr > > mMapFunctionNameToFunctionMaps;
     std::map<std::string, std::string > mMapActions;

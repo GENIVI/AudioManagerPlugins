@@ -69,10 +69,25 @@ public:
     virtual am_Error_e hookSetMainSinkSoundProperty(const std::string& sinkName,
                                                     const am_MainSoundProperty_s& soundProperty) =0;
     virtual am_Error_e hookSetSystemProperty(const am_SystemProperty_s& systemProperty) =0;
+
+    virtual am_Error_e hookSetMainSinkNotificationConfiguration(
+                    const std::string& sinkName,
+                    const am_NotificationConfiguration_s& notificationConfiguration) =0;
+    virtual am_Error_e hookSetMainSourceNotificationConfiguration(
+                    const std::string& sourceName,
+                    const am_NotificationConfiguration_s& notificationConfiguration) =0;
+    virtual am_Error_e hookSinkNotificationDataChanged(const std::string& sinkName,
+                                                       const am_NotificationPayload_s& payload)=0;
+    virtual am_Error_e hookSourceNotificationDataChanged(const std::string& sourceName,
+                                                         const am_NotificationPayload_s& payload)=0;
+
     virtual am_Error_e hookVolumeChange(const std::string& sinkName,
                                         const am_mainVolume_t mainVolume) =0;
     virtual am_Error_e hookSetSinkMuteState(const std::string& sinkName,
                                             const am_MuteState_e muteState) =0;
+    virtual am_Error_e hookConnectionStateChange(const std::string& connectionName,
+                                                   const am_ConnectionState_e& connectionState,
+                                                   am_Error_e& status) =0;
     virtual am_Error_e getListElements(const std::vector<std::string >& listNames,
                                        std::vector<gc_Sink_s >& listSinks)=0;
     virtual am_Error_e getListElements(const std::vector<std::string >& listNames,

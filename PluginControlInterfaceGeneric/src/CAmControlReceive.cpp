@@ -49,7 +49,7 @@ am_Error_e CAmControlReceive::connect(am_connectionID_t& connectionID,
     result = mpControlReceive->connect(handle, connectionID, format, sourceID, sinkID);
     if (result == E_OK)
     {
-        saveHandle(handle);
+        _saveHandle(handle);
     }
     return (result);
 }
@@ -61,7 +61,7 @@ am_Error_e CAmControlReceive::disconnect(const am_connectionID_t connectionID)
     result = mpControlReceive->disconnect(handle, connectionID);
     if (result == E_OK)
     {
-        saveHandle(handle);
+        _saveHandle(handle);
     }
     return (result);
 }
@@ -76,7 +76,7 @@ am_Error_e CAmControlReceive::crossFade(const am_HotSink_e hotSink,
     result = mpControlReceive->crossfade(handle, hotSink, crossFaderID, rampType, rampTime);
     if (result == E_OK)
     {
-        saveHandle(handle);
+        _saveHandle(handle);
     }
     return (result);
 }
@@ -97,7 +97,7 @@ am_Error_e CAmControlReceive::setSourceState(const am_sourceID_t sourceID,
     result = mpControlReceive->setSourceState(handle, sourceID, state);
     if (result == E_OK)
     {
-        saveHandle(handle);
+        _saveHandle(handle);
     }
     return result;
 }
@@ -111,7 +111,7 @@ am_Error_e CAmControlReceive::setSinkVolume(const am_sinkID_t sinkID, const am_v
     result = mpControlReceive->setSinkVolume(handle, sinkID, volume, rampType, time);
     if (result == E_OK)
     {
-        saveHandle(handle);
+        _saveHandle(handle);
     }
     return (result);
 }
@@ -126,7 +126,7 @@ am_Error_e CAmControlReceive::setSourceVolume(const am_sourceID_t sourceID,
     result = mpControlReceive->setSourceVolume(handle, sourceID, volume, rampType, rampTime);
     if (result == E_OK)
     {
-        saveHandle(handle);
+        _saveHandle(handle);
     }
     return (result);
 }
@@ -140,7 +140,7 @@ am_Error_e CAmControlReceive::setSinkSoundProperties(
     result = mpControlReceive->setSinkSoundProperties(handle, sinkID, listSoundProperties);
     if (result == E_OK)
     {
-        saveHandle(handle);
+        _saveHandle(handle);
     }
     return (result);
 }
@@ -153,7 +153,7 @@ am_Error_e CAmControlReceive::setSinkSoundProperty(const am_sinkID_t sinkID,
     result = mpControlReceive->setSinkSoundProperty(handle, sinkID, soundProperty);
     if (result == E_OK)
     {
-        saveHandle(handle);
+        _saveHandle(handle);
     }
     return (result);
 }
@@ -167,7 +167,7 @@ am_Error_e CAmControlReceive::setSourceSoundProperties(
     result = mpControlReceive->setSourceSoundProperties(handle, sourceID, listSoundProperties);
     if (result == E_OK)
     {
-        saveHandle(handle);
+        _saveHandle(handle);
     }
     return (result);
 }
@@ -180,7 +180,7 @@ am_Error_e CAmControlReceive::setSourceSoundProperty(const am_sourceID_t sourceI
     result = mpControlReceive->setSourceSoundProperty(handle, sourceID, soundProperty);
     if (result == E_OK)
     {
-        saveHandle(handle);
+        _saveHandle(handle);
     }
     return (result);
 }
@@ -581,68 +581,7 @@ void CAmControlReceive::getInterfaceVersion(std::string& version) const
     mpControlReceive->getInterfaceVersion(version);
 }
 
-void CAmControlReceive::cbAckConnect(const am_Handle_s handle, const am_Error_e errorID)
-{
-    notifyAsyncResult(handle, errorID);
-}
-
-void CAmControlReceive::cbAckDisconnect(const am_Handle_s handle, const am_Error_e errorID)
-{
-    notifyAsyncResult(handle, errorID);
-}
-
-void CAmControlReceive::cbAckCrossFade(const am_Handle_s handle, const am_HotSink_e hotSink,
-                                       const am_Error_e errorID)
-{
-    (void)hotSink;
-    notifyAsyncResult(handle, errorID);
-}
-
-void CAmControlReceive::cbAckSetSourceState(const am_Handle_s handle, const am_Error_e errorID)
-{
-    notifyAsyncResult(handle, errorID);
-}
-
-void CAmControlReceive::cbAckSetSinkVolumeChange(const am_Handle_s handle, const am_volume_t volume,
-                                                 const am_Error_e errorID)
-{
-    (void)volume;
-    notifyAsyncResult(handle, errorID);
-}
-
-void CAmControlReceive::cbAckSetSourceVolumeChange(const am_Handle_s handle,
-                                                   const am_volume_t volume,
-                                                   const am_Error_e errorID)
-{
-    (void)volume;
-    notifyAsyncResult(handle, errorID);
-}
-
-void CAmControlReceive::cbAckSetSinkSoundProperties(const am_Handle_s handle,
-                                                    const am_Error_e errorID)
-{
-    notifyAsyncResult(handle, errorID);
-}
-
-void CAmControlReceive::cbAckSetSinkSoundProperty(const am_Handle_s handle,
-                                                  const am_Error_e errorID)
-{
-    notifyAsyncResult(handle, errorID);
-}
-
-void CAmControlReceive::cbAckSetSourceSoundProperties(const am_Handle_s handle,
-                                                      const am_Error_e errorID)
-{
-    notifyAsyncResult(handle, errorID);
-}
-
-void CAmControlReceive::cbAckSetSourceSoundProperty(const am_Handle_s handle,
-                                                    const am_Error_e errorID)
-{
-    notifyAsyncResult(handle, errorID);
-}
-
-void CAmControlReceive::saveHandle(am_Handle_s Handle)
+void CAmControlReceive::_saveHandle(am_Handle_s Handle)
 {
     mHandle.handle = Handle.handle;
     mHandle.handleType = Handle.handleType;
@@ -727,19 +666,33 @@ am_Error_e CAmControlReceive::changeGatewayDB(
 }
 
 am_Error_e CAmControlReceive::setSinkNotificationConfiguration(
-                am_Handle_s& handle, const am_sinkID_t sinkID,
+                const am_sinkID_t sinkID,
                 const am_NotificationConfiguration_s& notificationConfiguration)
 {
-    return mpControlReceive->setSinkNotificationConfiguration(handle, sinkID,
-                                                              notificationConfiguration);
+    am_Error_e result;
+    am_Handle_s handle;
+    result = mpControlReceive->setSinkNotificationConfiguration(handle, sinkID,
+                                                                notificationConfiguration);
+    if (result == E_OK)
+    {
+        _saveHandle(handle);
+    }
+    return result;
 }
 
 am_Error_e CAmControlReceive::setSourceNotificationConfiguration(
-                am_Handle_s& handle, const am_sourceID_t sourceID,
+                const am_sourceID_t sourceID,
                 const am_NotificationConfiguration_s& notificationConfiguration)
 {
-    return mpControlReceive->setSourceNotificationConfiguration(handle, sourceID,
-                                                                notificationConfiguration);
+    am_Error_e result;
+    am_Handle_s handle;
+    result = mpControlReceive->setSourceNotificationConfiguration(handle, sourceID,
+                                                                  notificationConfiguration);
+    if (result == E_OK)
+    {
+        _saveHandle(handle);
+    }
+    return result;
 }
 
 am_Error_e CAmControlReceive::changeMainSinkNotificationConfigurationDB(

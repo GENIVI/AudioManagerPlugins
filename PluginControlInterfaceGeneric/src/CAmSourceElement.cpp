@@ -151,6 +151,25 @@ am_Error_e CAmSourceElement::saturateSoundPropertyRange(
                     soundPropertyType, mSource.listGCSoundProperties, soundPropertyValue);
 }
 
+template <typename TPropertyType, typename Tlisttype>
+bool CAmSourceElement::_isSoundPropertyConfigured(
+                const TPropertyType soundPropertyType,
+                const std::vector<Tlisttype >& listGCSoundProperties)
+{
+    bool soundPropertyConfigured = false;
+    typename std::vector<Tlisttype >::const_iterator itListSoundProperties;
+    for (itListSoundProperties = listGCSoundProperties.begin();
+                    itListSoundProperties != listGCSoundProperties.end(); ++itListSoundProperties)
+    {
+        if ((*itListSoundProperties).type == soundPropertyType)
+        {
+            soundPropertyConfigured = true;
+            break;
+        }
+    }
+    return soundPropertyConfigured;
+}
+
 am_Error_e CAmSourceElement::getSoundPropertyValue(const am_CustomSoundPropertyType_t type,
                                                    int16_t& value) const
 {
@@ -225,7 +244,7 @@ am_Error_e CAmSourceElement::soundPropertyToMainSoundProperty(
                 const am_SoundProperty_s &soundProperty, am_MainSoundProperty_s& mainSoundProperty)
 {
     am_Error_e error = E_DATABASE_ERROR;
-    if (mSource.mapMSPTOSP[MD_SP_TO_MSP].find(mainSoundProperty.type) != mSource.mapMSPTOSP[MD_SP_TO_MSP].end())
+    if (mSource.mapMSPTOSP[MD_SP_TO_MSP].find(soundProperty.type) != mSource.mapMSPTOSP[MD_SP_TO_MSP].end())
     {
         mainSoundProperty.type = mSource.mapMSPTOSP[MD_SP_TO_MSP][soundProperty.type];
         mainSoundProperty.value = soundProperty.value;
@@ -264,17 +283,14 @@ am_Error_e CAmSourceElement::upadateDB(
     /*
      * sound properties update. The strategy is as follows
      * 1. Get the sound properties from the audio manager database
-     * 2. for each property present in the list from routing side saturate the values and update
-     * in the list.
-     * 3. If the new list has a sound property type which is not present in the configuration list
-     * then ignore it.
+     * 2. for each property present in the list from routing side update in the list.
      */
     for (itListSoundProperties = listSoundProperties.begin();
                     itListSoundProperties != listSoundProperties.end(); itListSoundProperties++)
     {
         am_SoundProperty_s soundProperty = *itListSoundProperties;
         am_MainSoundProperty_s mainSoundProperty;
-        if (E_OK == saturateSoundPropertyRange(soundProperty.type, soundProperty.value))
+        if (_isSoundPropertyConfigured(soundProperty.type, mSource.listGCSoundProperties))
         {
             for (itListUpdatedSoundProperties = listUpdatedSoundProperties.begin();
                             itListUpdatedSoundProperties != listUpdatedSoundProperties.end();
@@ -290,6 +306,8 @@ am_Error_e CAmSourceElement::upadateDB(
             {
                 listUpdatedSoundProperties.push_back(soundProperty);
             }
+            LOG_FN_INFO("converting SP TO MSP type:value=", soundProperty.type,
+                        soundProperty.value);
             if (E_OK != soundPropertyToMainSoundProperty(soundProperty, mainSoundProperty))
             {
                 continue;
@@ -309,32 +327,19 @@ am_Error_e CAmSourceElement::upadateDB(
                 listUpdatedMainSoundProperties.push_back(mainSoundProperty);
             }
         }
-        else
-        {
-            /*
-             * TODO : This is a new sound property found not present in the list in configuration
-             * we have two options here either
-             * 1. ignore the update
-             * 2. add it to the list of ranges with no range
-             */
-            continue;
-        }
     }
     /*
      * main sound properties update. The strategy is as follows
      * 1. Get the main sound properties from the audio manager database
-     * 2. For each main sound property present in the new list update the MSP
-     * 3. If the new list has a main sound property type which is not present in the
-     * configuration list then ignore it.
-     * 4. Finally perform the SP to MSP conversion and update the MSP type:values after saturation
-     *  if present in the list else add new type:value after saturation.
+     * 2. perform the SP to MSP conversion and update the MSP type:values.
+     * 3. For each main sound property present in the new list update the MSP
      */
     for (itListMainSoundProperties = listMainSoundProperties.begin();
                     itListMainSoundProperties != listMainSoundProperties.end();
                     itListMainSoundProperties++)
     {
         am_MainSoundProperty_s mainSoundProperty = *itListMainSoundProperties;
-        if (E_OK == saturateMainSoundPropertyRange(mainSoundProperty.type, mainSoundProperty.value))
+        if (_isSoundPropertyConfigured(mainSoundProperty.type, mSource.listGCMainSoundProperties))
         {
             for (itListUpdatedMainSoundProperties = listUpdatedMainSoundProperties.begin();
                             itListUpdatedMainSoundProperties != listUpdatedMainSoundProperties.end();
@@ -350,11 +355,6 @@ am_Error_e CAmSourceElement::upadateDB(
             {
                 listUpdatedMainSoundProperties.push_back(mainSoundProperty);
             }
-        }
-        else
-        {
-            //TODO : this is a new main sound property found not present in the original list.
-            continue;
         }
     }
     /*
@@ -386,6 +386,91 @@ am_Error_e CAmSourceElement::upadateDB(
 bool CAmSourceElement::isVolumeChangeSupported() const
 {
     return mSource.isVolumeChangeSupported;
+}
+
+am_Error_e CAmSourceElement::setMainNotificationConfiguration(
+                const am_NotificationConfiguration_s& mainNotificationConfiguraton)
+{
+    return mpControlReceive->changeMainSourceNotificationConfigurationDB(
+                    getID(), mainNotificationConfiguraton);
+}
+
+am_Error_e CAmSourceElement::notificationDataUpdate(const am_NotificationPayload_s& payload)
+{
+    mpControlReceive->sendMainSourceNotificationPayload(getID(), payload);
+    return E_OK;
+}
+
+am_Error_e CAmSourceElement::getListMainNotificationConfigurations(
+                std::vector<am_NotificationConfiguration_s >& listMainNotificationConfigurations)
+{
+    am_Source_s sourceData;
+    am_Error_e result;
+    //get the source Info from Database
+    result = mpControlReceive->getSourceInfoDB(getID(), sourceData);
+    listMainNotificationConfigurations = sourceData.listMainNotificationConfigurations;
+    return result;
+}
+
+am_Error_e CAmSourceElement::getListNotificationConfigurations(
+                std::vector<am_NotificationConfiguration_s >& listNotificationConfigurations)
+{
+    am_Source_s sourceData;
+    am_Error_e result;
+    //get the source Info from Database
+    result = mpControlReceive->getSourceInfoDB(getID(), sourceData);
+    listNotificationConfigurations = sourceData.listNotificationConfigurations;
+    return result;
+}
+
+am_Error_e CAmSourceElement::getNotificationConfigurations(
+                am_CustomNotificationType_t type,
+                am_NotificationConfiguration_s& notificationConfiguration)
+{
+    std::vector < am_NotificationConfiguration_s > listNotificationConfigurations;
+    std::vector<am_NotificationConfiguration_s >::iterator itListNotificationConfigurations;
+    am_Error_e result = getListNotificationConfigurations(listNotificationConfigurations);
+    if (result == E_OK)
+    {
+        result = E_UNKNOWN;
+        for (itListNotificationConfigurations = listNotificationConfigurations.begin();
+                        itListNotificationConfigurations != listNotificationConfigurations.end();
+                        ++itListNotificationConfigurations)
+        {
+            if (itListNotificationConfigurations->type == type)
+            {
+                notificationConfiguration = *itListNotificationConfigurations;
+                result = E_OK;
+                break;
+            }
+        }
+    }
+    return result;
+}
+
+am_Error_e CAmSourceElement::getMainNotificationConfigurations(
+                am_CustomNotificationType_t type,
+                am_NotificationConfiguration_s& mainNotificationConfiguration)
+{
+    std::vector < am_NotificationConfiguration_s > listMainNotificationConfigurations;
+    std::vector<am_NotificationConfiguration_s >::iterator itListMainNotificationConfigurations;
+    am_Error_e result = getListMainNotificationConfigurations(listMainNotificationConfigurations);
+    if (result == E_OK)
+    {
+        result = E_UNKNOWN;
+        for (itListMainNotificationConfigurations = listMainNotificationConfigurations.begin();
+                        itListMainNotificationConfigurations != listMainNotificationConfigurations.end();
+                        ++itListMainNotificationConfigurations)
+        {
+            if (itListMainNotificationConfigurations->type == type)
+            {
+                mainNotificationConfiguration = *itListMainNotificationConfigurations;
+                result = E_OK;
+                break;
+            }
+        }
+    }
+    return result;
 }
 
 } /* namespace gc */

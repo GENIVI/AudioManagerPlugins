@@ -40,6 +40,21 @@
             </xsd:enumeration>
         </xsd:restriction>
     </xsd:simpleType>
+    <xsd:simpleType name="am_Error_e">
+        <xsd:restriction base="xsd:string">
+            <xsd:enumeration value="E_OK"/>
+            <xsd:enumeration value="E_UNKNOWN"/>
+            <xsd:enumeration value="E_OUT_OF_RANGE"/>
+            <xsd:enumeration value="E_NOT_USED"/>
+            <xsd:enumeration value="E_DATABASE_ERROR"/>
+            <xsd:enumeration value="E_ALREADY_EXISTS"/>
+            <xsd:enumeration value="E_NO_CHANGE"/>
+			<xsd:enumeration value="E_NOT_POSSIBLE"/>
+			<xsd:enumeration value="E_NON_EXISTENT"/>
+			<xsd:enumeration value="E_ABORTED"/>
+			<xsd:enumeration value="E_WRONG_FORMAT"/>
+        </xsd:restriction>
+    </xsd:simpleType>
     <xsd:simpleType name="am_AvailabilityReason_t">
         <xsd:union memberTypes="c:am_GeniviAvailabilityReason_t c:am_CustomAvailabilityReason_t"/>
     </xsd:simpleType>
@@ -416,6 +431,8 @@ For details of the topology writing rules refer the topology writing rules secti
                 </xsd:annotation>
             </xsd:enumeration>
             <xsd:enumeration value="USER_SET_SYSTEM_PROPERTY"/>
+            <xsd:enumeration value="USER_SET_SINK_MAIN_NOTIFICATION_CONFIGURATION"/>
+            <xsd:enumeration value="USER_SET_SOURCE_MAIN_NOTIFICATION_CONFIGURATION"/>
             <xsd:enumeration value="SYSTEM_SOURCE_AVAILABILITY_CHANGED">
                 <xsd:annotation>
                     <xsd:documentation>This trigger occurs when a source availability status change is called by routing adaptor. </xsd:documentation>
@@ -435,10 +452,11 @@ For details of the topology writing rules refer the topology writing rules secti
             <xsd:enumeration value="SYSTEM_SINK_MAIN_SOUND_PROPERTY_CHANGED"/>
             <xsd:enumeration value="SYSTEM_SOURCE_MAIN_SOUND_PROPERTY_CHANGED"/>
             <xsd:enumeration value="SYSTEM_VOLUME_CHANGED"/>
-            <xsd:enumeration value="SYSTEM_NOTIFICATION_CONFIGURATION_CHANGED"/>
+            <xsd:enumeration value="SYSTEM_SINK_NOTIFICATION_DATA_CHANGED"/>
+            <xsd:enumeration value="SYSTEM_SOURCE_NOTIFICATION_DATA_CHANGED"/>
             <xsd:enumeration value="SYSTEM_REGISTER_DOMAIN"/>
             <xsd:enumeration value="SYSTEM_REGISTER_SOURCE">
-                <xsd:annotation>
+            <xsd:annotation>
                     <xsd:documentation>This trigger occurs when a new source is registered by routing adaptor.</xsd:documentation>
                 </xsd:annotation>
             </xsd:enumeration>
@@ -461,6 +479,7 @@ For details of the topology writing rules refer the topology writing rules secti
             </xsd:enumeration>
             <xsd:enumeration value="SYSTEM_DEREGISTER_GATEWAY"/>
             <xsd:enumeration value="SYSTEM_DOMAIN_REGISTRATION_COMPLETE"/>
+            <xsd:enumeration value="SYSTEM_CONNECTION_STATE_CHANGE"/>
             <xsd:enumeration value="USER_ALL_TRIGGER"/>
             <xsd:enumeration value="TRIGGER_MAX"/>
             </xsd:restriction>
@@ -650,6 +669,7 @@ For example lets take a real life policy, "when I go out , if its raining , I wi
 			</xsd:enumeration>
 			<xsd:enumeration value="ACTION_REGISTER"/>
 			<xsd:enumeration value="ACTION_DEBUG"/>
+			<xsd:enumeration value="ACTION_SET_NOTIFICATION_CONFIGURATION"/>
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:element name="configuration" type="c:configuration"/>
@@ -813,6 +833,9 @@ For example lets take a real life policy, "when I go out , if its raining , I wi
 			<xsd:element name="exceptSource" type="c:stringListType" minOccurs="0" maxOccurs="1" />
 			<xsd:element name="exceptSink" type="c:stringListType" minOccurs="0" maxOccurs="1" />
 			<xsd:element name="exceptClass" type="c:stringListType" minOccurs="0" maxOccurs="1" />
+			<xsd:element name="notificationConfigurationType" type="c:am_NotificationType_t" minOccurs="0" maxOccurs="1" />
+			<xsd:element name="notificationConfigurationStatus" type="c:am_NotificationStatus_e" minOccurs="0" maxOccurs="1" />
+			<xsd:element name="notificationConfigurationParam" type="xsd:short" minOccurs="0" maxOccurs="1" />
 		</xsd:all>
 	</xsd:complexType>
 	<xsd:simpleType name="gc_Operator_e">

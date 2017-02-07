@@ -406,6 +406,27 @@ void CAmDbusMessageHandler::append(const am::am_SystemProperty_s & SystemPropert
     }
 }
 
+void CAmDbusMessageHandler::append(const am::am_MainConnectionType_s& mainConnection)
+{
+    DBusMessageIter structIter;
+    dbus_bool_t success = true;
+
+    success = success && dbus_message_iter_open_container(&mDBusMessageIter, DBUS_TYPE_STRUCT, NULL, &structIter);
+    success = success && dbus_message_iter_append_basic(&structIter, DBUS_TYPE_UINT16, &mainConnection.mainConnectionID);
+    success = success && dbus_message_iter_append_basic(&structIter, DBUS_TYPE_UINT16, &mainConnection.sourceID);
+    success = success && dbus_message_iter_append_basic(&structIter, DBUS_TYPE_UINT16, &mainConnection.sinkID);
+    success = success && dbus_message_iter_append_basic(&structIter, DBUS_TYPE_INT16, &mainConnection.delay);
+    success = success && dbus_message_iter_append_basic(&structIter, DBUS_TYPE_INT16, &mainConnection.connectionState);
+    success = success && dbus_message_iter_close_container(&mDBusMessageIter, &structIter);
+
+    if (!success)
+    {
+        log(&commandDbus, DLT_LOG_ERROR, "DBusMessageHandler::append Cannot allocate DBus message!");
+        mErrorName = std::string(DBUS_ERROR_NO_MEMORY);
+        mErrorMsg = "Cannot create reply!";
+    }
+}
+
 void CAmDbusMessageHandler::append(const std::vector<am::am_MainConnectionType_s>& listMainConnections)
 {
     DBusMessageIter arrayIter;

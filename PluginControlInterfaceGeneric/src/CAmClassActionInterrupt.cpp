@@ -49,8 +49,11 @@ int CAmClassActionInterrupt::_execute(void)
     mSinkNameParam.getParam(sinkName);
     std::vector<CAmMainConnectionElement* > listMainConnections;
     std::vector < am_ConnectionState_e > listConnectionStates {CS_CONNECTED};
-    mpClassElement->getListMainConnections(sourceName, sinkName, listConnectionStates,
-                                           listMainConnections);
+    CAmConnectionListFilter filterObject;
+    filterObject.setSinkName(sinkName);
+    filterObject.setSourceName(sourceName);
+    filterObject.setListConnectionStates(listConnectionStates);
+    mpClassElement->getListMainConnections(listMainConnections,filterObject);
     if ((false == sourceName.empty()) && (false == sinkName.empty())
         && (true == listMainConnections.empty()))
     {

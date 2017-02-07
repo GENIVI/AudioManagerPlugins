@@ -64,11 +64,7 @@ public:
 
     void removeHandle(uint16_t handle);
     void addDomainLookup(am_domainID_t domainID, rs_lookupData_s lookupData);
-    void addSourceLookup(am_sourceID_t sourceID, am_domainID_t domainID);
-    void addSinkLookup(am_sinkID_t sinkID, am_domainID_t domainID);
     void removeDomainLookup(am_domainID_t domainID);
-    void removeSourceLookup(am_sourceID_t sourceID);
-    void removeSinkLookup(am_sinkID_t sinkID);
 
 private:
     CAmDbusWrapper* mpCAmDBusWrapper;
@@ -78,16 +74,12 @@ private:
     IAmRoutingReceiverShadowDbus mIAmRoutingReceiverShadowDbus;
 
     typedef std::map<am_domainID_t,rs_lookupData_s> mapDomain_t;
-    typedef std::map<am_sinkID_t,rs_lookupData_s> mapSinks_t;
-    typedef std::map<am_sourceID_t,rs_lookupData_s> mapSources_t;
     typedef std::map<am_connectionID_t,rs_lookupData_s> mapConnections_t;
     typedef std::map<uint16_t,rs_lookupData_s> mapHandles_t;
 
     template <typename TKey> static void  removeEntriesForValue(const rs_lookupData_s & value, std::map<TKey,rs_lookupData_s> & map);
 
     mapDomain_t mMapDomains;
-    mapSinks_t mMapSinks;
-    mapSources_t mMapSources;
     mapConnections_t mMapConnections;
     mapHandles_t mMapHandles;
 

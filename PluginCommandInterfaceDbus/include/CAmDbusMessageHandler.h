@@ -95,6 +95,7 @@ public:
     void append(const am::am_MainSoundProperty_s mainSoundProperty);
     void append(const am::am_Availability_s & availability);
     void append(const am::am_SystemProperty_s & SystemProperty);
+    void append(const am::am_MainConnectionType_s& listMainConnections);
     void append(const std::vector<am::am_MainConnectionType_s>& listMainConnections);
     void append(const std::vector<am::am_SinkType_s>& listMainSinks);
     void append(const std::vector<am::am_SourceType_s>& listMainSources);

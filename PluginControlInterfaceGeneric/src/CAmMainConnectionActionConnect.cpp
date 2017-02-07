@@ -24,6 +24,7 @@
 #include "CAmSourceActionSetState.h"
 #include "CAmRouteActionConnect.h"
 #include "CAmLogger.h"
+#include "CAmTriggerQueue.h"
 
 namespace am {
 namespace gc {
@@ -85,6 +86,7 @@ int CAmMainConnectionActionConnect::_execute(void)
         append(pAction);
     }
     mpMainConnection->setState(CS_CONNECTING);
+    _setConnectionStateChangeTrigger();
     return E_OK;
 }
 
@@ -92,6 +94,7 @@ int CAmMainConnectionActionConnect::_undo(void)
 {
     // update main connection state in Audio Manager daemon
     mpMainConnection->setState(CS_DISCONNECTING);
+    _setConnectionStateChangeTrigger();
     return E_OK;
 }
 
@@ -116,9 +119,12 @@ int CAmMainConnectionActionConnect::_update(const int result)
         connectionState = CS_DISCONNECTED;
     }
 
-
-    // update main connection state in Audio Manager daemon
-    mpMainConnection->setState(connectionState);
+    if(connectionState != CS_UNKNOWN)
+    {
+        // update main connection state in Audio Manager daemon
+        mpMainConnection->setState(connectionState);
+        _setConnectionStateChangeTrigger();
+    }
     return E_OK;
 }
 
@@ -137,6 +143,15 @@ IAmActionCommand* CAmMainConnectionActionConnect::_createActionSetSourceState(CA
         }
     }
     return pAction;
+}
+
+void CAmMainConnectionActionConnect::_setConnectionStateChangeTrigger(void)
+{
+    gc_ConnectionStateChangeTrigger_s* ptrigger = new gc_ConnectionStateChangeTrigger_s;
+    ptrigger->connectionName = mpMainConnection->getName();
+    mpMainConnection->getState((int&)(ptrigger->connectionState));
+    ptrigger->status = (am_Error_e)getError();
+    CAmTriggerQueue::getInstance()->pushTop(SYSTEM_CONNECTION_STATE_CHANGE,ptrigger);
 }
 
 } /* namespace gc */

@@ -28,6 +28,8 @@ namespace am {
 namespace gc {
 class CAmMainConnectionElement;
 class CAmControlReceive;
+
+class CAmConnectionListFilter;
 class CAmClassElement : public CAmElement
 {
 
@@ -49,20 +51,20 @@ public:
     virtual ~CAmClassElement();
     bool isSourceBelongtoClass(const std::string& sourceName);
     bool isSinkBelongtoClass(const std::string& sinkName);
+
     /**
      * @brief It is API providing the interface to verify whether source and sink both belong to this class
      * @param sinkName: name of sink
      *        sourceName: name of source
-     * @return true if yes
-     *         false if no
+     * @return true if source,sink pair belongs to class and vice versa
      */
     bool isSourceSinkPairBelongtoClass(const std::string& sinkName, const std::string& sourceName);
     // factory interface
     /**
      * @brief It is API providing the interface to create the new main connection using source and sink ID
-     * @param sourceID: ID of source of connection
-     *        sinkID: ID of sink of connection
-     *        mainConnectionID: main connection ID as returned by AM
+     * @param sourceName: ID of source of connection
+     *        sinkName: ID of sink of connection
+     *        mainConnectionID: out parameter, main connection ID as returned by AM
      * @return E_NOT_POSSIBLE on internal error
      *         E_OK on success
      */
@@ -78,28 +80,17 @@ public:
     CAmMainConnectionElement* getMainConnection(
                     const std::string& sourceName, const std::string& sinkName,
                     std::vector<am_ConnectionState_e >& listConnectionStates,
-                    const gc_Order_e order);
+                    const gc_Order_e order = O_OLDEST);
     /**
      * @brief It is API providing the interface to get the main connection list using either source or sink
      * 		  or both name. User to provide NULL for not required parameter
-     * @param listMainConnections: list in which main connections will be returned
-     * 		  sourceName: source name of connection
-     *        sinkName: sink name of connection
+     * @param   fobject : the fuction object for filtering the list connections
+     *          listMainConnections: list in which main connections will be returned
      *
      * @return none
      */
-    void getListMainConnections(const std::string& sourceName, const std::string& sinkName,
-                                std::vector<am_ConnectionState_e >& listConnectionStates,
-                                std::vector<CAmMainConnectionElement* >& listMainConnections);
-    /**
-     * @brief It is API providing the interface to get the main connection instance of given connection state with given order.
-     * In case order not provided by default oldest connection is returned
-     * @param connectionState: state of connection
-     * 		  order: connection order
-     * @return pointer to main connection
-     */
-    CAmMainConnectionElement* getMainConnection(const am_ConnectionState_e connectionState,
-                                                const gc_Order_e order = O_OLDEST);
+    void getListMainConnections(std::vector<CAmMainConnectionElement* >& listMainConnections,
+                                const CAmConnectionListFilter& fobject);
     /**
      * @brief It is API providing the interface to get the list of all the connection belonging to this class
      * @param listConnections: variable in which list will be returned
@@ -159,7 +150,9 @@ private:
      */
     am_Error_e _getRoute(const std::string& mainSourceName, const std::string& mainSinkName,
                          gc_Route_s& route);
-    am_Error_e _validateRouteFromTopology(std::vector<am_Route_s>& listRoutes, gc_Route_s& topologyRoute);
+    am_Error_e _validateRouteFromTopology(std::vector<am_Route_s >& listRoutes,
+                                          gc_Route_s& topologyRoute);
+
     // list of main connections of this class
     std::vector<CAmMainConnectionElement* > mListMainConnections;
     // map to store source element pointer belonging to this class
@@ -178,15 +171,43 @@ private:
 class CAmClassFactory : public CAmFactory<gc_Class_s, CAmClassElement >
 {
 public:
-    static CAmClassElement* getClassElement(const std::string sourceName,
-                                            const std::string sinkName);
+    using CAmFactory<gc_Class_s, CAmClassElement >::getElement;
+    static CAmClassElement* getElement(const std::string sourceName, const std::string sinkName);
     static void getElementsBySource(const std::string sourceName,
                                     std::vector<CAmClassElement* >& listClasses);
     static void getElementsBySink(const std::string sinkName,
                                   std::vector<CAmClassElement* >& listClasses);
-    static CAmClassElement* getClassElement(const std::string& connectionName);
+    static CAmClassElement* getElementByConnection(const std::string& connectionName);
 
 };
+
+class CAmConnectionListFilter
+{
+public:
+    CAmConnectionListFilter();
+    virtual ~CAmConnectionListFilter()
+    {
+    }
+    void setSourceName(std::string sourceName);
+    void setSinkName(std::string sinkName);
+    void setListConnectionStates(std::vector<am_ConnectionState_e >& listConnectionStates);
+    void setListExceptSourceNames(std::vector<std::string >& listExceptSources);
+    void setListExceptSinkNames(std::vector<std::string >& listExceptSinks);
+    std::vector<CAmMainConnectionElement* >& getListMainConnection();
+    void operator()(CAmMainConnectionElement* pMainConnection);
+private:
+    bool _stringMatchFilter(std::string filterName, std::string inputName);
+    bool _connetionStateFilter(am_ConnectionState_e connectionState);
+    bool _exceptionNamesFilter(std::vector<std::string >& listString, std::string input);
+
+    std::string mSourceName;
+    std::string mSinkName;
+    std::vector<am_ConnectionState_e > mListConnectionStates;
+    std::vector<std::string > mListExceptSources;
+    std::vector<std::string > mListExceptSinks;
+    std::vector<CAmMainConnectionElement* > mListMainConnections;
+};
+
 } /* namespace gc */
 } /* namespace am */
 #endif /* GC_CLASSELEMENT_H_ */

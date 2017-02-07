@@ -45,6 +45,16 @@ CAmMainConnectionElement::~CAmMainConnectionElement()
     {
         if (NULL != (*itListRouteElements))
         {
+            CAmSourceElement* pSource = (*itListRouteElements)->getSource();
+            if(pSource != NULL)
+            {
+                pSource->setInUse(false);
+            }
+            CAmSinkElement* pSink = (*itListRouteElements)->getSink();
+            if(pSink != NULL)
+            {
+                pSink->setInUse(false);
+            }
             am_Error_e err = CAmRouteFactory::destroyElement((*itListRouteElements)->getName());
         }
     }

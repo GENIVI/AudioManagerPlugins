@@ -43,11 +43,13 @@ private:
     void _getClassList(gc_Action_s &policyAction, std::vector<CAmClassElement * >& listClasses);
     void _getActions(gc_Action_s &policyAction, std::vector<IAmActionCommand * >& listFrameworks);
     std::string _getParam(std::map<std::string, std::string > &map, const std::string &elementName);
-    void _setActionParameters(gc_Action_s &policyAction, IAmActionCommand *pFrameworkAction);
+    void _setActionParameters(std::map<std::string, std::string >& mapParams,
+                              IAmActionCommand *pAction);
     am_Error_e _getListNames(std::string name, std::vector<std::string >& listNames);
 
     std::vector<gc_Action_s > mListActions;
     IAmPolicySend* mpPolicySend;
+    std::map<std::string, std::vector<am_ConnectionState_e > > mMapConnectionStates;
     CAmControlReceive* mpControlReceive;
 };
 }

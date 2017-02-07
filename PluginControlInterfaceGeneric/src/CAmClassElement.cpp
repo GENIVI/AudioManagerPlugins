@@ -88,101 +88,6 @@ void CAmClassElement::disposeConnection(const am_mainConnectionID_t mainConnecti
 }
 
 CAmMainConnectionElement* CAmClassElement::getMainConnection(
-                const am_ConnectionState_e connectionState, const gc_Order_e order)
-{
-    std::vector<CAmMainConnectionElement* >::iterator itListMainConnections;
-    std::vector<CAmMainConnectionElement* >::reverse_iterator itListReverseMainConnections;
-    CAmMainConnectionElement* pMainConnection = NULL;
-    int32_t tempPriority = 0;
-    int32_t tempPriority1;
-    int state;
-    switch (order)
-    {
-    case O_HIGH_PRIORITY:
-        for (itListMainConnections = mListMainConnections.begin();
-                        itListMainConnections != mListMainConnections.end();
-                        itListMainConnections++)
-        {
-            (*itListMainConnections)->getPriority(tempPriority1);
-            (*itListMainConnections)->getState(state);
-            // store the first connection pointer found in queue which is in given state
-            if ((pMainConnection == NULL) && (state == connectionState))
-            {
-                LOG_FN_DEBUG("  connection found with ID:", (*itListMainConnections)->getID());
-                pMainConnection = *itListMainConnections;
-                pMainConnection->getPriority(tempPriority);
-            }
-            else if ((state == connectionState) && (tempPriority > tempPriority1)) // update connection pointer if higher priority connection is found with given state.  Lower number means higher priority.
-            {
-                pMainConnection = *itListMainConnections;
-                pMainConnection->getPriority(tempPriority);
-                LOG_FN_DEBUG("  higher priority connection found with ID:Priority:",
-                             (*itListMainConnections)->getID(), tempPriority);
-            }
-        }
-        break;
-    case O_LOW_PRIORITY:
-        for (itListMainConnections = mListMainConnections.begin();
-                        itListMainConnections != mListMainConnections.end();
-                        itListMainConnections++)
-        {
-            (*itListMainConnections)->getPriority(tempPriority1);
-            (*itListMainConnections)->getState(state);
-            // store the first connection pointer found in queue which is in given state
-            if ((pMainConnection == NULL) && (state == connectionState))
-            {
-                LOG_FN_DEBUG("  connection found with ID:", (*itListMainConnections)->getID());
-                pMainConnection = *itListMainConnections;
-                pMainConnection->getPriority(tempPriority);
-            }
-            else if ((state == connectionState) && (tempPriority < tempPriority1)) // update connection pointer if higher priority connection is found with given state. Higher number means lower priority
-            {
-                LOG_FN_DEBUG("  lower priority connection found with ID:",
-                             (*itListMainConnections)->getID());
-                pMainConnection = *itListMainConnections;
-                pMainConnection->getPriority(tempPriority);
-            }
-        }
-        break;
-    case O_NEWEST:
-        for (itListReverseMainConnections = mListMainConnections.rbegin();
-                        itListReverseMainConnections != mListMainConnections.rend();
-                        itListReverseMainConnections++)
-        {
-            (*itListReverseMainConnections)->getState(state);
-            // store the first connection pointer found in queue which is in disconnected state
-            if (state == connectionState)
-            {
-                LOG_FN_DEBUG("  connection found with ID:",
-                             (*itListReverseMainConnections)->getID());
-                pMainConnection = *itListReverseMainConnections;
-                break;
-            }
-        }
-        break;
-    case O_OLDEST:
-        LOG_FN_DEBUG("Number of connections =", mListMainConnections.size());
-        for (itListMainConnections = mListMainConnections.begin();
-                        itListMainConnections != mListMainConnections.end();
-                        itListMainConnections++)
-        {
-            (*itListMainConnections)->getState(state);
-            // store the first connection pointer found in queue which is in disconnected state
-            if (state == connectionState)
-            {
-                LOG_FN_DEBUG("  connection found with ID:", (*itListMainConnections)->getID());
-                pMainConnection = *itListMainConnections;
-                break;
-            }
-        }
-        break;
-    default:
-        break;
-    }
-    return pMainConnection;
-}
-
-CAmMainConnectionElement* CAmClassElement::getMainConnection(
                 const std::string& sourceName, const std::string& sinkName,
                 std::vector<am_ConnectionState_e >& listConnectionStates, const gc_Order_e order)
 {
@@ -190,7 +95,11 @@ CAmMainConnectionElement* CAmClassElement::getMainConnection(
     std::vector<CAmMainConnectionElement* >::iterator itListMainConnections;
     std::vector<CAmMainConnectionElement* >::reverse_iterator itListReverseMainConnections;
     CAmMainConnectionElement* pMainConnection = NULL;
-    getListMainConnections(sourceName, sinkName, listConnectionStates, listMainConnections);
+    CAmConnectionListFilter filterObject;
+    filterObject.setSourceName(sourceName);
+    filterObject.setSinkName(sinkName);
+    filterObject.setListConnectionStates(listConnectionStates);
+    getListMainConnections(listMainConnections,filterObject);
     int32_t tempPriority = 0;
     int32_t tempPriority1;
     switch (order)
@@ -259,82 +168,12 @@ CAmMainConnectionElement* CAmClassElement::getMainConnection(
     LOG_FN_EXIT();
     return pMainConnection;
 }
-void CAmClassElement::getListMainConnections(
-                const std::string& sourceName, const std::string& sinkName,
-                std::vector<am_ConnectionState_e >& listConnectionStates,
-                std::vector<CAmMainConnectionElement* >& listMainConnections)
+
+void CAmClassElement::getListMainConnections(std::vector<CAmMainConnectionElement* >& listMainConnections,
+                                             const CAmConnectionListFilter& fobject)
 {
-    std::vector<CAmMainConnectionElement* >::iterator itListMainConnections;
-    std::vector<CAmMainConnectionElement* > listTempMainConnections;
-    std::vector<am_ConnectionState_e >::iterator itListConnectionStates;
-    if ((true == sourceName.empty()) && (true == sinkName.empty())) // both source and sink name are empty. means needed all the connection of class
-    {
-        listTempMainConnections = mListMainConnections;
-    }
-    if ((true == sourceName.empty()) && (false == sinkName.empty())) // needs connection containing given sink name as source name is empty
-    {
-        //loop through connection list maintained by this class element
-        for (itListMainConnections = mListMainConnections.begin();
-                        itListMainConnections != mListMainConnections.end();
-                        itListMainConnections++)
-        {
-            // get the sink name of this connection
-            if ((*itListMainConnections)->getMainSinkName() == sinkName)
-            {
-                listTempMainConnections.push_back(*itListMainConnections);
-            }
-        }
-    }
-    else if ((true == sinkName.empty()) && (false == sourceName.empty())) // needs connection containing given source name as sink name is empty
-    {
-        //loop through connection list maintained by this class element
-        for (itListMainConnections = mListMainConnections.begin();
-                        itListMainConnections != mListMainConnections.end();
-                        itListMainConnections++)
-        {
-            // get the source name of this connection
-            if ((*itListMainConnections)->getMainSourceName() == sourceName)
-            {
-                listTempMainConnections.push_back(*itListMainConnections);
-            }
-        }
-    }
-    else // needs connection containing both source and sink name
-    {
-        //loop through connection list maintained by this class element
-        for (itListMainConnections = mListMainConnections.begin();
-                        itListMainConnections != mListMainConnections.end();
-                        itListMainConnections++)
-        {
-            // get the source name of this connection
-            if ((*itListMainConnections)->getMainSourceName() == sourceName)
-            {
-                // get the sink name of this connection
-                if ((*itListMainConnections)->getMainSinkName() == sinkName)
-                {
-                    listTempMainConnections.push_back(*itListMainConnections);
-                    break;
-                }
-            }
-        }
-    }
-    // find only those connection which are in given connection state
-    for (itListMainConnections = listTempMainConnections.begin();
-                    itListMainConnections != listTempMainConnections.end(); itListMainConnections++)
-    {
-        for (itListConnectionStates = listConnectionStates.begin();
-                        itListConnectionStates != listConnectionStates.end();
-                        itListConnectionStates++)
-        {
-            int state;
-            (*itListMainConnections)->getState(state);
-            if (state == *itListConnectionStates)
-            {
-                listMainConnections.push_back(*itListMainConnections);
-                break;
-            }
-        }
-    }
+    listMainConnections = std::for_each(mListMainConnections.begin(), mListMainConnections.end(),
+                                        fobject).getListMainConnection();
 }
 
 am_Error_e CAmClassElement::createMainConnection(const std::string& sourceName,
@@ -350,7 +189,7 @@ am_Error_e CAmClassElement::createMainConnection(const std::string& sourceName,
 
     pSourceElement = CAmSourceFactory::getElement(sourceName);
     pSinkElement = CAmSinkFactory::getElement(sinkName);
-    if((pSourceElement == NULL) || (pSinkElement == NULL))
+    if ((pSourceElement == NULL) || (pSinkElement == NULL))
     {
         LOG_FN_ERROR("Source or sink doesn't exist");
         return E_NOT_POSSIBLE;
@@ -368,25 +207,25 @@ am_Error_e CAmClassElement::createMainConnection(const std::string& sourceName,
          * 3. validate if the route from topology exist in the list retrieved from daemon
          * 4. if the route is present then use that route for connection creation.
          */
-        result =  mpControlReceive->getRoute(false, pSourceElement->getID(), pSinkElement->getID(),
-                                             listRoutes);
-        if(result != E_OK)
+        result = mpControlReceive->getRoute(false, pSourceElement->getID(), pSinkElement->getID(),
+                                            listRoutes);
+        if (result != E_OK)
         {
             LOG_FN_ERROR("getting route list from daemon failed");
         }
         else
         {
             result = _getRoute(sourceName, sinkName, route);
-            if(result != E_OK)
+            if (result != E_OK)
             {
                 LOG_FN_ERROR(getName(), "failed to get route");
             }
             else
             {
-                result = _validateRouteFromTopology(listRoutes,route);
+                result = _validateRouteFromTopology(listRoutes, route);
             }
         }
-        if(result == E_OK)
+        if (result == E_OK)
         {
             // create main connection object
             pMainConnection = CAmMainConnectionFactory::createElement(route, mpControlReceive);
@@ -402,30 +241,34 @@ am_Error_e CAmClassElement::createMainConnection(const std::string& sourceName,
     return result;
 }
 
-am_Error_e CAmClassElement::_validateRouteFromTopology(std::vector<am_Route_s>& listRoutes, gc_Route_s& topologyRoute)
+am_Error_e CAmClassElement::_validateRouteFromTopology(std::vector<am_Route_s >& listRoutes,
+                                                       gc_Route_s& topologyRoute)
 {
     am_Error_e result = E_NOT_POSSIBLE;
-    std::vector<am_Route_s>::iterator itListRoutes;
-    std::vector<am_RoutingElement_s>::iterator itdaemonRoute;
-    std::vector<am_RoutingElement_s>::reverse_iterator ittopologyRoute;
+    std::vector<am_Route_s >::iterator itListRoutes;
+    std::vector<am_RoutingElement_s >::iterator itdaemonRoute;
+    std::vector<am_RoutingElement_s >::reverse_iterator ittopologyRoute;
     LOG_FN_ENTRY(listRoutes.size());
-    for(itListRoutes = listRoutes.begin();itListRoutes!=listRoutes.end();++itListRoutes)
+    for (itListRoutes = listRoutes.begin(); itListRoutes != listRoutes.end(); ++itListRoutes)
     {
-        if(itListRoutes->route.size()!= topologyRoute.route.size())
+        if (itListRoutes->route.size() != topologyRoute.route.size())
         {
-            LOG_FN_DEBUG("routes size don't match",itListRoutes->route.size(),"=",topologyRoute.route.size());
+            LOG_FN_DEBUG("routes size don't match", itListRoutes->route.size(), "=",
+                         topologyRoute.route.size());
             continue;
         }
-        for(itdaemonRoute=itListRoutes->route.begin(),ittopologyRoute=topologyRoute.route.rbegin();
-            itdaemonRoute!=itListRoutes->route.end();++itdaemonRoute,++ittopologyRoute)
+        for (itdaemonRoute = itListRoutes->route.begin(), ittopologyRoute = topologyRoute.route.rbegin();
+                        itdaemonRoute != itListRoutes->route.end();
+                        ++itdaemonRoute, ++ittopologyRoute)
         {
             LOG_FN_INFO("checking next element");
-            if((itdaemonRoute->sinkID != ittopologyRoute->sinkID)||(itdaemonRoute->sourceID!=ittopologyRoute->sourceID))
+            if ((itdaemonRoute->sinkID != ittopologyRoute->sinkID) || (itdaemonRoute->sourceID
+                            != ittopologyRoute->sourceID))
             {
                 break;
             }
         }
-        if(itdaemonRoute == itListRoutes->route.end())
+        if (itdaemonRoute == itListRoutes->route.end())
         {
             topologyRoute.sinkID = itListRoutes->sinkID;
             topologyRoute.sourceID = itListRoutes->sourceID;
@@ -682,43 +525,60 @@ void CAmClassElement::pushMainConnectionInQueue(CAmMainConnectionElement* pMainC
 
 am_Error_e CAmClassElement::_register(void)
 {
-    am_SinkClass_s sinkClassInstance;
     am_SourceClass_s sourceClassInstance;
-    sinkClassInstance.sinkClassID = 0;
     sourceClassInstance.sourceClassID = 0;
-
-    sinkClassInstance.name = mClass.name;
     sourceClassInstance.name = mClass.name;
-    // store sink class in DB
-    if (E_OK != mpControlReceive->enterSinkClassDB(sinkClassInstance,
-                                                   sinkClassInstance.sinkClassID))
-    {
-        LOG_FN_ERROR(" Error while registering sink Class");
-        return E_DATABASE_ERROR;
-    } else {
-        setID(sinkClassInstance.sinkClassID);
-    }
-    // store source class in DB
 
-    if (E_OK != mpControlReceive->enterSourceClassDB(sourceClassInstance.sourceClassID,
-                                                     sourceClassInstance))
+    // store source class in DB
+    if (E_OK == mpControlReceive->enterSourceClassDB(sourceClassInstance.sourceClassID,
+            sourceClassInstance))
+    {
+        if (mClass.type == C_PLAYBACK)
+        {
+            setID(sourceClassInstance.sourceClassID);
+        }
+    }
+    else
     {
         LOG_FN_ERROR(" Error while registering source Class");
         return E_DATABASE_ERROR;
-    } else {
-        setID(sourceClassInstance.sourceClassID);
     }
+    am_SinkClass_s sinkClassInstance;
+    sinkClassInstance.sinkClassID = 0;
+    sinkClassInstance.name = mClass.name;
 
+    // store sink class in DB
+    if (E_OK == mpControlReceive->enterSinkClassDB(sinkClassInstance,
+            sinkClassInstance.sinkClassID))
+    {
+        if (mClass.type == C_CAPTURE)
+        {
+            setID(sinkClassInstance.sinkClassID);
+        }
+    }
+    else
+    {
+        LOG_FN_ERROR(" Error while registering source Class");
+        return E_DATABASE_ERROR;
+    }
     return E_OK;
+
 }
 
 am_Error_e CAmClassElement::_unregister(void)
 {
-    mpControlReceive->removeSourceClassDB(getID());
-    mpControlReceive->removeSinkClassDB(getID());
+	if (mClass.type == C_PLAYBACK)
+	{
+		mpControlReceive->removeSourceClassDB(getID());
+	}
+	else if (mClass.type == C_CAPTURE)
+	{
+		mpControlReceive->removeSinkClassDB(getID());
+	}
     return E_OK;
 }
-bool CAmClassElement::isSourceBelongtoClass(const std::string& sourceName)
+	
+	bool CAmClassElement::isSourceBelongtoClass(const std::string& sourceName)
 {
     std::vector<std::string >::iterator itListOwnedSourceElements;
     //check if source belong to this class element
@@ -736,8 +596,8 @@ bool CAmClassElement::isSinkBelongtoClass(const std::string& sinkName)
 
 }
 
-CAmClassElement* CAmClassFactory::getClassElement(const std::string sourceName,
-                                                  const std::string sinkName)
+CAmClassElement* CAmClassFactory::getElement(const std::string sourceName,
+                                             const std::string sinkName)
 {
     CAmClassElement* pClassElement = NULL;
     std::vector<CAmClassElement* > listElements;
@@ -786,7 +646,7 @@ void CAmClassFactory::getElementsBySink(const std::string sinkName,
     }
 }
 
-CAmClassElement* CAmClassFactory::getClassElement(const std::string& connectionName)
+CAmClassElement* CAmClassFactory::getElementByConnection(const std::string& connectionName)
 {
     CAmClassElement* pClassElement = NULL;
     std::vector<CAmClassElement* > listElements;
@@ -836,5 +696,101 @@ am_MuteState_e CAmClassElement::getMuteState() const
     }
     return muteState;
 }
+
+CAmConnectionListFilter::CAmConnectionListFilter() :
+                                mSourceName(""),
+                                mSinkName("")
+{
+    mListConnectionStates.clear();
+    mListExceptSinks.clear();
+    mListExceptSources.clear();
+}
+void CAmConnectionListFilter::setSourceName(std::string sourceName)
+{
+    mSourceName = sourceName;
+}
+
+void CAmConnectionListFilter::setSinkName(std::string sinkName)
+{
+    mSinkName = sinkName;
+}
+
+void CAmConnectionListFilter::setListConnectionStates(
+                std::vector<am_ConnectionState_e >& listConnectionStates)
+{
+    mListConnectionStates = listConnectionStates;
+}
+
+void CAmConnectionListFilter::setListExceptSourceNames(std::vector<std::string >& listExceptSources)
+{
+    mListExceptSources = listExceptSources;
+}
+
+void CAmConnectionListFilter::setListExceptSinkNames(std::vector<std::string >& listExceptSinks)
+{
+    mListExceptSinks = listExceptSinks;
+}
+
+std::vector<CAmMainConnectionElement* >& CAmConnectionListFilter::getListMainConnection()
+{
+    return mListMainConnections;
+}
+
+void CAmConnectionListFilter::operator()(CAmMainConnectionElement* pMainConnection)
+{
+    if (pMainConnection == NULL)
+    {
+        return;
+    }
+    int state;
+    pMainConnection->getState(state);
+    std::string sourceName = pMainConnection->getMainSourceName();
+    std::string sinkName = pMainConnection->getMainSinkName();
+    if (_stringMatchFilter(mSourceName, sourceName) && _stringMatchFilter(mSinkName, sinkName)
+        && _connetionStateFilter((am_ConnectionState_e)state)
+        && _exceptionNamesFilter(mListExceptSources, sourceName)
+        && _exceptionNamesFilter(mListExceptSinks, sinkName))
+    {
+        mListMainConnections.push_back(pMainConnection);
+    }
+
+}
+
+bool CAmConnectionListFilter::_stringMatchFilter(std::string filterName, std::string inputName)
+{
+    bool result = false;
+    if (filterName == "")
+    {
+        result = true;
+    }
+    else
+    {
+        if (filterName == inputName)
+        {
+            result = true;
+        }
+    }
+    return result;
+}
+bool CAmConnectionListFilter::_connetionStateFilter(am_ConnectionState_e connectionState)
+{
+    bool result = false;
+    if (std::find(mListConnectionStates.begin(), mListConnectionStates.end(), connectionState) != mListConnectionStates.end())
+    {
+        result = true;
+    }
+    return result;
+}
+bool CAmConnectionListFilter::_exceptionNamesFilter(std::vector<std::string >& listString,
+                                                  std::string input)
+{
+    bool result = true;
+    if (std::find(listString.begin(), listString.end(), input) != listString.end())
+    {
+        result = false;
+    }
+    return result;
+}
+
 } /* namespace gc */
 } /* namespace am */

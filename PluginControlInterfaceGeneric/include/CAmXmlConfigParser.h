@@ -184,6 +184,14 @@ namespace gc {
 #define FUNCTION_DOMAIN_STATE				"domainState"
 #define FUNCTION_SOURCE_STATE				"sourceState"
 #define FUNCTION_CONNECTION_FORMAT			"connectionFormat"
+#define FUNCTION_CONNECTION_ERROR           "connectionError"
+#define FUNCTION_NOTIFICATION_CONFIGURATION_STATUS  "notificationConfigurationStatus"
+#define FUNCTION_NOTIFICATION_CONFIGURATION_PARAM   "notificationConfigurationParam"
+#define FUNCTION_NOTIFICATION_DATA_VALUE            "notificationDataValue"
+#define FUNCTION_MAIN_NOTIFICATION_CONFIGURATION_TYPE    "mainNotificationConfigurationType"
+#define FUNCTION_MAIN_NOTIFICATION_CONFIGURATION_STATUS  "mainNotificationConfigurationStatus"
+#define FUNCTION_MAIN_NOTIFICATION_CONFIGURATION_PARAM   "mainNotificationConfigurationParam"
+#define FUNCTION_PEEK                       "peek"
 
 // macros supported in functions
 #define FUNCTION_MACRO_SUPPORTED_REQUESTING	"REQUESTING"
@@ -222,6 +230,7 @@ namespace gc {
 #define CONFIG_ACTION_NAME_SET_PROPERTY        "ACTION_SET_PROPERTY"
 #define CONFIG_ACTION_NAME_REGISTER            "ACTION_REGISTER"
 #define CONFIG_ACTION_NAME_DEBUG               "ACTION_DEBUG"
+#define CONFIG_ACTION_NAME_NOTIFICATION_CONFIGURATION    "ACTION_SET_NOTIFICATION_CONFIGURATION"
 
 // store the function and its parameter as given in policy
 struct gc_FunctionElement_s
@@ -230,6 +239,7 @@ struct gc_FunctionElement_s
     std::string category;
     std::string mandatoryParameter;
     std::string optionalParameter;
+    std::string optionalParameter2;
     bool isValueMacro;
 };
 
@@ -322,7 +332,7 @@ private:
      *        pCurrent: current node to be parsed
      * @return none
      */
-    void _parseSimpleType(const xmlDocPtr& pDocument, xmlNodePtr& pCurrent);
+    void _parseSimpleType(const xmlDocPtr pDocument, xmlNodePtr pCurrent);
     /**
      * @brief It is the internal function use to parse the enum initializer values as defined in schema.
      * @param pDocument: document pointer
@@ -331,7 +341,7 @@ private:
      * @return E_UNKNOWN on error
      *         E_OK on success
      */
-    am_Error_e _parseEnumInitialiser(const xmlDocPtr& pDocument, xmlNodePtr& pCurrent, int& value);
+    am_Error_e _parseEnumInitialiser(const xmlDocPtr pDocument, xmlNodePtr pCurrent, int& value);
     /**
      * @brief It is the internal function use to parse the enum as defined in schema.
      * @param pDocument: document pointer
@@ -339,7 +349,7 @@ private:
      *        Name: name of enum
      * @return none
      */
-    void _parseEnumeration(const xmlDocPtr& pDocument, xmlNodePtr& pCurrent);
+    void _parseEnumeration(const xmlDocPtr pDocument, xmlNodePtr pCurrent);
 
     /**
      * @brief It is the internal function use to parse the default and user configuration common elements

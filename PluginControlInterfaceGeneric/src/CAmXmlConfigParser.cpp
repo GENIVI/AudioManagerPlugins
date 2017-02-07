@@ -153,6 +153,16 @@ public:
                                     mTagName(tagname)
     {
     }
+    ~CAmSimpleNode()
+    {
+        std::vector<IAmXmlNodeAttribute* >::iterator itListAttributes;
+        for (itListAttributes = mListAttributes.begin(); itListAttributes != mListAttributes.end();
+                        ++itListAttributes)
+        {
+            delete *itListAttributes;
+        }
+        mListAttributes.clear();
+    }
     int parse(xmlDocPtr pDocument, xmlNodePtr* pCurrent)
     {
         int returnValue = PARSE_TAG_MISMATCH;
@@ -267,7 +277,6 @@ public:
         addAttribute(new CAmint16Attribute(SOUND_PROPERTY_TAG_MAX_VALUE, pmaxValue));
     }
 };
-
 class CAmUint16Node : public CAmSimpleNode
 {
 public:
@@ -441,6 +450,13 @@ public:
             delete *itListChilds;
         }
         mListChildNodes.clear();
+        std::vector<IAmXmlNodeAttribute* >::iterator itListAttributes;
+        for (itListAttributes = mListAttributes.begin(); itListAttributes != mListAttributes.end();
+                        ++itListAttributes)
+        {
+            delete *itListAttributes;
+        }
+        mListAttributes.clear();
     }
     virtual void expand(void)=0;
     int parse(xmlDocPtr pDocument, xmlNodePtr* pCurrent)
@@ -519,6 +535,14 @@ public:
     }
     ~CAmAllNode()
     {
+        std::map<std::string, IAmXmlNode* >::iterator itMapChildNodes;
+        for(itMapChildNodes = mMapChildNodes.begin();itMapChildNodes!=mMapChildNodes.end();++itMapChildNodes)
+        {
+            if(itMapChildNodes->second !=NULL)
+            {
+                delete itMapChildNodes->second;
+            }
+        }
     }
     int parse(xmlDocPtr pDocument, xmlNodePtr* pCurrent)
     {
@@ -1204,7 +1228,6 @@ public:
         mpGateway->sinkName = "";
         mpGateway->sourceName = "";
         mpGateway->convertionMatrix.clear();
-
     }
     void expand()
     {
@@ -1543,6 +1566,8 @@ public:
         mOrder = -1;
         mPropertyType = -1;
         mDebugType = -1;
+        mNotificationType = -1;
+        mNotificationStatus = -1;
 
     }
     void expand(void)
@@ -1587,6 +1612,11 @@ public:
                      new CAmStringNode(ACTION_PARAM_EXCEPT_SINK_NAME, &mExceptSink));
         addChildNode(ACTION_PARAM_EXCEPT_CLASS_NAME,
                      new CAmStringNode(ACTION_PARAM_EXCEPT_CLASS_NAME, &mExceptClass));
+        addChildNode(ACTION_PARAM_NOTIFICATION_CONFIGURATION_TYPE, new CAmEnumerationintNode(ACTION_PARAM_NOTIFICATION_CONFIGURATION_TYPE, &mNotificationType));
+        addChildNode(ACTION_PARAM_NOTIFICATION_CONFIGURATION_STATUS, new CAmEnumerationintNode(ACTION_PARAM_NOTIFICATION_CONFIGURATION_STATUS, &mNotificationStatus));
+        addChildNode(ACTION_PARAM_NOTIFICATION_CONFIGURATION_PARAM,
+                             new CAmStringNode(ACTION_PARAM_NOTIFICATION_CONFIGURATION_PARAM, &mNotificationParam));
+
     }
     void _copyData(void)
     {
@@ -1635,6 +1665,17 @@ public:
         copyStringInMap(ACTION_PARAM_EXCEPT_SOURCE_NAME, mExceptSource);
         copyStringInMap(ACTION_PARAM_EXCEPT_SINK_NAME, mExceptSink);
         copyStringInMap(ACTION_PARAM_EXCEPT_CLASS_NAME, mExceptClass);
+        if (mNotificationType != -1)
+        {
+            sprintf(outputData, "%d", mNotificationType);
+            copyStringInMap(ACTION_PARAM_NOTIFICATION_CONFIGURATION_TYPE, outputData);
+        }
+        if (mNotificationStatus != -1)
+        {
+            sprintf(outputData, "%d", mNotificationStatus);
+            copyStringInMap(ACTION_PARAM_NOTIFICATION_CONFIGURATION_STATUS, outputData);
+        }
+        copyStringInMap(ACTION_PARAM_NOTIFICATION_CONFIGURATION_PARAM, mNotificationParam);
     }
 private:
     void copyStringInMap(std::string keyName, std::string value)
@@ -1661,12 +1702,15 @@ private:
     std::string mExceptSink;
     std::string mExceptClass;
     std::string mConnectionState;
+    std::string mNotificationParam;
 
     int mDebugType;
     int mRampType;
     int mMuteState;
     int mOrder;
     int mPropertyType;
+    int mNotificationType;
+    int mNotificationStatus;
     std::map<std::string, std::string > *mpMapParameters;
 }
 ;
@@ -1720,6 +1764,9 @@ public:
         mValidFunctionNames.push_back(FUNCTION_IS_REGISTERED);
         mValidFunctionNames.push_back(FUNCTION_STATE);
         mValidFunctionNames.push_back(FUNCTION_CONNECTION_FORMAT);
+        mValidFunctionNames.push_back(FUNCTION_PEEK);
+        mValidFunctionNames.push_back(FUNCTION_CONNECTION_ERROR);
+
         mValidCategory.push_back(CATEGORY_SINK);
         mValidCategory.push_back(CATEGORY_SOURCE);
         mValidCategory.push_back(CATEGORY_CLASS);
@@ -1791,7 +1838,8 @@ private:
         }
         if ((false == functionInstance.optionalParameter.empty()) && (FUNCTION_MACRO_SUPPORTED_ALL
                         != functionInstance.optionalParameter)
-            && (FUNCTION_MACRO_SUPPORTED_OTHERS != functionInstance.optionalParameter))
+            && (FUNCTION_MACRO_SUPPORTED_OTHERS != functionInstance.optionalParameter)
+            && (FUNCTION_MACRO_SUPPORTED_REQUESTING != functionInstance.optionalParameter))
         {
             // As it is map it can store only one entry for given pKey value
             if (mValidFunctionNames.end() == std::find(mValidFunctionNames.begin(),
@@ -1884,6 +1932,7 @@ private:
         std::string category;
         std::string mandatoryParameter;
         std::string optionalParameter;
+        std::string optionalParameter2;
         bool isValueMacro = false;
 
         //find function name
@@ -1892,17 +1941,19 @@ private:
         if (mValidFunctionNames.end() == std::find(mValidFunctionNames.begin(),
                                                    mValidFunctionNames.end(), functionName))
         {
+            LOG_FN_ERROR("Function name is not supported");
             return E_UNKNOWN;
         }
         startPosition++;
 
         //find category
         category = _findElement(startPosition, ',', inputString, ')');
-        //validate category name
-        if (mValidCategory.end() == std::find(mValidCategory.begin(), mValidCategory.end(),
-                                              category))
+        if(inputString[startPosition] == ')') // end of condition part
         {
-            return E_UNKNOWN;
+            if(true == category.empty())
+            {
+                category = CATEGORY_USER;
+            }
         }
         startPosition++;
 
@@ -1953,15 +2004,39 @@ private:
         if (inputString[startPosition] == ',')
         {
             startPosition++;
-            optionalParameter = _findElement(startPosition, ')', inputString, '"');
+            optionalParameter = _findElement(startPosition, ')', inputString, ',');
+        }
+		else
+        {
+            // this is needed for main notification configuration param/status function because 3 parameter can be left empty.
+            //In that case REQUESTING type need to be considered as configuration type
+            if((FUNCTION_MAIN_NOTIFICATION_CONFIGURATION_PARAM == functionName)
+              || (FUNCTION_MAIN_NOTIFICATION_CONFIGURATION_STATUS == functionName))
+            {
+                optionalParameter = FUNCTION_MACRO_SUPPORTED_REQUESTING;
+            }
+        }
+        //find the 2nd optional value
+        if (inputString[startPosition] == ',')
+        {
+            startPosition++;
+            optionalParameter2 = _findElement(startPosition, ')', inputString, ',');
+        }
+        //validate category name
+        if (mValidCategory.end() == std::find(mValidCategory.begin(), mValidCategory.end(),
+                                              category))
+        {
+            return E_UNKNOWN;
         }
         startPosition++;
+
         if (true == isLHS)
         {
             conditionInstance.leftObject.functionName = functionName;
             conditionInstance.leftObject.category = category;
             conditionInstance.leftObject.mandatoryParameter = mandatoryParameter;
             conditionInstance.leftObject.optionalParameter = optionalParameter;
+            conditionInstance.leftObject.optionalParameter2 = optionalParameter2;
             conditionInstance.leftObject.isValueMacro = isValueMacro;
         }
         else
@@ -1970,6 +2045,7 @@ private:
             conditionInstance.rightObject.functionObject.category = category;
             conditionInstance.rightObject.functionObject.mandatoryParameter = mandatoryParameter;
             conditionInstance.rightObject.functionObject.optionalParameter = optionalParameter;
+            conditionInstance.rightObject.functionObject.optionalParameter2 = optionalParameter2;
             conditionInstance.rightObject.functionObject.isValueMacro = isValueMacro;
         }
         return E_OK;
@@ -2321,7 +2397,6 @@ am_Error_e CAmXmlConfigParser::_parseXSDFile(const std::string& XSDFilename)
     if (pDocument == NULL)
     {
         LOG_FN_ERROR(" Document not parsed successfully. ");
-        xmlFreeDoc(pDocument);
         return E_UNKNOWN;
     }
     pCurrent = xmlDocGetRootElement(pDocument);
@@ -2342,7 +2417,7 @@ am_Error_e CAmXmlConfigParser::_parseXSDFile(const std::string& XSDFilename)
     return E_OK;
 }
 
-void CAmXmlConfigParser::_parseSimpleType(const xmlDocPtr& pDocument, xmlNodePtr& pCurrent)
+void CAmXmlConfigParser::_parseSimpleType(const xmlDocPtr pDocument, xmlNodePtr pCurrent)
 {
     xmlNodePtr pChildNode;
     while (pCurrent != NULL)
@@ -2356,8 +2431,8 @@ void CAmXmlConfigParser::_parseSimpleType(const xmlDocPtr& pDocument, xmlNodePtr
     }
 }
 
-am_Error_e CAmXmlConfigParser::_parseEnumInitialiser(const xmlDocPtr& pDocument,
-                                                     xmlNodePtr& pCurrent, int& value)
+am_Error_e CAmXmlConfigParser::_parseEnumInitialiser(const xmlDocPtr pDocument,
+                                                     xmlNodePtr pCurrent, int& value)
 {
     am_Error_e result = E_UNKNOWN;
     xmlChar * pKey;
@@ -2389,7 +2464,7 @@ am_Error_e CAmXmlConfigParser::_parseEnumInitialiser(const xmlDocPtr& pDocument,
     return result;
 }
 
-void CAmXmlConfigParser::_parseEnumeration(const xmlDocPtr& pDocument, xmlNodePtr& pCurrent)
+void CAmXmlConfigParser::_parseEnumeration(const xmlDocPtr pDocument, xmlNodePtr pCurrent)
 {
     xmlChar * pKey;
     xmlNodePtr pChild;
@@ -2696,6 +2771,7 @@ void CAmXmlConfigParser::printListPolicies(gc_Configuration_s* pConfiguration)
         "SYSTEM_DEREGISTER_SOURCE",
         "SYSTEM_DEREGISTER_GATEWAY",
         "SYSTEM_DOMAIN_REGISTRATION_COMPLETE",
+        "SYSTEM_CONNECTION_STATE_CHANGE",
         "USER_ALL_TRIGGER",
         "TRIGGER_MAX"
     };

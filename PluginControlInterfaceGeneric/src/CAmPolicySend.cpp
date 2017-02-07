@@ -302,6 +302,69 @@ am_Error_e CAmPolicySend::hookSetSinkMuteState(const std::string& sinkName,
     return mpPolicyEngine->processTrigger(triggerParams);
 }
 
+am_Error_e CAmPolicySend::hookSetMainSinkNotificationConfiguration(
+                const std::string& sinkName,
+                const am_NotificationConfiguration_s& notificationConfiguration)
+{
+    gc_triggerParams_s triggerParams;
+    // store the triggerParams in member variable
+    triggerParams.sinkName = sinkName;
+    triggerParams.notificatonConfiguration = notificationConfiguration;
+    //get the action based on the trigger
+    triggerParams.triggerType = USER_SET_SINK_MAIN_NOTIFICATION_CONFIGURATION;
+    return mpPolicyEngine->processTrigger(triggerParams);
+}
+
+am_Error_e CAmPolicySend::hookConnectionStateChange(const std::string& connectionName,
+                                               const am_ConnectionState_e& connectionState,
+                                               am_Error_e& status)
+{
+    gc_triggerParams_s triggerParams;
+    // store the triggerParams in member variable
+    triggerParams.connectionName = connectionName;
+    triggerParams.connectionState = connectionState;
+    triggerParams.status = status;
+    //get the action based on the trigger
+    triggerParams.triggerType = SYSTEM_CONNECTION_STATE_CHANGE;
+    return mpPolicyEngine->processTrigger(triggerParams);
+}
+
+am_Error_e CAmPolicySend::hookSetMainSourceNotificationConfiguration(
+                    const std::string& sourceName,
+                    const am_NotificationConfiguration_s& notificationConfiguration)
+{
+    gc_triggerParams_s triggerParams;
+    // store the triggerParams in member variable
+    triggerParams.sourceName = sourceName;
+    triggerParams.notificatonConfiguration = notificationConfiguration;
+    //get the action based on the trigger
+    triggerParams.triggerType = USER_SET_SOURCE_MAIN_NOTIFICATION_CONFIGURATION;
+    return mpPolicyEngine->processTrigger(triggerParams);
+}
+
+am_Error_e CAmPolicySend::hookSinkNotificationDataChanged(const std::string& sinkName,
+                                               const am_NotificationPayload_s& payload)
+{
+    gc_triggerParams_s triggerParams;
+    // store the triggerParams in member variable
+    triggerParams.sinkName = sinkName;
+    triggerParams.notificatonPayload = payload;
+    //get the action based on the trigger
+    triggerParams.triggerType = SYSTEM_SINK_NOTIFICATION_DATA_CHANGED;
+    return mpPolicyEngine->processTrigger(triggerParams);
+}
+
+am_Error_e CAmPolicySend::hookSourceNotificationDataChanged(const std::string& sourceName,
+                                                 const am_NotificationPayload_s& payload)
+{
+    gc_triggerParams_s triggerParams;
+    // store the triggerParams in member variable
+    triggerParams.sourceName = sourceName;
+    triggerParams.notificatonPayload = payload;
+    //get the action based on the trigger
+    triggerParams.triggerType = SYSTEM_SOURCE_NOTIFICATION_DATA_CHANGED;
+    return mpPolicyEngine->processTrigger(triggerParams);
+}
 /*
  *  TBD : Check if such a copy is needed. Basically here we are over writing  the configuration
  *  data with the data received from the routing side during the registration, but the issue

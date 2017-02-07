@@ -59,7 +59,8 @@ int CAmClassActionSetVolume::_execute(void)
     std::vector < std::pair<CAmElement*, gc_LimitVolume_s > > listLimitElement;
     am_volume_t volume;
     am_mainVolume_t mainVolume;
-    pMainConnection = mpClassElement->getMainConnection(CS_CONNECTED);
+    std::vector < am_ConnectionState_e > listConnectionStates {CS_CONNECTED};
+    pMainConnection = mpClassElement->getMainConnection("", "", listConnectionStates);
     std::vector<IAmActionCommand* > listSetVolumeActions;
     std::vector<IAmActionCommand* >::iterator itListSetVolumeActions;
     IAmActionCommand* pRequestElementAction = NULL;
@@ -130,11 +131,9 @@ am_Error_e CAmClassActionSetVolume::_getParameters()
         LOG_FN_ERROR("  element name not valid", elementName);
         return E_NOT_POSSIBLE;
     }
-    if((false == mVolumeParam.getParam(volume)) &&
-       (false == mVolumeStepParam.getParam(volume)) &&
-       (false == mMainVolumeParam.getParam(mainVolume))&&
-       (false == mMainVolumeStepParam.getParam(mainVolume))
-      )
+    if ((false == mVolumeParam.getParam(volume)) && (false == mVolumeStepParam.getParam(volume))
+        && (false == mMainVolumeParam.getParam(mainVolume))
+        && (false == mMainVolumeStepParam.getParam(mainVolume)))
     {
         LOG_FN_ERROR("  volume not set");
         return E_NOT_POSSIBLE;
@@ -161,6 +160,8 @@ int CAmClassActionSetVolume::_CreateSetVolumeActionList(
 {
     am_mainVolume_t mainVolume;
     am_volume_t volume;
+    am_time_t rampTime;
+    am_CustomRampType_t rampType;
     IAmActionCommand * pRequestedElement = NULL;
     std::vector<std::pair<CAmElement*, gc_LimitVolume_s > >::iterator itListLimitElement;
     for (itListLimitElement = listLimitElement.begin();
@@ -221,7 +222,7 @@ int CAmClassActionSetVolume::_CreateSetVolumeActionList(
             return E_NOT_POSSIBLE;
         }
     }
-    if(mpElement->getType()==ET_SINK)
+    if (mpElement->getType() == ET_SINK)
     {
         if (true == mMainVolumeParam.getParam(mainVolume))
         {
@@ -229,7 +230,7 @@ int CAmClassActionSetVolume::_CreateSetVolumeActionList(
         }
         if (true == mMainVolumeStepParam.getParam(mainVolume))
         {
-            am_mainVolume_t actualMainVol=0;
+            am_mainVolume_t actualMainVol = 0;
             mpElement->getMainVolume(actualMainVol);
             actualMainVol += mainVolume;
             mMainVolumeParam.setParam(actualMainVol);
@@ -242,11 +243,21 @@ int CAmClassActionSetVolume::_CreateSetVolumeActionList(
     }
     if (true == mVolumeStepParam.getParam(volume))
     {
-        am_volume_t actualVolume=0;
+        am_volume_t actualVolume = 0;
         mpElement->getVolume(actualVolume);
         actualVolume += volume;
         mVolumeParam.setParam(actualVolume);
         pRequestedElement->setParam(ACTION_PARAM_VOLUME, &mVolumeParam);
+    }
+    if (true == mRampTimeParam.getParam(rampTime))
+    {
+        mRampTimeParam.setParam(rampTime);
+        pRequestedElement->setParam(ACTION_PARAM_RAMP_TIME, &mRampTimeParam);
+    }
+    if (true == mRampTypeParam.getParam(rampType))
+    {
+        mRampTypeParam.setParam(rampType);
+        pRequestedElement->setParam(ACTION_PARAM_RAMP_TYPE, &mRampTypeParam);
     }
 
     return E_OK;

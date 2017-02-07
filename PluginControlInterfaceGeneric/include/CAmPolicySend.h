@@ -212,6 +212,49 @@ public:
     am_Error_e hookSetSystemProperty(const am_SystemProperty_s& systemProperty);
     /**
      * @brief It is the API providing the interface to framework to pass the hook of
+     * sink notification configuration from application to policy engine.
+     * @param sinkName: name of Sink
+     * @param notificationConfiguration: Notification configuration
+     * @return E_NOT_POSSIBLE on internal error
+     *         E_OK on success
+     */
+    am_Error_e hookSetMainSinkNotificationConfiguration(
+                    const std::string& sinkName,
+                    const am_NotificationConfiguration_s& notificationConfiguration);
+    /**
+     * @brief It is the API providing the interface to framework to pass the hook of
+     * source notification configuration from application to policy engine.
+     * @param sourceName: name of Source
+     * @param notificationConfiguration: Notification configuration
+     * @return E_NOT_POSSIBLE on internal error
+     *         E_OK on success
+     */
+    am_Error_e hookSetMainSourceNotificationConfiguration(
+                    const std::string& sourceName,
+                    const am_NotificationConfiguration_s& notificationConfiguration);
+    /**
+     * @brief It is the API providing the interface to framework to pass the hook of
+     * sink notification data change from application to policy engine.
+     * @param sinkName: name of Sink
+     * @param payload: Notification Data
+     * @return E_NOT_POSSIBLE on internal error
+     *         E_OK on success
+     */
+    am_Error_e hookSinkNotificationDataChanged(const std::string& sinkName,
+                                               const am_NotificationPayload_s& payload);
+    /**
+     * @brief It is the API providing the interface to framework to pass the hook of
+     * source notification data change from application to policy engine.
+     * @param sourceName: name of Sink
+     * @param payload: Notification Data
+     * @return E_NOT_POSSIBLE on internal error
+     *         E_OK on success
+     */
+    am_Error_e hookSourceNotificationDataChanged(const std::string& sourceName,
+                                                 const am_NotificationPayload_s& payload);
+
+    /**
+     * @brief It is the API providing the interface to framework to pass the hook of
      * change volume request from application to policy engine.
      * @param sinkName: name of sink
      *        mainVolume: new volume requested
@@ -228,6 +271,9 @@ public:
      *         E_OK on success
      */
     am_Error_e hookSetSinkMuteState(const std::string& sinkName, const am_MuteState_e muteState);
+    am_Error_e hookConnectionStateChange(const std::string& connectionName,
+                                                   const am_ConnectionState_e& connectionState,
+                                                   am_Error_e& status);
     /**
      * @brief This API returns the list of configuration data of a sink by list of names.
      * @param listNames The list of the sink names

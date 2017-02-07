@@ -48,21 +48,10 @@ int CAmSourceActionSetVolume::_execute(void)
 {
     am_volume_t volume(0);
     gc_LimitVolume_s limitVolume;
-    bool volume_param_set = false;
-    bool limit_param_set = false;
 
-    if (mLimitTypeParam.getParam(limitVolume.limitType) ||
-        mLimitVolumeParam.getParam(limitVolume.limitVolume))
-    {
-      limit_param_set = true;
-    }
-
-    if (mVolumeParam.getParam(volume))
-    {
-      volume_param_set = true;
-    }
-
-    if (!limit_param_set && !volume_param_set)
+    if ((false == mLimitTypeParam.getParam(limitVolume.limitType)) && (false
+                    == mLimitVolumeParam.getParam(limitVolume.limitVolume))
+        && (false == mVolumeParam.getParam(volume)))
     {
         LOG_FN_ERROR("parameters not set properly");
         return E_NOT_POSSIBLE;
@@ -70,11 +59,14 @@ int CAmSourceActionSetVolume::_execute(void)
     // remember old volume
     mpSource->getVolume(mOldVolume);
     mpSource->getLimitVolume(mOldLimitVolume);
-
-    if (volume_param_set)
-      mpSource->setVolume(volume);
-    if (limit_param_set)
-      mpSource->setLimitVolume(limitVolume);
+    if(true == mVolumeParam.getParam(volume))
+    {
+        mpSource->setVolume(volume);
+    }
+    if((true == mLimitVolumeParam.getParam(limitVolume.limitVolume))&&(true==mLimitTypeParam.getParam(limitVolume.limitType)))
+    {
+        mpSource->setLimitVolume(limitVolume);
+    }
     return _setRoutingSideVolume();
 }
 
