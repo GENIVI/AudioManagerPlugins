@@ -20,6 +20,10 @@ cmake_minimum_required(VERSION 2.8.8)
 include(CMakeDependentOption)
 find_package(PkgConfig)
 
+IF ("${CONFIG_PREFIX}" STREQUAL "")
+    SET(CONFIG_PREFIX ${CMAKE_INSTALL_PREFIX}/etc)
+ENDIF ("${CONFIG_PREFIX}" STREQUAL "")
+SET(PLUGINS_CONFIG_PATH ${CONFIG_PREFIX}/audiomanager)
 
 OPTION (WITH_COMMAND_INTERFACE_CAPI
         "build with commandinterface common-api plugin" OFF )

@@ -10,9 +10,9 @@ in this file.<BR>
 and the policies.
 
     After preparing the two file, these files needs to be copied at specific locations. The generic 
-controller expects the custmotypes.xsd to be present at the /etc/controllerconf/ directory. The XML 
+controller expects the custmotypes.xsd to be present at the etc/audiomanager/controller/ directory. The XML
 configuration file can be copied at any location, the controller by default tries to load the 
-configuration present at /etc/controllerconf/configuration.xml. However this can be overridden by 
+configuration present at /etc/audiomanager/controller/generic.xml. However this can be overridden by
 defining an environment variable GENERIC_CONTROLLER_CONFIGURATION which should point to the 
 location of the configuration file.
 
