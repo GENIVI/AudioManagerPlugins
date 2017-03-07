@@ -64,8 +64,12 @@ These plug-ins are needed in case WITH_TEST is activated by AudioManagerDaemon
 <tt>-- WITH_TEST_CONTROLLER		= OFF</tt>
 
 **_Generic Controller_**  
-The Controller has one additional build dependency to libxml2.  
+The Controller has a build dependency to libxml2.  
 <tt>-- WITH_GENERIC_CONTROLLER		= OFF</tt>  
+
+**_Routing Adapter for ALSA_**  
+The Routing Adapter has a build dependency to libxml2.  
+<tt>-- WITH_ROUTING_ADAPTER_ALSA	= OFF</tt>  
 
 ## Build targets
 just install the plug-ins (only available if plug-ins are compiled)

@@ -26,54 +26,58 @@ ENDIF ("${CONFIG_PREFIX}" STREQUAL "")
 SET(PLUGINS_CONFIG_PATH ${CONFIG_PREFIX}/audiomanager)
 
 OPTION (WITH_COMMAND_INTERFACE_CAPI
-        "build with commandinterface common-api plugin" OFF )
+        "build with commandinterface common-api plugin" OFF)
 OPTION (WITH_COMMAND_INTERFACE_DBUS
-        "build with commandinterface dbus plugin" OFF )
+        "build with commandinterface dbus plugin" OFF)
 OPTION (WITH_ROUTING_INTERFACE_ASYNC
         "build with routing interface async plugin" OFF)
-OPTION(WITH_ROUTING_INTERFACE_CAPI
-       "build with routing iterface common-api plugin" OFF)   
-OPTION(WITH_ROUTING_INTERFACE_DBUS
-       "build with routing iterface dbus plugin" OFF)  
-OPTION (WITH_TEST_CONTROLLER 
-        "Build with the test controller" OFF)  
-OPTION (WITH_GENERIC_CONTROLLER 
-        "Build with the generic controller" OFF)     
+OPTION (WITH_ROUTING_INTERFACE_CAPI
+        "build with routing interface common-api plugin" OFF)
+OPTION (WITH_ROUTING_INTERFACE_DBUS
+        "build with routing interface dbus plugin" OFF)
+OPTION (WITH_TEST_CONTROLLER
+        "Build with the test controller" OFF)
+OPTION (WITH_GENERIC_CONTROLLER
+        "Build with the generic controller" OFF)
+OPTION (WITH_ROUTING_ADAPTER_ALSA
+        "Build with the routing adapter ALSA" OFF)
 
-if (NOT WITH_TEST_CONTROLLER AND NOT WITH_ROUTING_INTERFACE_DBUS AND NOT WITH_GENERIC_CONTROLLER AND NOT WITH_ROUTING_INTERFACE_CAPI AND NOT WITH_ROUTING_INTERFACE_ASYNC AND NOT WITH_COMMAND_INTERFACE_DBUS AND NOT WITH_COMMAND_INTERFACE_CAPI)
+if (NOT WITH_TEST_CONTROLLER AND NOT WITH_ROUTING_INTERFACE_DBUS AND NOT WITH_GENERIC_CONTROLLER AND NOT WITH_ROUTING_INTERFACE_CAPI AND NOT WITH_ROUTING_INTERFACE_ASYNC AND NOT WITH_COMMAND_INTERFACE_DBUS AND NOT WITH_COMMAND_INTERFACE_CAPI AND NOT WITH_ROUTING_ADAPTER_ALSA)
 	message (FATAL_ERROR "No option selected. please choose the plugins you want")
-endif (NOT WITH_TEST_CONTROLLER AND NOT WITH_ROUTING_INTERFACE_DBUS AND NOT WITH_GENERIC_CONTROLLER AND NOT WITH_ROUTING_INTERFACE_CAPI AND NOT WITH_ROUTING_INTERFACE_ASYNC AND NOT WITH_COMMAND_INTERFACE_DBUS AND NOT WITH_COMMAND_INTERFACE_CAPI)
+endif (NOT WITH_TEST_CONTROLLER AND NOT WITH_ROUTING_INTERFACE_DBUS AND NOT WITH_GENERIC_CONTROLLER AND NOT WITH_ROUTING_INTERFACE_CAPI AND NOT WITH_ROUTING_INTERFACE_ASYNC AND NOT WITH_COMMAND_INTERFACE_DBUS AND NOT WITH_COMMAND_INTERFACE_CAPI AND NOT WITH_ROUTING_ADAPTER_ALSA)
 
 IF (WITH_GENERIC_CONTROLLER)
 	add_subdirectory(PluginControlInterfaceGeneric)
 ENDIF(WITH_GENERIC_CONTROLLER)
 
 IF (WITH_TEST_CONTROLLER)
-	add_subdirectory(PluginControlInterface)
+    add_subdirectory(PluginControlInterface)
 ENDIF (WITH_TEST_CONTROLLER) 
 
 IF (WITH_COMMAND_INTERFACE_CAPI)
-	add_subdirectory(PluginCommandInterfaceCAPI)
+    add_subdirectory(PluginCommandInterfaceCAPI)
 ENDIF(WITH_COMMAND_INTERFACE_CAPI)
  
 IF (WITH_COMMAND_INTERFACE_DBUS)
-	add_subdirectory(PluginCommandInterfaceDbus)
+    add_subdirectory(PluginCommandInterfaceDbus)
 ENDIF (WITH_COMMAND_INTERFACE_DBUS)
-        
 
 IF (WITH_ROUTING_INTERFACE_ASYNC)
-	add_subdirectory(PluginRoutingInterfaceAsync)
-ENDIF (WITH_ROUTING_INTERFACE_ASYNC)  
+    add_subdirectory(PluginRoutingInterfaceAsync)
+ENDIF (WITH_ROUTING_INTERFACE_ASYNC)
 
-IF(WITH_ROUTING_INTERFACE_CAPI)
-		add_subdirectory(PluginRoutingInterfaceCAPI)
+IF (WITH_ROUTING_INTERFACE_CAPI)
+    add_subdirectory(PluginRoutingInterfaceCAPI)
 ENDIF(WITH_ROUTING_INTERFACE_CAPI)
 
-IF(WITH_ROUTING_INTERFACE_DBUS) 
-		add_subdirectory(PluginRoutingInterfaceDbus)
-ENDIF(WITH_ROUTING_INTERFACE_DBUS) 
-             
-        
+IF (WITH_ROUTING_INTERFACE_DBUS)
+    add_subdirectory(PluginRoutingInterfaceDbus)
+ENDIF(WITH_ROUTING_INTERFACE_DBUS)
+
+IF (WITH_ROUTING_ADAPTER_ALSA)
+    add_subdirectory(PluginRoutingAdapterALSA)
+ENDIF(WITH_ROUTING_ADAPTER_ALSA)
+
 add_custom_target(plugins-install
   COMMAND
      "${CMAKE_COMMAND}" -DCMAKE_INSTALL_COMPONENT=plugin
