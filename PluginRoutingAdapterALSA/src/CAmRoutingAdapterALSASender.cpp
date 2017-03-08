@@ -81,8 +81,6 @@ CAmRoutingAdapterALSASender::~CAmRoutingAdapterALSASender()
     mDataBase.getProxyLists(proxies);
     for (IAmRoutingAdapterALSAProxy * proxy : proxies)
     {
-        proxy->stopStreaming();
-        proxy->closeStreaming();
         delete proxy;
     }
 
@@ -492,14 +490,7 @@ am_Error_e CAmRoutingAdapterALSASender::asyncDisconnect(const am_Handle_s handle
         return E_OK;
     }
 
-    // stop thread in case some is running
-    IAmRoutingAdapterALSAProxy *proxy = mDataBase.getProxyOfConnection(connectionID);
-    if (proxy)
-    {
-        proxy->stopStreaming();
-        proxy->closeStreaming();
-        delete proxy;
-    }
+    delete mDataBase.getProxyOfConnection(connectionID);
     mDataBase.deregisterConnection(connectionID);
 
     logAmRaInfo("CRaALSASender::asyncDisconnect Connection", connectionID, "disconnected");

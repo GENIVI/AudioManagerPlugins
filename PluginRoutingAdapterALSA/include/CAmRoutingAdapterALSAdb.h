@@ -377,7 +377,7 @@ private:
     public:
         class IAmRoutingAdapterALSAProxy * proxy;
     public:
-        ra_route_s() {};
+        ra_route_s() : proxy(NULL) {};
         ra_route_s(const am_RoutingElement_s & e, class IAmRoutingAdapterALSAProxy * p)
             : am_RoutingElement_s(e), proxy(p) {};
     };
