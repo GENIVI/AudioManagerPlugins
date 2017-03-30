@@ -281,7 +281,7 @@ public:
     std::vector<ra_sinkInfo_s> lSinkInfo;
     std::vector<ra_gatewayInfo_s> lGatewayInfo;
     std::vector<ra_proxyInfo_s> lProxyInfo;
-    std::string lAudioProxyInfo;
+    std::string pxyNam;
 
 public:
     ra_domainInfo_s() {};
@@ -346,8 +346,10 @@ public:
     ra_domainInfo_s * findDomainByConnection(const am_connectionID_t id);
     ra_domainInfo_s * findDomainBySource(const am_sourceID_t id);
     ra_domainInfo_s * findDomainBySink(const am_sinkID_t id);
-    ra_proxyInfo_s  * findProxyInDomain(const am_domainID_t domainId,
+    ra_proxyInfo_s  * findProxyInDomain(ra_domainInfo_s *pDomain,
                                         const am_sourceID_t sourceID, const am_sinkID_t sinkID = 0);
+    ra_proxyInfo_s  * findProxyInDomain(const am_domainID_t domainID,
+                                        const std::string & sourceName, const std::string & sinkName = "");
     am_connectionID_t findConnectionFromSource(const am_domainID_t domainId,
                                                     const am_sourceID_t sourceID);
 

@@ -5,8 +5,6 @@
  *
  *  \author: Jens Lorenz, jlorenz@de.adit-jv.com 2013-2016
  *           Mattia Guerra, mguerra@de.adit-jv.com 2016
- *           Jayanth MC, Jayanth.mc@in.bosch.com 2013-2014
- *
  *
  *  \copyright The MIT License (MIT)
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -45,14 +43,25 @@ namespace am
 class IAmRoutingAdapterALSAProxy
 {
 public:
-    IAmRoutingAdapterALSAProxy(){}
-    virtual ~IAmRoutingAdapterALSAProxy(){}
+    IAmRoutingAdapterALSAProxy() : libHandle(NULL) {}
+    virtual ~IAmRoutingAdapterALSAProxy() {}
 
     virtual am_timeSync_t getDelay() const = 0;
     virtual am_Error_e openStreaming() = 0;
     virtual am_Error_e startStreaming() = 0;
     virtual am_Error_e stopStreaming() = 0;
     virtual am_Error_e closeStreaming() = 0;
+
+    void *getLibHandle()
+    {
+        return libHandle;
+    }
+    void setLibHandle(void *ptr)
+    {
+        libHandle = ptr;
+    }
+private:
+    void *libHandle;
 };
 
 } /* namespace am */

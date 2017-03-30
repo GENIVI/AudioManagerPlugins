@@ -81,7 +81,17 @@ CAmRoutingAdapterALSASender::~CAmRoutingAdapterALSASender()
     mDataBase.getProxyLists(proxies);
     for (IAmRoutingAdapterALSAProxy * proxy : proxies)
     {
+        if (!proxy)
+        {
+            continue;
+        }
+
+        void *dlhandle = proxy->getLibHandle();
         delete proxy;
+        if (dlhandle)
+        {
+            dlclose(dlhandle);
+        }
     }
 
     /* stop all asynchronous operating volumes */
@@ -156,8 +166,11 @@ bool CAmRoutingAdapterALSASender::registerSource(ra_sourceInfo_s & info, am_doma
     bool ret = true;
     am_Source_s & source = info.amInfo;
 
-    /* Let's declare the sourceState as SS_OFF when registering*/
-    source.sourceState = SS_OFF;
+    ra_proxyInfo_s * proxy = mDataBase.findProxyInDomain(domainID, source.name);
+    if (proxy && source.sourceState == SS_UNKNNOWN)
+    {
+        source.sourceState = SS_OFF;
+    }
 
     if (source.name.length() != 0)
     {
@@ -380,7 +393,7 @@ am_Error_e CAmRoutingAdapterALSASender::asyncConnect(const am_Handle_s handle, c
     /* Check if we can take the job and find the domain */
     ra_sourceInfo_s source(sourceID);
     ra_sinkInfo_s sink(sinkID);
-    const ra_domainInfo_s * pDomain = mDataBase.findDomain(source, sink);
+    ra_domainInfo_s * pDomain = mDataBase.findDomain(source, sink);
     if (pDomain == NULL)
     {
         logAmRaError("CRaALSASender::connect No domain found with same source and sink!");
@@ -402,7 +415,7 @@ am_Error_e CAmRoutingAdapterALSASender::asyncConnect(const am_Handle_s handle, c
 
     if ((source.devTyp == DPS_REAL) && (sink.devTyp == DPS_REAL))
     {
-        ra_proxyInfo_s * pProxy = mDataBase.findProxyInDomain(pDomain->domain.domainID, sourceID, sinkID);
+        ra_proxyInfo_s * pProxy = mDataBase.findProxyInDomain(pDomain, sourceID, sinkID);
         if (pProxy != NULL)
         {
             /* Fetch format entries of table */
@@ -427,17 +440,18 @@ am_Error_e CAmRoutingAdapterALSASender::asyncConnect(const am_Handle_s handle, c
 
             try
             {
-                if (pDomain->lAudioProxyInfo.empty())
+                if (pProxy->pxyNam.empty())
                 {
                     logAmRaInfo("ProxyDefault creation");
                     proxy = new CAmRoutingAdapterALSAProxyDefault(pProxy->alsa);
                 }
                 else
                 {
-                    std::string routingAdapterProxyAbsPath = mCommandLineArg.getValue() + "/lib" + pDomain->lAudioProxyInfo + ".so";
+                    std::string routingAdapterProxyAbsPath = mCommandLineArg.getValue() + "/lib" + pProxy->pxyNam + ".so";
                     IAmRoutingAdapterALSAProxy *(*createFunc)(const ra_Proxy_s &);
                     createFunc = getCreateFunction<IAmRoutingAdapterALSAProxy*(const ra_Proxy_s &)>(routingAdapterProxyAbsPath.c_str(), tempLibHandle);
                     proxy = createFunc(pProxy->alsa);
+                    proxy->setLibHandle(tempLibHandle);
                 }
             }
             catch (int err)
@@ -490,7 +504,16 @@ am_Error_e CAmRoutingAdapterALSASender::asyncDisconnect(const am_Handle_s handle
         return E_OK;
     }
 
-    delete mDataBase.getProxyOfConnection(connectionID);
+    IAmRoutingAdapterALSAProxy * pProxy = mDataBase.getProxyOfConnection(connectionID);
+    if (pProxy)
+    {
+        void *dlhandle = pProxy->getLibHandle();
+        delete pProxy;
+        if (dlhandle)
+        {
+            dlclose(dlhandle);
+        }
+    }
     mDataBase.deregisterConnection(connectionID);
 
     logAmRaInfo("CRaALSASender::asyncDisconnect Connection", connectionID, "disconnected");
@@ -648,51 +671,53 @@ am_Error_e CAmRoutingAdapterALSASender::asyncSetSourceState(const am_Handle_s ha
     assert(handle.handleType == H_SETSOURCESTATE);
     assert(sourceID);
 
-    (void)state;
-
     /* check if we can take the job */
     ra_domainInfo_s * pDomain = mDataBase.findDomainBySource(sourceID);
-    if (pDomain != NULL)
+    if (pDomain == NULL)
     {
-        vector<ra_sourceInfo_s>::iterator itSrc =
-                std::find_if(pDomain->lSourceInfo.begin(), pDomain->lSourceInfo.end(), ra_sourceInfo_s(sourceID));
+        mpShadow->ackSetSourceState(handle, E_NON_EXISTENT);
+        return E_OK;
+    }
 
-        if (itSrc != pDomain->lSourceInfo.end())
+    vector<ra_sourceInfo_s>::iterator itSrc =
+            std::find_if(pDomain->lSourceInfo.begin(), pDomain->lSourceInfo.end(), ra_sourceInfo_s(sourceID));
+    if (itSrc == pDomain->lSourceInfo.end())
+    {
+        mpShadow->ackSetSourceState(handle, E_NON_EXISTENT);
+        return E_OK;
+    }
+
+    am_Error_e error = E_OK;
+    am_Source_s & source = itSrc->amInfo;
+
+    IAmRoutingAdapterALSAProxy *proxy = mDataBase.getProxyOfConnection(mDataBase.findConnectionFromSource(pDomain->domain.domainID, sourceID));
+    if (proxy)
+    {
+        switch (state)
         {
-            am_Error_e error = E_UNKNOWN;
-            IAmRoutingAdapterALSAProxy *proxy = mDataBase.getProxyOfConnection(mDataBase.findConnectionFromSource(pDomain->domain.domainID, sourceID));
-            if (proxy)
-            {
-                switch (state)
+            case SS_ON:
+                if (proxy->openStreaming() == E_OK)
                 {
-                    case SS_ON:
-                        if (proxy->openStreaming() == E_OK)
-                        {
-                            error = proxy->startStreaming();
-                        }
-                        break;
-                    case SS_OFF:
-                        error = proxy->closeStreaming();
-                        break;
-                    case SS_PAUSED:
-                        error = proxy->stopStreaming();
-                        break;
-                    default:
-                        break;
+                    error = proxy->startStreaming();
                 }
-
-                if (error == E_OK)
-                {
-                    am_Source_s source = itSrc->amInfo;
-                    source.sourceState = state;
-                }
-            }
-            mpShadow->ackSetSourceState(handle, error);
-            return E_OK;
+                break;
+            case SS_OFF:
+                error = proxy->closeStreaming();
+                break;
+            case SS_PAUSED:
+                error = proxy->stopStreaming();
+                break;
+            default:
+                break;
         }
     }
 
-    mpShadow->ackSetSourceState(handle, E_NON_EXISTENT);
+    if (error == E_OK)
+    {
+        source.sourceState = state;
+    }
+
+    mpShadow->ackSetSourceState(handle, error);
     return E_OK;
 }
 

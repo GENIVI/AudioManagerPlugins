@@ -17,7 +17,7 @@
 </tDOMAIN> <!-- end of Domain 1 device info -->
 
 <!-- Begining of Domain 2 device info -->
-<tDOMAIN domNam = "Domain2" nodNam = "AsyncNode1" proxy = "AlsaProxy">
+<tDOMAIN domNam = "Domain2" nodNam = "AsyncNode1" pxyNam = "AlsaProxy">
 	<!-- source info -->
 	<tSOURCE srcNam = "Gateway1" srcClsNam = "player" srcClsID = "100" visible = "0"> </tSOURCE>
 	<tSOURCE srcNam = "Gateway2" srcClsNam = "navi" srcClsID = "101" visible = "0"> </tSOURCE>
