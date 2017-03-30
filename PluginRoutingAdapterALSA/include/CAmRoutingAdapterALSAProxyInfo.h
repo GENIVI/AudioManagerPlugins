@@ -58,6 +58,7 @@ public:
     uint8_t duplex;
     uint16_t msBuffersize;
     uint16_t msPrefill;
+    uint16_t msInitTimeout;
     ra_cpuSched_s cpuScheduler;
 };
 
