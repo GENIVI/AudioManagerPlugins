@@ -314,23 +314,40 @@ public:
     /**
      * Registers Domain to Audio Manager
      */
-    virtual bool registerDomain(am_Domain_s & domain) = 0;
+    virtual am_Error_e registerDomain(am_Domain_s & domain) = 0;
     /**
      * Registers Source to Audio Manager
      */
-    virtual bool registerSource(ra_sourceInfo_s & info, am_domainID_t domainID) = 0;
+    virtual void registerSource(ra_sourceInfo_s & info, am_domainID_t domainID) = 0;
     /**
      * Registers Sink to Audio Manager
      */
-    virtual bool registerSink(ra_sinkInfo_s & info, am_domainID_t domainID) = 0;
+    virtual void registerSink(ra_sinkInfo_s & info, am_domainID_t domainID) = 0;
     /**
      * Registers Gateway to Audio Manager
      */
-    virtual bool registerGateway(ra_gatewayInfo_s & info, am_domainID_t domainID) = 0;
+    virtual void registerGateway(ra_gatewayInfo_s & info, am_domainID_t domainID) = 0;
     /**
      * Sends to AudioManager when a Domain Registration is finished
      */
     virtual void hookDomainRegistrationComplete(am_domainID_t domainID) = 0;
+
+    /**
+     * Deregisters Domain from Audio Manager
+     */
+    virtual void deregisterDomain(const am_domainID_t &domainID) = 0;
+    /**
+     * Deregisters Source from Audio Manager
+     */
+    virtual void deregisterSource(const am_sourceID_t &sourceID) = 0;
+    /**
+     * Deregisters Sink from Audio Manager
+     */
+    virtual void deregisterSink(const am_sinkID_t &sinkID) = 0;
+    /**
+     * Deregisters Gateway from Audio Manager
+     */
+    virtual void deregisterGateway(const am_gatewayID_t &gatewayID) = 0;
 };
 
 
@@ -354,6 +371,7 @@ public:
                                                     const am_sourceID_t sourceID);
 
     void registerDomains();
+    void deregisterDomains();
     void cleanup();
 
     void registerVolumeOp(const am_Handle_s handle, class CAmRoutingAdapterALSAVolume* volume);

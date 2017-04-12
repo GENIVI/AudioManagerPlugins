@@ -73,7 +73,9 @@ public:
     void hookDomainRegistrationComplete(const am_domainID_t domain);
     void hookTimingInformationChanged(const am_connectionID_t connectionID, const am_timeSync_t delay);
     am_Error_e registerDomain(const am_Domain_s& domainData, am_domainID_t& domainID) ;
+    am_Error_e deregisterDomain(const am_domainID_t domainID) ;
     am_Error_e registerGateway(const am_Gateway_s& gatewayData, am_gatewayID_t& gatewayID) ;
+    am_Error_e deregisterGateway(const am_gatewayID_t gatewayID) ;
     am_Error_e registerSink(const am_Sink_s& sinkData, am_sinkID_t& sinkID) ;
     am_Error_e deregisterSink(const am_sinkID_t sinkID) ;
     am_Error_e registerSource(const am_Source_s& sourceData, am_sourceID_t& sourceID) ;

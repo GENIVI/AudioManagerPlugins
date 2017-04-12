@@ -181,7 +181,7 @@ void CAmRoutingAdapterALSAdb::registerDomains()
 {
     for (ra_domainInfo_s & domain : mDomains)
     {
-        if (mpObserver->registerDomain(domain.domain) == false)
+        if (mpObserver->registerDomain(domain.domain) != E_OK)
         {
             continue;
         }
@@ -202,7 +202,6 @@ void CAmRoutingAdapterALSAdb::registerDomains()
         updateProxys(domain);
 
         domain.domain.complete = true;
-
     }
 
     /* Gateway registration needs to be done at the end
@@ -225,6 +224,14 @@ void CAmRoutingAdapterALSAdb::registerDomains()
         {
             mpObserver->hookDomainRegistrationComplete(domain.domain.domainID);
         }
+    }
+}
+
+void CAmRoutingAdapterALSAdb::deregisterDomains()
+{
+    for (ra_domainInfo_s & domain : mDomains)
+    {
+        mpObserver->deregisterDomain(domain.domain.domainID);
     }
 }
 
