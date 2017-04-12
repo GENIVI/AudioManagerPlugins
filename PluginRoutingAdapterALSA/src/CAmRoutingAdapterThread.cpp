@@ -30,16 +30,17 @@
 
 #include <stdexcept>
 #include <cassert>
+#include <string.h>
 #include "CAmRoutingAdapterThread.h"
 
 using namespace am;
 
 #define THROW_ASSERT_NEQ(CALL, COND) \
-        if (true) \
-        { \
-        if (!((CALL) == (COND))) throw std::runtime_error( \
-            std::string(__func__) + ": (" + std::string(#CALL) + " != " + std::to_string(COND) + ")"); \
-        } else (void)0
+    do { \
+        int _err = COND; \
+        if (!((_err = (CALL)) == (COND))) throw std::runtime_error( \
+            std::string(__func__) + ": (" + std::string(#CALL) + " = " + std::string(strerror(_err)) + ")"); \
+    } while(0)
 
 
 CAmRoutingAdapterThread::CAmRoutingAdapterThread()
@@ -132,11 +133,12 @@ int CAmRoutingAdapterThread::stopThread()
         case STATE_STOPPING:
             waitForStateChange(STATE_STOPPING);
             break;
+        case STATE_STOPPED:
+            break;
         case STATE_JOINING:
         case STATE_JOINED:
-            return -1;
         default:
-            break;
+            return -1;
     }
 
     return 0;
@@ -144,30 +146,27 @@ int CAmRoutingAdapterThread::stopThread()
 
 int CAmRoutingAdapterThread::joinThread()
 {
-    int * err[1];
-
     switch (getState())
     {
         case STATE_FORKING:
             waitForStateChange(STATE_FORKING);
-            setStateAndWaitForStateChange(STATE_JOINING);
-            pthread_join(mId, reinterpret_cast<void**>(&err[0]));
-            return *err[0];
+            setState(STATE_JOINING);
+            break;
         case STATE_RUNNING:
         case STATE_STOPPING:
         case STATE_STOPPED:
-            setStateAndWaitForStateChange(STATE_JOINING);
-            pthread_join(mId, reinterpret_cast<void**>(&err[0]));
-            return *err[0];
+            setState(STATE_JOINING);
+            break;
+        case STATE_JOINED:
+            return mThreadErr;
         case STATE_JOINING:
-            waitForStateChange(STATE_JOINING);
-            pthread_join(mId, reinterpret_cast<void**>(&err[0]));
-            return *err[0];
         default:
             break;
     }
 
-    return 0;
+    pthread_join(mId, NULL);
+    setState(STATE_JOINED);
+    return mThreadErr;
 }
 
 int CAmRoutingAdapterThread::startWorkerThread(void)
@@ -195,9 +194,8 @@ int CAmRoutingAdapterThread::startWorkerThread(void)
     waitForStateChange(STATE_FORKING);
     if (getState() != STATE_RUNNING)
     {
-        int * err[1];
-        pthread_join(mId, reinterpret_cast<void**>(&err[0]));
-        return *err[0];
+        THROW_ASSERT_NEQ(pthread_join(mId, NULL), 0);
+        return mThreadErr;
     }
 
     return 0;
@@ -211,25 +209,25 @@ void CAmRoutingAdapterThread::WorkerThread()
         pthread_setname_np(mId, static_cast<const char*>(mName.c_str()));
     }
 
-    int err = static_cast<CAmRoutingAdapterThread*>(this)->initThread();
-    if (err == 0)
+    mThreadErr = static_cast<CAmRoutingAdapterThread*>(this)->initThread();
+    if (mThreadErr == 0)
     {
         setState(STATE_RUNNING);
         do
         {
-            err = static_cast<CAmRoutingAdapterThread*>(this)->workerThread();
+            mThreadErr = static_cast<CAmRoutingAdapterThread*>(this)->workerThread();
             if (getState() == STATE_STOPPING)
             {
                 setStateAndWaitForStateChange(STATE_STOPPED);
             }
 
-        } while ((err == 0) && (isStateForked()));
+        } while ((mThreadErr == 0) && (isStateForked()));
     }
 
-    static_cast<CAmRoutingAdapterThread*>(this)->deinitThread(err);
+    setState(STATE_JOINING);
+    static_cast<CAmRoutingAdapterThread*>(this)->deinitThread(mThreadErr);
 
-    setState(STATE_JOINED);
-    pthread_exit(&err);
+    pthread_exit(NULL);
 }
 
 void CAmRoutingAdapterThread::setState(const eState state)

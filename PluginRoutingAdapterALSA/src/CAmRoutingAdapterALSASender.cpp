@@ -564,9 +564,9 @@ am_Error_e CAmRoutingAdapterALSASender::asyncSetSinkVolume(const am_Handle_s han
             mDataBase.registerVolumeOp(handle, pVolume);
             itSink->amInfo.volume = volume;
         }
-        catch (...)
+        catch (exception& exc)
         {
-            logAmRaError("CRaALSASender::asyncSetSinkVolume Creation failed for:", itSink->pcmNam, itSink->volNam);
+            logAmRaError("CRaALSASender::asyncSetSinkVolume Creation failed for", itSink->pcmNam, "->", itSink->volNam, "with", exc.what());
             mpShadow->ackSetSinkVolumeChange(handle, volume, E_UNKNOWN);
         }
     }
@@ -635,9 +635,9 @@ am_Error_e CAmRoutingAdapterALSASender::asyncSetSourceVolume(const am_Handle_s h
             mDataBase.registerVolumeOp(handle, pVolume);
             itSrc->amInfo.volume = volume;
         }
-        catch (...)
+        catch (exception& exc)
         {
-            logAmRaError("CRaALSASender::asyncSetSourceVolume Creation failed for:", itSrc->pcmNam, itSrc->volNam);
+            logAmRaError("CRaALSASender::asyncSetSourceVolume Creation failed for", itSrc->pcmNam, "->", itSrc->volNam, "with", exc.what());
             mpShadow->ackSetSourceVolumeChange(handle, volume, E_UNKNOWN);
         }
     }
