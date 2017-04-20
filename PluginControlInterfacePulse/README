@@ -1,0 +1,54 @@
+GENIVI_AudioManager_PluginRoutingInterfacePulse
+===============================================
+:Author: Adrian Scarlat <adrian.scarlat@windriver.com>
+:doctitle: GENIVI_AudioManager_PluginControlInterfacePulse
+
+SPDX license identifier: MPL-2.0
+
+Copyright (C) 2011-2014, Wind River Systems
+Copyright (C) 2014, GENIVI Alliance
+
+This file is part of AudioManager Pulse Audio Interface Control Plugin.
+
+This Source Code Form is subject to the terms of the Mozilla Public
+License (MPL), v. 2.0. If a copy of the MPL was not distributed with this
+file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+For further information see http://www.genivi.org/.
+
+== Documentation
+Documentation is provided by doxygen. In order to use this, please compile the
+AudioManager like this:
+cmake -DWITH_DOCUMENTATION=ON
+make
+
+== Description of Pulse Control Plugin
+The PluginControlInterfacePulse is the "heart" of the AM.It is needed by any
+application that will be developed on top of AM and will use PulseAudio Sound
+Server to control the sources and sinks present on the system. It must be
+loaded by AudioManager at startup.
+Please run AudioManager --help to find out how to achieve this.
+
+== Build intstructions
+Execute the following command from audiomanager/ folder:
+mkdir BUILD
+cd BUILD
+cmake -DWITH_ENABLED_IPC=DBUS -DWITH_PULSE_CONTROL_PLUGIN=ON ..
+make  [ add to make command "-j 4" if you have a 4 CPU.
+
+If all goes well a bin/ folder will be made.
+Change to it by executing cd ../bin/
+
+In order to use the AudioManager with the PluginControlInterfacePulse,
+the AudioManager must be compiled with PluginRoutingInterfacePulse and with
+PluginControlInterfacePulse. For achieving run:
+cmake -DWITH_ENABLED_IPC=DBUS -DWITH_PULSE_ROUTING_PLUGIN=ON -DWITH_PULSE_CONTROL_PLUGIN=ON ..
+
+== Available files after building
+libPluginControlInterface.conf -- This is Pulse Control Interface configuration
+files.It is used for configuring Source Classes and Sink Classes on the system,
+Audio Routes and Mixing Rules.
+
+Plsease consult libPluginControlInterface.conf for a description of these and
+also please consult libPluginRoutingInterfacePulse.conf file also for a better
+understanding.

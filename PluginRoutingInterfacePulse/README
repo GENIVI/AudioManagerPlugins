@@ -1,0 +1,50 @@
+GENIVI_AudioManager_PluginRoutingInterfacePulse
+===============================================
+:Author: Adrian Scarlat <adrian.scarlat@windriver.com>
+:doctitle: GENIVI_AudioManager_PluginRoutingInterfacePulse
+
+SPDX license identifier: MPL-2.0
+
+Copyright (C) 2011-2014, Wind River Systems
+Copyright (C) 2014, GENIVI Alliance
+
+This file is part of AudioManager Pulse Audio Interface Routing Plugin.
+
+This Source Code Form is subject to the terms of the Mozilla Public
+License (MPL), v. 2.0. If a copy of the MPL was not distributed with this
+file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+For further information see http://www.genivi.org/.
+
+== Documentation
+Documentation is provided by doxygen. In order to use this, please compile the
+AudioManager like this:
+cmake -DWITH_DOCUMENTATION=ON
+make
+
+== Description of Pulse Routing Plugin
+The PluginRoutingInterfacePulse is used by the AM PoC application to communicate
+with PulseAudio present on the system on which the AM PoC application will be
+deployed.
+
+== Build intstructions
+Execute the following command from audiomanager/ folder:
+mkdir BUILD
+cd BUILD
+cmake -DWITH_ENABLED_IPC=DBUS -DWITH_PULSE_ROUTING_PLUGIN=ON ..
+make  [ add to make command "-j 4" if you have a 4 CPU.
+
+If all goes well a bin/ folder will be made.
+Change to it by executing cd ../bin/
+
+In order to use the AudioManager with the PluginRoutingInterfacePulse, the
+AudioManager must be compiled with PluginRoutingInterfacePulse and with
+PluginControlInterfacePulse.For achieving this please consult the README
+from the PluginControlInterfacePulse Project also.
+
+== Available files after building
+libPluginRoutingInterfacePULSE.conf -- This is Pulse Routing Interface
+configuration files.It is used for configuring Sources and Sinks on the system.
+The contend on this file must be in sync with libPluginControlInterface.conf
+file from the PluginControlInterfacePulse Projec.Also some PulseAudio knowledge
+is advisable.
