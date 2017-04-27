@@ -70,8 +70,7 @@ DLT_DECLARE_CONTEXT(routingPulse)
  */
 extern "C" IAmRoutingSend* PluginRoutingInterfacePULSEFactory()
 {
-
-    return (new RoutingSenderPULSE(NULL));
+    return (new RoutingSenderPULSE(nullptr));
 }
 
 /**
@@ -659,7 +658,7 @@ am_Error_e RoutingSenderPULSE::returnBusName(std::string& BusName) const {
 
 void RoutingSenderPULSE::getInterfaceVersion(std::string& out_ver) const
 {
-    out_ver = "3.0";
+    out_ver = RoutingVersion;
 }
 
 am_Error_e RoutingSenderPULSE::asyncSetVolumes(const am_Handle_s handle, const std::vector<am_Volumes_s>& listVolumes)
@@ -687,6 +686,12 @@ am_Error_e RoutingSenderPULSE::asyncSetSourceNotificationConfiguration(const am_
     //todo: implement asyncSetSourceNotificationConfiguration;
     return (E_NOT_USED);
 }
+
+am_Error_e RoutingSenderPULSE::resyncConnectionState(const am_domainID_t domainID, std::vector<am_Connection_s>& listOfExistingConnections)
+{
+    return E_OK;
+}
+
 /*******************************************************************************
  * Private methods
  ******************************************************************************/
