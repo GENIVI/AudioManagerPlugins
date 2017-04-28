@@ -23,7 +23,7 @@
 #define ROUTINGSENDERPULSE_H_
 
 /* Includes */
-#include "IAmRouting.h"
+#include "IAmRoutingReceiverShadow.h"
 #include <signal.h>
 #include <string.h>
 #include <errno.h>
@@ -116,7 +116,7 @@ private:
     uint16_t                                        m_paSinkNullIndex;
     uint16_t                                        m_paSourceNullIndex;
 
-    IAmRoutingReceive                               *m_routingReceiver;
+    IAmRoutingReceiverShadow                        *m_shadow;
     pa_context                                      *m_paContext;
 
 /**
