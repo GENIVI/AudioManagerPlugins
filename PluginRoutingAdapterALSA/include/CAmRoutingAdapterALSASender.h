@@ -110,11 +110,16 @@ public:
     void asyncDeleteVolume(const am_Handle_s handle, const CAmRoutingAdapterALSAVolume* reference) override;
 
     /* IAmRoutingAdapterDbObserver */
-    bool registerDomain(am_Domain_s & domain) override;
-    bool registerSource(ra_sourceInfo_s & info, am_domainID_t domainID) override;
-    bool registerSink(ra_sinkInfo_s & info, am_domainID_t domainID) override;
-    bool registerGateway(ra_gatewayInfo_s & info, am_domainID_t domainID) override;
+    am_Error_e registerDomain(am_Domain_s & domain) override;
+    void registerSource(ra_sourceInfo_s & info, am_domainID_t domainID) override;
+    void registerSink(ra_sinkInfo_s & info, am_domainID_t domainID) override;
+    void registerGateway(ra_gatewayInfo_s & info, am_domainID_t domainID) override;
     void hookDomainRegistrationComplete(am_domainID_t domainID) override;
+
+    void deregisterDomain(const am_domainID_t &domainID) override;
+    void deregisterSource(const am_sourceID_t &sourceID) override;
+    void deregisterSink(const am_sinkID_t &sinkID) override;
+    void deregisterGateway(const am_gatewayID_t &gatewayID) override;
 
 private:
     static bool isNumber(const std::string& value);

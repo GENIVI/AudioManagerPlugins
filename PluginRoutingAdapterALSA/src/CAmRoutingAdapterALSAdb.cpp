@@ -123,9 +123,8 @@ ra_domainInfo_s * CAmRoutingAdapterALSAdb::findDomainBySink(am_sinkID_t id)
 }
 
 ra_proxyInfo_s * CAmRoutingAdapterALSAdb::findProxyInDomain(
-        const am_domainID_t domainID, const am_sourceID_t sourceID, const am_sinkID_t sinkID)
+        ra_domainInfo_s * pDomain, const am_sourceID_t sourceID, const am_sinkID_t sinkID)
 {
-    ra_domainInfo_s * pDomain = findDomain(domainID);
     std::vector<ra_proxyInfo_s>::iterator itr =
             find_if(pDomain->lProxyInfo.begin(), pDomain->lProxyInfo.end(), ra_proxyInfo_s(sourceID, sinkID));
     if (itr != pDomain->lProxyInfo.end())
@@ -136,6 +135,21 @@ ra_proxyInfo_s * CAmRoutingAdapterALSAdb::findProxyInDomain(
     return NULL;
 }
 
+ra_proxyInfo_s * CAmRoutingAdapterALSAdb::findProxyInDomain(
+        const am_domainID_t domainID, const std::string & sourceName, const std::string & sinkName)
+{
+    ra_domainInfo_s * pDomain = findDomain(domainID);
+    std::vector<ra_proxyInfo_s>::iterator itr =
+            find_if(pDomain->lProxyInfo.begin(), pDomain->lProxyInfo.end(), ra_proxyInfo_s(sourceName, sinkName));
+    if (itr != pDomain->lProxyInfo.end())
+    {
+        return &(*itr);
+    }
+    // This is a valid behavior. NO error log here!!!
+    return NULL;
+}
+
+
 am_connectionID_t CAmRoutingAdapterALSAdb::findConnectionFromSource(const am_domainID_t domainId,
                                                     const am_sourceID_t sourceID)
 {
@@ -143,24 +157,7 @@ am_connectionID_t CAmRoutingAdapterALSAdb::findConnectionFromSource(const am_dom
     {
         if (it.second.domainID == domainId && it.second.sourceID == sourceID)
         {
-            if (it.second.proxy)
-            {
-                return it.first;
-            }
-            else
-            {
-                // the proxy is NULL, let's search for a possible connection held by a Gateway
-                ra_domainInfo_s * pDomain = findDomain(domainId);
-                for (auto && iit : pDomain->lGatewayInfo)
-                {
-                    if (iit.sinkNam.compare(pDomain->lSinkInfo.at(sourceID - 1).amInfo.name) == 0)
-                    {
-                        // We found a Gateway managing such Sink. We should then pick up the connection
-                        // offered by iit.amInfo.sourceID and iit.amInfo.domainSourceID
-                        return findConnectionFromSource(iit.amInfo.domainSourceID, iit.amInfo.sourceID);
-                    }
-                }
-            }
+            return it.first;
         }
     }
     return -1;
@@ -184,7 +181,7 @@ void CAmRoutingAdapterALSAdb::registerDomains()
 {
     for (ra_domainInfo_s & domain : mDomains)
     {
-        if (mpObserver->registerDomain(domain.domain) == false)
+        if (mpObserver->registerDomain(domain.domain) != E_OK)
         {
             continue;
         }
@@ -205,7 +202,6 @@ void CAmRoutingAdapterALSAdb::registerDomains()
         updateProxys(domain);
 
         domain.domain.complete = true;
-
     }
 
     /* Gateway registration needs to be done at the end
@@ -228,6 +224,14 @@ void CAmRoutingAdapterALSAdb::registerDomains()
         {
             mpObserver->hookDomainRegistrationComplete(domain.domain.domainID);
         }
+    }
+}
+
+void CAmRoutingAdapterALSAdb::deregisterDomains()
+{
+    for (ra_domainInfo_s & domain : mDomains)
+    {
+        mpObserver->deregisterDomain(domain.domain.domainID);
     }
 }
 

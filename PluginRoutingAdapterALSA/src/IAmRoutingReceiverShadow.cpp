@@ -142,9 +142,19 @@ am_Error_e IAmRoutingReceiverShadow::registerDomain(const am_Domain_s & domainDa
     return mpRoutingReceiveInterface->registerDomain(domainData, domainID);
 }
 
+am_Error_e IAmRoutingReceiverShadow::deregisterDomain(const am_domainID_t domainID)
+{
+    return mpRoutingReceiveInterface->deregisterDomain(domainID);
+}
+
 am_Error_e IAmRoutingReceiverShadow::registerGateway(const am_Gateway_s & gatewayData, am_gatewayID_t & gatewayID)
 {
     return mpRoutingReceiveInterface->registerGateway(gatewayData, gatewayID);
+}
+
+am_Error_e IAmRoutingReceiverShadow::deregisterGateway(const am_gatewayID_t gatewayID)
+{
+    return mpRoutingReceiveInterface->deregisterGateway(gatewayID);
 }
 
 am_Error_e IAmRoutingReceiverShadow::registerSink(const am_Sink_s & sinkData, am_sinkID_t & sinkID)

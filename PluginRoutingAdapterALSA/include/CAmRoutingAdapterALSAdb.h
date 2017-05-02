@@ -281,7 +281,7 @@ public:
     std::vector<ra_sinkInfo_s> lSinkInfo;
     std::vector<ra_gatewayInfo_s> lGatewayInfo;
     std::vector<ra_proxyInfo_s> lProxyInfo;
-    std::string lAudioProxyInfo;
+    std::string pxyNam;
 
 public:
     ra_domainInfo_s() {};
@@ -314,23 +314,40 @@ public:
     /**
      * Registers Domain to Audio Manager
      */
-    virtual bool registerDomain(am_Domain_s & domain) = 0;
+    virtual am_Error_e registerDomain(am_Domain_s & domain) = 0;
     /**
      * Registers Source to Audio Manager
      */
-    virtual bool registerSource(ra_sourceInfo_s & info, am_domainID_t domainID) = 0;
+    virtual void registerSource(ra_sourceInfo_s & info, am_domainID_t domainID) = 0;
     /**
      * Registers Sink to Audio Manager
      */
-    virtual bool registerSink(ra_sinkInfo_s & info, am_domainID_t domainID) = 0;
+    virtual void registerSink(ra_sinkInfo_s & info, am_domainID_t domainID) = 0;
     /**
      * Registers Gateway to Audio Manager
      */
-    virtual bool registerGateway(ra_gatewayInfo_s & info, am_domainID_t domainID) = 0;
+    virtual void registerGateway(ra_gatewayInfo_s & info, am_domainID_t domainID) = 0;
     /**
      * Sends to AudioManager when a Domain Registration is finished
      */
     virtual void hookDomainRegistrationComplete(am_domainID_t domainID) = 0;
+
+    /**
+     * Deregisters Domain from Audio Manager
+     */
+    virtual void deregisterDomain(const am_domainID_t &domainID) = 0;
+    /**
+     * Deregisters Source from Audio Manager
+     */
+    virtual void deregisterSource(const am_sourceID_t &sourceID) = 0;
+    /**
+     * Deregisters Sink from Audio Manager
+     */
+    virtual void deregisterSink(const am_sinkID_t &sinkID) = 0;
+    /**
+     * Deregisters Gateway from Audio Manager
+     */
+    virtual void deregisterGateway(const am_gatewayID_t &gatewayID) = 0;
 };
 
 
@@ -346,12 +363,15 @@ public:
     ra_domainInfo_s * findDomainByConnection(const am_connectionID_t id);
     ra_domainInfo_s * findDomainBySource(const am_sourceID_t id);
     ra_domainInfo_s * findDomainBySink(const am_sinkID_t id);
-    ra_proxyInfo_s  * findProxyInDomain(const am_domainID_t domainId,
+    ra_proxyInfo_s  * findProxyInDomain(ra_domainInfo_s *pDomain,
                                         const am_sourceID_t sourceID, const am_sinkID_t sinkID = 0);
+    ra_proxyInfo_s  * findProxyInDomain(const am_domainID_t domainID,
+                                        const std::string & sourceName, const std::string & sinkName = "");
     am_connectionID_t findConnectionFromSource(const am_domainID_t domainId,
                                                     const am_sourceID_t sourceID);
 
     void registerDomains();
+    void deregisterDomains();
     void cleanup();
 
     void registerVolumeOp(const am_Handle_s handle, class CAmRoutingAdapterALSAVolume* volume);
@@ -377,7 +397,7 @@ private:
     public:
         class IAmRoutingAdapterALSAProxy * proxy;
     public:
-        ra_route_s() {};
+        ra_route_s() : proxy(NULL) {};
         ra_route_s(const am_RoutingElement_s & e, class IAmRoutingAdapterALSAProxy * p)
             : am_RoutingElement_s(e), proxy(p) {};
     };

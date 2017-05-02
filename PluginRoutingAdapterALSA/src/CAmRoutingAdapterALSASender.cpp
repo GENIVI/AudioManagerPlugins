@@ -81,9 +81,17 @@ CAmRoutingAdapterALSASender::~CAmRoutingAdapterALSASender()
     mDataBase.getProxyLists(proxies);
     for (IAmRoutingAdapterALSAProxy * proxy : proxies)
     {
-        proxy->stopStreaming();
-        proxy->closeStreaming();
+        if (!proxy)
+        {
+            continue;
+        }
+
+        void *dlhandle = proxy->getLibHandle();
         delete proxy;
+        if (dlhandle)
+        {
+            dlclose(dlhandle);
+        }
     }
 
     /* stop all asynchronous operating volumes */
@@ -121,178 +129,235 @@ void CAmRoutingAdapterALSASender::getInterfaceVersion(std::string & version) con
     version = RoutingVersion;
 }
 
-bool CAmRoutingAdapterALSASender::registerDomain(am_Domain_s & domain)
+am_Error_e CAmRoutingAdapterALSASender::registerDomain(am_Domain_s & domain)
 {
-    am_Error_e error = E_OK;
-    bool ret = true;
-
-    if (domain.name.length() != 0)
-    {
-        /* Register only in case if it is dynamic otherwise skip */
-        if ((domain.domainID == 0) || (domain.domainID > DYNAMIC_ID_BOUNDARY))
-        {
-            if ((error = mpShadow->registerDomain(domain, domain.domainID)) != E_OK)
-            {
-                logAmRaError("CRaALSASender::registerDomain", "Error on registering Domain,", domain.name, error);
-                ret = false;
-            }
-            // variable needs to be updated after successful registering of domain.
-            if ((ret != E_OK) && (domain.state == DS_INDEPENDENT_STARTUP))
-            {
-                domain.early = true;
-            }
-        }
-    }
-    else
+    if (domain.name.length() == 0)
     {
         logAmRaError("CRaALSASender::registerDomain", "Error in Domain configuration. Name is not provided!");
-        ret = false;
+        return E_DATABASE_ERROR;
     }
 
-    return ret;
+    /* Register only in case if it is dynamic otherwise skip */
+    am_Error_e error = E_OK;
+    if ((domain.domainID == 0) || (domain.domainID >= DYNAMIC_ID_BOUNDARY))
+    {
+        error = mpShadow->registerDomain(domain, domain.domainID);
+        if ((error == E_OK) && (domain.state == DS_INDEPENDENT_STARTUP))
+        {
+            // variable needs to be updated after successful registering of domain.
+            domain.early = true;
+        }
+    }
+
+    return error;
 }
 
-bool CAmRoutingAdapterALSASender::registerSource(ra_sourceInfo_s & info, am_domainID_t domainID)
+void CAmRoutingAdapterALSASender::registerSource(ra_sourceInfo_s & info, am_domainID_t domainID)
 {
     am_Error_e error = E_OK;
-    bool ret = true;
     am_Source_s & source = info.amInfo;
 
-    /* Let's declare the sourceState as SS_OFF when registering*/
-    source.sourceState = SS_OFF;
-
-    if (source.name.length() != 0)
+    ra_proxyInfo_s * proxy = mDataBase.findProxyInDomain(domainID, source.name);
+    if (proxy && source.sourceState == SS_UNKNNOWN)
     {
-        if ((info.srcClsNam.length() != 0) && (source.visible == true))
-        {
-            if ((error = mpReceiveInterface->peekSourceClassID(info.srcClsNam, source.sourceClassID)) != E_OK)
-            {
-                logAmRaInfo("CRaALSASender::registerSource", "Error on peekSourceClassID, failed with", error);
-            }
-        }
-        /* Register only in case if it is dynamic otherwise skip */
-        if ((source.sourceID == 0) || (source.sourceID > DYNAMIC_ID_BOUNDARY))
-        {
-            source.domainID = domainID;
-            if ((error = mpShadow->registerSource(source, source.sourceID)) != E_OK)
-            {
-                logAmRaError("CRaALSASender::registerSource", "Error on registering Source,", source.name, error);
-                ret = false;
-            }
-        }
+        source.sourceState = SS_OFF;
     }
-    else
+
+    if (source.name.length() == 0)
     {
         logAmRaError("CRaALSASender::registerSource", "Error in Source configuration. Name is not provided!");
-        ret = false;
+        return;
     }
-
-    return ret;
+    if ((info.srcClsNam.length() != 0) && (source.visible == true))
+    {
+        if ((error = mpReceiveInterface->peekSourceClassID(info.srcClsNam, source.sourceClassID)) != E_OK)
+        {
+            logAmRaInfo("CRaALSASender::registerSource", "Error on peekSourceClassID, failed with", error);
+        }
+    }
+    /* Register only in case if it is dynamic otherwise skip */
+    if ((source.sourceID == 0) || (source.sourceID >= DYNAMIC_ID_BOUNDARY))
+    {
+        source.domainID = domainID;
+        if ((error = mpShadow->registerSource(source, source.sourceID)) != E_OK)
+        {
+            logAmRaError("CRaALSASender::registerSource", "Error on registering Source,", source.name, error);
+        }
+    }
 }
 
-bool CAmRoutingAdapterALSASender::registerSink(ra_sinkInfo_s & info, am_domainID_t domainID)
+void CAmRoutingAdapterALSASender::registerSink(ra_sinkInfo_s & info, am_domainID_t domainID)
 {
     am_Error_e error = E_OK;
     am_Sink_s & sink = info.amInfo;
-    bool ret = true;
 
-    if (sink.name.length() != 0)
-    {
-
-        if ((info.sinkClsNam.length() != 0) && (sink.visible == true))
-        {
-            if ((error = mpReceiveInterface->peekSinkClassID(info.sinkClsNam, sink.sinkClassID)) != E_OK)
-            {
-                logAmRaError("CRaALSASender::registerSink", "ret on peekSinkClassID, failed with", error);
-            }
-        }
-
-        /* Register only in case if it is dynamic otherwise skip */
-        if ((sink.sinkID == 0) || (sink.sinkID > DYNAMIC_ID_BOUNDARY))
-        {
-            sink.domainID = domainID;
-            if ((error = mpShadow->registerSink(sink, sink.sinkID)) != E_OK)
-            {
-                logAmRaError("CRaALSASender::registerSink", "ret on registering Sink,", sink.name, error);
-                ret = false;
-            }
-        }
-    }
-    else
+    if (sink.name.length() == 0)
     {
         logAmRaError("CRaALSASender::registerSink", "ret in Sink configuration. Name is not provided!");
-        ret = false;
+        return;
     }
 
-    return ret;
+    if ((info.sinkClsNam.length() != 0) && (sink.visible == true))
+    {
+        if ((error = mpReceiveInterface->peekSinkClassID(info.sinkClsNam, sink.sinkClassID)) != E_OK)
+        {
+            logAmRaError("CRaALSASender::registerSink", "ret on peekSinkClassID, failed with", error);
+        }
+    }
+
+    /* Register only in case if it is dynamic otherwise skip */
+    if ((sink.sinkID == 0) || (sink.sinkID >= DYNAMIC_ID_BOUNDARY))
+    {
+        sink.domainID = domainID;
+        if ((error = mpShadow->registerSink(sink, sink.sinkID)) != E_OK)
+        {
+            logAmRaError("CRaALSASender::registerSink", "ret on registering Sink,", sink.name, error);
+        }
+    }
 }
 
-bool CAmRoutingAdapterALSASender::registerGateway(ra_gatewayInfo_s & info, am_domainID_t domainID)
+void CAmRoutingAdapterALSASender::registerGateway(ra_gatewayInfo_s & info, am_domainID_t domainID)
 {
     am_Error_e error = E_OK;
     am_Gateway_s & gateway = info.amInfo;
-    bool ret = true;
 
     /* validate Gateway Information*/
-    if ((gateway.name.length() != 0)
-            && (info.srcDomNam.length() != 0) && (info.sinkDomNam.length() != 0)
-            && (info.srcNam.length() != 0) && (info.sinkNam.length() != 0))
+    if ((gateway.name.length() == 0)
+            || (info.srcDomNam.length() == 0) || (info.sinkDomNam.length() == 0)
+            || (info.srcNam.length() == 0) || (info.sinkNam.length() == 0))
     {
-        /* get source information*/
-        if (((error = mpReceiveInterface->peekDomain(info.srcDomNam, gateway.domainSourceID)) == E_OK)
-                && ((error = mpReceiveInterface->peekSource(info.srcNam, gateway.sourceID)) == E_OK))
+        logAmRaError("CRaALSASender::registerGateway Error in Gateway configuration",
+                         "Domain name(s) or gateway or source or sink name not configured!");
+        return;
+    }
+    /* get source information*/
+    if (((error = mpReceiveInterface->peekDomain(info.srcDomNam, gateway.domainSourceID)) == E_OK)
+            && ((error = mpReceiveInterface->peekSource(info.srcNam, gateway.sourceID)) == E_OK))
+    {
+        /*get sink information*/
+
+        if (((error = mpReceiveInterface->peekDomain(info.sinkDomNam, gateway.domainSinkID)) == E_OK)
+                && ((error = mpReceiveInterface->peekSink(info.sinkNam, gateway.sinkID)) == E_OK))
         {
-            /*get sink information*/
-
-            if (((error = mpReceiveInterface->peekDomain(info.sinkDomNam, gateway.domainSinkID)) == E_OK)
-                    && ((error = mpReceiveInterface->peekSink(info.sinkNam, gateway.sinkID)) == E_OK))
+            /* check if the expected matrix size is equal to the configured */
+            size_t expectedMatrixSize = gateway.listSinkFormats.size() * gateway.listSourceFormats.size();
+            if (expectedMatrixSize != gateway.convertionMatrix.size())
             {
-                /* check if the expected matrix size is equal to the configured */
-                size_t expectedMatrixSize = gateway.listSinkFormats.size() * gateway.listSourceFormats.size();
-                if (expectedMatrixSize != gateway.convertionMatrix.size())
-                {
-                    logAmRaInfo("CRaALSASender::registerGateway", gateway.name,
-                            ": Matrix vs. Source and Sink formats incompatible. Expected:", expectedMatrixSize, "!=",
-                            gateway.convertionMatrix.size());
-                }
-
-                /* Register only in case if it is dynamic otherwise skip */
-                if ((gateway.gatewayID == 0) || (gateway.gatewayID > DYNAMIC_ID_BOUNDARY))
-                {
-                    gateway.controlDomainID = domainID;
-                    if ((error = mpShadow->registerGateway(gateway, gateway.gatewayID)) != E_OK)
-                    {
-                        logAmRaError("CRaALSASender::registerGateway", "Error on registering gateway,", gateway.name, error);
-                        ret = false;
-                    }
-                }
+                logAmRaInfo("CRaALSASender::registerGateway", gateway.name,
+                        ": Matrix vs. Source and Sink formats incompatible. Expected:", expectedMatrixSize, "!=",
+                        gateway.convertionMatrix.size());
             }
-            else
+
+            /* Register only in case if it is dynamic otherwise skip */
+            if ((gateway.gatewayID == 0) || (gateway.gatewayID >= DYNAMIC_ID_BOUNDARY))
             {
-                logAmRaError("CRaALSASender::registerGateway Error on peek SinkInformation:", error);
-                ret = false;
+                gateway.controlDomainID = domainID;
+                if ((error = mpShadow->registerGateway(gateway, gateway.gatewayID)) != E_OK)
+                {
+                    logAmRaError("CRaALSASender::registerGateway", "Error on registering gateway,", gateway.name, error);
+                }
             }
         }
         else
         {
-            logAmRaError("CRaALSASender::registerGateway Error on peek SourceInformation:", error);
-            ret = false;
+            logAmRaError("CRaALSASender::registerGateway Error on peek SinkInformation:", error);
         }
-
     }
     else
     {
-        logAmRaError("CRaALSASender::registerGateway Error in Gateway configuration",
-                 "Domain name(s) or gateway or source or sink name not configured!");
-        ret = false;
+        logAmRaError("CRaALSASender::registerGateway Error on peek SourceInformation:", error);
     }
-
-    return ret;
 }
 
 void CAmRoutingAdapterALSASender::hookDomainRegistrationComplete(am_domainID_t domainID)
 {
     mpShadow->hookDomainRegistrationComplete(domainID);
+}
+
+void CAmRoutingAdapterALSASender::deregisterDomain(const am_domainID_t &domainID)
+{
+    ra_domainInfo_s *domainInfo = mDataBase.findDomain(domainID);
+    am_Error_e error = E_OK;
+
+    if (domainInfo == NULL)
+    {
+        logAmRaError("Domain with ID =", domainID, " not found");
+        return;
+    }
+    /*
+     * Deregister all gateways first
+     */
+    for (ra_gatewayInfo_s & gateway : domainInfo->lGatewayInfo)
+    {
+        deregisterGateway(gateway.amInfo.gatewayID);
+    }
+
+    /*
+     * Then deregister sources and sinks
+     */
+    for (ra_sinkInfo_s & sink : domainInfo->lSinkInfo)
+    {
+        deregisterSink(sink.amInfo.sinkID);
+    }
+    for (ra_sourceInfo_s & source : domainInfo->lSourceInfo)
+    {
+        deregisterSource(source.amInfo.sourceID);
+    }
+
+    /*
+     * In the end, the domain itself
+     */
+    if (domainID >= DYNAMIC_ID_BOUNDARY)
+    {
+        if ((error = mpShadow->deregisterDomain(domainID)) != E_OK)
+        {
+            logAmRaError("CRaALSASender::deregisterDomain", "Error on deregistering domainID ", domainID, error);
+            return;
+        }
+        logAmRaDebug("Domain ", domainID, "unregistered successfully");
+    }
+}
+
+void CAmRoutingAdapterALSASender::deregisterSource(const am_sourceID_t &sourceID)
+{
+    am_Error_e error = E_OK;
+    if (sourceID >= DYNAMIC_ID_BOUNDARY)
+    {
+        if ((error = mpShadow->deregisterSource(sourceID)) != E_OK)
+        {
+            logAmRaError("CRaALSASender::deregisterSource", "Error on deregistering sourceID ", sourceID, error);
+            return;
+        }
+        logAmRaDebug("Source ", sourceID, "unregistered successfully");
+    }
+}
+
+void CAmRoutingAdapterALSASender::deregisterSink(const am_sinkID_t &sinkID)
+{
+    am_Error_e error = E_OK;
+    if (sinkID >= DYNAMIC_ID_BOUNDARY)
+    {
+        if ((error = mpShadow->deregisterSink(sinkID)) != E_OK)
+        {
+            logAmRaError("CRaALSASender::deregisterSink", "Error on deregistering sinkID ", sinkID, error);
+            return;
+        }
+        logAmRaDebug("Sink ", sinkID, "unregistered successfully");
+    }
+}
+
+void CAmRoutingAdapterALSASender::deregisterGateway(const am_gatewayID_t &gatewayID)
+{
+    am_Error_e error = E_OK;
+    if (gatewayID >= DYNAMIC_ID_BOUNDARY)
+    {
+        if ((error = mpShadow->deregisterGateway(gatewayID)) != E_OK)
+        {
+            logAmRaError("CRaALSASender::deregisterGateway", "Error on deregistering gatewayID ", gatewayID, error);
+            return;
+        }
+        logAmRaDebug("Gateway ", gatewayID, "unregistered successfully");
+    }
 }
 
 void CAmRoutingAdapterALSASender::setRoutingReady(const uint16_t handle)
@@ -305,6 +370,7 @@ void CAmRoutingAdapterALSASender::setRoutingReady(const uint16_t handle)
 void CAmRoutingAdapterALSASender::setRoutingRundown(const uint16_t handle)
 {
     assert(mpReceiveInterface);
+    mDataBase.deregisterDomains();
     mpShadow->confirmRoutingRundown(handle, E_OK);
 }
 
@@ -382,7 +448,7 @@ am_Error_e CAmRoutingAdapterALSASender::asyncConnect(const am_Handle_s handle, c
     /* Check if we can take the job and find the domain */
     ra_sourceInfo_s source(sourceID);
     ra_sinkInfo_s sink(sinkID);
-    const ra_domainInfo_s * pDomain = mDataBase.findDomain(source, sink);
+    ra_domainInfo_s * pDomain = mDataBase.findDomain(source, sink);
     if (pDomain == NULL)
     {
         logAmRaError("CRaALSASender::connect No domain found with same source and sink!");
@@ -404,7 +470,7 @@ am_Error_e CAmRoutingAdapterALSASender::asyncConnect(const am_Handle_s handle, c
 
     if ((source.devTyp == DPS_REAL) && (sink.devTyp == DPS_REAL))
     {
-        ra_proxyInfo_s * pProxy = mDataBase.findProxyInDomain(pDomain->domain.domainID, sourceID, sinkID);
+        ra_proxyInfo_s * pProxy = mDataBase.findProxyInDomain(pDomain, sourceID, sinkID);
         if (pProxy != NULL)
         {
             /* Fetch format entries of table */
@@ -429,17 +495,18 @@ am_Error_e CAmRoutingAdapterALSASender::asyncConnect(const am_Handle_s handle, c
 
             try
             {
-                if (pDomain->lAudioProxyInfo.empty())
+                if (pProxy->pxyNam.empty())
                 {
                     logAmRaInfo("ProxyDefault creation");
                     proxy = new CAmRoutingAdapterALSAProxyDefault(pProxy->alsa);
                 }
                 else
                 {
-                    std::string routingAdapterProxyAbsPath = mCommandLineArg.getValue() + "/lib" + pDomain->lAudioProxyInfo + ".so";
+                    std::string routingAdapterProxyAbsPath = mCommandLineArg.getValue() + "/lib" + pProxy->pxyNam + ".so";
                     IAmRoutingAdapterALSAProxy *(*createFunc)(const ra_Proxy_s &);
                     createFunc = getCreateFunction<IAmRoutingAdapterALSAProxy*(const ra_Proxy_s &)>(routingAdapterProxyAbsPath.c_str(), tempLibHandle);
                     proxy = createFunc(pProxy->alsa);
+                    proxy->setLibHandle(tempLibHandle);
                 }
             }
             catch (int err)
@@ -492,13 +559,15 @@ am_Error_e CAmRoutingAdapterALSASender::asyncDisconnect(const am_Handle_s handle
         return E_OK;
     }
 
-    // stop thread in case some is running
-    IAmRoutingAdapterALSAProxy *proxy = mDataBase.getProxyOfConnection(connectionID);
-    if (proxy)
+    IAmRoutingAdapterALSAProxy * pProxy = mDataBase.getProxyOfConnection(connectionID);
+    if (pProxy)
     {
-        proxy->stopStreaming();
-        proxy->closeStreaming();
-        delete proxy;
+        void *dlhandle = pProxy->getLibHandle();
+        delete pProxy;
+        if (dlhandle)
+        {
+            dlclose(dlhandle);
+        }
     }
     mDataBase.deregisterConnection(connectionID);
 
@@ -564,9 +633,9 @@ am_Error_e CAmRoutingAdapterALSASender::asyncSetSinkVolume(const am_Handle_s han
             mDataBase.registerVolumeOp(handle, pVolume);
             itSink->amInfo.volume = volume;
         }
-        catch (...)
+        catch (exception& exc)
         {
-            logAmRaError("CRaALSASender::asyncSetSinkVolume Creation failed for:", itSink->pcmNam, itSink->volNam);
+            logAmRaError("CRaALSASender::asyncSetSinkVolume Creation failed for", itSink->pcmNam, "->", itSink->volNam, "with", exc.what());
             mpShadow->ackSetSinkVolumeChange(handle, volume, E_UNKNOWN);
         }
     }
@@ -635,9 +704,9 @@ am_Error_e CAmRoutingAdapterALSASender::asyncSetSourceVolume(const am_Handle_s h
             mDataBase.registerVolumeOp(handle, pVolume);
             itSrc->amInfo.volume = volume;
         }
-        catch (...)
+        catch (exception& exc)
         {
-            logAmRaError("CRaALSASender::asyncSetSourceVolume Creation failed for:", itSrc->pcmNam, itSrc->volNam);
+            logAmRaError("CRaALSASender::asyncSetSourceVolume Creation failed for", itSrc->pcmNam, "->", itSrc->volNam, "with", exc.what());
             mpShadow->ackSetSourceVolumeChange(handle, volume, E_UNKNOWN);
         }
     }
@@ -657,51 +726,53 @@ am_Error_e CAmRoutingAdapterALSASender::asyncSetSourceState(const am_Handle_s ha
     assert(handle.handleType == H_SETSOURCESTATE);
     assert(sourceID);
 
-    (void)state;
-
     /* check if we can take the job */
     ra_domainInfo_s * pDomain = mDataBase.findDomainBySource(sourceID);
-    if (pDomain != NULL)
+    if (pDomain == NULL)
     {
-        vector<ra_sourceInfo_s>::iterator itSrc =
-                std::find_if(pDomain->lSourceInfo.begin(), pDomain->lSourceInfo.end(), ra_sourceInfo_s(sourceID));
+        mpShadow->ackSetSourceState(handle, E_NON_EXISTENT);
+        return E_OK;
+    }
 
-        if (itSrc != pDomain->lSourceInfo.end())
+    vector<ra_sourceInfo_s>::iterator itSrc =
+            std::find_if(pDomain->lSourceInfo.begin(), pDomain->lSourceInfo.end(), ra_sourceInfo_s(sourceID));
+    if (itSrc == pDomain->lSourceInfo.end())
+    {
+        mpShadow->ackSetSourceState(handle, E_NON_EXISTENT);
+        return E_OK;
+    }
+
+    am_Error_e error = E_OK;
+    am_Source_s & source = itSrc->amInfo;
+
+    IAmRoutingAdapterALSAProxy *proxy = mDataBase.getProxyOfConnection(mDataBase.findConnectionFromSource(pDomain->domain.domainID, sourceID));
+    if (proxy)
+    {
+        switch (state)
         {
-            am_Error_e error = E_UNKNOWN;
-            IAmRoutingAdapterALSAProxy *proxy = mDataBase.getProxyOfConnection(mDataBase.findConnectionFromSource(pDomain->domain.domainID, sourceID));
-            if (proxy)
-            {
-                switch (state)
+            case SS_ON:
+                if (proxy->openStreaming() == E_OK)
                 {
-                    case SS_ON:
-                        if (proxy->openStreaming() == E_OK)
-                        {
-                            error = proxy->startStreaming();
-                        }
-                        break;
-                    case SS_OFF:
-                        error = proxy->closeStreaming();
-                        break;
-                    case SS_PAUSED:
-                        error = proxy->stopStreaming();
-                        break;
-                    default:
-                        break;
+                    error = proxy->startStreaming();
                 }
-
-                if (error == E_OK)
-                {
-                    am_Source_s source = itSrc->amInfo;
-                    source.sourceState = state;
-                }
-            }
-            mpShadow->ackSetSourceState(handle, error);
-            return E_OK;
+                break;
+            case SS_OFF:
+                error = proxy->closeStreaming();
+                break;
+            case SS_PAUSED:
+                error = proxy->stopStreaming();
+                break;
+            default:
+                break;
         }
     }
 
-    mpShadow->ackSetSourceState(handle, E_NON_EXISTENT);
+    if (error == E_OK)
+    {
+        source.sourceState = state;
+    }
+
+    mpShadow->ackSetSourceState(handle, error);
     return E_OK;
 }
 

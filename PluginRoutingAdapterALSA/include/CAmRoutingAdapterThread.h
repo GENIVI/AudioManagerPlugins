@@ -67,6 +67,7 @@ private:
     std::string             mName;
     __cpu_sched             mCpuSched;
     eState                  mState;
+    int                     mThreadErr;
 
     pthread_mutex_t         mMtx;
     pthread_cond_t          mCond;

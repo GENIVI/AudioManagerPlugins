@@ -58,6 +58,7 @@ public:
     uint8_t duplex;
     uint16_t msBuffersize;
     uint16_t msPrefill;
+    uint16_t msInitTimeout;
     ra_cpuSched_s cpuScheduler;
 };
 
@@ -73,6 +74,7 @@ public:
     std::string domNam;
     std::string srcNam;
     std::string sinkNam;
+    std::string pxyNam;
 
     std::vector<uint32_t> convertionMatrix;
     std::vector<uint32_t> listChannels;
@@ -81,15 +83,25 @@ public:
 
 public:
     ra_proxyInfo_s() {};
-    ra_proxyInfo_s(am_sourceID_t srcId, am_sinkID_t sinkId)
+    ra_proxyInfo_s(const am_sourceID_t srcId, const am_sinkID_t sinkId)
     {
         route.sourceID = srcId;
         route.sinkID = sinkId;
     };
+    ra_proxyInfo_s(const std::string & srcName, const std::string & sinkName)
+    {
+        srcNam = srcName;
+        sinkNam = sinkName;
+    };
     bool operator()(const ra_proxyInfo_s & elem) const
     {
-        return ((route.sourceID == elem.route.sourceID)
-                && ((elem.route.sinkID == 0) || (route.sinkID == elem.route.sinkID)));
+        if (!srcNam.empty())
+        {
+            return ( (srcNam == elem.srcNam)
+                 && ((sinkNam.empty()) || (sinkNam == elem.sinkNam)));
+        }
+        return ( (route.sourceID == elem.route.sourceID)
+             && ((elem.route.sinkID == 0) || (route.sinkID == elem.route.sinkID)));
     };
 };
 }/* namespace am */

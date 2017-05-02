@@ -44,8 +44,12 @@ using namespace am;
 #define ROUTING_ADAPTER_ALSA_DEFAULT_CONF_ROOT "/etc/audiomanager/routing"
 #endif
 
-#define ROUTING_ADAPTER_ALSA_NODE_NAME			"amra_alsa"
+#define ROUTING_ADAPTER_ALSA_NODE_NAME "amra_alsa"
 
+/*
+ * INIT_TOUT is the default number of milliseconds assigned to attribute msInitTimeout when parsing Proxy elements.
+ */
+#define INIT_TOUT 1000
 
 CAmRoutingAdapterALSAParser::CAmRoutingAdapterALSAParser(CAmRoutingAdapterALSAdb & db, string & busname) :
         mDataBase(db), mpDomainRef(), mBusname(busname)
@@ -61,8 +65,7 @@ void CAmRoutingAdapterALSAParser::parseDomainData(ra_domainInfo_s & domainInfo, 
     domainInfo.domain.nodename = converter.kvpQueryValue("nodNam", static_cast<string>(""));
     domainInfo.domain.early = converter.kvpQueryValue("early", false);
     domainInfo.domain.state = converter.kvpQueryValue("state", DS_CONTROLLED, am_dsMap);
-    domainInfo.lAudioProxyInfo = converter.kvpQueryValue("proxy", static_cast<string>(""));
-
+    domainInfo.pxyNam = converter.kvpQueryValue("pxyNam", static_cast<string>(""));
 }
 
 void CAmRoutingAdapterALSAParser::parseSourceData(ra_sourceInfo_s & info, CAmRoutingAdapterKVPConverter::KVPList & kvpList)
@@ -80,10 +83,10 @@ void CAmRoutingAdapterALSAParser::parseSourceData(ra_sourceInfo_s & info, CAmRou
     src.sourceID = converter.kvpQueryValue("srcID", 0);
     src.domainID = converter.kvpQueryValue("domID", 0);
     src.name = converter.kvpQueryValue("srcNam", static_cast<string>(""));
-    src.sourceClassID = converter.kvpQueryValue("srcClsID", 1);
-    src.sourceState = converter.kvpQueryValue("srcStat", SS_ON, am_ssMap);
     src.volume = converter.kvpQueryValue("volume", AM_MUTE);
     src.visible = converter.kvpQueryValue("visible", true);
+    src.sourceClassID = converter.kvpQueryValue("srcClsID", 1);
+    src.sourceState = converter.kvpQueryValue("srcStat", src.visible ? SS_OFF : SS_UNKNNOWN, am_ssMap);
     src.available.availability = converter.kvpQueryValue("availability", A_AVAILABLE, am_aMap);
     src.available.availabilityReason = converter.kvpQueryValue("availabilityReason", AR_UNKNOWN);
     src.interruptState = converter.kvpQueryValue("interruptState", IS_UNKNOWN, am_isMap);
@@ -146,6 +149,7 @@ void CAmRoutingAdapterALSAParser::parseProxyData(ra_proxyInfo_s & info, CAmRouti
     info.domNam = converter.kvpQueryValue("domNam", info.domNam);
     info.srcNam = converter.kvpQueryValue("srcNam", static_cast<string>(""));
     info.sinkNam = converter.kvpQueryValue("sinkNam", static_cast<string>(""));
+    info.pxyNam = converter.kvpQueryValue("pxyNam", mpDomainRef->pxyNam);
     info.convertionMatrix = converter.kvpQueryValue("dftConv", DEF_VEC_MATRIX);
     info.listChannels = converter.kvpQueryValue("lstChannels", DEF_VEC_CHANNELS);
     info.listPcmFormats = converter.kvpQueryValue("lstPcmFmts", DEF_VEC_FORMATS);
@@ -157,6 +161,7 @@ void CAmRoutingAdapterALSAParser::parseProxyData(ra_proxyInfo_s & info, CAmRouti
     alsa.duplex = converter.kvpQueryValue("duplex", false);
     alsa.msBuffersize = converter.kvpQueryValue("msBuffersize", 0);
     alsa.msPrefill = converter.kvpQueryValue("msPrefill", alsa.msBuffersize);
+    alsa.msInitTimeout = converter.kvpQueryValue("msInitTimeout", INIT_TOUT);
     alsa.cpuScheduler.policy = converter.kvpQueryValue("CPUSchedulingPolicy", SCHED_OTHER);
     alsa.cpuScheduler.priority = converter.kvpQueryValue("CPUSchedulingPriority", 0);
 }
