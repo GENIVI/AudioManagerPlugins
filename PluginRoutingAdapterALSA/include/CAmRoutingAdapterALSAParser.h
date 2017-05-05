@@ -63,6 +63,8 @@ private:
     void parseGatewayData(ra_gatewayInfo_s & info, CAmRoutingAdapterKVPConverter::KVPList & kvpList);
     /*Proxy member map*/
     void parseProxyData(ra_proxyInfo_s & info, CAmRoutingAdapterKVPConverter::KVPList & kvpList);
+    /*USB member map*/
+    void parseUSBData(ra_USBInfo_s & info, CAmRoutingAdapterKVPConverter::KVPList & kvpList);
     /*SoundProperty member map */
     template <typename S> void parseSoundPropertyData(S & info, CAmRoutingAdapterKVPConverter::KVPList & kvpList);
     /*SoundPropertySpecification member map */
@@ -83,6 +85,8 @@ private:
     void updateSourceInfo(const xmlNodePtr devNode, CAmRoutingAdapterKVPConverter::KVPList & keyValPair);
     /* Adds the Sink information into lSinkInfo*/
     void updateSinkInfo(const xmlNodePtr devNode, CAmRoutingAdapterKVPConverter::KVPList & keyValPair);
+    /* Adds the USB information*/
+    void updateUSBInfo(CAmRoutingAdapterKVPConverter::KVPList & keyValPair);
     /* updates child information of a sink or source */
     template <typename S> void parseChildInfo(const xmlNodePtr devNode, S & info);
     /* updates inner child information of a property of sink or source */

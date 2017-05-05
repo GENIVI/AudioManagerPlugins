@@ -16,7 +16,7 @@ Requests from the AudioManagerDaemon may address to Streaming operations or Volu
 
 \section class_01 DBManagement
 
-\c CAmRoutingAdapterALSAParser reads the configuration from \c /etc/amra_alsa.conf XML file, using the utilities from \c CAmRoutingAdapterKVPConverter for achieving the correct relations between Key and Value/s. The data is collected in \c CAmRoutingAdapterALSAdb class.
+\c CAmRoutingAdapterALSAParser reads the configuration from \c /etc/audiomanager/routing/alsa.xml file, using the utilities from \c CAmRoutingAdapterKVPConverter for achieving the correct relations between Key and Value/s. The data is collected in \c CAmRoutingAdapterALSAdb class.
 
 \image html db_management.png
 

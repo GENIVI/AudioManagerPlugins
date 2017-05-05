@@ -37,6 +37,8 @@ OPTION (WITH_SHARED_PROXY_INTERFACE
         "build Interface Proxy as a Shared Library" ON )
 OPTION (WITH_TEST_ROUTING_ADAPTER_ALSA
         "Build with the routing adapter ALSA test" OFF )
+OPTION (WITH_DEVICE_DETECTOR
+        "Build with the USB Device Detector using udev" OFF )
 
 SET(PLUGIN_LIB_NAME PluginRoutingAdapterALSA)
 
@@ -49,6 +51,12 @@ SET(CONF_ROOT "${PLUGINS_CONFIG_PATH}/routing")
 FIND_PACKAGE(LibXml2 REQUIRED)
 
 FIND_PACKAGE(ALSA REQUIRED)
+
+IF(WITH_DEVICE_DETECTOR)
+set(UDEV_NAMES ${UDEV_NAMES} udev)
+find_library(UDEV_LIBRARY NAMES ${UDEV_NAMES})
+add_definitions(-DWITH_DEVICE_DETECTOR)
+ENDIF (WITH_DEVICE_DETECTOR)
 
 INCLUDE_DIRECTORIES(
     ${CMAKE_SOURCE_DIR}
@@ -86,6 +94,7 @@ TARGET_LINK_LIBRARIES(PluginRoutingAdapterALSA
     ${AM_LINK_LIBS}
     ${LIBXML2_LIBRARIES}
     ${ALSA_LIBRARIES}
+    ${UDEV_LIBRARY}
 )
 
 INSTALL(TARGETS PluginRoutingAdapterALSA

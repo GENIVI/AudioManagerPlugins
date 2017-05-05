@@ -58,6 +58,13 @@ ra_domainInfo_s * CAmRoutingAdapterALSAdb::findDomain(am_domainID_t id)
     return ((it != mDomains.end()) ? it.base() : NULL);
 }
 
+ra_domainInfo_s * CAmRoutingAdapterALSAdb::findDomain(const string &domNam)
+{
+    vector<ra_domainInfo_s>::iterator it =
+            find_if(mDomains.begin(), mDomains.end(), ra_domainInfo_s(domNam));
+    return ((it != mDomains.end()) ? it.base() : NULL);
+}
+
 ra_domainInfo_s * CAmRoutingAdapterALSAdb::findDomain(ra_sourceInfo_s & source, ra_sinkInfo_s & sink)
 {
     for (ra_domainInfo_s & domain : mDomains)

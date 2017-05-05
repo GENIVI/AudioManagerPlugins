@@ -3,13 +3,13 @@
 AudioManager concept (<a href="http://docs.projects.genivi.org/AudioManager/audiomanagercomponentspage.html">http://docs.projects.genivi.org/AudioManager/audiomanagercomponentspage.html</a>) shows how a Routing Adapter is placed in the main architecture.
 \n
 \n
-The Routing Adapter ALSA is a plugin which can be used as a playground to get familiar with the GENIVI AudioManager. With an XML file it is possible to register as many Domains as needed with respective Source, Sinks and Gateways.
+The Routing Adapter ALSA is a plugin which can be used as a playground to get familiar with the GENIVI AudioManager. With an XML file it is possible to register as many Domains as needed with respective Sources, Sinks and Gateways.
 \n
 \n
 The Routing Adapter ALSA does not interact directly with applications which stream PCM audio to an ALSA device. An application has to interact with AudioManager through Command Interface in order to request connections, disconnect them, to receive notifications about new elements detected or elements removed. The AudioManager Daemon itself interacts with the Routing Adapter ALSA.
 \n
 \n
-In order to implement use cases like mixing of different MainSource of class entertainment and announcement the Routing Adapter ALSA can be used to change the volume level of the “MainSource”. To achieve this the user must configure dedicated virtual ALSA devices in the ALSA configuration file which offers e.g. softvol ALSA plugin per application. With the dmix ALSA plugin the streams are finally mixed together.
+In order to implement use cases, like mixing of different MainSource of class entertainment and announcement, the Routing Adapter ALSA can be used to change the volume level of the “MainSource”. To achieve this the user must configure dedicated virtual ALSA devices in the ALSA configuration file which offers e.g. softvol ALSA plugin per application. With the dmix ALSA plugin the streams are finally mixed together.
 \n
 \b NOTE: The Generic Controller can be used to control the MainSource volumes for mixed scenarios.
 \n
@@ -98,4 +98,9 @@ pcm.vdev_dsp_amp {
 \endcode
 
 In the \ref example can be seen how these resources have to be configured for the RoutingAdapter ALSA to achieve the design.
+\n
+\n
+The RoutingAdapterALSA can monitor connected USB Devices via udev. When this feature is enabled, USB soundcards will be dynamic Sources and Sinks. Details on configuration can be found in the \ref configuration_file.
+
+
 */

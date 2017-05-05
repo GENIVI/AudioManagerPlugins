@@ -3,6 +3,8 @@
 \c alsa.xml file is the XML configuration file which is read by the DB Management component as shown in the \ref architecture_overview.
 The file will be deployed by default to /usr/local/etc/audiomanager/routing. The position can be changed through CMAKE flag <b>CONFIG_PREFIX</b>.
 Please read README.md for further information.
+\n
+The full path to \c alsa.xml can also be set through the Environmental Variable \c AMRA_ALSA_CONFIGPATH. 
 
 \section overview_xml Overview
  
@@ -35,6 +37,17 @@ It is possible to configure Domains with such tags.
 <li> 3 - DS_INDEPENDENT_RUNDOWN
 </ul>
 <tr><td>\c pxyNam<td>String<td>""<td>The name of the Proxy to be used by the whole Domain. With default settings, the \c RoutingAdapterALSA will attempt to open \c /usr/lib/audiomanager/streaming/lib[specified_proxy].so . It is possible to change the path with the command line option \c -P and through this XML attribute is possible to specify the name of the proxy shared library
+</table>
+\n\n
+\ref example
+
+\subsection usb_tag <tUSB>
+This tag must be child of \c <amra_alsa>\n
+The RoutingAdapterALSA supports USB soundcard devices detection, by listening to udev messages. The feature has to be activated through CMake Option WITH_DEVICE_DETECTOR. This tag is mandatory for knowing to which Domain the (obviously dynamic) resources shall belong to. 
+<table>
+<caption id="usb_table" align="top">&lt;tUSB&gt; Attributes</caption>
+<tr><th>Attribute<th>Type<th>Default<th>Description
+<tr><td>\c domNam<td>String<td>""<td>The name of the domain to which the dynamic resources will be registered
 </table>
 \n\n
 \ref example
@@ -290,7 +303,7 @@ File: \c /etc/audiomanager/routing/alsa.xml
 </tDOMAIN> <!-- end of Domain Applications device info -->
 
 <!-- Beginning of Domain VirtDSP device info -->
-<!-- <tDOMAIN domNam = "VirtDSP" nodNam = "Cpu" proxy = "CustomAudioProxy"> -->
+<!-- <tDOMAIN domNam = "VirtDSP" nodNam = "Cpu" pxyNam = "CustomAudioProxy"> -->
 <tDOMAIN domNam = "VirtDSP" nodNam = "Cpu">
     <!-- source info -->
     <tSOURCE srcNam = "Gateway0" srcClsNam = "BASE" visible = "0"> </tSOURCE>

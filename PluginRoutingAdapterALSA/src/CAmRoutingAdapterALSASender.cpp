@@ -112,7 +112,14 @@ am_Error_e CAmRoutingAdapterALSASender::startupInterface(IAmRoutingReceive * rec
     mpReceiveInterface = receiveInterface;
     mpReceiveInterface->getSocketHandler(mpSocketHandler);
     assert(mpSocketHandler);
+
+
+#ifdef WITH_DEVICE_DETECTOR
+    mpDeviceDetector = make_shared<CAmRoutingAdapterALSADeviceDetector>(mpSocketHandler, this, mDataBase);
+#endif /* WITH_DEVICE_DETECTOR */
+
     mpShadow = new IAmRoutingReceiverShadow(mpReceiveInterface, mpSocketHandler);
+
     return E_OK;
 }
 
@@ -364,6 +371,11 @@ void CAmRoutingAdapterALSASender::setRoutingReady(const uint16_t handle)
 {
     logAmRaInfo("CRaALSASender::setRoutingReady got called");
     mDataBase.registerDomains();
+
+#ifdef WITH_DEVICE_DETECTOR
+    mpDeviceDetector->enumerateAndRegister();
+#endif /* WITH_DEVICE_DETECTOR */
+
     mpShadow->confirmRoutingReady(handle, E_OK);
 }
 

@@ -32,6 +32,7 @@
 #ifndef ROUTINGADAPTERALSASENDER_H_
 #define ROUTINGADAPTERALSASENDER_H_
 
+#include <memory>
 #include "IAmRouting.h"
 #include "IAmRoutingReceiverShadow.h"
 #include "CAmRoutingAdapterALSAProxyDefault.h"
@@ -40,6 +41,7 @@
 
 #include "CAmCommandLineSingleton.h"
 
+#include "CAmRoutingAdapterALSADeviceDetector.h"
 
 #define RA_ALSA_BUSNAME  "ALSARoutingPlugin"
 
@@ -131,6 +133,10 @@ private:
 
     CAmRoutingAdapterALSAdb   mDataBase;
     std::string               mBusname;
+
+#ifdef WITH_DEVICE_DETECTOR
+    std::shared_ptr<CAmRoutingAdapterALSADeviceDetector> mpDeviceDetector;
+#endif /* WITH_DEVICE_DETECTOR */
 
     TCLAP::ValueArg<std::string> mCommandLineArg;
 
