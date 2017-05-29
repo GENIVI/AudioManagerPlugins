@@ -374,14 +374,15 @@ public:
     ra_domainInfo_s * findDomain(const std::string &domNam);
     ra_domainInfo_s * findDomain(ra_sourceInfo_s & source, ra_sinkInfo_s & sink);
     ra_domainInfo_s * findDomainByConnection(const am_connectionID_t id);
-    ra_domainInfo_s * findDomainBySource(const am_sourceID_t id);
-    ra_domainInfo_s * findDomainBySink(const am_sinkID_t id);
     ra_proxyInfo_s  * findProxyInDomain(ra_domainInfo_s *pDomain,
                                         const am_sourceID_t sourceID, const am_sinkID_t sinkID = 0);
     ra_proxyInfo_s  * findProxyInDomain(const am_domainID_t domainID,
                                         const std::string & sourceName, const std::string & sinkName = "");
     am_connectionID_t findConnectionFromSource(const am_domainID_t domainId,
                                                     const am_sourceID_t sourceID);
+    ra_sinkInfo_s   * findSink(const am_sinkID_t id);
+    ra_sourceInfo_s * findSource(const am_sourceID_t id);
+
     void setUSBInfo(ra_USBInfo_s &usbInfo)
     {
         mUSB = usbInfo;

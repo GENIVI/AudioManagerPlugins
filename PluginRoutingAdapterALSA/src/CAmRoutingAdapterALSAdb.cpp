@@ -51,7 +51,7 @@ ra_domainInfo_s * CAmRoutingAdapterALSAdb::createDomain(ra_domainInfo_s & domain
     return &mDomains.back();
 }
 
-ra_domainInfo_s * CAmRoutingAdapterALSAdb::findDomain(am_domainID_t id)
+ra_domainInfo_s * CAmRoutingAdapterALSAdb::findDomain(const am_domainID_t id)
 {
     vector<ra_domainInfo_s>::iterator it =
             find_if(mDomains.begin(), mDomains.end(), ra_domainInfo_s(id));
@@ -90,7 +90,7 @@ ra_domainInfo_s * CAmRoutingAdapterALSAdb::findDomain(ra_sourceInfo_s & source, 
     return NULL;
 }
 
-ra_domainInfo_s * CAmRoutingAdapterALSAdb::findDomainByConnection(am_connectionID_t id)
+ra_domainInfo_s * CAmRoutingAdapterALSAdb::findDomainByConnection(const am_connectionID_t id)
 {
     /* find the route */
     map<am_connectionID_t, ra_route_s>::iterator hit = mMapConnectionIDRoute.find(id);
@@ -100,33 +100,6 @@ ra_domainInfo_s * CAmRoutingAdapterALSAdb::findDomainByConnection(am_connectionI
         return NULL;
     }
     return findDomain(hit->second.domainID);
-}
-
-ra_domainInfo_s * CAmRoutingAdapterALSAdb::findDomainBySource(am_sourceID_t id)
-{
-    /* find the route */
-    for (pair<am_connectionID_t, ra_route_s>&& pair : mMapConnectionIDRoute)
-    {
-        if (pair.second.sourceID == id)
-        {
-            return findDomain(pair.second.domainID);
-        }
-    }
-    logAmRaError("CRaALSAdb::findDomainBySource unknown", id);
-    return NULL;
-}
-
-ra_domainInfo_s * CAmRoutingAdapterALSAdb::findDomainBySink(am_sinkID_t id)
-{
-    for (pair<am_connectionID_t, ra_route_s>&& pair : mMapConnectionIDRoute)
-    {
-        if (pair.second.sinkID == id)
-        {
-            return findDomain(pair.second.domainID);
-        }
-    }
-    logAmRaError("CRaALSAdb::findDomainBySink unknown", id);
-    return NULL;
 }
 
 ra_proxyInfo_s * CAmRoutingAdapterALSAdb::findProxyInDomain(
@@ -168,6 +141,38 @@ am_connectionID_t CAmRoutingAdapterALSAdb::findConnectionFromSource(const am_dom
         }
     }
     return -1;
+}
+
+ra_sinkInfo_s * CAmRoutingAdapterALSAdb::findSink(const am_sinkID_t id)
+{
+    for (ra_domainInfo_s & domain : mDomains)
+    {
+        /* find sink id */
+        vector<ra_sinkInfo_s>::iterator itr =
+                find_if(domain.lSinkInfo.begin(), domain.lSinkInfo.end(), ra_sinkInfo_s(id));
+        if (itr != domain.lSinkInfo.end())
+        {
+            return &(*itr);
+        }
+    }
+
+    return NULL;
+}
+
+ra_sourceInfo_s * CAmRoutingAdapterALSAdb::findSource(const am_sourceID_t id)
+{
+    for (ra_domainInfo_s & domain : mDomains)
+    {
+        /* find source id */
+        vector<ra_sourceInfo_s>::iterator itr =
+                find_if(domain.lSourceInfo.begin(), domain.lSourceInfo.end(), ra_sourceInfo_s(id));
+        if (itr != domain.lSourceInfo.end())
+        {
+            return &(*itr);
+        }
+    }
+
+    return NULL;
 }
 
 void CAmRoutingAdapterALSAdb::cleanup()

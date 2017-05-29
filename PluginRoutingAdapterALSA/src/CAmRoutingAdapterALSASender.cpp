@@ -576,8 +576,7 @@ am_Error_e CAmRoutingAdapterALSASender::asyncDisconnect(const am_Handle_s handle
     assert(handle.handleType == H_DISCONNECT);
     assert(connectionID);
 
-    ra_domainInfo_s * pDomain = mDataBase.findDomainByConnection(connectionID);
-    if (pDomain == NULL)
+    if (!mDataBase.findDomainByConnection(connectionID))
     {
         mpShadow->ackDisconnect(handle, connectionID, E_NON_EXISTENT);
         return E_OK;
@@ -623,24 +622,15 @@ am_Error_e CAmRoutingAdapterALSASender::asyncSetSinkVolume(const am_Handle_s han
         return E_OK;
     }
 
-    ra_domainInfo_s * pDomain = mDataBase.findDomainBySink(sinkID);
-    if (pDomain == NULL)
+    ra_sinkInfo_s * pSink = mDataBase.findSink(sinkID);
+    if (pSink == NULL)
     {
+        logAmRaInfo("CRaALSASender::asyncSetSinkVolume", sinkID, "is not existing");
         mpShadow->ackSetSinkVolumeChange(handle, volume, E_NON_EXISTENT);
         return E_OK;
     }
 
-    /* find the sink and request the configuration settings */
-    vector<ra_sinkInfo_s>::iterator itSink =
-            std::find_if(pDomain->lSinkInfo.begin(), pDomain->lSinkInfo.end(), ra_sinkInfo_s(sinkID));
-    if (itSink == pDomain->lSinkInfo.end())
-    {
-        logAmRaError("CRaALSASender::asyncSetSinkVolume no volume element configured", itSink->pcmNam, itSink->volNam);
-        mpShadow->ackSetSinkVolumeChange(handle, volume, E_NON_EXISTENT);
-        return E_OK;
-    }
-
-    if (volume != itSink->amInfo.volume)
+    if (volume != pSink->amInfo.volume)
     {
         try
         {
@@ -652,14 +642,14 @@ am_Error_e CAmRoutingAdapterALSASender::asyncSetSinkVolume(const am_Handle_s han
             volumes.time = rampTime;
 
             CAmRoutingAdapterALSAVolume* pVolume = new CAmRoutingAdapterALSAVolume(handle, volumes,
-                    itSink->pcmNam, itSink->volNam, mpReceiveInterface, mpSocketHandler, this);
+                    pSink->pcmNam, pSink->volNam, mpReceiveInterface, mpSocketHandler, this);
             pVolume->startFading();
             mDataBase.registerVolumeOp(handle, pVolume);
-            itSink->amInfo.volume = volume;
+            pSink->amInfo.volume = volume;
         }
         catch (exception& exc)
         {
-            logAmRaError("CRaALSASender::asyncSetSinkVolume Creation failed for", itSink->pcmNam, "->", itSink->volNam, "with", exc.what());
+            logAmRaError("CRaALSASender::asyncSetSinkVolume Creation failed for", pSink->pcmNam, "->", pSink->volNam, "with", exc.what());
             mpShadow->ackSetSinkVolumeChange(handle, volume, E_UNKNOWN);
         }
     }
@@ -694,24 +684,15 @@ am_Error_e CAmRoutingAdapterALSASender::asyncSetSourceVolume(const am_Handle_s h
         return E_OK;
     }
 
-    ra_domainInfo_s * pDomain = mDataBase.findDomainBySource(sourceID);
-    if (pDomain == NULL)
+    ra_sourceInfo_s * pSrc = mDataBase.findSource(sourceID);
+    if (pSrc == NULL)
     {
+        logAmRaInfo("CRaALSASender::asyncSetSourceVolume", sourceID, "is not existing");
         mpShadow->ackSetSourceVolumeChange(handle, volume, E_NON_EXISTENT);
         return E_OK;
     }
 
-    /* find the sink and request the configuration settings */
-    vector<ra_sourceInfo_s>::iterator itSrc =
-            std::find_if(pDomain->lSourceInfo.begin(), pDomain->lSourceInfo.end(), ra_sourceInfo_s(sourceID));
-    if (itSrc == pDomain->lSourceInfo.end())
-    {
-        logAmRaInfo("CRaALSASender::asyncSetSourceVolume no volume element configured", itSrc->pcmNam, itSrc->volNam);
-        mpShadow->ackSetSourceVolumeChange(handle, volume, E_NON_EXISTENT);
-        return E_OK;
-    }
-
-    if (volume != itSrc->amInfo.volume)
+    if (volume != pSrc->amInfo.volume)
     {
         try
         {
@@ -723,14 +704,14 @@ am_Error_e CAmRoutingAdapterALSASender::asyncSetSourceVolume(const am_Handle_s h
             volumes.time = rampTime;
 
             CAmRoutingAdapterALSAVolume* pVolume = new CAmRoutingAdapterALSAVolume(handle, volumes,
-                    itSrc->pcmNam, itSrc->volNam, mpReceiveInterface, mpSocketHandler, this);
+                    pSrc->pcmNam, pSrc->volNam, mpReceiveInterface, mpSocketHandler, this);
             pVolume->startFading();
             mDataBase.registerVolumeOp(handle, pVolume);
-            itSrc->amInfo.volume = volume;
+            pSrc->amInfo.volume = volume;
         }
         catch (exception& exc)
         {
-            logAmRaError("CRaALSASender::asyncSetSourceVolume Creation failed for", itSrc->pcmNam, "->", itSrc->volNam, "with", exc.what());
+            logAmRaError("CRaALSASender::asyncSetSourceVolume Creation failed for", pSrc->pcmNam, "->", pSrc->volNam, "with", exc.what());
             mpShadow->ackSetSourceVolumeChange(handle, volume, E_UNKNOWN);
         }
     }
@@ -751,25 +732,17 @@ am_Error_e CAmRoutingAdapterALSASender::asyncSetSourceState(const am_Handle_s ha
     assert(sourceID);
 
     /* check if we can take the job */
-    ra_domainInfo_s * pDomain = mDataBase.findDomainBySource(sourceID);
-    if (pDomain == NULL)
-    {
-        mpShadow->ackSetSourceState(handle, E_NON_EXISTENT);
-        return E_OK;
-    }
-
-    vector<ra_sourceInfo_s>::iterator itSrc =
-            std::find_if(pDomain->lSourceInfo.begin(), pDomain->lSourceInfo.end(), ra_sourceInfo_s(sourceID));
-    if (itSrc == pDomain->lSourceInfo.end())
+    ra_sourceInfo_s * pSrc = mDataBase.findSource(sourceID);
+    if (pSrc == NULL)
     {
         mpShadow->ackSetSourceState(handle, E_NON_EXISTENT);
         return E_OK;
     }
 
     am_Error_e error = E_OK;
-    am_Source_s & source = itSrc->amInfo;
+    am_Source_s & source = pSrc->amInfo;
 
-    IAmRoutingAdapterALSAProxy *proxy = mDataBase.getProxyOfConnection(mDataBase.findConnectionFromSource(pDomain->domain.domainID, sourceID));
+    IAmRoutingAdapterALSAProxy *proxy = mDataBase.getProxyOfConnection(mDataBase.findConnectionFromSource(source.domainID, sourceID));
     if (proxy)
     {
         switch (state)
@@ -810,16 +783,8 @@ am_Error_e CAmRoutingAdapterALSASender::asyncSetSinkSoundProperty(const am_Handl
     assert(sinkID);
 
     /* check if we can take the job */
-    ra_domainInfo_s * pDomain = mDataBase.findDomainBySink(sinkID);
-    if (pDomain == NULL)
-    {
-        mpShadow->ackSetSinkSoundProperty(handle, E_NON_EXISTENT);
-        return E_OK;
-    }
-
-    vector<ra_sinkInfo_s>::iterator itSink =
-            std::find_if(pDomain->lSinkInfo.begin(), pDomain->lSinkInfo.end(), ra_sinkInfo_s(sinkID));
-    if (itSink == pDomain->lSinkInfo.end())
+    ra_sinkInfo_s * pSink = mDataBase.findSink(sinkID);
+    if (pSink == NULL)
     {
         mpShadow->ackSetSinkSoundProperty(handle, E_NON_EXISTENT);
         return E_OK;
@@ -828,10 +793,10 @@ am_Error_e CAmRoutingAdapterALSASender::asyncSetSinkSoundProperty(const am_Handl
     am_SoundPropertyMapping_s soundPropertyMapping;
     soundPropertyMapping.type = soundProperty.type;
     soundPropertyMapping.value = soundProperty.value;
-    for (auto it = itSink->mapSoundPropertiesToMixer[soundPropertyMapping].begin(); it != itSink->mapSoundPropertiesToMixer[soundPropertyMapping].end(); it++)
+    for (auto it = pSink->mapSoundPropertiesToMixer[soundPropertyMapping].begin(); it != pSink->mapSoundPropertiesToMixer[soundPropertyMapping].end(); it++)
     {
         CAmRoutingAdapterALSAMixerCtrl mixer;
-        int err = mixer.openMixer(itSink->pcmNam, it->mixerName);
+        int err = mixer.openMixer(pSink->pcmNam, it->mixerName);
         if (err < 0)
         {
             logAmRaError(mixer.getStrError());
@@ -864,7 +829,7 @@ am_Error_e CAmRoutingAdapterALSASender::asyncSetSinkSoundProperty(const am_Handl
             }
         }
 
-        for (vector<am_SoundProperty_s>::reference prop : itSink->amInfo.listSoundProperties)
+        for (vector<am_SoundProperty_s>::reference prop : pSink->amInfo.listSoundProperties)
         {
             if (prop.type == soundProperty.type)
             {
@@ -902,19 +867,9 @@ am_Error_e CAmRoutingAdapterALSASender::asyncSetSourceSoundProperty(const am_Han
     assert(handle.handleType == H_SETSOURCESOUNDPROPERTY);
     assert(sourceID);
 
-    (void)soundProperty;
-
     /* check if we can take the job */
-    ra_domainInfo_s * pDomain = mDataBase.findDomainBySource(sourceID);
-    if (pDomain == NULL)
-    {
-        mpShadow->ackSetSourceSoundProperty(handle, E_NON_EXISTENT);
-        return E_OK;
-    }
-
-    vector<ra_sourceInfo_s>::iterator itSrc =
-            std::find_if(pDomain->lSourceInfo.begin(), pDomain->lSourceInfo.end(), ra_sourceInfo_s(sourceID));
-    if (itSrc == pDomain->lSourceInfo.end())
+    ra_sourceInfo_s * pSrc = mDataBase.findSource(sourceID);
+    if (pSrc == NULL)
     {
         mpShadow->ackSetSourceSoundProperty(handle, E_NON_EXISTENT);
         return E_OK;
@@ -923,10 +878,10 @@ am_Error_e CAmRoutingAdapterALSASender::asyncSetSourceSoundProperty(const am_Han
     am_SoundPropertyMapping_s soundPropertyMapping;
     soundPropertyMapping.type = soundProperty.type;
     soundPropertyMapping.value = soundProperty.value;
-    for (auto it = itSrc->mapSoundPropertiesToMixer[soundPropertyMapping].begin(); it != itSrc->mapSoundPropertiesToMixer[soundPropertyMapping].end(); it++)
+    for (auto it = pSrc->mapSoundPropertiesToMixer[soundPropertyMapping].begin(); it != pSrc->mapSoundPropertiesToMixer[soundPropertyMapping].end(); it++)
     {
         CAmRoutingAdapterALSAMixerCtrl mixer;
-        int err = mixer.openMixer(itSrc->pcmNam, it->mixerName);
+        int err = mixer.openMixer(pSrc->pcmNam, it->mixerName);
         if (err < 0)
         {
             logAmRaError(mixer.getStrError());
@@ -959,7 +914,7 @@ am_Error_e CAmRoutingAdapterALSASender::asyncSetSourceSoundProperty(const am_Han
             }
         }
 
-        for (vector<am_SoundProperty_s>::reference prop : itSrc->amInfo.listSoundProperties)
+        for (vector<am_SoundProperty_s>::reference prop : pSrc->amInfo.listSoundProperties)
         {
             if (prop.type == soundProperty.type)
             {
