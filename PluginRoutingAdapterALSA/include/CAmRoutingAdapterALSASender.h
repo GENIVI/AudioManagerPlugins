@@ -123,6 +123,12 @@ public:
     void deregisterSink(const am_sinkID_t &sinkID) override;
     void deregisterGateway(const am_gatewayID_t &gatewayID) override;
 
+    /*
+     * Helper for USB
+     */
+    void peekSourceClassID(const std::string& name, am_sourceID_t& sourceID);
+    void peekSinkClassID(const std::string& name, am_sinkID_t& sinkID);
+
 private:
     static bool isNumber(const std::string& value);
 

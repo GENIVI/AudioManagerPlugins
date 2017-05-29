@@ -136,6 +136,24 @@ void CAmRoutingAdapterALSASender::getInterfaceVersion(std::string & version) con
     version = RoutingVersion;
 }
 
+void CAmRoutingAdapterALSASender::peekSourceClassID(const std::string& name, am_sourceID_t& sourceID)
+{
+    am_Error_e error = E_OK;
+    if ((error = mpReceiveInterface->peekSourceClassID(name, sourceID)) != E_OK)
+    {
+        logAmRaInfo("CAmRoutingAdapterALSASender::registerSource", "Error on peekSourceClassID, failed with", error);
+    }
+}
+
+void CAmRoutingAdapterALSASender::peekSinkClassID(const std::string& name, am_sinkID_t& sinkID)
+{
+    am_Error_e error = E_OK;
+    if ((error = mpReceiveInterface->peekSinkClassID(name, sinkID)) != E_OK)
+    {
+        logAmRaInfo("CAmRoutingAdapterALSASender::registerSink", "Error on peekSinkClassID, failed with", error);
+    }
+}
+
 am_Error_e CAmRoutingAdapterALSASender::registerDomain(am_Domain_s & domain)
 {
     if (domain.name.length() == 0)
@@ -177,10 +195,7 @@ void CAmRoutingAdapterALSASender::registerSource(ra_sourceInfo_s & info, am_doma
     }
     if ((info.srcClsNam.length() != 0) && (source.visible == true))
     {
-        if ((error = mpReceiveInterface->peekSourceClassID(info.srcClsNam, source.sourceClassID)) != E_OK)
-        {
-            logAmRaInfo("CRaALSASender::registerSource", "Error on peekSourceClassID, failed with", error);
-        }
+        peekSourceClassID(info.srcClsNam, source.sourceClassID);
     }
     /* Register only in case if it is dynamic otherwise skip */
     if ((source.sourceID == 0) || (source.sourceID >= DYNAMIC_ID_BOUNDARY))
@@ -206,10 +221,7 @@ void CAmRoutingAdapterALSASender::registerSink(ra_sinkInfo_s & info, am_domainID
 
     if ((info.sinkClsNam.length() != 0) && (sink.visible == true))
     {
-        if ((error = mpReceiveInterface->peekSinkClassID(info.sinkClsNam, sink.sinkClassID)) != E_OK)
-        {
-            logAmRaError("CRaALSASender::registerSink", "ret on peekSinkClassID, failed with", error);
-        }
+        peekSinkClassID(info.sinkClsNam, sink.sinkClassID);
     }
 
     /* Register only in case if it is dynamic otherwise skip */

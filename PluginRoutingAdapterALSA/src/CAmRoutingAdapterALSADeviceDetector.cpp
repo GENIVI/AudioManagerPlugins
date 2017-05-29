@@ -115,25 +115,30 @@ void CAmRoutingAdapterALSADeviceDetector::registerSink(
     /*
      * Save Card# VS resource name in mapping
      */
-    mDatabase.getUSBInfo()->mapCardToSinkName[cardNumber] = cardLabel.name + " [" + cardLabel.id + "]";
+    for (auto && it : mDatabase.getUSBInfo()->lSinkInfo)
+    {
+        mDatabase.getUSBInfo()->mapCardToSinkName[cardNumber].push_back(cardLabel.name + " [" + cardLabel.id + "][" + it.sinkClsNam + "]");
 
-    ra_sinkInfo_s sinkInfo;
+        ra_sinkInfo_s sinkInfo;
 
-    sinkInfo.amInfo.domainID = domainUSB->domain.domainID;
-    sinkInfo.domNam = domainUSB->domain.name;
+        sinkInfo.amInfo.domainID = domainUSB->domain.domainID;
+        sinkInfo.domNam = domainUSB->domain.name;
+        sinkInfo.amInfo.sinkID = it.amInfo.sinkID;
+        sinkInfo.amInfo.name = mDatabase.getUSBInfo()->mapCardToSinkName[cardNumber].at(&it - &mDatabase.getUSBInfo()->lSinkInfo[0]);
+        sinkInfo.amInfo.visible = it.amInfo.visible;
+        sinkInfo.amInfo.muteState = it.amInfo.muteState;
+        sinkInfo.devTyp = it.devTyp;
+        sinkInfo.sinkClsNam = it.sinkClsNam;
 
-    sinkInfo.amInfo.sinkID = 0;
-    sinkInfo.amInfo.name = mDatabase.getUSBInfo()->mapCardToSinkName[cardNumber];
-    sinkInfo.amInfo.visible = true;
-    sinkInfo.amInfo.muteState = MS_UNMUTED;
-    sinkInfo.devTyp = DPS_REAL;
+        mpSender->peekSinkClassID(sinkInfo.sinkClsNam, sinkInfo.amInfo.sinkClassID);
 
-    mpSender->registerSink(sinkInfo, sinkInfo.amInfo.domainID);
+        mpSender->registerSink(sinkInfo, sinkInfo.amInfo.domainID);
 
-    /*
-     * Add the entry to our db
-     */
-    domainUSB->lSinkInfo.push_back(sinkInfo);
+        /*
+         * Add the entry to our db
+         */
+        domainUSB->lSinkInfo.push_back(sinkInfo);
+    }
 }
 
 void CAmRoutingAdapterALSADeviceDetector::registerSource(
@@ -147,25 +152,30 @@ void CAmRoutingAdapterALSADeviceDetector::registerSource(
     /*
      * Save Card# VS resource name in mapping
      */
-    mDatabase.getUSBInfo()->mapCardToSourceName[cardNumber] = cardLabel.name + " [" + cardLabel.id + "]";
+    for (auto && it : mDatabase.getUSBInfo()->lSourceInfo)
+    {
+        mDatabase.getUSBInfo()->mapCardToSourceName[cardNumber].push_back(cardLabel.name + " [" + cardLabel.id + "][" +  it.srcClsNam + "]");
 
-    ra_sourceInfo_s sourceInfo;
+        ra_sourceInfo_s sourceInfo;
 
-    sourceInfo.amInfo.domainID = domainUSB->domain.domainID;
-    sourceInfo.domNam = domainUSB->domain.name;
+        sourceInfo.amInfo.domainID = domainUSB->domain.domainID;
+        sourceInfo.domNam = domainUSB->domain.name;
+        sourceInfo.amInfo.sourceID = it.amInfo.sourceID;
+        sourceInfo.amInfo.name = mDatabase.getUSBInfo()->mapCardToSourceName[cardNumber].at(&it - &mDatabase.getUSBInfo()->lSourceInfo[0]);
+        sourceInfo.amInfo.visible = it.amInfo.visible;
+        sourceInfo.amInfo.sourceState = it.amInfo.sourceState;
+        sourceInfo.devTyp = it.devTyp;
+        sourceInfo.srcClsNam = it.srcClsNam;
 
-    sourceInfo.amInfo.sourceID = 0;
-    sourceInfo.amInfo.name = mDatabase.getUSBInfo()->mapCardToSourceName[cardNumber];
-    sourceInfo.amInfo.visible = true;
-    sourceInfo.amInfo.sourceState = SS_OFF;
-    sourceInfo.devTyp = DPS_REAL;
+        mpSender->peekSourceClassID(sourceInfo.srcClsNam, sourceInfo.amInfo.sourceClassID);
 
-    mpSender->registerSource(sourceInfo, sourceInfo.amInfo.domainID);
+        mpSender->registerSource(sourceInfo, sourceInfo.amInfo.domainID);
 
-    /*
-     * Add the entry to our db
-     */
-    domainUSB->lSourceInfo.push_back(sourceInfo);
+        /*
+         * Add the entry to our db
+         */
+        domainUSB->lSourceInfo.push_back(sourceInfo);
+    }
 }
 
 void CAmRoutingAdapterALSADeviceDetector::getAlsaInfo(const string &cardNumber, CardLabel & cardLabelPlayback, CardLabel & cardLabelCapture)
@@ -228,25 +238,30 @@ void CAmRoutingAdapterALSADeviceDetector::getAlsaInfo(const string &cardNumber, 
 
 void CAmRoutingAdapterALSADeviceDetector::deregisterSource(ra_domainInfo_s *domainUSB, const string &cardNumber)
 {
-    ra_sourceInfo_s *source = mDatabase.findElement<ra_sourceInfo_s>(domainUSB->domain.domainID, mDatabase.getUSBInfo()->mapCardToSourceName[cardNumber]);
-    if (source)
+    for (auto && it : mDatabase.getUSBInfo()->lSourceInfo)
     {
-        mpSender->deregisterSource(source->amInfo.sourceID);
-        domainUSB->lSourceInfo.erase(static_cast<vector<ra_sourceInfo_s>::iterator>(source));
-        mDatabase.getUSBInfo()->mapCardToSourceName.erase(cardNumber);
+        ra_sourceInfo_s *source = mDatabase.findElement<ra_sourceInfo_s>(domainUSB->domain.domainID, mDatabase.getUSBInfo()->mapCardToSourceName[cardNumber].at(&it - &mDatabase.getUSBInfo()->lSourceInfo[0]));
+        if (source)
+        {
+            mpSender->deregisterSource(source->amInfo.sourceID);
+            domainUSB->lSourceInfo.erase(static_cast<vector<ra_sourceInfo_s>::iterator>(source));
+        }
     }
-
+    mDatabase.getUSBInfo()->mapCardToSourceName.erase(cardNumber);
 }
 
 void CAmRoutingAdapterALSADeviceDetector::deregisterSink(ra_domainInfo_s *domainUSB, const string &cardNumber)
 {
-    ra_sinkInfo_s *sink = mDatabase.findElement<ra_sinkInfo_s>(domainUSB->domain.domainID, mDatabase.getUSBInfo()->mapCardToSinkName[cardNumber]);
-    if (sink)
+    for (auto && it : mDatabase.getUSBInfo()->lSinkInfo)
     {
-        mpSender->deregisterSink(sink->amInfo.sinkID);
-        domainUSB->lSinkInfo.erase(static_cast<vector<ra_sinkInfo_s>::iterator>(sink));
-        mDatabase.getUSBInfo()->mapCardToSinkName.erase(cardNumber);
+        ra_sinkInfo_s *sink = mDatabase.findElement<ra_sinkInfo_s>(domainUSB->domain.domainID, mDatabase.getUSBInfo()->mapCardToSinkName[cardNumber].at(&it - &mDatabase.getUSBInfo()->lSinkInfo[0]));
+        if (sink)
+        {
+            mpSender->deregisterSink(sink->amInfo.sinkID);
+            domainUSB->lSinkInfo.erase(static_cast<vector<ra_sinkInfo_s>::iterator>(sink));
+        }
     }
+    mDatabase.getUSBInfo()->mapCardToSinkName.erase(cardNumber);
 }
 
 void CAmRoutingAdapterALSADeviceDetector::parseSysPath(const char *path, struct udev_device *dev, const bool isFromMonitor)

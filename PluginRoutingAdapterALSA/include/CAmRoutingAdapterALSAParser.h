@@ -85,6 +85,10 @@ private:
     void updateSourceInfo(const xmlNodePtr devNode, CAmRoutingAdapterKVPConverter::KVPList & keyValPair);
     /* Adds the Sink information into lSinkInfo*/
     void updateSinkInfo(const xmlNodePtr devNode, CAmRoutingAdapterKVPConverter::KVPList & keyValPair);
+    /* Adds the USB source information into lSourceInfo*/
+    void updateUSBSourceInfo(const xmlNodePtr devNode, CAmRoutingAdapterKVPConverter::KVPList & keyValPair);
+    /* Adds the USB Sink information into lSinkInfo*/
+    void updateUSBSinkInfo(const xmlNodePtr devNode, CAmRoutingAdapterKVPConverter::KVPList & keyValPair);
     /* Adds the USB information*/
     void updateUSBInfo(CAmRoutingAdapterKVPConverter::KVPList & keyValPair);
     /* updates child information of a sink or source */

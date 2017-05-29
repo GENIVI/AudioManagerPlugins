@@ -277,8 +277,10 @@ public:
 struct ra_USBInfo_s
 {
     std::string domNam;
-    std::map<std::string, std::string> mapCardToSourceName;
-    std::map<std::string, std::string> mapCardToSinkName;
+    std::map<std::string, std::vector<std::string> > mapCardToSourceName;
+    std::map<std::string, std::vector<std::string> > mapCardToSinkName;
+    std::vector<ra_sourceInfo_s> lSourceInfo;
+    std::vector<ra_sinkInfo_s> lSinkInfo;
 };
 
 /**
