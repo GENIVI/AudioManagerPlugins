@@ -5,12 +5,12 @@
 	<tSOURCE srcNam = "MediaPlayer" srcID = "1" srcClsNam = "BASE" pcmNam = "vdev_app_mediaplayer" volNam = "vol_mediaplayer" devTyp = "0"> </tSOURCE>
 	<tSOURCE srcNam = "Navigation" srcID = "2" srcClsNam = "NAVI" pcmNam = "vdev_app_interrupt" volNam = "vol_interrupt" devTyp = "0" > </tSOURCE>
 	<!-- sink 1 info -->
-	<tSINK  sinkNam = "Gateway0" sinkClsNam = "BASE" visible = "0" devTyp = "0">
+	<tSINK  sinkNam = "Gateway0" sinkClsNam = "BASE" visible = "0" devTyp = "0"  pcmNam = "vdev_app_mediaplayer" volNam = "vol_mediaplayer">
 		<!-- gateway info -->
 		<tGATEWAY gatewayNam = "Gateway0" srcNam = "Gateway0" srcDomNam = "VirtDSP" lstSrcFrmt = "2" lstSinkFrmt = "2" conversionMatrix = "1"> </tGATEWAY>
 	</tSINK>
 	<!-- sink 2 info -->
-	<tSINK  sinkNam = "Gateway1" sinkClsNam = "NAVI" visible = "0" devTyp = "0">
+	<tSINK  sinkNam = "Gateway1" sinkClsNam = "NAVI" visible = "0" devTyp = "0" pcmNam = "vdev_app_interrupt" volNam = "vol_interrupt">
 		<!-- gateway info -->
 		<tGATEWAY gatewayNam = "Gateway1" srcNam = "Gateway1" srcDomNam = "VirtDSP" lstSrcFrmt = "2" lstSinkFrmt = "2" conversionMatrix = "1"> </tGATEWAY>
 	</tSINK>
@@ -19,8 +19,8 @@
 <!-- Beginning of Domain VirtDSP device info -->
 <tDOMAIN domNam = "VirtDSP" nodNam = "Cpu" pxyNam = "AlsaProxy">
 	<!-- source info -->
-	<tSOURCE srcNam = "Gateway0" srcClsNam = "BASE" visible = "0"> </tSOURCE>
-	<tSOURCE srcNam = "Gateway1" srcClsNam = "NAVI" visible = "0"> </tSOURCE>
+	<tSOURCE srcNam = "Gateway0" srcClsNam = "BASE" visible = "0" pcmNam = "vdev_app_mediaplayer" volNam = "vol_mediaplayer"> </tSOURCE>
+	<tSOURCE srcNam = "Gateway1" srcClsNam = "NAVI" visible = "0" pcmNam = "vdev_app_interrupt" volNam = "vol_interrupt"> </tSOURCE>
 	<!-- sink info -->
 	<tSINK  sinkNam = "AMP" sinkID = "1" pcmNam = "vdev_dsp_amp"> </tSINK>
 	<!-- proxy info - for CPUSchedulingPolicy see sched_setscheduler(2) -->
