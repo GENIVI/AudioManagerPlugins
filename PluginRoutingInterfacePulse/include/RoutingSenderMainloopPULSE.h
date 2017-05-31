@@ -22,10 +22,6 @@
 #ifndef ROUTINGSENDERMAINLOPPPULSE_H_
 #define ROUTINGSENDERMAINLOPPPULSE_H_
 
-/* Defines */
-/* In PulseAudio the volume value range from 0 (silence) to 0x10000U=65536 ("maximum" sensible volume). */
-#define MAX_PULSE_VOLUME    (0x10000U)
-
 bool routing_sender_create_mainloop(void *thiz);
 
 void * routing_sender_start_mainloop(void *thiz);
@@ -71,15 +67,15 @@ bool routing_sender_move_source_output(
 bool routing_sender_sink_input_volume_ramp(
         pa_context *c,
         uint32_t sink_input_index,
-        uint32_t crt_volume,
-        uint32_t volume,
+        pa_volume_t crt_volume,
+        pa_volume_t volume,
         uint16_t ramp_time,
         void *thiz);
 
 bool routing_sender_sink_input_volume(
         pa_context *c,
         uint32_t sink_input_index,
-        uint32_t volume,
+        pa_volume_t volume,
         void *thiz);
 
 bool routing_sender_sink_input_mute(
@@ -91,7 +87,7 @@ bool routing_sender_sink_input_mute(
 bool routing_sender_sink_volume(
         pa_context *c,
         uint32_t sink_index,
-        uint32_t volume,
+        pa_volume_t volume,
         void *thiz);
 
 #endif

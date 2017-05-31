@@ -29,12 +29,14 @@
 static pthread_t        *p_thread;
 static pa_mainloop      *main_loop;
 
+static pthread_mutex_t main_mutex     = PTHREAD_MUTEX_INITIALIZER;
+
 /* struct used for ramp_volume changing */
-typedef struct ramp_volume
+struct ramp_volume
 {
     uint32_t sink_input_index;
-    uint32_t volume_ini;
-    uint32_t volume_end;
+    int32_t volume_ini;
+    int32_t volume_end;
     /* max ramp time in ms */
     uint16_t ramp_max_time;
     /* current delay between calls in ms */
@@ -150,6 +152,8 @@ end:
 
 void routing_sender_pa_event_callback(pa_context *c, pa_subscription_event_type_t t, uint32_t idx, void *thiz)
 {
+    pthread_mutex_lock(&main_mutex);
+
     switch(t)
     {
         case PA_SUBSCRIPTION_EVENT_SINK_INPUT:
@@ -169,12 +173,17 @@ void routing_sender_pa_event_callback(pa_context *c, pa_subscription_event_type_
             logInfo("Pulse Audio event", t, "was ignored");
         }
     }
+
+    pthread_mutex_unlock(&main_mutex);
 }
 
 
 void routing_sender_get_sink_input_info_callback(pa_context *c, const pa_sink_input_info *i, int eol, void *userdata)
 {
     (void) eol;
+
+    pthread_mutex_lock(&main_mutex);
+
 
     RoutingSenderPULSE* thiz = (RoutingSenderPULSE*) userdata;
     if (!thiz)
@@ -192,6 +201,8 @@ void routing_sender_get_sink_input_info_callback(pa_context *c, const pa_sink_in
         g_sinkInputId2rampVolume.insert(std::make_pair(i->index, source_ramp_volume));
     }
 
+    pthread_mutex_unlock(&main_mutex);
+
     thiz->getSinkInputInfoCallback(c, i, userdata);
 }
 
@@ -200,12 +211,20 @@ void routing_sender_get_source_output_info_callback(pa_context *c, const pa_sour
 {
     (void) eol;
 
+    pthread_mutex_lock(&main_mutex);
+
     RoutingSenderPULSE* thiz = (RoutingSenderPULSE*) userdata;
     if (!thiz)
     {
         logError("pa_context_get_surce_output_info was called with wrong params\n");
+
+        pthread_mutex_unlock(&main_mutex);
+
         return;
     }
+
+    pthread_mutex_unlock(&main_mutex);
+
     thiz->getSourceOutputInfoCallback(c, i, userdata);
 }
 
@@ -213,29 +232,48 @@ void routing_sender_get_source_output_info_callback(pa_context *c, const pa_sour
 
 void routing_sender_get_sink_info_callback(pa_context *c, const pa_sink_info *i, int is_last, void *userdata)
 {
+    pthread_mutex_lock(&main_mutex);
+
     RoutingSenderPULSE* thiz = (RoutingSenderPULSE*) userdata;
     if (!thiz)
     {
         logError("pa_context_get_sink_info was called with wrong params\n");
+
+        pthread_mutex_unlock(&main_mutex);
+
         return;
     }
+
+    pthread_mutex_unlock(&main_mutex);
+
     thiz->getSinkInfoCallback(c, i, is_last, userdata);
 }
 
 
 void routing_sender_get_source_info_callback(pa_context *c, const pa_source_info *i, int is_last, void *userdata)
 {
+    pthread_mutex_lock(&main_mutex);
+
     RoutingSenderPULSE* thiz = (RoutingSenderPULSE*) userdata;
     if (!thiz)
     {
         logError("pa_context_get_source_info was called with wrong params\n");
+
+        pthread_mutex_unlock(&main_mutex);
+
         return;
     }
+
+    pthread_mutex_unlock(&main_mutex);
+
     thiz->getSourceInfoCallback(c, i, is_last, userdata);
 }
 
 
-void routing_sender_subscriber_callback(pa_context *c, int success, void *thiz) {
+void routing_sender_subscriber_callback(pa_context *c, int success, void *thiz)
+{
+    pthread_mutex_lock(&main_mutex);
+
     if (success)
     {
         pa_operation *o = pa_context_get_sink_info_list(c, routing_sender_get_sink_info_callback, thiz);
@@ -253,11 +291,14 @@ void routing_sender_subscriber_callback(pa_context *c, int success, void *thiz) 
     {
         logError("routing_sender_subscriber_callback: success = false");
     }
+
+    pthread_mutex_unlock(&main_mutex);
 }
 
 
 void routing_sender_context_state_callback(pa_context *c, void *thiz)
  {
+    pthread_mutex_lock(&main_mutex);
 
     if (pa_context_get_state(c) == PA_CONTEXT_FAILED)
     {
@@ -279,10 +320,15 @@ void routing_sender_context_state_callback(pa_context *c, void *thiz)
         }
     }
     //other states are not relevant
+
+    pthread_mutex_unlock(&main_mutex);
 }
 
 
-bool routing_sender_get_source_info(pa_context *c, void *thiz) {
+bool routing_sender_get_source_info(pa_context *c, void *thiz)
+{
+    pthread_mutex_lock(&main_mutex);
+
     if (pa_context_get_state(c) == PA_CONTEXT_READY)
     {
         pa_operation *o = pa_context_get_source_info_list(c, routing_sender_get_source_info_callback, thiz);
@@ -294,14 +340,22 @@ bool routing_sender_get_source_info(pa_context *c, void *thiz) {
         {
             logError("Unable to create Pulse Audio operation:",
                     "pa_context_get_sink_info_list");
+
+            pthread_mutex_unlock(&main_mutex);
+
             return false;
         }
     }
     else
     {
         logError("Can not get Pulse Audio sources info - context not ready\n");
+
+        pthread_mutex_unlock(&main_mutex);
+
         return false;
     }
+
+    pthread_mutex_unlock(&main_mutex);
 
     return true;
 }
@@ -309,6 +363,8 @@ bool routing_sender_get_source_info(pa_context *c, void *thiz) {
 
 bool routing_sender_move_sink_input(pa_context *c, uint32_t sink_input_index, uint32_t sink_index, void *thiz)
 {
+    pthread_mutex_lock(&main_mutex);
+
     if (pa_context_get_state(c) == PA_CONTEXT_READY)
     {
         pa_operation *o = pa_context_move_sink_input_by_index(c, sink_input_index, sink_index, NULL, thiz);
@@ -320,20 +376,31 @@ bool routing_sender_move_sink_input(pa_context *c, uint32_t sink_input_index, ui
         {
             logError("Unable to create Pulse Audio operation:",
                     "pa_context_move_sink_input_by_index");
+
+            pthread_mutex_unlock(&main_mutex);
+
             return false;
         }
     }
     else
     {
         logError("Can not move sink input - context not ready\n");
+
+        pthread_mutex_unlock(&main_mutex);
+
         return false;
     }
+
+    pthread_mutex_unlock(&main_mutex);
+
     return true;
 }
 
 
 bool routing_sender_move_source_output(pa_context *c, uint32_t source_output_index, uint32_t source_index, void *thiz)
 {
+    pthread_mutex_lock(&main_mutex);
+
     if (pa_context_get_state(c) == PA_CONTEXT_READY)
     {
         pa_operation *o = pa_context_move_source_output_by_index(c, source_output_index, source_index, NULL, thiz);
@@ -345,14 +412,23 @@ bool routing_sender_move_source_output(pa_context *c, uint32_t source_output_ind
         {
             logError("Unable to create Pulse Audio operation:",
                     "pa_context_set_sink_input_volume");
+
+            pthread_mutex_unlock(&main_mutex);
+
             return false;
         }
     }
     else
     {
         logError("Can not move source output - context not ready\n");
+
+        pthread_mutex_unlock(&main_mutex);
+
         return false;
     }
+
+    pthread_mutex_unlock(&main_mutex);
+
     return true;
 }
 
@@ -367,8 +443,14 @@ static inline uint16_t timespec2mili(const timespec & time)
 static inline uint16_t timespec2DeltaMili(const timespec & time1, const timespec & time2)
 {
     timespec l_deltaTime;
-    l_deltaTime.tv_sec = time2.tv_sec - time1.tv_sec;
-    l_deltaTime.tv_nsec = time2.tv_nsec - time1.tv_nsec;
+
+    if ((time2.tv_nsec - time1.tv_nsec) < 0) {
+        l_deltaTime.tv_sec = time2.tv_sec - time1.tv_sec - 1;
+        l_deltaTime.tv_nsec = time2.tv_nsec - time1.tv_nsec + 1000000000;
+    } else {
+        l_deltaTime.tv_sec = time2.tv_sec - time1.tv_sec;
+        l_deltaTime.tv_nsec = time2.tv_nsec - time1.tv_nsec;
+    }
     return timespec2mili(l_deltaTime);
 }
 
@@ -379,14 +461,19 @@ static void routing_sender_sink_input_volume_cb(pa_context *c, int success, void
     {
         ramp_volume * l_ramp_volume = (ramp_volume *)data;
         timespec l_endTime;
-        clock_gettime(0, &l_endTime);
+        clock_gettime(CLOCK_MONOTONIC, &l_endTime);
+
+        logInfo("+++++++++++ Start time sec:", l_ramp_volume->start_time.tv_sec, "nsec:", l_ramp_volume->start_time.tv_nsec);
+        logInfo("*********** End time sec:", l_endTime.tv_sec, "nsec:", l_endTime.tv_nsec);
+
         l_ramp_volume->ramp_crt_elapsed = timespec2DeltaMili(l_ramp_volume->start_time, l_endTime);
+
+        logInfo("routing_sender_sink_input_volume_cb: ms elapsed=", l_ramp_volume->ramp_crt_elapsed, " of ", l_ramp_volume->ramp_max_time);
+
         if (l_ramp_volume->ramp_crt_elapsed >= l_ramp_volume->ramp_max_time)
         {
             return;
         }
-
-        logInfo("routing_sender_sink_input_volume_cb: ms elapsed=", l_ramp_volume->ramp_crt_elapsed, " of ", l_ramp_volume->ramp_max_time);
 
         /* ######## Calculate new volume with formula: ##########
                                 crt_time x ( vol_end - vol_ini )
@@ -396,8 +483,11 @@ static void routing_sender_sink_input_volume_cb(pa_context *c, int success, void
         uint32_t new_volume =
                 l_ramp_volume->volume_ini +
                 ( ( l_ramp_volume->ramp_crt_elapsed * ( l_ramp_volume->volume_end - l_ramp_volume->volume_ini ) ) / l_ramp_volume->ramp_max_time );
-        logInfo("routing_sender_sink_input_volume_cb: vol_ini=",l_ramp_volume->volume_ini,"vol_crt=",new_volume,"vol_end=",l_ramp_volume->volume_end);
 
+        logInfo("routing_sender_sink_input_volume_cb: vol_ini=", l_ramp_volume->volume_ini,
+                "vol_end=", l_ramp_volume->volume_end,
+                "vol_crt=", new_volume,
+                "elapsed time=", l_ramp_volume->ramp_crt_elapsed);
 
         /* ***** Set volume again ***** */
         pa_cvolume *volumeCh = (pa_cvolume *) malloc(sizeof(pa_cvolume));
@@ -436,7 +526,7 @@ static void routing_sender_sink_input_volume_cb(pa_context *c, int success, void
 
 }
 
-bool routing_sender_sink_input_volume_ramp(pa_context *c, uint32_t sink_input_index, uint32_t crt_volume, uint32_t volume, uint16_t ramp_time, void *thiz)
+bool routing_sender_sink_input_volume_ramp(pa_context *c, uint32_t sink_input_index, pa_volume_t crt_volume, pa_volume_t volume, uint16_t ramp_time, void *thiz)
 {
     if (pa_context_get_state(c) == PA_CONTEXT_READY)
     {
@@ -446,7 +536,7 @@ bool routing_sender_sink_input_volume_ramp(pa_context *c, uint32_t sink_input_in
         if (iter != iterEnd)
         {
             /* set test volume with only 1 unit more or less, just to see how callback responds */
-            pa_volume_t test_volume = ((crt_volume * MAX_PULSE_VOLUME) / 100);
+            pa_volume_t test_volume = crt_volume;
             test_volume += volume > crt_volume ? 1 : -1;
 
             pa_cvolume *volumeCh = (pa_cvolume *) malloc(sizeof(pa_cvolume));
@@ -471,10 +561,11 @@ bool routing_sender_sink_input_volume_ramp(pa_context *c, uint32_t sink_input_in
 
             ramp_volume * l_ramp_volume = (ramp_volume *) &iter->second;
             logInfo("routing_sender_sink_input_volume_ramp: searching ",sink_input_index,"found ramp_vlume struct with sinkInputId ",l_ramp_volume->sink_input_index," (should be equal) ");
-            l_ramp_volume->volume_ini = (crt_volume * MAX_PULSE_VOLUME) / 100;
-            l_ramp_volume->volume_end = (volume * MAX_PULSE_VOLUME) / 100;
+            l_ramp_volume->volume_ini = crt_volume;
+            l_ramp_volume->volume_end = volume;
             l_ramp_volume->ramp_max_time = ramp_time;
-            clock_gettime(0, &l_ramp_volume->start_time);
+            clock_gettime(CLOCK_MONOTONIC, &l_ramp_volume->start_time);
+            logInfo("*********** Start time sec:", l_ramp_volume->start_time.tv_sec, "nsec:", l_ramp_volume->start_time.tv_nsec);
             l_ramp_volume->ramp_crt_elapsed = 0;
             logInfo("routing_sender_sink_input_volume_ramp: will set vol=", test_volume);
             o = pa_context_set_sink_input_volume(c, sink_input_index, volumeCh, routing_sender_sink_input_volume_cb, l_ramp_volume);
@@ -506,13 +597,15 @@ bool routing_sender_sink_input_volume_ramp(pa_context *c, uint32_t sink_input_in
     return true;
 }
 
-bool routing_sender_sink_input_volume(pa_context *c, uint32_t sink_input_index, uint32_t volume, void *thiz)
+bool routing_sender_sink_input_volume(pa_context *c, uint32_t sink_input_index, pa_volume_t volume, void *thiz)
 {
+    pthread_mutex_lock(&main_mutex);
+
     if (pa_context_get_state(c) == PA_CONTEXT_READY)
     {
         pa_cvolume *volumeCh = (pa_cvolume *) malloc(sizeof(pa_cvolume));
         volumeCh->channels = 1;//TODO: check is stream is mono / stereo
-        volumeCh->values[0] = (volume * MAX_PULSE_VOLUME) / 100;
+        volumeCh->values[0] = volume;
 
         pa_operation *o = pa_context_set_sink_input_volume(c, sink_input_index, volumeCh, NULL, thiz);
         if (o)
@@ -523,12 +616,15 @@ bool routing_sender_sink_input_volume(pa_context *c, uint32_t sink_input_index, 
         {
             logError("Unable to create Pulse Audio operation:",
                     "pa_context_set_sink_input_volume");
+
+            pthread_mutex_unlock(&main_mutex);
+
             return false;
         }
 
         volumeCh->channels = 2;//TODO: check is stream is mono / stereo
-        volumeCh->values[0] = (volume * MAX_PULSE_VOLUME) / 100;
-        volumeCh->values[1] = (volume * MAX_PULSE_VOLUME) / 100;
+        volumeCh->values[0] = volume;
+        volumeCh->values[1] = volume;
 
         o = pa_context_set_sink_input_volume(c, sink_input_index, volumeCh, NULL, NULL);
         if (o)
@@ -539,20 +635,31 @@ bool routing_sender_sink_input_volume(pa_context *c, uint32_t sink_input_index, 
         {
             logError("Unable to create Pulse Audio operation:",
                     "pa_context_set_sink_input_volume");
+
+            pthread_mutex_unlock(&main_mutex);
+
             return false;
         }
     }
     else
     {
         logError("Can not set sink input volume - context not ready\n");
+
+        pthread_mutex_unlock(&main_mutex);
+
         return false;
     }
+
+    pthread_mutex_unlock(&main_mutex);
+
     return true;
 }
 
 
 bool routing_sender_sink_input_mute(pa_context *c, uint32_t sink_input_index, bool mute, void *thiz)
 {
+    pthread_mutex_lock(&main_mutex);
+
     if (pa_context_get_state(c) == PA_CONTEXT_READY)
     {
         pa_operation *o = pa_context_set_sink_input_mute(
@@ -565,26 +672,37 @@ bool routing_sender_sink_input_mute(pa_context *c, uint32_t sink_input_index, bo
         {
             logError("Unable to create Pulse Audio operation:",
                     "pa_context_set_sink_input_mute");
+
+            pthread_mutex_unlock(&main_mutex);
+
             return false;
         }
     }
     else
     {
         logError("Can not set sink input volume - context not ready\n");
+
+        pthread_mutex_unlock(&main_mutex);
+
         return false;
     }
+
+    pthread_mutex_unlock(&main_mutex);
+
     return true;
 }
 
 
-bool routing_sender_sink_volume(pa_context *c, uint32_t sink_index, uint32_t volume, void *thiz)
+bool routing_sender_sink_volume(pa_context *c, uint32_t sink_index, pa_volume_t volume, void *thiz)
 {
+    pthread_mutex_lock(&main_mutex);
+
     if (pa_context_get_state(c) == PA_CONTEXT_READY)
     {
         pa_cvolume *volumeCh = (pa_cvolume *) malloc(sizeof(pa_cvolume));
         volumeCh->channels = 2;//TODO: check is stream is mono / stereo
-        volumeCh->values[0] = (volume * MAX_PULSE_VOLUME) / 100;
-        volumeCh->values[1] = (volume * MAX_PULSE_VOLUME) / 100;
+        volumeCh->values[0] = volume;
+        volumeCh->values[1] = volume;
 
         pa_operation *o = pa_context_set_sink_volume_by_index(c, sink_index, volumeCh, NULL, thiz);
         if (o)
@@ -595,14 +713,23 @@ bool routing_sender_sink_volume(pa_context *c, uint32_t sink_index, uint32_t vol
         {
             logError("Unable to create Pulse Audio operation:",
                     "pa_context_set_sink_input_volume");
+
+            pthread_mutex_unlock(&main_mutex);
+
             return false;
         }
     }
     else
     {
         logError("Can not set sink input volume - context not ready\n");
+
+        pthread_mutex_unlock(&main_mutex);
+
         return false;
     }
+
+    pthread_mutex_unlock(&main_mutex);
+
     return true;
 }
 

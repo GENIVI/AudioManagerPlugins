@@ -353,7 +353,7 @@ am_Error_e RoutingSenderPULSE::asyncConnect(
 
     //by default - sources ar connected at 100% -> controller is responsible to setSourcevolume if needed
 
-    m_sourceToVolume[sourceID] = MAX_SOURCE_VOLUME;
+//    m_sourceToVolume[sourceID] = MAX_SOURCE_VOLUME;
 
 
     if (m_sinkToPASink[sinkID] != -1)
@@ -405,6 +405,8 @@ am_Error_e RoutingSenderPULSE::asyncConnect(
     {
         logError("Sink and source for connection not identified:",
                 sinkID, sourceID, connectionID);
+
+        m_shadow->ackConnect(handle, connectionID, am::E_NOT_POSSIBLE);
         return am::E_NOT_POSSIBLE;
     }
 
@@ -514,30 +516,34 @@ am_Error_e RoutingSenderPULSE::asyncSetSourceVolume(
     (void) ramp;
     (void) time;
 
-    am_volume_t crt_volume = this->m_sourceToVolume[sourceID];
-    this->m_sourceToVolume[sourceID] = volume;
+    pa_volume_t crt_volume = m_sourceToVolume[sourceID];
+    m_sourceToVolume[sourceID] = pa_sw_volume_from_dB(volume*0.1);
 
     logInfo("PULSE - asyncSetSourceVolume() - volume:", volume, "sink input index:", this->m_sourceToPASinkInput[sourceID]);
     if (m_sourceToPASinkInput[sourceID] != -1)
     {
+#if 0
         if (time == 0)
         {/* without ramp time */
+#endif
             routing_sender_sink_input_volume(
-                    this->m_paContext,
-                    this->m_sourceToPASinkInput[sourceID],
-                    volume,
+                    m_paContext,
+                    m_sourceToPASinkInput[sourceID],
+                    m_sourceToVolume[sourceID],
                     this);
+#if 0
         }
         else
         {/* with ramp time */
             routing_sender_sink_input_volume_ramp(
-                    this->m_paContext,
-                    this->m_sourceToPASinkInput[sourceID],
+                    m_paContext,
+                    m_sourceToPASinkInput[sourceID],
                     crt_volume,
-                    volume,
+                    m_sourceToVolume[sourceID],
                     (uint16_t)time,
                     this);
         }
+#endif
     }
     else
     {
@@ -754,10 +760,10 @@ void RoutingSenderPULSE::getSinkInputInfoCallback(pa_context *c, const pa_sink_i
             bool requiresVolUpdate = false;
             for (int j = 0; j < i->volume.channels; j++)
             {
-                if ((i->volume.values[j]*MAX_SOURCE_VOLUME / MAX_PULSE_VOLUME) != m_sourceToVolume[iter->source.sourceID])
+                if (i->volume.values[j] != m_sourceToVolume[iter->source.sourceID])
                 {
                     requiresVolUpdate = true;
-                    logInfo("PULSE - sink registerd with vol:", (i->volume.values[j]*MAX_SOURCE_VOLUME / MAX_PULSE_VOLUME),
+                    logInfo("PULSE - sink registerd with vol:", i->volume.values[j],
                             "; should be changed to:",
                             m_sourceToVolume[iter->source.sourceID]);
                     break;
@@ -820,7 +826,7 @@ void RoutingSenderPULSE::getSourceOutputInfoCallback(pa_context *c, const pa_sou
                             this);
 
                     //TODO: add callback for pulse move source output -> to send confirmation; for the moment directly send confirmation
-                    this->m_shadow->ackConnect(iterConn->handle, iterConn->connectionID, am::E_OK);
+                    //this->m_shadow->ackConnect(iterConn->handle, iterConn->connectionID, am::E_OK);
                 }
             }
 

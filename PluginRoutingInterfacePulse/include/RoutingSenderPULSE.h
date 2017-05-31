@@ -126,8 +126,7 @@ private:
  * same for disconnect? not sure - probably the sink input was already created by the time the user is calling disconnect
  */
     std::vector<RoutingSenderPULSEConnection>       m_activeConnections;
-    std::map<uint16_t, uint16_t>                    m_sinkToVolume;
-    std::map<uint16_t, uint16_t>                    m_sourceToVolume;
+    std::map<uint16_t, float>                       m_sourceToVolume;
 };
 
 #endif

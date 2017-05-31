@@ -218,5 +218,4 @@ am_Error_e IAmRoutingReceiverShadow::peekSinkClassID(const std::string& name, am
     mpRoutingReceiveInterface->peekSinkClassID(name, sinkClassID);
 }
 
-
 }
