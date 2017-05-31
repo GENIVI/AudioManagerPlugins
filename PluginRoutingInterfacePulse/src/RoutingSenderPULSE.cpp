@@ -91,9 +91,9 @@ extern "C" void destroyPluginRoutingInterfacePULSE(IAmRoutingSend* routingSendIn
  */
 RoutingSenderPULSE::RoutingSenderPULSE(pa_context *p_paContext)
 {
-    this->m_paSinkNullIndex = -1;
-    this->m_paSourceNullIndex = -1;
-    this->m_paContext = p_paContext;
+    m_paSinkNullIndex = -1;
+    m_paSourceNullIndex = -1;
+    m_paContext = p_paContext;
 }
 
 
@@ -235,17 +235,17 @@ void RoutingSenderPULSE::setRoutingReady(uint16_t handle)
     //TODO: do not register sinks with the same name
 
     int i;
-    this->loadConfig();
+    loadConfig();
     //first register Domain = PulseAudio
-    this->m_domain.name     = "PulseAudio";
-    this->returnBusName(this->m_domain.busname);//set domain bus name = current interface bus name
-    this->m_domain.nodename = "PulseAudio";
-    this->m_domain.early    = false;
-    this->m_domain.complete = true;
-    this->m_domain.state    = am::DS_CONTROLLED;
+    m_domain.name     = "PulseAudio";
+    returnBusName(m_domain.busname);//set domain bus name = current interface bus name
+    m_domain.nodename = "PulseAudio";
+    m_domain.early    = false;
+    m_domain.complete = true;
+    m_domain.state    = am::DS_CONTROLLED;
 
-    this->m_domain.domainID = 0;
-    this->m_shadow->registerDomain(this->m_domain, this->m_domain.domainID);
+    m_domain.domainID = 0;
+    m_shadow->registerDomain(m_domain, m_domain.domainID);
 
     am_SoundProperty_s l_spTreble;
     l_spTreble.type = SP_GENIVI_BASS;
@@ -263,21 +263,21 @@ void RoutingSenderPULSE::setRoutingReady(uint16_t handle)
     for (i = 0; i < m_sources.size(); i++)
     {
         am_sourceID_t l_newSourceID = 0;
-        this->m_sources[i].source.sourceID = l_newSourceID;
-        this->m_sources[i].source.name = m_sources[i].name;
-        this->m_sources[i].source.sourceState = am::SS_ON;
-        this->m_sources[i].source.domainID = this->m_domain.domainID;
-        this->m_sources[i].source.visible = true;
-        this->m_sources[i].source.volume = MAX_SOURCE_VOLUME; /* initialize source volume to 100% */
+        m_sources[i].source.sourceID = l_newSourceID;
+        m_sources[i].source.name = m_sources[i].name;
+        m_sources[i].source.sourceState = am::SS_ON;
+        m_sources[i].source.domainID = m_domain.domainID;
+        m_sources[i].source.visible = true;
+        m_sources[i].source.volume = MAX_SOURCE_VOLUME; /* initialize source volume to 100% */
 
-        this->m_sources[i].source.listConnectionFormats.push_back(am::CF_GENIVI_STEREO);
-        this->m_shadow->peekSourceClassID(
-                this->m_sources[i].clazz,
-                this->m_sources[i].source.sourceClassID);
+        m_sources[i].source.listConnectionFormats.push_back(am::CF_GENIVI_STEREO);
+        m_shadow->peekSourceClassID(
+                m_sources[i].clazz,
+                m_sources[i].source.sourceClassID);
 
-        this->m_shadow->registerSource(this->m_sources[i].source, l_newSourceID);
+        m_shadow->registerSource(m_sources[i].source, l_newSourceID);
 
-        this->m_sources[i].source.sourceID = l_newSourceID;
+        m_sources[i].source.sourceID = l_newSourceID;
         m_sourceToPASinkInput[l_newSourceID] = -1;
         m_sourceToPASource[l_newSourceID] = -1;
 
@@ -291,22 +291,22 @@ void RoutingSenderPULSE::setRoutingReady(uint16_t handle)
     for (i = 0; i < m_sinks.size(); i++)
     {
         am_sinkID_t l_newsinkID = 0;
-        this->m_sinks[i].sink.sinkID = l_newsinkID;
-        this->m_sinks[i].sink.name = this->m_sinks[i].name;
-        this->m_sinks[i].sink.muteState = am::MS_MUTED;
-        this->m_sinks[i].sink.domainID = this->m_domain.domainID;
-        this->m_sinks[i].sink.visible = true;
+        m_sinks[i].sink.sinkID = l_newsinkID;
+        m_sinks[i].sink.name = m_sinks[i].name;
+        m_sinks[i].sink.muteState = am::MS_MUTED;
+        m_sinks[i].sink.domainID = m_domain.domainID;
+        m_sinks[i].sink.visible = true;
 
-        this->m_sinks[i].sink.listSoundProperties.push_back(l_spTreble);
-        this->m_sinks[i].sink.listSoundProperties.push_back(l_spMid);
-        this->m_sinks[i].sink.listSoundProperties.push_back(l_spBass);
-        this->m_sinks[i].sink.listConnectionFormats.push_back(am::CF_GENIVI_STEREO);
+        m_sinks[i].sink.listSoundProperties.push_back(l_spTreble);
+        m_sinks[i].sink.listSoundProperties.push_back(l_spMid);
+        m_sinks[i].sink.listSoundProperties.push_back(l_spBass);
+        m_sinks[i].sink.listConnectionFormats.push_back(am::CF_GENIVI_STEREO);
 
-        this->m_shadow->peekSinkClassID(
-                this->m_sinks[i].clazz,
-                this->m_sinks[i].sink.sinkClassID);
-        this->m_shadow->registerSink(this->m_sinks[i].sink, l_newsinkID);
-        this->m_sinks[i].sink.sinkID = l_newsinkID;
+        m_shadow->peekSinkClassID(
+                m_sinks[i].clazz,
+                m_sinks[i].sink.sinkClassID);
+        m_shadow->registerSink(m_sinks[i].sink, l_newsinkID);
+        m_sinks[i].sink.sinkID = l_newsinkID;
         m_sinkToPASourceOutput[l_newsinkID] = -1;
         m_sinkToPASink[l_newsinkID] = -1;
 
@@ -316,7 +316,7 @@ void RoutingSenderPULSE::setRoutingReady(uint16_t handle)
     }
 
     logInfo("PULSE - routingInterfacesReady");
-    this->m_shadow->confirmRoutingReady(handle, am::E_OK);
+    m_shadow->confirmRoutingReady(handle, am::E_OK);
 
     //register pulse sink & sources, sink inputs & source outputs - > start the main PA loop
     routing_sender_create_mainloop((void *) this);
@@ -324,7 +324,7 @@ void RoutingSenderPULSE::setRoutingReady(uint16_t handle)
 
 void RoutingSenderPULSE::setRoutingRundown(uint16_t handle)
 {
-    this->m_shadow->confirmRoutingRundown(handle, am::E_OK);
+    m_shadow->confirmRoutingRundown(handle, am::E_OK);
     //TODO: implement this
 }
 
@@ -361,7 +361,7 @@ am_Error_e RoutingSenderPULSE::asyncConnect(
         if (m_sourceToPASinkInput[sourceID] != -1)
         {
             if (routing_sender_move_sink_input(
-                    this->m_paContext,
+                    m_paContext,
                     m_sourceToPASinkInput[sourceID],
                     m_sinkToPASink[sinkID],
                     this))
@@ -373,7 +373,7 @@ am_Error_e RoutingSenderPULSE::asyncConnect(
             }
             else
             {
-                this->m_shadow->ackConnect(handle, connectionID, am::E_NOT_POSSIBLE);
+                m_shadow->ackConnect(handle, connectionID, am::E_NOT_POSSIBLE);
                 return am::E_NOT_POSSIBLE;
             }
         }//else move_sink_input will be called later
@@ -383,7 +383,7 @@ am_Error_e RoutingSenderPULSE::asyncConnect(
         if (m_sinkToPASourceOutput[sinkID] != -1)
         {
             if (routing_sender_move_source_output(
-                    this->m_paContext,
+                    m_paContext,
                     m_sinkToPASourceOutput[sinkID],
                     m_sourceToPASource[sourceID],
                     this))
@@ -396,7 +396,7 @@ am_Error_e RoutingSenderPULSE::asyncConnect(
             }
             else
             {
-                this->m_shadow->ackConnect(handle, connectionID, am::E_NOT_POSSIBLE);
+                m_shadow->ackConnect(handle, connectionID, am::E_NOT_POSSIBLE);
                 return am::E_NOT_POSSIBLE;
             }
         }//else move_sink_input will be called later
@@ -412,7 +412,7 @@ am_Error_e RoutingSenderPULSE::asyncConnect(
 
     m_activeConnections.push_back(l_newConnection);
 
-    this->m_shadow->ackConnect(handle, connectionID, am::E_OK);
+    m_shadow->ackConnect(handle, connectionID, am::E_OK);
 
 /**
  * TODO: connection is always possible ? check that
@@ -433,37 +433,37 @@ am_Error_e RoutingSenderPULSE::asyncDisconnect(const am_Handle_s handle, const a
         {
             if (m_sourceToPASinkInput[iter->sourceID] != -1)
             {
-                if (this->m_paSinkNullIndex >= 0)
+                if (m_paSinkNullIndex >= 0)
                 {
                     //if null sink is defined - disconnect = move sink input to null
                     logInfo("PULSE - asyncDisconnect() - connection found - move sinkInputIndex:",
-                            m_sourceToPASinkInput[iter->sourceID], "to NULL sinkIndex:", this->m_paSinkNullIndex);
+                            m_sourceToPASinkInput[iter->sourceID], "to NULL sinkIndex:", m_paSinkNullIndex);
 
                     routing_sender_move_sink_input(
-                            this->m_paContext,
-                            this->m_sourceToPASinkInput[iter->sourceID],
-                            this->m_paSinkNullIndex,
+                            m_paContext,
+                            m_sourceToPASinkInput[iter->sourceID],
+                            m_paSinkNullIndex,
                             this);
                     //TODO: add callback for pulse move sink input -> to send confirmation; for the moment directly send confirmation
-                    this->m_shadow->ackDisconnect(handle, connectionID, am::E_OK);
+                    m_shadow->ackDisconnect(handle, connectionID, am::E_OK);
 
                 }
             }
             else if (m_sinkToPASourceOutput[iter->sinkID] != -1)
             {
-                if (this->m_paSourceNullIndex >= 0)
+                if (m_paSourceNullIndex >= 0)
                 {
                     //if null source is defined - disconnect = move source output to null
                     logInfo("PULSE - asyncDisconnect() - connection found - move sourceOutputIndex:",
-                            m_sinkToPASourceOutput[iter->sinkID], "to NULL sourceIndex:", this->m_paSourceNullIndex);
+                            m_sinkToPASourceOutput[iter->sinkID], "to NULL sourceIndex:", m_paSourceNullIndex);
 
                     routing_sender_move_source_output(
-                            this->m_paContext,
+                            m_paContext,
                             m_sourceToPASinkInput[iter->sourceID],
-                            this->m_paSinkNullIndex,
+                            m_paSinkNullIndex,
                             this);
                     //TODO: add callback for pulse move sink input -> to send confirmation; for the moment directly send confirmation
-                    this->m_shadow->ackDisconnect(handle, connectionID, am::E_OK);
+                    m_shadow->ackDisconnect(handle, connectionID, am::E_OK);
 
                     //remove connection from the list of active connections
                     iter = m_activeConnections.erase(iter);
@@ -474,7 +474,7 @@ am_Error_e RoutingSenderPULSE::asyncDisconnect(const am_Handle_s handle, const a
             else
             {
                 logInfo("PULSE - asyncDisconnect() - connection found - but no sink input or source");
-                this->m_shadow->ackDisconnect(handle, connectionID, am::E_OK);
+                m_shadow->ackDisconnect(handle, connectionID, am::E_OK);
             }
             //remove connection from the list of active connections
             iter = m_activeConnections.erase(iter);
@@ -495,14 +495,14 @@ am_Error_e RoutingSenderPULSE::asyncSetSinkVolume(
     (void) ramp;
     (void) time;
 
-    logInfo("PULSE - asyncSetSinkVolume() - volume:", volume, "sink index:", this->m_sinkToPASink[sinkID]);
+    logInfo("PULSE - asyncSetSinkVolume() - volume:", volume, "sink index:", m_sinkToPASink[sinkID]);
 
     routing_sender_sink_volume(
-            this->m_paContext,
-            this->m_sinkToPASink[sinkID],
+            m_paContext,
+            m_sinkToPASink[sinkID],
             volume,
             this);
-    this->m_shadow->ackSetSinkVolumeChange(handle, volume, E_OK);
+    m_shadow->ackSetSinkVolumeChange(handle, volume, E_OK);
     return E_OK;
 }
 
@@ -519,7 +519,7 @@ am_Error_e RoutingSenderPULSE::asyncSetSourceVolume(
     pa_volume_t crt_volume = m_sourceToVolume[sourceID];
     m_sourceToVolume[sourceID] = pa_sw_volume_from_dB(volume*0.1);
 
-    logInfo("PULSE - asyncSetSourceVolume() - volume:", volume, "sink input index:", this->m_sourceToPASinkInput[sourceID]);
+    logInfo("PULSE - asyncSetSourceVolume() - volume:", volume, "sink input index:", m_sourceToPASinkInput[sourceID]);
     if (m_sourceToPASinkInput[sourceID] != -1)
     {
 #if 0
@@ -549,7 +549,7 @@ am_Error_e RoutingSenderPULSE::asyncSetSourceVolume(
     {
         logInfo("PULSE - sink input not registered yet - should wait for registration before update the volume");
     }
-    this->m_shadow->ackSetSourceVolumeChange(handle, volume, E_OK);
+    m_shadow->ackSetSourceVolumeChange(handle, volume, E_OK);
 
 }
 
@@ -564,8 +564,8 @@ am_Error_e RoutingSenderPULSE::asyncSetSourceState(
         case SS_ON:
         {
             routing_sender_sink_input_mute(
-                    this->m_paContext,
-                    this->m_sourceToPASinkInput[sourceID],
+                    m_paContext,
+                    m_sourceToPASinkInput[sourceID],
                     false,
                     this
             );
@@ -576,8 +576,8 @@ am_Error_e RoutingSenderPULSE::asyncSetSourceState(
         {
             //TODO: mute source in case of PAUSE or OFF - is there a better way to pause ? maybe suspending the associated sink?
             routing_sender_sink_input_mute(
-                    this->m_paContext,
-                    this->m_sourceToPASinkInput[sourceID],
+                    m_paContext,
+                    m_sourceToPASinkInput[sourceID],
                     true,
                     this
             );
@@ -586,11 +586,11 @@ am_Error_e RoutingSenderPULSE::asyncSetSourceState(
         default:
         {
             logError("RoutingSenderPULSE::asyncSetSourceState - wrong source state\n");
-            this->m_shadow->ackSetSourceState(handle, E_NOT_POSSIBLE);
+            m_shadow->ackSetSourceState(handle, E_NOT_POSSIBLE);
             return E_NOT_POSSIBLE;
         }
     }
-    this->m_shadow->ackSetSourceState(handle, E_OK);
+    m_shadow->ackSetSourceState(handle, E_OK);
     return E_OK;
 }
 
@@ -747,13 +747,13 @@ void RoutingSenderPULSE::getSinkInputInfoCallback(pa_context *c, const pa_sink_i
                             "move sinkInputIndex:", m_sourceToPASinkInput[iterConn->sourceID], "to sinkIndex:", m_sinkToPASink[iterConn->sinkID]);
 
                     routing_sender_move_sink_input(
-                            this->m_paContext,
+                            m_paContext,
                             m_sourceToPASinkInput[iterConn->sourceID],
                             m_sinkToPASink[iterConn->sinkID],
                             this);
 
                     //TODO: add callback for pulse move sink input -> to send confirmation; for the moment directly send confirmation
-                    this->m_shadow->ackConnect(iterConn->handle, iterConn->connectionID, am::E_OK);
+                    m_shadow->ackConnect(iterConn->handle, iterConn->connectionID, am::E_OK);
                 }
             }
             //check of controller already requested vol adjustment  for this source
@@ -772,7 +772,7 @@ void RoutingSenderPULSE::getSinkInputInfoCallback(pa_context *c, const pa_sink_i
             if (requiresVolUpdate)
             {
                 routing_sender_sink_input_volume(
-                        this->m_paContext,
+                        m_paContext,
                         m_sourceToPASinkInput[iter->source.sourceID],
                         m_sourceToVolume[iter->source.sourceID],
                         this);
@@ -820,13 +820,13 @@ void RoutingSenderPULSE::getSourceOutputInfoCallback(pa_context *c, const pa_sou
                             "move sourceOutputIndex:", m_sinkToPASourceOutput[iterConn->sinkID], "to sourceIndex:", m_sourceToPASource[iterConn->sourceID]);
 
                     routing_sender_move_source_output(
-                            this->m_paContext,
+                            m_paContext,
                             m_sinkToPASourceOutput[iterConn->sinkID],
                             m_sourceToPASource[iterConn->sourceID],
                             this);
 
                     //TODO: add callback for pulse move source output -> to send confirmation; for the moment directly send confirmation
-                    //this->m_shadow->ackConnect(iterConn->handle, iterConn->connectionID, am::E_OK);
+                    //m_shadow->ackConnect(iterConn->handle, iterConn->connectionID, am::E_OK);
                 }
             }
 
@@ -842,7 +842,7 @@ void RoutingSenderPULSE::getSinkInfoCallback(pa_context *c, const pa_sink_info *
     {
         if (strcmp("null", i->name) == 0)
         {
-            this->m_paSinkNullIndex = i->index;
+            m_paSinkNullIndex = i->index;
         }
 
         //search for corresponding (already registered) Sink
@@ -877,7 +877,7 @@ void RoutingSenderPULSE::getSinkInfoCallback(pa_context *c, const pa_sink_info *
     }
     else if (is_last)
     {
-        routing_sender_get_source_info(this->m_paContext, this);
+        routing_sender_get_source_info(m_paContext, this);
         logInfo("PULSE - PA sinks registration completed");
     }
 }
@@ -888,7 +888,7 @@ void RoutingSenderPULSE::getSourceInfoCallback(pa_context *c, const pa_source_in
     {
         if (strcmp("null", i->name) == 0)
         {
-            this->m_paSourceNullIndex = i->index;
+            m_paSourceNullIndex = i->index;
         }
 
         //search for corresponding (already registered) Source
@@ -923,7 +923,7 @@ void RoutingSenderPULSE::getSourceInfoCallback(pa_context *c, const pa_source_in
     }
     else if (is_last)
     {
-        this->m_shadow->hookDomainRegistrationComplete(this->m_domain.domainID);
+        m_shadow->hookDomainRegistrationComplete(m_domain.domainID);
         logInfo("PULSE - PA sinks and source registration completed");
         //TODO: - search for existing sink inputs & sources outputs
     }
