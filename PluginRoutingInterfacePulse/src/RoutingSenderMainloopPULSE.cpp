@@ -21,10 +21,17 @@
 
 /* Includes */
 
+#if 0
 #include <pthread.h>
 #include "CAmDltWrapper.h"
+#endif
+
+#include <cstring>
+
 #include "RoutingSenderPULSE.h"
 #include "RoutingSenderMainloopPULSE.h"
+
+using namespace am;
 
 static pthread_t        *p_thread;
 static pa_mainloop      *main_loop;

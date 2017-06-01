@@ -23,43 +23,23 @@
 #define ROUTINGSENDERPULSE_H_
 
 /* Includes */
-#include "IAmRoutingReceiverShadow.h"
-#include <signal.h>
-#include <string.h>
-#include <errno.h>
-#include <unistd.h>
-#include <assert.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <limits.h>
-#include <getopt.h>
-#include <locale.h>
-#include <map>
+
 #include <pulse/pulseaudio.h>
 
-using namespace am;
+#include "IAmRoutingReceiverShadow.h"
+
+#include "CAmXmlConfigParser.h"
+
+namespace am
+{
 
 struct RoutingSenderPULSEConnection
 {
     am_connectionID_t   connectionID;
     am_sourceID_t       sourceID;
     am_sinkID_t         sinkID;
-    am_Handle_s         handle;
     bool                pending;
 };
-
-
-struct RoutingSenderPULSESourceSinkConfig
-{
-    am_Source_s source;
-    am_Sink_s   sink;
-
-    std::string name;//e.g. {"gst-launch-0.10",  "mono", "aplay"};
-    std::string clazz;//e.g. {"Entertainment", "Navigation", "TTS"};
-    std::string propertyName;//e.g. {"application.process.binary", "application.process.binary",    "application.process.app"};
-    std::string propertyValue;//
-};
-
 
 /* Prototypes */
 class RoutingSenderPULSE : public IAmRoutingSend
@@ -87,26 +67,28 @@ public:
     void getInterfaceVersion(std::string& out_ver) const;
 
     void setPAContext(pa_context *p_paContext) {
-        this->m_paContext = p_paContext;
+        m_paContext = p_paContext;
     }
     am_Error_e asyncSetVolumes(const am_Handle_s handle, const std::vector<am_Volumes_s>& listVolumes);
     am_Error_e asyncSetSinkNotificationConfiguration(const am_Handle_s handle, const am_sinkID_t sinkID, const am_NotificationConfiguration_s& notificationConfiguration);
     am_Error_e asyncSetSourceNotificationConfiguration(const am_Handle_s handle, const am_sourceID_t sourceID, const am_NotificationConfiguration_s& notificationConfiguration);
 	am_Error_e resyncConnectionState(const am_domainID_t domainID, std::vector<am_Connection_s>& listOfExistingConnections);
 
-//Pulse Audio callbacks
-    void getSinkInfoCallback(pa_context *c, const pa_sink_info *i, int is_last, void *userdata);
-    void getSourceInfoCallback(pa_context *c, const pa_source_info *i, int is_last, void *userdata);
-    void getSinkInputInfoCallback(pa_context *c, const pa_sink_input_info *i, void *userdata);
-    void getSourceOutputInfoCallback(pa_context *c, const pa_source_output_info *i, void *userdata);
+	//Pulse Audio callbacks
+    void getSinkInfoCallback(pa_context *ctx, const pa_sink_info *info, int isLast, void *userdata);
+    void getSourceInfoCallback(pa_context *ctx, const pa_source_info *info, int isLast, void *userdata);
+    void getSinkInputInfoCallback(pa_context *ctx, const pa_sink_input_info *info, void *userdata);
+    void getSourceOutputInfoCallback(pa_context *ctx, const pa_source_output_info *info, void *userdata);
 
 private:
     void loadConfig();
+    void registerDomain(const rp_Domain_s& rp_domain);
+    void registerSource(const rp_Source_s& rp_source);
+    void registerSink(const rp_Sink_s& rp_sink);
 
-    am_Domain_s                                     m_domain;
-
-    std::vector<RoutingSenderPULSESourceSinkConfig> m_sinks;
-    std::vector<RoutingSenderPULSESourceSinkConfig> m_sources;
+    rp_Domain_s                                     m_domain;
+    std::vector<rp_Source_s>                        m_sources;
+    std::vector<rp_Sink_s>                          m_sinks;
 
     std::map<uint16_t, uint32_t>                    m_sourceToPASinkInput;
     std::map<uint16_t, uint32_t>                    m_sourceToPASource;
@@ -128,5 +110,7 @@ private:
     std::vector<RoutingSenderPULSEConnection>       m_activeConnections;
     std::map<uint16_t, float>                       m_sourceToVolume;
 };
+
+}
 
 #endif

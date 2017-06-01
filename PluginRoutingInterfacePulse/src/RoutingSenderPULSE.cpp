@@ -38,28 +38,22 @@
  *
  */
 
-#include <stdio.h>
-#include <string.h>
-#include <iostream>
+#include <cstring>
 
 #include "CAmDltWrapper.h"
 
 #include "RoutingSenderPULSE.h"
 #include "RoutingSenderMainloopPULSE.h"
 
+using namespace std;
 
-
-#define LIBNAME "libPluginRoutingInterfacePULSE.so"
-#define CFGNAME "libPluginRoutingInterfacePULSE.conf"
+namespace am
+{
 
 /* Globals */
 
-
 /* Defines */
 DLT_DECLARE_CONTEXT(routingPulse)
-/* Maximum source volume measured in percentage. Minimum value is 0% */
-#define MAX_SOURCE_VOLUME   (100)
-
 
 /**
  * Factory function for the plug-in to be used by audio manager daemon with dlopen & dlsym functions.
@@ -84,7 +78,6 @@ extern "C" void destroyPluginRoutingInterfacePULSE(IAmRoutingSend* routingSendIn
     delete routingSendInterface;//virtual destructor -> our constructor will be called too
 }
 
-
 /**
  * Constructor.
  * @param p_paContext - reference to PulseAudio context
@@ -95,117 +88,6 @@ RoutingSenderPULSE::RoutingSenderPULSE(pa_context *p_paContext)
     m_paSourceNullIndex = -1;
     m_paContext = p_paContext;
 }
-
-
-void RoutingSenderPULSE::loadConfig()
-{
-    //get current library path - search: /proc/< getpid() >/maps
-    char proc_maps_file_name[256];
-    char line[256];
-    char lib_name[256];
-    char *tmp;
-    pid_t pid = getpid();
-    snprintf(proc_maps_file_name, 256,  "/proc/%d/maps", pid);
-    FILE *proc_maps = fopen(proc_maps_file_name, "r");
-
-    while (!feof(proc_maps))
-    {
-        char *cnt = fgets(line, 256, proc_maps);
-        if (strlen(line) == 0 || line[0] == '#')
-        {
-            continue;
-        }
-        if (cnt == NULL) continue;
-        //tmp0 tmp1 tmp2 tmp3 tmp4 lib_name);
-        tmp = strtok(line, " ");//address-interval
-        if(tmp == NULL) continue;
-
-        tmp = strtok(NULL, " ");//rights
-        if(tmp == NULL) continue;
-
-        tmp = strtok(NULL, " ");//offset
-        if(tmp == NULL) continue;
-
-        strtok(NULL, " ");//dev
-        if(tmp == NULL) continue;
-
-        tmp = strtok(NULL, " \n");//inode
-        if(tmp == NULL) continue;
-
-        tmp = strtok(NULL, " \n");
-        if(tmp == NULL) continue;
-
-        strcpy(lib_name, tmp);
-        if ((lib_name != NULL) && (strstr(lib_name, LIBNAME) >= lib_name))
-        {
-            strcpy(strrchr(lib_name, '/') + 1, CFGNAME);
-            logInfo("PULSE - config file name:", lib_name);
-
-            FILE *config = fopen(lib_name, "r");
-
-            while (config && !feof(config))
-            {
-                char *cnt = fgets(line, 256, config);
-                if (!line || strlen(line) == 0) continue;
-                //config format line: TYPE|PULSE TYPE|NAME|CLASS|PROPERTY_NAME|PROPERTY_VALUE
-                //TYPE="Source" or "Sink"
-
-                char *tmp = strtok(line, "|");//type
-                if (strcmp("Sink", tmp) == 0)
-                {
-                    //add sink config
-                    RoutingSenderPULSESourceSinkConfig sinkConfig;
-
-                    tmp = strtok(NULL, "|");//pulse type - not used for the moment
-
-                    tmp = strtok(NULL, "|");//class
-                    sinkConfig.clazz = std::string(tmp);
-
-                    tmp = strtok(NULL, "|");//name
-                    sinkConfig.name = std::string(tmp);
-
-                    tmp = strtok(NULL, "|");//property name
-                    sinkConfig.propertyName = std::string(tmp);
-
-                    tmp = strtok(NULL, "|\n");//property value
-                    sinkConfig.propertyValue = std::string(tmp);
-
-                    m_sinks.push_back(sinkConfig);
-                    logInfo("sinkConfig: sinkConfig.clazz=", sinkConfig.clazz, " sinkConfig.name=", sinkConfig.name, " sinkConfig.propertyName=", sinkConfig.propertyName, " sinkConfig.propertyValue=", sinkConfig.propertyValue);
-                }
-                if (strcmp("Source", tmp) == 0)
-                {
-                    //add source config
-                    RoutingSenderPULSESourceSinkConfig sourceConfig;
-
-                    tmp = strtok(NULL, "|");//pulse type - not used for the moment
-
-                    tmp = strtok(NULL, "|");//class
-                    sourceConfig.clazz = std::string(tmp);
-
-                    tmp = strtok(NULL, "|");//name
-                    sourceConfig.name = std::string(tmp);
-
-                    tmp = strtok(NULL, "|");//property name
-                    sourceConfig.propertyName = std::string(tmp);
-
-                    tmp = strtok(NULL, "|\n");//property value
-                    sourceConfig.propertyValue = std::string(tmp);
-
-                    m_sources.push_back(sourceConfig);
-                    logInfo("sourceConfig: sourceConfig.clazz=", sourceConfig.clazz, " sourceConfig.name=", sourceConfig.name, " sourceConfig.propertyName=", sourceConfig.propertyName, " sourceConfig.propertyValue=", sourceConfig.propertyValue);
-                }
-            }
-
-            if (config)
-                fclose(config);
-            break;
-        }
-    }
-
-    fclose(proc_maps);
-}
-
 
 /**
  * Destructor.
@@ -233,87 +115,7 @@ am_Error_e RoutingSenderPULSE::startupInterface(am::IAmRoutingReceive *p_routing
 void RoutingSenderPULSE::setRoutingReady(uint16_t handle)
 {
     //TODO: do not register sinks with the same name
-
-    int i;
     loadConfig();
-    //first register Domain = PulseAudio
-    m_domain.name     = "PulseAudio";
-    returnBusName(m_domain.busname);//set domain bus name = current interface bus name
-    m_domain.nodename = "PulseAudio";
-    m_domain.early    = false;
-    m_domain.complete = true;
-    m_domain.state    = am::DS_CONTROLLED;
-
-    m_domain.domainID = 0;
-    m_shadow->registerDomain(m_domain, m_domain.domainID);
-
-    am_SoundProperty_s l_spTreble;
-    l_spTreble.type = SP_GENIVI_BASS;
-    l_spTreble.value = 0;
-
-    am_SoundProperty_s l_spMid;
-    l_spMid.type = SP_GENIVI_MID;
-    l_spMid.value = 0;
-
-    am_SoundProperty_s l_spBass;
-    l_spBass.type = SP_GENIVI_BASS;
-    l_spBass.value = 0;
-
-    //register sources (sink inputs & sinks)
-    for (i = 0; i < m_sources.size(); i++)
-    {
-        am_sourceID_t l_newSourceID = 0;
-        m_sources[i].source.sourceID = l_newSourceID;
-        m_sources[i].source.name = m_sources[i].name;
-        m_sources[i].source.sourceState = am::SS_ON;
-        m_sources[i].source.domainID = m_domain.domainID;
-        m_sources[i].source.visible = true;
-        m_sources[i].source.volume = MAX_SOURCE_VOLUME; /* initialize source volume to 100% */
-
-        m_sources[i].source.listConnectionFormats.push_back(am::CF_GENIVI_STEREO);
-        m_shadow->peekSourceClassID(
-                m_sources[i].clazz,
-                m_sources[i].source.sourceClassID);
-
-        m_shadow->registerSource(m_sources[i].source, l_newSourceID);
-
-        m_sources[i].source.sourceID = l_newSourceID;
-        m_sourceToPASinkInput[l_newSourceID] = -1;
-        m_sourceToPASource[l_newSourceID] = -1;
-
-        logInfo("PULSE - register source:"
-            ,m_sources[i].name
-            , "(", m_sources[i].propertyName , ", ", m_sources[i].propertyValue, ")");
-        m_sourceToVolume[l_newSourceID] = MAX_SOURCE_VOLUME;//initially all the sources are at 100%
-    }
-
-    //register sinks (source outputs & sources)
-    for (i = 0; i < m_sinks.size(); i++)
-    {
-        am_sinkID_t l_newsinkID = 0;
-        m_sinks[i].sink.sinkID = l_newsinkID;
-        m_sinks[i].sink.name = m_sinks[i].name;
-        m_sinks[i].sink.muteState = am::MS_MUTED;
-        m_sinks[i].sink.domainID = m_domain.domainID;
-        m_sinks[i].sink.visible = true;
-
-        m_sinks[i].sink.listSoundProperties.push_back(l_spTreble);
-        m_sinks[i].sink.listSoundProperties.push_back(l_spMid);
-        m_sinks[i].sink.listSoundProperties.push_back(l_spBass);
-        m_sinks[i].sink.listConnectionFormats.push_back(am::CF_GENIVI_STEREO);
-
-        m_shadow->peekSinkClassID(
-                m_sinks[i].clazz,
-                m_sinks[i].sink.sinkClassID);
-        m_shadow->registerSink(m_sinks[i].sink, l_newsinkID);
-        m_sinks[i].sink.sinkID = l_newsinkID;
-        m_sinkToPASourceOutput[l_newsinkID] = -1;
-        m_sinkToPASink[l_newsinkID] = -1;
-
-        logInfo("PULSE - register sink:"
-            ,m_sinks[i].name
-            , "(", m_sinks[i].propertyName , ", ", m_sinks[i].propertyValue, ")");
-    }
 
     logInfo("PULSE - routingInterfacesReady");
     m_shadow->confirmRoutingReady(handle, am::E_OK);
@@ -334,7 +136,6 @@ am_Error_e RoutingSenderPULSE::asyncAbort(const am_Handle_s handle)
     return E_NOT_USED;
 }
 
-
 am_Error_e RoutingSenderPULSE::asyncConnect(
         const am_Handle_s handle,
         const am_connectionID_t connectionID,
@@ -344,27 +145,19 @@ am_Error_e RoutingSenderPULSE::asyncConnect(
 {
     //TODO: check stuff like connectionFormat
     logInfo("PULSE - asyncConnect() - start");
+
     //add source,sink & connectionID to a list of connections maintained by Routing Pulse Engine
-    RoutingSenderPULSEConnection l_newConnection;
+    RoutingSenderPULSEConnection l_newConnection {};
+
     l_newConnection.sinkID = sinkID;
     l_newConnection.sourceID = sourceID;
     l_newConnection.connectionID = connectionID;
-    l_newConnection.handle = handle;
-
-    //by default - sources ar connected at 100% -> controller is responsible to setSourcevolume if needed
-
-//    m_sourceToVolume[sourceID] = MAX_SOURCE_VOLUME;
-
 
     if (m_sinkToPASink[sinkID] != -1)
     {
         if (m_sourceToPASinkInput[sourceID] != -1)
         {
-            if (routing_sender_move_sink_input(
-                    m_paContext,
-                    m_sourceToPASinkInput[sourceID],
-                    m_sinkToPASink[sinkID],
-                    this))
+            if (routing_sender_move_sink_input(m_paContext, m_sourceToPASinkInput[sourceID], m_sinkToPASink[sinkID], this))
             {
                 //TODO: add callback for pulse move sink input -> to send confirmation; for the moment directly send confirmation
 
@@ -376,7 +169,14 @@ am_Error_e RoutingSenderPULSE::asyncConnect(
                 m_shadow->ackConnect(handle, connectionID, am::E_NOT_POSSIBLE);
                 return am::E_NOT_POSSIBLE;
             }
-        }//else move_sink_input will be called later
+        }
+        else
+        {
+            logInfo("PULSE - asyncConnect() - connectionID:", connectionID, " pending");
+
+            l_newConnection.pending = true;
+        }
+        //else move_sink_input will be called later
     }
     else if (m_sourceToPASource[sourceID] != -1)
     {
@@ -388,18 +188,20 @@ am_Error_e RoutingSenderPULSE::asyncConnect(
                     m_sourceToPASource[sourceID],
                     this))
             {
-                //TODO: add callback for pulse move sink input -> to send confirmation; for the moment directly send confirmation
-
                 logInfo("PULSE - asyncConnect() - connectionID:", connectionID,
                         "move sourceOutputIndex:", m_sinkToPASourceOutput[sinkID], "to sourceIndex:", m_sourceToPASource[sourceID]);
-
             }
             else
             {
                 m_shadow->ackConnect(handle, connectionID, am::E_NOT_POSSIBLE);
                 return am::E_NOT_POSSIBLE;
             }
-        }//else move_sink_input will be called later
+        }
+        else
+        {
+            l_newConnection.pending = true;
+        }
+        //else move_sink_input will be called later
     }
     else
     {
@@ -425,8 +227,8 @@ am_Error_e RoutingSenderPULSE::asyncConnect(
 am_Error_e RoutingSenderPULSE::asyncDisconnect(const am_Handle_s handle, const am_connectionID_t connectionID)
 {
     //get connection by ID ... not to many connections, therefore linear search is fast enough
-    std::vector<RoutingSenderPULSEConnection>::iterator iter    = m_activeConnections.begin();
-    std::vector<RoutingSenderPULSEConnection>::iterator iterEnd = m_activeConnections.end();
+    vector<RoutingSenderPULSEConnection>::iterator iter    = m_activeConnections.begin();
+    vector<RoutingSenderPULSEConnection>::iterator iterEnd = m_activeConnections.end();
     for (; iter < iterEnd; ++iter)
     {
         if (iter->connectionID == connectionID)
@@ -597,7 +399,7 @@ am_Error_e RoutingSenderPULSE::asyncSetSourceState(
 am_Error_e RoutingSenderPULSE::asyncSetSinkSoundProperties(
         const am_Handle_s handle,
         const am_sinkID_t sinkID,
-        const std::vector<am_SoundProperty_s>& listSoundProperties)
+        const vector<am_SoundProperty_s>& listSoundProperties)
 {
     (void) handle;
     (void) sinkID;
@@ -619,7 +421,7 @@ am_Error_e RoutingSenderPULSE::asyncSetSinkSoundProperty(
 am_Error_e RoutingSenderPULSE::asyncSetSourceSoundProperties(
         const am_Handle_s handle,
         const am_sourceID_t sourceID,
-        const std::vector<am_SoundProperty_s>& listSoundProperties)
+        const vector<am_SoundProperty_s>& listSoundProperties)
 {
     (void) handle;
     (void) sourceID;
@@ -662,17 +464,18 @@ am_Error_e RoutingSenderPULSE::setDomainState(
     return E_NOT_USED;
 }
 
-am_Error_e RoutingSenderPULSE::returnBusName(std::string& BusName) const {
-    BusName = "RoutingPULSE";
+am_Error_e RoutingSenderPULSE::returnBusName(string& BusName) const {
+    BusName = "PulseRoutingPlugin";
     return E_OK;
 }
 
-void RoutingSenderPULSE::getInterfaceVersion(std::string& out_ver) const
+void RoutingSenderPULSE::getInterfaceVersion(string& out_ver) const
+
 {
     out_ver = RoutingVersion;
 }
 
-am_Error_e RoutingSenderPULSE::asyncSetVolumes(const am_Handle_s handle, const std::vector<am_Volumes_s>& listVolumes)
+am_Error_e RoutingSenderPULSE::asyncSetVolumes(const am_Handle_s handle, const vector<am_Volumes_s>& listVolumes)
 {
     (void) handle;
     (void) listVolumes;
@@ -698,7 +501,7 @@ am_Error_e RoutingSenderPULSE::asyncSetSourceNotificationConfiguration(const am_
     return (E_NOT_USED);
 }
 
-am_Error_e RoutingSenderPULSE::resyncConnectionState(const am_domainID_t domainID, std::vector<am_Connection_s>& listOfExistingConnections)
+am_Error_e RoutingSenderPULSE::resyncConnectionState(const am_domainID_t domainID, vector<am_Connection_s>& listOfExistingConnections)
 {
     return E_OK;
 }
@@ -708,64 +511,54 @@ am_Error_e RoutingSenderPULSE::resyncConnectionState(const am_domainID_t domainI
  ******************************************************************************/
 
 
-void RoutingSenderPULSE::getSinkInputInfoCallback(pa_context *c, const pa_sink_input_info *i, void *userdata)
+void RoutingSenderPULSE::getSinkInputInfoCallback(pa_context *ctx, const pa_sink_input_info *info, void *userdata)
 {
-    if (i == NULL)
+    if (info == NULL)
     {
         return;
     }
 
-    //search for corresponding Source
-    std::vector<RoutingSenderPULSESourceSinkConfig>::iterator iter    = m_sources.begin();
-    std::vector<RoutingSenderPULSESourceSinkConfig>::iterator iterEnd = m_sources.end();
-    for (; iter < iterEnd; ++iter)
+    for (auto source : m_sources)
     {
         //try to match source PulseAudio properties against config properties
-        const char *property_value = pa_proplist_gets(i->proplist, iter->propertyName.c_str());
+        const char *property_value = pa_proplist_gets(info->proplist, source.propertyName.c_str());
 
         if (property_value &&
-            ( std::string::npos != std::string(property_value).find(iter->propertyValue) ||
-              std::string::npos != iter->propertyValue.find(property_value)) )
+            (string::npos != string(property_value).find(source.propertyValue) ||
+             string::npos != source.propertyValue.find(property_value)))
         {
-            logInfo("PULSE - sink input registered:"
-                , " sinkInputIndex:", i->index, "sourceID:", iter->source.sourceID);
+            logInfo("PULSE - sink input registered:", " sinkInputIndex:", info->index, "sourceID:", source.id);
+            logInfo("PULSE - sink input details:", " prop_val: ", property_value, " source.prop_val: ", source.propertyValue);
 
-            logInfo("PULSE - sink input details:"
-                    , " prop_val: ", property_value, " iter->prop_val: ", iter->propertyValue);
-
-            m_sourceToPASinkInput[iter->source.sourceID] = i->index;
+            m_sourceToPASinkInput[source.id] = info->index;
 
             //iterate pending connection request
             // -> if there is a connection pending such that sink input "i" matches source from Connect() - create the connection in pulse
-            std::vector<RoutingSenderPULSEConnection>::iterator iterConn    = m_activeConnections.begin();
-            std::vector<RoutingSenderPULSEConnection>::iterator iterConnEnd = m_activeConnections.end();
-            for (; iterConn < iterConnEnd; ++iterConn)
+
+            for (auto connection  : m_activeConnections)
             {
-                if (iterConn->sourceID == iter->source.sourceID)
+                if (connection.sourceID == source.id)
                 {
-                    logInfo("PULSE - asyncConnect() - connectionID:", iterConn->connectionID,
-                            "move sinkInputIndex:", m_sourceToPASinkInput[iterConn->sourceID], "to sinkIndex:", m_sinkToPASink[iterConn->sinkID]);
+                    logInfo("PULSE - asyncConnect() - connectionID:", connection.connectionID,
+                            "move sinkInputIndex:", m_sourceToPASinkInput[connection.sourceID], "to sinkIndex:", m_sinkToPASink[connection.sinkID]);
 
-                    routing_sender_move_sink_input(
-                            m_paContext,
-                            m_sourceToPASinkInput[iterConn->sourceID],
-                            m_sinkToPASink[iterConn->sinkID],
+                    routing_sender_move_sink_input(m_paContext,
+                            m_sourceToPASinkInput[connection.sourceID],
+                            m_sinkToPASink[connection.sinkID],
                             this);
-
-                    //TODO: add callback for pulse move sink input -> to send confirmation; for the moment directly send confirmation
-                    m_shadow->ackConnect(iterConn->handle, iterConn->connectionID, am::E_OK);
                 }
             }
+
             //check of controller already requested vol adjustment  for this source
             bool requiresVolUpdate = false;
-            for (int j = 0; j < i->volume.channels; j++)
+            for (int j = 0; j < info->volume.channels; j++)
             {
-                if (i->volume.values[j] != m_sourceToVolume[iter->source.sourceID])
+                if (info->volume.values[j] != m_sourceToVolume[source.id])
                 {
                     requiresVolUpdate = true;
-                    logInfo("PULSE - sink registerd with vol:", i->volume.values[j],
+                    logInfo("PULSE - sink registerd with vol:", info->volume.values[j],
                             "; should be changed to:",
-                            m_sourceToVolume[iter->source.sourceID]);
+                            m_sourceToVolume[source.id]);
                     break;
                 }
             }
@@ -773,8 +566,8 @@ void RoutingSenderPULSE::getSinkInputInfoCallback(pa_context *c, const pa_sink_i
             {
                 routing_sender_sink_input_volume(
                         m_paContext,
-                        m_sourceToPASinkInput[iter->source.sourceID],
-                        m_sourceToVolume[iter->source.sourceID],
+                        m_sourceToPASinkInput[source.id],
+                        m_sourceToVolume[source.id],
                         this);
             }
             //TODO: check mute state was requested by controller.
@@ -783,50 +576,40 @@ void RoutingSenderPULSE::getSinkInputInfoCallback(pa_context *c, const pa_sink_i
     }
 }
 
-
-void RoutingSenderPULSE::getSourceOutputInfoCallback(pa_context *c, const pa_source_output_info *i, void *userdata)
+void RoutingSenderPULSE::getSourceOutputInfoCallback(pa_context *ctx, const pa_source_output_info *info, void *userdata)
 {
-    if (i == NULL)
+    if (info == NULL)
     {
         return;
     }
 
-    //search for corresponding Source
-    std::vector<RoutingSenderPULSESourceSinkConfig>::iterator iter    = m_sinks.begin();
-    std::vector<RoutingSenderPULSESourceSinkConfig>::iterator iterEnd = m_sinks.end();
-    for (; iter < iterEnd; ++iter)
+    for (auto sink : m_sinks)
     {
         //try to match source PulseAudio properties agains config properties
-        const char *property_value = pa_proplist_gets(i->proplist, iter->propertyName.c_str());
+        const char *property_value = pa_proplist_gets(info->proplist, sink.propertyName.c_str());
 
         if (property_value &&
-            ( std::string::npos != std::string(property_value).find(iter->propertyValue) ||
-              std::string::npos != iter->propertyValue.find(property_value)) )
+            (string::npos != string(property_value).find(sink.propertyValue) ||
+             string::npos != sink.propertyValue.find(property_value)) )
         {
-            logInfo("PULSE - source output registered:"
-                , " sourceOutputIndex:", i->index, "sinkID:", iter->sink.sinkID);
+            logInfo("PULSE - source output registered:", " sourceOutputIndex:", info->index, "sinkID:", sink.id);
 
-            m_sinkToPASourceOutput[iter->sink.sinkID] = i->index;
+            m_sinkToPASourceOutput[sink.id] = info->index;
 
             //iterate pending connection request
             // -> if there is a connection pending such that sink input "i" matches source from Connect() - create the connection in pulse
-            std::vector<RoutingSenderPULSEConnection>::iterator iterConn    = m_activeConnections.begin();
-            std::vector<RoutingSenderPULSEConnection>::iterator iterConnEnd = m_activeConnections.end();
-            for (; iterConn < iterConnEnd; ++iterConn)
+            for (auto connection : m_activeConnections)
             {
-                if (iterConn->sinkID == iter->sink.sinkID)
+                if (connection.sinkID == sink.id)
                 {
-                    logInfo("PULSE - asyncConnect() - connectionID:", iterConn->connectionID,
-                            "move sourceOutputIndex:", m_sinkToPASourceOutput[iterConn->sinkID], "to sourceIndex:", m_sourceToPASource[iterConn->sourceID]);
+                    logInfo("PULSE - asyncConnect() - connectionID:", connection.connectionID,
+                            "move sourceOutputIndex:", m_sinkToPASourceOutput[connection.sinkID], "to sourceIndex:", m_sourceToPASource[connection.sourceID]);
 
                     routing_sender_move_source_output(
                             m_paContext,
-                            m_sinkToPASourceOutput[iterConn->sinkID],
-                            m_sourceToPASource[iterConn->sourceID],
+                            m_sinkToPASourceOutput[connection.sinkID],
+                            m_sourceToPASource[connection.sourceID],
                             this);
-
-                    //TODO: add callback for pulse move source output -> to send confirmation; for the moment directly send confirmation
-                    //m_shadow->ackConnect(iterConn->handle, iterConn->connectionID, am::E_OK);
                 }
             }
 
@@ -835,96 +618,205 @@ void RoutingSenderPULSE::getSourceOutputInfoCallback(pa_context *c, const pa_sou
     }
 }
 
-
-void RoutingSenderPULSE::getSinkInfoCallback(pa_context *c, const pa_sink_info *i, int is_last, void *userdata)
+void RoutingSenderPULSE::getSinkInfoCallback(pa_context *ctx, const pa_sink_info *info, int isLast, void *userdata)
 {
-    if (i != NULL)
+    if (info != NULL)
     {
-        if (strcmp("null", i->name) == 0)
+        if (strcmp("null", info->name) == 0)
         {
-            m_paSinkNullIndex = i->index;
+            m_paSinkNullIndex = info->index;
         }
 
-        //search for corresponding (already registered) Sink
-        std::vector<RoutingSenderPULSESourceSinkConfig>::iterator iter    = m_sinks.begin();
-        std::vector<RoutingSenderPULSESourceSinkConfig>::iterator iterEnd = m_sinks.end();
-        for (; iter < iterEnd; ++iter)
+        for (auto sink : m_sinks)
         {
-            //first try to match the sink name from pulse audio sink name
-            if (iter->sink.name == std::string(i->name))
+            if (sink.deviceName == string(info->name))
             {
-                logInfo("PULSE sink name PA:", i->name, "config name:" ,iter->sink.name);
-                logInfo("PULSE - PA sink:", i->index,
-                        "corresponding to AMGR sink:", iter->sink.sinkID, " - found");
-                m_sinkToPASink[iter->sink.sinkID] = i->index;
+                logInfo("PULSE - PA sink:", info->index, "corresponding to AMGR sink:", sink.id, " - found");
+
+                m_sinkToPASink[sink.id] = info->index;
             }
             else
             {
                 //try to match sink PulseAudio properties against config properties
-                const char *property_value = pa_proplist_gets(i->proplist, iter->propertyName.c_str());
+                const char *property_value = pa_proplist_gets(info->proplist, sink.propertyName.c_str());
 
-                if (!property_value) continue;
-
-                if (std::string::npos != iter->propertyValue.find(property_value))
+                if (!property_value)
                 {
-                    logInfo("PULSE - PA sink:", i->index,
-                            "corresponding to AMGR sink:", iter->sink.sinkID, " - found");
+                    continue;
+                }
 
-                    m_sinkToPASink[iter->sink.sinkID] = i->index;
+                if (string::npos != sink.propertyValue.find(property_value))
+                {
+                    logInfo("PULSE - PA sink:", info->index, "corresponding to AMGR sink:", sink.id, " - found");
+
+                    m_sinkToPASink[sink.id] = info->index;
                 }
             }
         }
     }
-    else if (is_last)
+    else if (isLast)
     {
         routing_sender_get_source_info(m_paContext, this);
         logInfo("PULSE - PA sinks registration completed");
     }
 }
 
-void RoutingSenderPULSE::getSourceInfoCallback(pa_context *c, const pa_source_info *i, int is_last, void *userdata)
+void RoutingSenderPULSE::getSourceInfoCallback(pa_context *ctx, const pa_source_info *info, int isLast, void *userdata)
 {
-    if (i != NULL)
+    if (info != NULL)
     {
-        if (strcmp("null", i->name) == 0)
+        if (strcmp("null", info->name) == 0)
         {
-            m_paSourceNullIndex = i->index;
+            m_paSourceNullIndex = info->index;
         }
 
         //search for corresponding (already registered) Source
-        std::vector<RoutingSenderPULSESourceSinkConfig>::iterator iter    = m_sources.begin();
-        std::vector<RoutingSenderPULSESourceSinkConfig>::iterator iterEnd = m_sources.end();
-        for (; iter < iterEnd; ++iter)
+        for (auto source : m_sources)
         {
             //first try to match the sink name from pulse audio sink name
-            if (iter->sink.name == std::string(i->name))
+            if (source.name == string(info->name))
             {
-                logInfo("PULSE - PA source:", i->index,
-                        "corresponding to AMGR source:", iter->source.sourceID, " - found");
-                m_sourceToPASource[iter->source.sourceID] = i->index;
+                logInfo("PULSE - PA source:", info->index, "corresponding to AMGR source:", source.id, " - found");
+
+                m_sourceToPASource[source.id] = info->index;
             }
             else
             {
                 //try to match source PulseAudio properties against config properties
-                const char *property_value = pa_proplist_gets(i->proplist, iter->propertyName.c_str());
+                const char *property_value = pa_proplist_gets(info->proplist, source.propertyName.c_str());
 
-                if (!property_value) continue;
-
-                if (std::string::npos != iter->propertyValue.find(property_value))
+                if (!property_value)
                 {
-                    logInfo("PULSE - PA source:", i->index,
-                            "corresponding to AMGR source:", iter->source.sourceID, " - found");
+                    continue;
+                }
 
-                    m_sourceToPASource[iter->source.sourceID] = i->index;
+                if (string::npos != source.propertyValue.find(property_value))
+                {
+                    logInfo("PULSE - PA source:", info->index, "corresponding to AMGR source:", source.id, " - found");
+
+                    m_sourceToPASource[source.id] = info->index;
                 }
             }
-
         }
     }
-    else if (is_last)
+    else if (isLast)
     {
-        m_shadow->hookDomainRegistrationComplete(m_domain.domainID);
+        m_shadow->hookDomainRegistrationComplete(m_domain.id);
+
         logInfo("PULSE - PA sinks and source registration completed");
         //TODO: - search for existing sink inputs & sources outputs
     }
+}
+
+void RoutingSenderPULSE::loadConfig()
+{
+    rp_Configuration_s config;
+    CAmXmlConfigParser xmlConfigParser;
+
+    xmlConfigParser.parse(config);
+
+    registerDomain(config.domain);
+
+    for(auto source : config.listSources)
+    {
+        registerSource(source);
+    }
+
+    for(auto sink : config.listSinks)
+    {
+        registerSink(sink);
+    }
+}
+
+void RoutingSenderPULSE::registerDomain(const rp_Domain_s& rp_domain)
+{
+    am_Domain_s l_amDomain;
+
+    l_amDomain.name     = rp_domain.name;
+    returnBusName(l_amDomain.busname);//set domain bus name = current interface bus name
+    l_amDomain.nodename = rp_domain.nodeName;
+    l_amDomain.early    = false;
+    l_amDomain.complete = true;
+    l_amDomain.state    = am::DS_CONTROLLED;
+    l_amDomain.domainID = rp_domain.id;
+
+    m_domain = rp_domain;
+
+    m_shadow->registerDomain(l_amDomain, m_domain.id);
+}
+
+void RoutingSenderPULSE::registerSource(const rp_Source_s& rp_source)
+{
+    am_Source_s l_amSource {};
+    am_sourceID_t l_sourceID = 0;
+
+    l_amSource.sourceID = rp_source.id;
+    l_amSource.name = rp_source.name;
+    // Do we need it ?
+    l_amSource.sourceState = SS_ON;
+    l_amSource.domainID = m_domain.id;
+    l_amSource.visible = true;
+    l_amSource.volume = 0;
+    l_amSource.listConnectionFormats.push_back(am::CF_GENIVI_STEREO);
+
+    m_shadow->peekSourceClassID(rp_source.className, l_amSource.sourceClassID);
+
+    if (m_shadow->registerSource(l_amSource, l_sourceID) == E_OK)
+    {
+        logInfo("PULSE - register source:", rp_source.name,
+                "(", rp_source.propertyName , ", ", rp_source.propertyValue, ")");
+        m_sources.push_back(rp_source);
+        m_sources.back().id = l_sourceID;
+
+        m_sourceToPASinkInput[l_sourceID] = -1;
+        m_sourceToPASource[l_sourceID] = -1;
+        m_sourceToVolume[l_sourceID] = pa_sw_volume_from_dB(0);
+
+        logInfo("PULSE - register source:", rp_source.name,
+                "(", rp_source.propertyName , ", ", rp_source.propertyValue, ")");
+    }
+}
+
+void RoutingSenderPULSE::registerSink(const rp_Sink_s& rp_sink)
+{
+    am_Sink_s l_amSink {};
+    am_sinkID_t l_sinkID = 0;
+
+    am_SoundProperty_s l_spTreble;
+    l_spTreble.type = SP_GENIVI_BASS;
+    l_spTreble.value = 0;
+
+    am_SoundProperty_s l_spMid;
+    l_spMid.type = SP_GENIVI_MID;
+    l_spMid.value = 0;
+
+    am_SoundProperty_s l_spBass;
+    l_spBass.type = SP_GENIVI_BASS;
+    l_spBass.value = 0;
+
+    l_amSink.sinkID = l_sinkID;
+    l_amSink.name = rp_sink.name;
+    l_amSink.muteState = am::MS_MUTED;
+    l_amSink.domainID = m_domain.id;
+    l_amSink.visible = true;
+
+    l_amSink.listSoundProperties.push_back(l_spTreble);
+    l_amSink.listSoundProperties.push_back(l_spMid);
+    l_amSink.listSoundProperties.push_back(l_spBass);
+    l_amSink.listConnectionFormats.push_back(am::CF_GENIVI_STEREO);
+
+    m_shadow->peekSinkClassID(rp_sink.className, l_amSink.sinkClassID);
+    if (m_shadow->registerSink(l_amSink, l_sinkID) == E_OK)
+    {
+        m_sinks.push_back(rp_sink);
+        m_sinks.back().id = l_sinkID;
+
+        m_sinkToPASourceOutput[l_sinkID] = -1;
+        m_sinkToPASink[l_sinkID] = -1;
+
+        logInfo("PULSE - register sink:", rp_sink.name,
+                "(", rp_sink.propertyName , ", ", rp_sink.propertyValue, ")");
+    }
+}
+
 }
