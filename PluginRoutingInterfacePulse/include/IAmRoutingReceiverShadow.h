@@ -87,6 +87,8 @@ public:
     void hookSourceNotificationDataChange(const am_sourceID_t sourceID, const am_NotificationPayload_s& payload);
     am_Error_e peekSourceClassID(const std::string& name, am_sourceClass_t& sourceClassID);
     am_Error_e peekSinkClassID(const std::string& name, am_sinkClass_t& sinkClassID);
+    am_Error_e peekSource(const std::string& name, am_sourceID_t& sourceID);
+    am_Error_e peekSink(const std::string& name, am_sinkID_t& sinkID);
 
     void asyncDeleteVolume(const am_Handle_s handle, const class CAmRoutingAdapterALSAVolume* volume);
 

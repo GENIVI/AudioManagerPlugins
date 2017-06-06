@@ -24,17 +24,23 @@
 
 /* Includes */
 
+#include <mutex>
+#include <unordered_map>
+
 #include <pulse/pulseaudio.h>
 
 #include "IAmRoutingReceiverShadow.h"
-
 #include "CAmXmlConfigParser.h"
+#include "CAmMainloopPulse.h"
+#include "CAmConnectionManager.h"
+#include "CAmVolumeManager.h"
 
 namespace am
 {
 
-struct RoutingConnection
+struct rp_Connection_s
 {
+    am_Handle_s         handle;
     am_connectionID_t   connectionID;
     am_sourceID_t       sourceID;
     am_sinkID_t         sinkID;
@@ -42,10 +48,10 @@ struct RoutingConnection
 };
 
 /* Prototypes */
-class CAmRoutingSenderPulse : public IAmRoutingSend
+class CAmRoutingSenderPulse : public CAmPulseClientItf, public IAmRoutingSend
 {
 public:
-    CAmRoutingSenderPulse(pa_context *pPaContext);
+    CAmRoutingSenderPulse();
     ~CAmRoutingSenderPulse();
 
     am::am_Error_e startupInterface(am::IAmRoutingReceive* pRoutingReceiver);
@@ -66,52 +72,58 @@ public:
     am_Error_e returnBusName(std::string& BusName) const;
     void getInterfaceVersion(std::string& version) const;
 
-    void setPAContext(pa_context *p_paContext) {
-        mPaContext = p_paContext;
-    }
     am_Error_e asyncSetVolumes(const am_Handle_s handle, const std::vector<am_Volumes_s>& listVolumes);
     am_Error_e asyncSetSinkNotificationConfiguration(const am_Handle_s handle, const am_sinkID_t sinkID, const am_NotificationConfiguration_s& notificationConfiguration);
     am_Error_e asyncSetSourceNotificationConfiguration(const am_Handle_s handle, const am_sourceID_t sourceID, const am_NotificationConfiguration_s& notificationConfiguration);
 	am_Error_e resyncConnectionState(const am_domainID_t domainID, std::vector<am_Connection_s>& listOfExistingConnections);
 
 	//Pulse Audio callbacks
-    void getSinkInfoCallback(pa_context *ctx, const pa_sink_info *info, int isLast, void *userdata);
-    void getSourceInfoCallback(pa_context *ctx, const pa_source_info *info, int isLast, void *userdata);
-    void getSinkInputInfoCallback(pa_context *ctx, const pa_sink_input_info *info, void *userdata);
-    void getSourceOutputInfoCallback(pa_context *ctx, const pa_source_output_info *info, void *userdata);
+    void onNewSource(const pa_source_info *info);
+    void onRemoveSource(uint32_t idx) override;
+    void onNewSink(const pa_sink_info *info) override;
+    void onRemoveSink(uint32_t idx) override;
+    void onNewSinkInput(const pa_sink_input_info *info) override;
+    void onRemoveSinkInput(uint32_t idx) override;
+    void onNewSourceOutput(const pa_source_output_info *info) override;
+    void onRemoveSourceOutput(uint32_t idx) override;
+
 
 private:
-    bool cmpProperty(pa_proplist *propList, const std::string& name, const std::string& value);
-    void checkSourceVolume(pa_cvolume volume, am_sourceID_t sourceID);
 
-    void loadConfig();
-    void registerDomain(const rp_Domain_s& rpDomain);
-    void registerSource(const rp_Source_s& rpSource);
-    void registerSink(const rp_Sink_s& rpSink);
+    bool cmpProperty(pa_proplist *proplist, const std::string& name, const std::string& value);
 
-    rp_Domain_s                                     mDomain;
-    std::vector<rp_Source_s>                        mSources;
-    std::vector<rp_Sink_s>                          mSinks;
+    am_sourceID_t getSourceIdByIdx(uint32_t idx, bool isVirtual);
+    am_sinkID_t getSinkIdByIdx(uint32_t idx, bool isVirtual);
+    am_sourceID_t getSourceIdByConfig(const char* name, pa_proplist *proplist);
+    am_sinkID_t getSinkIdByConfig(const char* name, pa_proplist *proplist);
 
-    std::map<uint16_t, uint32_t>                    mSourceToPASinkInput;
-    std::map<uint16_t, uint32_t>                    mSourceToPASource;
-    std::map<uint16_t, uint32_t>                    mSinkToPASourceOutput;
-    std::map<uint16_t, uint32_t>                    mSinkToPASink;
+    void setSourceAvailable(am_sourceID_t sourceID, bool isAvailable);
+    void setSinkAvailable(am_sinkID_t sourceID, bool isAvailable);
 
-    uint16_t                                        mPaSinkNullIndex;
-    uint16_t                                        mPaSourceNullIndex;
+    void registerDomain(const rp_ConfigDomain_s& config);
+    void registerSources(const std::vector<rp_ConfigSource_s>& listSources);
+    void registerSinks(const std::vector<rp_ConfigSink_s>& listSinks);
 
-    IAmRoutingReceiverShadow                        *mShadow;
-    pa_context                                      *mPaContext;
+    am_Error_e registerSource(const rp_ConfigSource_s& rpSource);
+    am_Error_e deregisterSource(am_sourceID_t sourceID);
+    am_Error_e registerSink(const rp_ConfigSink_s& rpSink);
+    am_Error_e deregisterSink(am_sinkID_t sinkID);
 
-/**
- * Maintain a list of pending actions: there is a high change that the HMI first call connect,
- * then the audio client start to play, therefore, sink-input is not yet created by the time "connect" method was called.
- * same for volume? not sure - probably the sink input is created when the user change the volume.
- * same for disconnect? not sure - probably the sink input was already created by the time the user is calling disconnect
- */
-    std::vector<RoutingConnection>                  mConnections;
-    std::map<uint16_t, float>                       mSourceToVolume;
+    CAmMainloopPulse                                        mPulse;
+    CAmVolumeManager                                        mVolumeManager;
+    CAmConnectionManager                                    mConnectionManager;
+
+    am_domainID_t                                           mDomainID;
+
+    std::unordered_map<uint32_t, am_sourceID_t>             mSourceIdxToSourceId;
+    std::unordered_map<uint32_t, am_sourceID_t>             mSinkInputIdxToSourceId;
+    std::unordered_map<uint32_t, am_sinkID_t>               mSinkIdxToSinkId;
+    std::unordered_map<uint32_t, am_sinkID_t>               mSourceOutputIdxToSinkId;
+
+    std::unordered_map<am_sourceID_t, rp_ConfigSource_s>    mRegisteredSources;
+    std::unordered_map<am_sourceID_t, rp_ConfigSink_s>      mRegisteredSinks;
+
+    IAmRoutingReceiverShadow*                               mShadow;
 };
 
 }

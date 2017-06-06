@@ -210,12 +210,23 @@ void IAmRoutingReceiverShadow::asyncDeleteVolume(const am_Handle_s handle, const
 
 am_Error_e IAmRoutingReceiverShadow::peekSourceClassID(const std::string& name, am_sourceClass_t& sourceClassID)
 {
-    mpRoutingReceiveInterface->peekSourceClassID(name, sourceClassID);
+    return mpRoutingReceiveInterface->peekSourceClassID(name, sourceClassID);
 }
 
 am_Error_e IAmRoutingReceiverShadow::peekSinkClassID(const std::string& name, am_sinkClass_t& sinkClassID)
 {
-    mpRoutingReceiveInterface->peekSinkClassID(name, sinkClassID);
+    return mpRoutingReceiveInterface->peekSinkClassID(name, sinkClassID);
 }
+
+am_Error_e IAmRoutingReceiverShadow::peekSource(const std::string& name, am_sourceID_t& sourceID)
+{
+    return mpRoutingReceiveInterface->peekSource(name, sourceID);
+}
+
+am_Error_e IAmRoutingReceiverShadow::peekSink(const std::string& name, am_sinkID_t& sinkID)
+{
+    return mpRoutingReceiveInterface->peekSink(name, sinkID);
+}
+
 
 }

@@ -31,17 +31,7 @@ namespace am {
 #define CONFIG_TAG_PROPERTY_NAME    "propertyName"
 #define CONFIG_TAG_PROPERTY_VALUE   "propertyValue"
 
-struct rp_Sink_s
-{
-    am_sinkID_t     id;
-    std::string     name;
-    std::string     deviceName;
-    std::string     className;
-    std::string     propertyName;
-    std::string     propertyValue;
-};
-
-struct rp_Source_s
+struct rp_ConfigSource_s
 {
     am_sourceID_t   id;
     std::string     name;
@@ -51,7 +41,17 @@ struct rp_Source_s
     std::string     propertyValue;
 };
 
-struct rp_Domain_s
+struct rp_ConfigSink_s
+{
+    am_sinkID_t     id;
+    std::string     name;
+    std::string     deviceName;
+    std::string     className;
+    std::string     propertyName;
+    std::string     propertyValue;
+};
+
+struct rp_ConfigDomain_s
 {
     am_domainID_t   id;
     std::string     name;
@@ -60,9 +60,9 @@ struct rp_Domain_s
 
 struct rp_Configuration_s
 {
-    rp_Domain_s                 domain;
-    std::vector<rp_Source_s>    listSources;
-    std::vector<rp_Sink_s>      listSinks;
+    rp_ConfigDomain_s                 domain;
+    std::vector<rp_ConfigSource_s>    listSources;
+    std::vector<rp_ConfigSink_s>      listSinks;
 };
 
 class CAmXmlConfigParser

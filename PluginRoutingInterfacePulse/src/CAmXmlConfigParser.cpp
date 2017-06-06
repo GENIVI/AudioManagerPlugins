@@ -119,7 +119,7 @@ am_Error_e CAmXmlConfigParser::_parseConfiguration(const string& XMLFilename,
 
 am_Error_e CAmXmlConfigParser::_parseDomain(xmlNodePtr node, rp_Configuration_s& pConfiguration)
 {
-    rp_Domain_s domain {};
+    rp_ConfigDomain_s domain {};
 
     xmlNodePtr pCurrent;
 
@@ -191,7 +191,7 @@ am_Error_e CAmXmlConfigParser::_parseSet(xmlNodePtr node, const xmlChar *element
 
 am_Error_e CAmXmlConfigParser::_parseSource(xmlNodePtr node, rp_Configuration_s& pConfiguration)
 {
-    rp_Source_s source {};
+    rp_ConfigSource_s source {};
 
     xmlNodePtr pCurrent;
 
@@ -241,7 +241,7 @@ am_Error_e CAmXmlConfigParser::_parseSource(xmlNodePtr node, rp_Configuration_s&
 
 am_Error_e CAmXmlConfigParser::_parseSink(xmlNodePtr node, rp_Configuration_s& pConfiguration)
 {
-    rp_Sink_s sink {};
+    rp_ConfigSink_s sink {};
 
     xmlNodePtr pCurrent;
 
