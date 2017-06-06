@@ -19,8 +19,8 @@
  *                             Added Copyright and License information;
  */
 
-#ifndef ROUTINGSENDERPULSE_H_
-#define ROUTINGSENDERPULSE_H_
+#ifndef CAMROUTINGSENDERPULSE_H_
+#define CAMROUTINGSENDERPULSE_H_
 
 /* Includes */
 
@@ -33,7 +33,7 @@
 namespace am
 {
 
-struct RoutingSenderPULSEConnection
+struct RoutingConnection
 {
     am_connectionID_t   connectionID;
     am_sourceID_t       sourceID;
@@ -42,13 +42,13 @@ struct RoutingSenderPULSEConnection
 };
 
 /* Prototypes */
-class RoutingSenderPULSE : public IAmRoutingSend
+class CAmRoutingSenderPulse : public IAmRoutingSend
 {
 public:
-    RoutingSenderPULSE(pa_context *p_paContext);
-    ~RoutingSenderPULSE();
+    CAmRoutingSenderPulse(pa_context *pPaContext);
+    ~CAmRoutingSenderPulse();
 
-    am::am_Error_e startupInterface(am::IAmRoutingReceive* p_routingReceiver);
+    am::am_Error_e startupInterface(am::IAmRoutingReceive* pRoutingReceiver);
     void setRoutingReady(uint16_t handle);
     void setRoutingRundown(uint16_t handle);
     am_Error_e asyncAbort(const am_Handle_s handle);
@@ -64,10 +64,10 @@ public:
     am_Error_e asyncCrossFade(const am_Handle_s handle, const am_crossfaderID_t crossfaderID, const am_HotSink_e hotSink, const am_CustomRampType_t rampType, const am_time_t time);
     am_Error_e setDomainState(const am_domainID_t domainID, const am_DomainState_e domainState);
     am_Error_e returnBusName(std::string& BusName) const;
-    void getInterfaceVersion(std::string& out_ver) const;
+    void getInterfaceVersion(std::string& version) const;
 
     void setPAContext(pa_context *p_paContext) {
-        m_paContext = p_paContext;
+        mPaContext = p_paContext;
     }
     am_Error_e asyncSetVolumes(const am_Handle_s handle, const std::vector<am_Volumes_s>& listVolumes);
     am_Error_e asyncSetSinkNotificationConfiguration(const am_Handle_s handle, const am_sinkID_t sinkID, const am_NotificationConfiguration_s& notificationConfiguration);
@@ -81,25 +81,28 @@ public:
     void getSourceOutputInfoCallback(pa_context *ctx, const pa_source_output_info *info, void *userdata);
 
 private:
+    bool cmpProperty(pa_proplist *propList, const std::string& name, const std::string& value);
+    void checkSourceVolume(pa_cvolume volume, am_sourceID_t sourceID);
+
     void loadConfig();
-    void registerDomain(const rp_Domain_s& rp_domain);
-    void registerSource(const rp_Source_s& rp_source);
-    void registerSink(const rp_Sink_s& rp_sink);
+    void registerDomain(const rp_Domain_s& rpDomain);
+    void registerSource(const rp_Source_s& rpSource);
+    void registerSink(const rp_Sink_s& rpSink);
 
-    rp_Domain_s                                     m_domain;
-    std::vector<rp_Source_s>                        m_sources;
-    std::vector<rp_Sink_s>                          m_sinks;
+    rp_Domain_s                                     mDomain;
+    std::vector<rp_Source_s>                        mSources;
+    std::vector<rp_Sink_s>                          mSinks;
 
-    std::map<uint16_t, uint32_t>                    m_sourceToPASinkInput;
-    std::map<uint16_t, uint32_t>                    m_sourceToPASource;
-    std::map<uint16_t, uint32_t>                    m_sinkToPASourceOutput;
-    std::map<uint16_t, uint32_t>                    m_sinkToPASink;
+    std::map<uint16_t, uint32_t>                    mSourceToPASinkInput;
+    std::map<uint16_t, uint32_t>                    mSourceToPASource;
+    std::map<uint16_t, uint32_t>                    mSinkToPASourceOutput;
+    std::map<uint16_t, uint32_t>                    mSinkToPASink;
 
-    uint16_t                                        m_paSinkNullIndex;
-    uint16_t                                        m_paSourceNullIndex;
+    uint16_t                                        mPaSinkNullIndex;
+    uint16_t                                        mPaSourceNullIndex;
 
-    IAmRoutingReceiverShadow                        *m_shadow;
-    pa_context                                      *m_paContext;
+    IAmRoutingReceiverShadow                        *mShadow;
+    pa_context                                      *mPaContext;
 
 /**
  * Maintain a list of pending actions: there is a high change that the HMI first call connect,
@@ -107,8 +110,8 @@ private:
  * same for volume? not sure - probably the sink input is created when the user change the volume.
  * same for disconnect? not sure - probably the sink input was already created by the time the user is calling disconnect
  */
-    std::vector<RoutingSenderPULSEConnection>       m_activeConnections;
-    std::map<uint16_t, float>                       m_sourceToVolume;
+    std::vector<RoutingConnection>                  mConnections;
+    std::map<uint16_t, float>                       mSourceToVolume;
 };
 
 }

@@ -28,7 +28,7 @@
 
 #include <cstring>
 
-#include "RoutingSenderPULSE.h"
+#include "../include/CAmRoutingSenderPulse.h"
 #include "RoutingSenderMainloopPULSE.h"
 
 using namespace am;
@@ -115,7 +115,7 @@ void* routing_sender_start_mainloop(void *thiz)
         logError("Can not prepare Pulse Audio main loop: pa_context_new_with_proplist\n");
         goto end;
     }
-    ((RoutingSenderPULSE *) thiz)->setPAContext(context);
+    ((CAmRoutingSenderPulse *) thiz)->setPAContext(context);
 
     pa_mainloop_run(main_loop, &ret);
 
@@ -192,7 +192,7 @@ void routing_sender_get_sink_input_info_callback(pa_context *c, const pa_sink_in
     pthread_mutex_lock(&main_mutex);
 
 
-    RoutingSenderPULSE* thiz = (RoutingSenderPULSE*) userdata;
+    CAmRoutingSenderPulse* thiz = (CAmRoutingSenderPulse*) userdata;
     if (!thiz)
     {
         logError("pa_context_get_sink_input_info was called with wrong params\n");
@@ -220,7 +220,7 @@ void routing_sender_get_source_output_info_callback(pa_context *c, const pa_sour
 
     pthread_mutex_lock(&main_mutex);
 
-    RoutingSenderPULSE* thiz = (RoutingSenderPULSE*) userdata;
+    CAmRoutingSenderPulse* thiz = (CAmRoutingSenderPulse*) userdata;
     if (!thiz)
     {
         logError("pa_context_get_surce_output_info was called with wrong params\n");
@@ -241,7 +241,7 @@ void routing_sender_get_sink_info_callback(pa_context *c, const pa_sink_info *i,
 {
     pthread_mutex_lock(&main_mutex);
 
-    RoutingSenderPULSE* thiz = (RoutingSenderPULSE*) userdata;
+    CAmRoutingSenderPulse* thiz = (CAmRoutingSenderPulse*) userdata;
     if (!thiz)
     {
         logError("pa_context_get_sink_info was called with wrong params\n");
@@ -261,7 +261,7 @@ void routing_sender_get_source_info_callback(pa_context *c, const pa_source_info
 {
     pthread_mutex_lock(&main_mutex);
 
-    RoutingSenderPULSE* thiz = (RoutingSenderPULSE*) userdata;
+    CAmRoutingSenderPulse* thiz = (CAmRoutingSenderPulse*) userdata;
     if (!thiz)
     {
         logError("pa_context_get_source_info was called with wrong params\n");

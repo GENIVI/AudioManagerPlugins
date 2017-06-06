@@ -18,6 +18,7 @@ CAmXmlConfigParser::~CAmXmlConfigParser(void)
 am_Error_e CAmXmlConfigParser::parse(rp_Configuration_s& pConfiguration)
 {
     char *path = (char *)getenv(CONFIGURATION_FILE_ENV_VARNAME);
+
     if (nullptr == path)
     {
         path = (char*)DEFAULT_USER_CONFIGURATION_PATH;
@@ -28,6 +29,7 @@ am_Error_e CAmXmlConfigParser::parse(rp_Configuration_s& pConfiguration)
     if (E_OK != _parseConfiguration(string(path), pConfiguration))
     {
         logError(" Not able to parse configuration");
+
         return E_UNKNOWN;
     }
 
