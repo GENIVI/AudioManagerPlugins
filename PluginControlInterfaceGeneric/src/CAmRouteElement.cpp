@@ -47,7 +47,7 @@ std::string CAmRouteElement::getName(void) const
     CAmElement* pSinkElement = getSink();
     if ((pSourceElement != NULL) && (pSinkElement != NULL))
     {
-        name = pSourceElement->getName() + pSinkElement->getName();
+        name = pSourceElement->getName() + ":" + pSinkElement->getName();
     }
     return name;
 }
