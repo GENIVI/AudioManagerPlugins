@@ -198,9 +198,9 @@ void CAmRoutingAdapterALSASender::registerSource(ra_sourceInfo_s & info, am_doma
         peekSourceClassID(info.srcClsNam, source.sourceClassID);
     }
     /* Register only in case if it is dynamic otherwise skip */
+    source.domainID = domainID;
     if ((source.sourceID == 0) || (source.sourceID >= DYNAMIC_ID_BOUNDARY))
     {
-        source.domainID = domainID;
         if ((error = mpShadow->registerSource(source, source.sourceID)) != E_OK)
         {
             logAmRaError("CRaALSASender::registerSource", "Error on registering Source,", source.name, error);
@@ -225,9 +225,9 @@ void CAmRoutingAdapterALSASender::registerSink(ra_sinkInfo_s & info, am_domainID
     }
 
     /* Register only in case if it is dynamic otherwise skip */
+    sink.domainID = domainID;
     if ((sink.sinkID == 0) || (sink.sinkID >= DYNAMIC_ID_BOUNDARY))
     {
-        sink.domainID = domainID;
         if ((error = mpShadow->registerSink(sink, sink.sinkID)) != E_OK)
         {
             logAmRaError("CRaALSASender::registerSink", "ret on registering Sink,", sink.name, error);
@@ -267,10 +267,10 @@ void CAmRoutingAdapterALSASender::registerGateway(ra_gatewayInfo_s & info, am_do
                         gateway.convertionMatrix.size());
             }
 
+            gateway.controlDomainID = domainID;
             /* Register only in case if it is dynamic otherwise skip */
             if ((gateway.gatewayID == 0) || (gateway.gatewayID >= DYNAMIC_ID_BOUNDARY))
             {
-                gateway.controlDomainID = domainID;
                 if ((error = mpShadow->registerGateway(gateway, gateway.gatewayID)) != E_OK)
                 {
                     logAmRaError("CRaALSASender::registerGateway", "Error on registering gateway,", gateway.name, error);
