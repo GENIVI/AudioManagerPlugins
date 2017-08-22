@@ -159,6 +159,15 @@ inline std::istringstream& operator>>(std::istringstream &is, am::am_PropertySpe
 }
 
 /**
+ * This operator gets string even with blank spaces within
+ */
+inline std::istringstream& operator>>(std::istringstream &is, std::string &destString)
+{
+    destString = is.str();
+    return is;
+}
+
+/**
  * This operator allows to print out a pair of type am_PropertySpecification_s
  */
 inline std::ostream& operator<<(std::ostream &os, const am::am_PropertySpecification_s &ref)
