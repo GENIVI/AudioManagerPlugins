@@ -191,6 +191,22 @@ void IAmCommandReceiverShadow::setSystemProperty(DBusConnection *conn, DBusMessa
     mDBUSMessageHandler.sendMessage();
 }
 
+void IAmCommandReceiverShadow::getVolume(DBusConnection *conn, DBusMessage *msg)
+{
+    log(&commandDbus, DLT_LOG_INFO, "IAmCommandReceiverShadow::getVolume called");
+
+    (void) conn;
+    assert(mpIAmCommandReceive!=NULL);
+    mDBUSMessageHandler.initReceive(msg);
+    am_sinkID_t sinkID = (am_sinkID_t) mDBUSMessageHandler.getUInt();
+    am_mainVolume_t mainVolume = 0;
+    am_Error_e returnCode = mpIAmCommandReceive->getVolume(sinkID, mainVolume);
+    mDBUSMessageHandler.initReply(msg);
+    mDBUSMessageHandler.append((dbus_int16_t) returnCode);
+    mDBUSMessageHandler.append(mainVolume);
+    mDBUSMessageHandler.sendMessage();
+}
+
 void IAmCommandReceiverShadow::getListMainConnections(DBusConnection *conn, DBusMessage *msg)
 {
     log(&commandDbus, DLT_LOG_INFO, "CommandReceiverShadow::getListMainConnections called");
@@ -507,6 +523,7 @@ IAmCommandReceiverShadow::functionMap_t IAmCommandReceiverShadow::createMap()
     m["SetSinkMuteState"] = &IAmCommandReceiverShadow::setSinkMuteState;
     m["SetMainSinkSoundProperty"] = &IAmCommandReceiverShadow::setMainSinkSoundProperty;
     m["SetMainSourceSoundProperty"] = &IAmCommandReceiverShadow::setMainSourceSoundProperty;
+    m["getVolume"] = &IAmCommandReceiverShadow::getVolume;
     m["GetListMainConnections"] = &IAmCommandReceiverShadow::getListMainConnections;
     m["GetListMainSinks"] = &IAmCommandReceiverShadow::getListMainSinks;
     m["GetListMainSources"] = &IAmCommandReceiverShadow::getListMainSources;
