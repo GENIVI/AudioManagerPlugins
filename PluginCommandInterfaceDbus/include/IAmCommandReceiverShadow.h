@@ -50,6 +50,7 @@ public:
     void setMainSinkSoundProperty(DBusConnection *conn, DBusMessage *msg);
     void setMainSourceSoundProperty(DBusConnection *conn, DBusMessage *msg);
     void setSystemProperty(DBusConnection *conn, DBusMessage *msg);
+    void getVolume(DBusConnection *conn, DBusMessage *msg);
     void getListMainConnections(DBusConnection *conn, DBusMessage *msg);
     void getListMainSinks(DBusConnection *conn, DBusMessage *msg);
     void getListMainSources(DBusConnection *conn, DBusMessage *msg);
