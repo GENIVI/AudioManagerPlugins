@@ -194,7 +194,12 @@ int CAmRoutingAdapterThread::startWorkerThread(void)
     waitForStateChange(STATE_FORKING);
     if (getState() != STATE_RUNNING)
     {
-        THROW_ASSERT_NEQ(pthread_join(mId, NULL), 0);
+        int err = pthread_join(mId, NULL);
+        if ((err != 0) && (mThreadErr == 0))
+        {
+            mThreadErr = err;
+        }
+        setState(STATE_JOINED);
         return mThreadErr;
     }
 
