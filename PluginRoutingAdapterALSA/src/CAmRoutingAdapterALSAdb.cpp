@@ -140,7 +140,7 @@ am_connectionID_t CAmRoutingAdapterALSAdb::findConnectionFromSource(const am_dom
             return it.first;
         }
     }
-    return -1;
+    return 0;
 }
 
 ra_sinkInfo_s * CAmRoutingAdapterALSAdb::findSink(const am_sinkID_t id)
@@ -279,8 +279,16 @@ void CAmRoutingAdapterALSAdb::registerConnection(const am_connectionID_t connect
 
 class IAmRoutingAdapterALSAProxy * CAmRoutingAdapterALSAdb::getProxyOfConnection(const am_connectionID_t connectionId)
 {
-    ra_route_s route = mMapConnectionIDRoute[connectionId];
-    return route.proxy;
+    try
+    {
+        ra_route_s route = mMapConnectionIDRoute.at(connectionId);
+        return route.proxy;
+    }
+    catch(const std::out_of_range &e)
+    {
+        logError("CAmRoutingAdapterALSAdb::getProxyOfConnection - out_of_range", e.what());
+    }
+    return NULL;
 }
 
 void CAmRoutingAdapterALSAdb::getProxyLists(vector<class IAmRoutingAdapterALSAProxy*> & proxies)
