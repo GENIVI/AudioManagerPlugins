@@ -35,7 +35,7 @@
 using namespace am;
 
 CAmRoutingAdapterALSAProxyDefault::CAmRoutingAdapterALSAProxyDefault(const ra_Proxy_s & proxy)
-    :mProxy(proxy), mCnt(0), mpCopyBuffer(NULL), mPb(), mCap()
+    : IAmRoutingAdapterALSAProxy(proxy) ,mCnt(0), mpCopyBuffer(NULL), mPb(), mCap()
 {
     logAmRaInfo("CAmRoutingAdapterALSAProxyDefault::CAmRoutingAdapterALSAProxyDefault - Asynchronous implementation");
     ra_Prefill_s.mPreFill = NULL;

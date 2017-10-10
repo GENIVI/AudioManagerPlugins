@@ -31,6 +31,7 @@
 #define ROUTINGADAPTERALSAPROXY_H_
 
 #include "audiomanagertypes.h"
+#include "CAmRoutingAdapterALSAProxyInfo.h"
 
 namespace am
 {
@@ -43,7 +44,7 @@ namespace am
 class IAmRoutingAdapterALSAProxy
 {
 public:
-    IAmRoutingAdapterALSAProxy() : libHandle(NULL) {}
+    IAmRoutingAdapterALSAProxy(const ra_Proxy_s & proxy) : mProxy(proxy){}
     virtual ~IAmRoutingAdapterALSAProxy() {}
 
     virtual am_timeSync_t getDelay() const = 0;
@@ -60,6 +61,8 @@ public:
     {
         libHandle = ptr;
     }
+protected:
+    const ra_Proxy_s & mProxy;
 private:
     void *libHandle;
 };
