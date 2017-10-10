@@ -532,6 +532,13 @@ am_Error_e CAmRoutingAdapterALSASender::asyncConnect(const am_Handle_s handle, c
                     proxy = createFunc(pProxy->alsa);
                     proxy->setLibHandle(tempLibHandle);
                 }
+                am_Error_e error = proxy->openStreaming();
+                if (error != E_OK)
+                {
+                    logAmRaError("CRaALSASender::connect Error in openStreaming", error);
+                    mpShadow->ackConnect(handle, connectionID, error);
+                    return E_OK;
+                }
             }
             catch (int err)
             {
@@ -583,14 +590,23 @@ am_Error_e CAmRoutingAdapterALSASender::asyncDisconnect(const am_Handle_s handle
     }
 
     IAmRoutingAdapterALSAProxy * pProxy = mDataBase.getProxyOfConnection(connectionID);
+    void *tempLibHandle = NULL;
     if (pProxy)
     {
-        void *dlhandle = pProxy->getLibHandle();
-        delete pProxy;
-        if (dlhandle)
+        tempLibHandle = pProxy->getLibHandle();
+
+        am_Error_e error = pProxy->closeStreaming();
+        if (error != E_OK)
         {
-            dlclose(dlhandle);
+            logAmRaError("CRaALSASender::connect Error in closeStreaming", error);
+            mpShadow->ackDisconnect(handle, connectionID, error);
+            return E_OK;
         }
+    }
+    delete pProxy;
+    if (tempLibHandle)
+    {
+        dlclose(tempLibHandle);
     }
     mDataBase.deregisterConnection(connectionID);
 
@@ -748,14 +764,9 @@ am_Error_e CAmRoutingAdapterALSASender::asyncSetSourceState(const am_Handle_s ha
         switch (state)
         {
             case SS_ON:
-                if (proxy->openStreaming() == E_OK)
-                {
-                    error = proxy->startStreaming();
-                }
+                error = proxy->startStreaming();
                 break;
             case SS_OFF:
-                error = proxy->closeStreaming();
-                break;
             case SS_PAUSED:
                 error = proxy->stopStreaming();
                 break;
