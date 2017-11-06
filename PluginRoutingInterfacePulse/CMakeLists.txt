@@ -19,7 +19,7 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.0)
 INCLUDE(CMakeDependentOption)
 FIND_PACKAGE(PkgConfig)
 
-PROJECT(PluginRoutingAdapterALSA)
+PROJECT(PluginRoutingInterfacePULSE)
 
 FIND_PACKAGE(AudioManager REQUIRED > 7.3.0)  
 FIND_PACKAGE(AudioManagerUtilities REQUIRED > 7.3.0) 
@@ -31,14 +31,7 @@ IF (WITH_DLT)
     link_directories(${DLT_LIBRARY_DIRS})
 ENDIF(WITH_DLT)
 
-OPTION (WITH_DOCUMENTATION
-        "build plugins with documentation" OFF )
-OPTION (WITH_SHARED_PROXY_INTERFACE
-        "build Interface Proxy as a Shared Library" ON )
-OPTION (WITH_TEST_ROUTING_ADAPTER_ALSA
-        "Build with the routing adapter ALSA test" OFF )
-
-SET(PLUGIN_LIB_NAME PluginRoutingAdapterALSA)
+SET(PLUGIN_LIB_NAME PluginRoutingInterfacePULSE)
 
 SET(AM_LINK_LIBS ${CMAKE_DL_LIBS})
 
@@ -46,9 +39,7 @@ SET(INCLUDE_FOLDER "include")
 
 SET(CONF_ROOT "${PLUGINS_CONFIG_PATH}/routing")
 
-FIND_PACKAGE(LibXml2 REQUIRED)
-
-FIND_PACKAGE(ALSA REQUIRED)
+FIND_PACKAGE(PulseAudio REQUIRED)
 
 INCLUDE_DIRECTORIES(
     ${CMAKE_SOURCE_DIR}
@@ -56,8 +47,8 @@ INCLUDE_DIRECTORIES(
     ${AUDIO_INCLUDE_FOLDER}
     ${AudioManager_INCLUDE_DIRS}
     ${AudioManagerUtilities_INCLUDE_DIRS}
-    ${LIBXML2_INCLUDE_DIR}
     ${INCLUDE_FOLDER}
+    ${LIBXML2_INCLUDE_DIR}
 )
 
 IF(WITH_DLT)
@@ -68,49 +59,32 @@ IF(WITH_DLT)
         ${DLT_LIBRARIES})
 ENDIF(WITH_DLT)
 
-add_definitions(-DROUTING_ADAPTER_ALSA_DEFAULT_CONF_ROOT="${CONF_ROOT}")
-
 ##build flags set(CPACK_RPM_COMPONENT_INSTALL ON)
-set(ROUTING_ADAPTER_ALSA_CMAKE_CXX_FLAGS "-std=c++11 -pedantic -rdynamic -Wno-variadic-macros")
+set(ROUTING_INTERFACE_PULSE_CMAKE_CXX_FLAGS "-std=c++11 -pedantic -rdynamic")
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${ROUTING_ADAPTER_ALSA_CMAKE_CXX_FLAGS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${ROUTING_INTERFACE_PULSE_CMAKE_CXX_FLAGS}")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} -g -DDEBUG")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -O2 -DNDEBUG")
 
+add_definitions(-DPULSE_ROUTING_DEFAULT_CONF_ROOT="${CONF_ROOT}")
+
 # all source files go here
-file(GLOB PLUGINALSA_SRCS_CXX "src/*.cpp")
+file(GLOB PLUGINPULSE_SRCS_CXX "src/*.cpp")
 
-add_library(PluginRoutingAdapterALSA MODULE ${PLUGINALSA_SRCS_CXX})
+add_library(PluginRoutingInterfacePULSE MODULE ${PLUGINPULSE_SRCS_CXX})
 
-TARGET_LINK_LIBRARIES(PluginRoutingAdapterALSA
+TARGET_LINK_LIBRARIES(PluginRoutingInterfacePULSE
     ${AM_LINK_LIBS}
     ${LIBXML2_LIBRARIES}
-    ${ALSA_LIBRARIES}
+    ${PULSEAUDIO_LIBRARY}
 )
 
-INSTALL(TARGETS PluginRoutingAdapterALSA
+INSTALL(TARGETS PluginRoutingInterfacePULSE
         DESTINATION lib${LIB_SUFFIX}/${LIB_INSTALL_SUFFIX}/routing
         PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE WORLD_READ
         COMPONENT plugin)
 
-INSTALL(DIRECTORY conf/
-    DESTINATION ${CONF_ROOT}
-    COMPONENT conf
+INSTALL(DIRECTORY data/
+    DESTINATION lib${LIB_SUFFIX}/${LIB_INSTALL_SUFFIX}/routing
+    COMPONENT data
 )
-
-set(DOXY_FILE ${CMAKE_CURRENT_BINARY_DIR}/PluginRoutingAdapterALSA.doxyfile)
-set(DOC_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/doc)
-
-if(WITH_DOCUMENTATION)
-    find_package(Doxygen)
-    configure_file(${CMAKE_SOURCE_DIR}/PluginRoutingAdapterALSA/doc/PluginRoutingAdapterALSA.doxyfile ${CMAKE_CURRENT_BINARY_DIR}/doc/Doxyfile)
-    add_custom_target (PluginRoutingAdapterALSADoku ALL
-        COMMAND ${DOXYGEN_EXECUTABLE} ${DOC_OUTPUT_PATH}/Doxyfile WORKING_DIRECTORY ${DOC_OUTPUT_PATH}
-        SOURCES ${CMAKE_SOURCE_DIR}/PluginRoutingAdapterALSA ${DOC_OUTPUT_PATH}/Doxyfile
-    )
-    file(COPY ${CMAKE_SOURCE_DIR}/PluginRoutingAdapterALSA/doc/images/ DESTINATION ${DOC_OUTPUT_PATH}/images/)
-endif(WITH_DOCUMENTATION)
-
-if(WITH_TEST_ROUTING_ADAPTER_ALSA)
-    add_subdirectory(test)
-endif(WITH_TEST_ROUTING_ADAPTER_ALSA)

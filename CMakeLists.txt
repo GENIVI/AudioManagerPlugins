@@ -37,10 +37,14 @@ OPTION (WITH_ROUTING_INTERFACE_DBUS
         "build with routing interface dbus plugin" OFF)
 OPTION (WITH_TEST_CONTROLLER
         "Build with the test controller" OFF)
+OPTION (WITH_PULSE_CONTROL_PLUGIN
+        "Enable PULSE Audio control plugin interface" OFF)
 OPTION (WITH_GENERIC_CONTROLLER
         "Build with the generic controller" OFF)
 OPTION (WITH_ROUTING_ADAPTER_ALSA
         "Build with the routing adapter ALSA" OFF)
+OPTION (WITH_ROUTING_INTERFACE_PULSE
+        "Enable PULSE Audio routing plugin interface" OFF )
 
 if (NOT WITH_TEST_CONTROLLER AND NOT WITH_ROUTING_INTERFACE_DBUS AND NOT WITH_GENERIC_CONTROLLER AND NOT WITH_ROUTING_INTERFACE_CAPI AND NOT WITH_ROUTING_INTERFACE_ASYNC AND NOT WITH_COMMAND_INTERFACE_DBUS AND NOT WITH_COMMAND_INTERFACE_CAPI AND NOT WITH_ROUTING_ADAPTER_ALSA)
 	message (FATAL_ERROR "No option selected. please choose the plugins you want")
@@ -62,6 +66,10 @@ IF (WITH_COMMAND_INTERFACE_DBUS)
     add_subdirectory(PluginCommandInterfaceDbus)
 ENDIF (WITH_COMMAND_INTERFACE_DBUS)
 
+IF (WITH_PULSE_CONTROL_PLUGIN)
+	add_subdirectory(PluginControlInterfacePulse)
+ENDIF (WITH_PULSE_CONTROL_PLUGIN)
+
 IF (WITH_ROUTING_INTERFACE_ASYNC)
     add_subdirectory(PluginRoutingInterfaceAsync)
 ENDIF (WITH_ROUTING_INTERFACE_ASYNC)
@@ -77,6 +85,10 @@ ENDIF(WITH_ROUTING_INTERFACE_DBUS)
 IF (WITH_ROUTING_ADAPTER_ALSA)
     add_subdirectory(PluginRoutingAdapterALSA)
 ENDIF(WITH_ROUTING_ADAPTER_ALSA)
+
+IF (WITH_ROUTING_INTERFACE_PULSE)
+    add_subdirectory(PluginRoutingInterfacePulse)
+ENDIF(WITH_ROUTING_INTERFACE_PULSE)
 
 add_custom_target(plugins-install
   COMMAND
