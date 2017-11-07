@@ -36,6 +36,7 @@
 #include <map>
 #include <tuple>
 #include <sstream>
+#include <algorithm>
 #include "audiomanagertypes.h"
 #include "CAmRoutingAdapterALSAProxyInfo.h"
 
@@ -158,6 +159,15 @@ inline std::istringstream& operator>>(std::istringstream &is, am::am_PropertySpe
 }
 
 /**
+ * This operator gets string even with blank spaces within
+ */
+inline std::istringstream& operator>>(std::istringstream &is, std::string &destString)
+{
+    destString = is.str();
+    return is;
+}
+
+/**
  * This operator allows to print out a pair of type am_PropertySpecification_s
  */
 inline std::ostream& operator<<(std::ostream &os, const am::am_PropertySpecification_s &ref)
@@ -271,6 +281,18 @@ public:
 };
 
 /**
+ * Struct providing details on USB management in Audio Manager acception
+ */
+struct ra_USBInfo_s
+{
+    std::string domNam;
+    std::map<std::string, std::vector<std::string> > mapCardToSourceName;
+    std::map<std::string, std::vector<std::string> > mapCardToSinkName;
+    std::vector<ra_sourceInfo_s> lSourceInfo;
+    std::vector<ra_sinkInfo_s> lSinkInfo;
+};
+
+/**
  * Struct providing details on Domain in Audio Manager acception
  */
 struct ra_domainInfo_s
@@ -350,7 +372,6 @@ public:
     virtual void deregisterGateway(const am_gatewayID_t &gatewayID) = 0;
 };
 
-
 class CAmRoutingAdapterALSAdb
 {
 public:
@@ -359,16 +380,59 @@ public:
 
     ra_domainInfo_s * createDomain(ra_domainInfo_s & domain);
     ra_domainInfo_s * findDomain(const am_domainID_t id);
+    ra_domainInfo_s * findDomain(const std::string &domNam);
     ra_domainInfo_s * findDomain(ra_sourceInfo_s & source, ra_sinkInfo_s & sink);
     ra_domainInfo_s * findDomainByConnection(const am_connectionID_t id);
-    ra_domainInfo_s * findDomainBySource(const am_sourceID_t id);
-    ra_domainInfo_s * findDomainBySink(const am_sinkID_t id);
     ra_proxyInfo_s  * findProxyInDomain(ra_domainInfo_s *pDomain,
                                         const am_sourceID_t sourceID, const am_sinkID_t sinkID = 0);
     ra_proxyInfo_s  * findProxyInDomain(const am_domainID_t domainID,
                                         const std::string & sourceName, const std::string & sinkName = "");
     am_connectionID_t findConnectionFromSource(const am_domainID_t domainId,
                                                     const am_sourceID_t sourceID);
+    ra_sinkInfo_s   * findSink(const am_sinkID_t id);
+    ra_sourceInfo_s * findSource(const am_sourceID_t id);
+
+    void setUSBInfo(ra_USBInfo_s &usbInfo)
+    {
+        mUSB = usbInfo;
+    }
+
+    ra_USBInfo_s *getUSBInfo()
+    {
+        return &mUSB;
+    }
+
+    void getElementList(ra_domainInfo_s *domain, std::vector<ra_sourceInfo_s> **mpList)
+    {
+        *mpList = &domain->lSourceInfo;
+    }
+
+    void getElementList(ra_domainInfo_s *domain, std::vector<ra_sinkInfo_s> **mpList)
+    {
+        *mpList = &domain->lSinkInfo;
+    }
+
+    void getElementList(ra_domainInfo_s *domain, std::vector<ra_gatewayInfo_s> **mpList)
+    {
+        *mpList = &domain->lGatewayInfo;
+    }
+
+    template <typename T>
+    T* findElement(const am_domainID_t id, const std::string name)
+    {
+        ra_domainInfo_s *domain = findDomain(id);
+        if (domain == NULL)
+        {
+            return NULL;
+        }
+
+        std::vector<T> *mpList = NULL;
+        getElementList(domain, &mpList);
+        auto it = std::find_if(mpList->begin(), mpList->end(),
+            [=] (const T &m) -> bool {return (m.amInfo.name.compare(name) == 0) ? true : false;}
+        );
+        return (it == mpList->end()) ? NULL : &(*it);
+    }
 
     void registerDomains();
     void deregisterDomains();
@@ -405,6 +469,7 @@ private:
     std::map<uint16_t, std::vector<class CAmRoutingAdapterALSAVolume*> >  mMapAsyncOperations;
     std::vector<ra_domainInfo_s>                            mDomains;
     IAmRoutingAdapterDbObserver                                           *mpObserver;
+    ra_USBInfo_s                                            mUSB;
 };
 
 }/* namespace am */

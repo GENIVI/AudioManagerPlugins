@@ -32,6 +32,7 @@
 #ifndef ROUTINGADAPTERALSASENDER_H_
 #define ROUTINGADAPTERALSASENDER_H_
 
+#include <memory>
 #include "IAmRouting.h"
 #include "IAmRoutingReceiverShadow.h"
 #include "CAmRoutingAdapterALSAProxyDefault.h"
@@ -40,6 +41,7 @@
 
 #include "CAmCommandLineSingleton.h"
 
+#include "CAmRoutingAdapterALSADeviceDetector.h"
 
 #define RA_ALSA_BUSNAME  "ALSARoutingPlugin"
 
@@ -121,6 +123,12 @@ public:
     void deregisterSink(const am_sinkID_t &sinkID) override;
     void deregisterGateway(const am_gatewayID_t &gatewayID) override;
 
+    /*
+     * Helper for USB
+     */
+    void peekSourceClassID(const std::string& name, am_sourceID_t& sourceID);
+    void peekSinkClassID(const std::string& name, am_sinkID_t& sinkID);
+
 private:
     static bool isNumber(const std::string& value);
 
@@ -131,6 +139,10 @@ private:
 
     CAmRoutingAdapterALSAdb   mDataBase;
     std::string               mBusname;
+
+#ifdef WITH_DEVICE_DETECTOR
+    std::shared_ptr<CAmRoutingAdapterALSADeviceDetector> mpDeviceDetector;
+#endif /* WITH_DEVICE_DETECTOR */
 
     TCLAP::ValueArg<std::string> mCommandLineArg;
 

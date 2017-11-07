@@ -70,10 +70,11 @@ void CAmRoutingAdapterALSAParser::parseDomainData(ra_domainInfo_s & domainInfo, 
 
 void CAmRoutingAdapterALSAParser::parseSourceData(ra_sourceInfo_s & info, CAmRoutingAdapterKVPConverter::KVPList & kvpList)
 {
+    string domName(mpDomainRef ? mpDomainRef->domain.name : "");
     vector<am_CustomConnectionFormat_t> DEF_VEC_CONFMT = { CF_GENIVI_STEREO };
 
     CAmRoutingAdapterKVPConverter converter(kvpList, logAmRaDebug, logAmRaError);
-    info.domNam = converter.kvpQueryValue("domNam", mpDomainRef->domain.name);
+    info.domNam = converter.kvpQueryValue("domNam", domName);
     info.devTyp = converter.kvpQueryValue("devTyp", DPS_REAL, am_dpsMap);
     info.srcClsNam = converter.kvpQueryValue("srcClsNam", static_cast<string>(""));
     info.pcmNam = converter.kvpQueryValue("pcmNam", static_cast<string>("default"));
@@ -95,10 +96,11 @@ void CAmRoutingAdapterALSAParser::parseSourceData(ra_sourceInfo_s & info, CAmRou
 
 void CAmRoutingAdapterALSAParser::parseSinkData(ra_sinkInfo_s & info, CAmRoutingAdapterKVPConverter::KVPList & kvpList)
 {
+    string domName(mpDomainRef ? mpDomainRef->domain.name : "");
     vector<am_CustomConnectionFormat_t> DEF_VEC_CONFMT = { CF_GENIVI_STEREO };
 
     CAmRoutingAdapterKVPConverter converter(kvpList, logAmRaDebug, logAmRaError);
-    info.domNam = converter.kvpQueryValue("domNam", mpDomainRef->domain.name);
+    info.domNam = converter.kvpQueryValue("domNam", domName);
     info.devTyp = converter.kvpQueryValue("devTyp", DPS_REAL, am_dpsMap);
     info.sinkClsNam = converter.kvpQueryValue("sinkClsNam", static_cast<string>(""));
     info.pcmNam = converter.kvpQueryValue("pcmNam", static_cast<string>("default"));
@@ -164,6 +166,12 @@ void CAmRoutingAdapterALSAParser::parseProxyData(ra_proxyInfo_s & info, CAmRouti
     alsa.msInitTimeout = converter.kvpQueryValue("msInitTimeout", INIT_TOUT);
     alsa.cpuScheduler.policy = converter.kvpQueryValue("CPUSchedulingPolicy", SCHED_OTHER);
     alsa.cpuScheduler.priority = converter.kvpQueryValue("CPUSchedulingPriority", 0);
+}
+
+void CAmRoutingAdapterALSAParser::parseUSBData(ra_USBInfo_s & info, CAmRoutingAdapterKVPConverter::KVPList & kvpList)
+{
+    CAmRoutingAdapterKVPConverter converter(kvpList, logAmRaDebug, logAmRaError);
+    info.domNam = converter.kvpQueryValue("domNam", info.domNam);
 }
 
 template <typename S>
@@ -299,6 +307,20 @@ void CAmRoutingAdapterALSAParser::updateSinkInfo(const xmlNodePtr devNode, CAmRo
     mpDomainRef->lSinkInfo.push_back(sinkInfo);
 }
 
+void CAmRoutingAdapterALSAParser::updateUSBSourceInfo(const xmlNodePtr devNode, CAmRoutingAdapterKVPConverter::KVPList & keyValPair)
+{
+    ra_sourceInfo_s sourceInfo;
+    parseSourceData(sourceInfo, keyValPair);
+    mDataBase.getUSBInfo()->lSourceInfo.push_back(sourceInfo);
+}
+
+void CAmRoutingAdapterALSAParser::updateUSBSinkInfo(const xmlNodePtr devNode, CAmRoutingAdapterKVPConverter::KVPList & keyValPair)
+{
+    ra_sinkInfo_s sinkInfo;
+    parseSinkData(sinkInfo, keyValPair);
+    mDataBase.getUSBInfo()->lSinkInfo.push_back(sinkInfo);
+}
+
 template <typename S>
 void CAmRoutingAdapterALSAParser::parseChildInfo(const xmlNodePtr devNode, S & info)
 {
@@ -381,6 +403,13 @@ void CAmRoutingAdapterALSAParser::updateProxyInfo(CAmRoutingAdapterKVPConverter:
     mpDomainRef->lProxyInfo.push_back(proxyInfo);
 }
 
+void CAmRoutingAdapterALSAParser::updateUSBInfo(CAmRoutingAdapterKVPConverter::KVPList & keyValPair)
+{
+    ra_USBInfo_s usbInfo;
+    parseUSBData(usbInfo, keyValPair);
+    mDataBase.setUSBInfo(usbInfo);
+}
+
 void CAmRoutingAdapterALSAParser::parseXML(xmlNodePtr rootNode)
 {
     CAmRoutingAdapterKVPConverter::KVPList keyValPairDomain;
@@ -435,6 +464,37 @@ void CAmRoutingAdapterALSAParser::parseXML(xmlNodePtr rootNode)
                 else
                 {
                     logAmRaInfo("CRaALSAParser::parseXML:", (const char*) domNode->name, " is not a domain content");
+                }
+            }
+        }
+        else if (!xmlStrcmp(domNode->name, (const xmlChar *) "tUSB"))
+        {
+            logAmRaDebug("CRaALSAParser::parseXML", (const char*)domNode->name);
+
+            keyValPairDomain.clear();
+            getKeyValPairs(domNode, keyValPairDomain);
+            updateUSBInfo(keyValPairDomain);
+            /* child elements refers to the device under domain*/
+            for (elemNode = domNode->children; elemNode != NULL; elemNode = elemNode->next)
+            {
+                if (elemNode->type != XML_ELEMENT_NODE)
+                    continue;
+
+                CAmRoutingAdapterKVPConverter::KVPList keyValPair;
+                getKeyValPairs(elemNode, keyValPair);
+                if (!xmlStrcmp(elemNode->name, (const xmlChar *) "tSOURCE"))
+                {
+                    logAmRaDebug("CRaALSAParser::parseXML", (const char*)elemNode->name);
+                    updateUSBSourceInfo(elemNode, keyValPair);
+                }
+                else if (!xmlStrcmp(elemNode->name, (const xmlChar *) "tSINK"))
+                {
+                    logAmRaDebug("CRaALSAParser::parseXML", (const char*)elemNode->name);
+                    updateUSBSinkInfo(elemNode, keyValPair);
+                }
+                else
+                {
+                    logAmRaInfo("CRaALSAParser::parseXML:", (const char*) domNode->name, " is not a USB domain content");
                 }
             }
         }

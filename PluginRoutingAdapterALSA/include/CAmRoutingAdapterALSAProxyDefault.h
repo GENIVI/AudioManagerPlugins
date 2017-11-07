@@ -32,7 +32,6 @@
 #define ROUTINGADAPTERALSAPROXYDEFAULT_H_
 
 #include "IAmRoutingAdapterALSAProxy.h"
-#include "CAmRoutingAdapterALSAProxyInfo.h"
 #include "CAmRoutingAdapterThread.h"
 #include <alsa/asoundlib.h>
 
@@ -55,7 +54,6 @@ public:
 
 
 private:
-    const ra_Proxy_s & mProxy;
     struct ap_data_t
     {
     public:
