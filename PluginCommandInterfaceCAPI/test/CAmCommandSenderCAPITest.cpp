@@ -203,7 +203,6 @@ void CAmTestsEnvironment::onServiceStatusEvent(const CommonAPI::AvailabilityStat
 		mProxy->getMainSinkSoundPropertyChangedEvent().subscribe(std::bind(&MockNotificationsClient::onMainSinkSoundPropertyChangedEvent, mpClientMock,std::placeholders::_1, std::placeholders::_2));
 		mProxy->getSinkAvailabilityChangedEvent().subscribe(std::bind(&MockNotificationsClient::onSinkAvailabilityChangedEvent, mpClientMock, std::placeholders::_1, std::placeholders::_2));
 		mProxy->getVolumeChangedEvent().subscribe(std::bind(&MockNotificationsClient::onVolumeChangedEvent, mpClientMock,std::placeholders::_1, std::placeholders::_2));
-		mProxy->getSinkMuteStateChangedEvent().subscribe(std::bind(&MockNotificationsClient::onSinkMuteStateChangedEvent, mpClientMock, std::placeholders::_1, std::placeholders::_2));
 		mProxy->getSystemPropertyChangedEvent().subscribe(std::bind(&MockNotificationsClient::onSystemPropertyChangedEvent, mpClientMock, std::placeholders::_1));
 		mProxy->getTimingInformationChangedEvent().subscribe(std::bind(&MockNotificationsClient::onTimingInformationChangedEvent, mpClientMock,
 															   std::placeholders::_1, std::placeholders::_2));
