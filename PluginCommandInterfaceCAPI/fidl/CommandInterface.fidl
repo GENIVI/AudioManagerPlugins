@@ -355,21 +355,6 @@ interface CommandControl {
 
     <**
     @description : 
-        Requests the mute state of a sink.
-        (at)return E_OK on success, E_UNKNOWN on error
-    **>
-    method getSinkMuteState {
-        in {
-            AudioManagerTypes.am_sinkID_t sinkID
-        }
-        out {
-            AudioManagerTypes.am_MuteState_e muteState
-            AudioManagerTypes.am_Error_e amError
-        }
-    }
-
-    <**
-    @description : 
         Sets the mute state of a sink.
         (at)return E_OK on success, E_UNKNOWN on error. If the mute state is already the desired one, the Daemon will return E_OK
     **>
