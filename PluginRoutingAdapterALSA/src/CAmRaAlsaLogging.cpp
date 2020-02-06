@@ -26,32 +26,33 @@
  *  For further information see http://www.genivi.org/.
  ******************************************************************************/
 
-#include "CAmDLTLogging.h"
+#include "CAmRaAlsaLogging.h"
+
 
 using namespace am;
 
-CAmDLTLogging *CAmDLTLogging::mCAmDLTLogging = NULL;
+CAmRaAlsaLogging *CAmRaAlsaLogging::mpLogging = NULL;
 
-CAmDLTLogging::CAmDLTLogging()
+
+#define LOGCONTEXT "ALSA"
+#define LOGDESCRIPTION "Logging Context for Routing-Adapter ALSA"
+
+CAmRaAlsaLogging::CAmRaAlsaLogging()
+    : mContext(CAmLogWrapper::instance()->registerContext(LOGCONTEXT, LOGDESCRIPTION))
 {
-    CAmDltWrapper::instance()->registerContext(mContext, CONTEXT, "Context for RoutingAdapter");
 }
 
-CAmDLTLogging *CAmDLTLogging::Instance()
+CAmRaAlsaLogging *CAmRaAlsaLogging::Instance()
 {
-    if (mCAmDLTLogging == NULL)
+    if (mpLogging == NULL)
     {
-        mCAmDLTLogging = new CAmDLTLogging();
+        mpLogging = new CAmRaAlsaLogging();
     }
-    return mCAmDLTLogging;
+    return mpLogging;
 }
 
-CAmDLTLogging::~CAmDLTLogging()
+CAmRaAlsaLogging::~CAmRaAlsaLogging()
 {
-    CAmDltWrapper::instance()->unregisterContext(mContext);
-}
-
-DltContext *CAmDLTLogging::getContextPointer()
-{
-    return &mContext;
+    CAmLogWrapper::instance()->unregisterContext(LOGCONTEXT);
+    mpLogging = NULL;
 }

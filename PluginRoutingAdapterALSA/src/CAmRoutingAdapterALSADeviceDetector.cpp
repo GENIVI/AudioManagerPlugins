@@ -35,7 +35,7 @@
 #include "CAmRoutingAdapterALSAdb.h"
 #include "CAmRoutingAdapterALSASender.h"
 
-#include "CAmDLTLogging.h"
+#include "CAmRaAlsaLogging.h"
 
 using namespace std;
 using namespace am;

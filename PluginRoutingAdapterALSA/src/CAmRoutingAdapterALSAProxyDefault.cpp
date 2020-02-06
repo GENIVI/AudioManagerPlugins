@@ -29,7 +29,7 @@
 
 
 #include "CAmRoutingAdapterALSAProxyDefault.h"
-#include "CAmDLTLogging.h"
+#include "CAmRaAlsaLogging.h"
 #include <cerrno>
 
 using namespace am;

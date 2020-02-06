@@ -30,7 +30,7 @@
 #include <cassert>
 #include <algorithm>
 #include "CAmRoutingAdapterALSAdb.h"
-#include "CAmDLTLogging.h"
+#include "CAmRaAlsaLogging.h"
 
 using namespace std;
 using namespace am;

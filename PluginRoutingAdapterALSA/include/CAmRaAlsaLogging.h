@@ -26,48 +26,48 @@
  *  For further information see http://www.genivi.org/.
  ******************************************************************************/
 
-#ifndef CAMDLTLOGGING_H_
-#define CAMDLTLOGGING_H_
+#ifndef CAMRAALSALOGGING_H_
+#define CAMRAALSALOGGING_H_
 
-#include "CAmDltWrapper.h"
+#include "CAmLogWrapper.h"
 
-#define CONTEXT "AMRA"
 
 namespace am
 {
 
 /**
- * \brief DLT logging on AMRA Context
+ * \brief Short-hand notations for a logging context dedicated to the ALSA Routing-Adapter
  *
- * This class is a Singleton which allows Plugin Routing Adapter ALSA to DLT log towards its own Context
+ * This class is implemented as Singleton
  */
-class CAmDLTLogging
+class CAmRaAlsaLogging
 {
 public:
     /**
      * Allows to retrieve the Singleton
      */
-    static CAmDLTLogging *Instance();
+    static CAmRaAlsaLogging *Instance();
     /**
      * dtor
      */
-    virtual ~CAmDLTLogging();
+    virtual ~CAmRaAlsaLogging();
+
     /**
-     * returns a pointer to the DltContext. Such Context is then used when implementing
-     * the variadic template logging functions used throughout the plugin
+     * provide access to logging context
      */
-    DltContext *getContextPointer();
+    inline static IAmLogContext &getContext()
+    {
+        return Instance()->mContext;
+    }
 
 private:
     /**
      * private ctor being a singleton
      */
-    CAmDLTLogging();
+    CAmRaAlsaLogging();
 
-private:
-    DltContext mContext;
-    static CAmDLTLogging *mCAmDLTLogging;
-
+    IAmLogContext &mContext;
+    static CAmRaAlsaLogging *mpLogging;
 };
 
 /**
@@ -78,12 +78,7 @@ private:
 template<typename T, typename... TArgs>
 void logAmRaDebug(T value, TArgs... args)
 {
-    CAmDltWrapper* inst(CAmDltWrapper::instance());
-    if (!inst->init(DLT_LOG_DEBUG, CAmDLTLogging::Instance()->getContextPointer()))
-        return;
-    inst->append(value);
-    inst->append(args...);
-    inst->send();
+    CAmRaAlsaLogging::getContext().debug(value, args...);
 }
 
 /**
@@ -94,12 +89,7 @@ void logAmRaDebug(T value, TArgs... args)
 template<typename T, typename... TArgs>
 void logAmRaInfo(T value, TArgs... args)
 {
-    CAmDltWrapper* inst(CAmDltWrapper::instance());
-    if (!inst->init(DLT_LOG_INFO, CAmDLTLogging::Instance()->getContextPointer()))
-        return;
-    inst->append(value);
-    inst->append(args...);
-    inst->send();
+    CAmRaAlsaLogging::getContext().info(value, args...);
 }
 
 /**
@@ -110,14 +100,8 @@ void logAmRaInfo(T value, TArgs... args)
 template<typename T, typename... TArgs>
 void logAmRaError(T value, TArgs... args)
 {
-    CAmDltWrapper* inst(CAmDltWrapper::instance());
-
-    if (!inst->init(DLT_LOG_ERROR, CAmDLTLogging::Instance()->getContextPointer()))
-        return;
-    inst->append(value);
-    inst->append(args...);
-    inst->send();
+    CAmRaAlsaLogging::getContext().error(value, args...);
 }
 
 } /* namespace am */
-#endif /* CAMDLTLOGGING_H_ */
+#endif /* CAMRAALSALOGGING_H_ */

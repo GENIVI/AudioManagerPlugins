@@ -39,7 +39,7 @@
 
 #include "TAmPluginTemplate.h"
 
-#include "CAmDLTLogging.h"
+#include "CAmRaAlsaLogging.h"
 
 #define DEFAULT_PLUGIN_STREAMING_DIR DEFAULT_PLUGIN_DIR "/streaming"
 
