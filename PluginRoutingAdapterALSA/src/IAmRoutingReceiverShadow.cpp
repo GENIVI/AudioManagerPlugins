@@ -59,52 +59,52 @@ IAmRoutingReceiverShadow::~IAmRoutingReceiverShadow()
 
 void IAmRoutingReceiverShadow::ackConnect(const am_Handle_s handle, const am_connectionID_t connectionID, const am_Error_e error)
 {
-    mSerializer.asyncCall<IAmRoutingReceive,const am_Handle_s,const am_connectionID_t,const am_Error_e>(mpRoutingReceiveInterface,&IAmRoutingReceive::ackConnect,handle,connectionID,error);
+    mSerializer.asyncCall(mpRoutingReceiveInterface,&IAmRoutingReceive::ackConnect,handle,connectionID,error);
 }
 
 void IAmRoutingReceiverShadow::ackDisconnect(const am_Handle_s handle, const am_connectionID_t connectionID, const am_Error_e error)
 {
-    mSerializer.asyncCall<IAmRoutingReceive,const am_Handle_s,const am_connectionID_t,const am_Error_e>(mpRoutingReceiveInterface,&IAmRoutingReceive::ackDisconnect,handle,connectionID,error);
+    mSerializer.asyncCall(mpRoutingReceiveInterface,&IAmRoutingReceive::ackDisconnect,handle,connectionID,error);
 }
 
 void IAmRoutingReceiverShadow::ackSetSinkVolumeChange(const am_Handle_s handle, const am_volume_t volume, const am_Error_e error)
 {
-    mSerializer.asyncCall<IAmRoutingReceive,const am_Handle_s,const am_volume_t,const am_Error_e>(mpRoutingReceiveInterface,&IAmRoutingReceive::ackSetSinkVolumeChange,handle,volume,error);
+    mSerializer.asyncCall(mpRoutingReceiveInterface,&IAmRoutingReceive::ackSetSinkVolumeChange,handle,volume,error);
 }
 
 void IAmRoutingReceiverShadow::ackSetSourceVolumeChange(const am_Handle_s handle, const am_volume_t volume, const am_Error_e error)
 {
-    mSerializer.asyncCall<IAmRoutingReceive,const am_Handle_s,const am_volume_t,const am_Error_e>(mpRoutingReceiveInterface,&IAmRoutingReceive::ackSetSourceVolumeChange,handle,volume,error);
+    mSerializer.asyncCall(mpRoutingReceiveInterface,&IAmRoutingReceive::ackSetSourceVolumeChange,handle,volume,error);
 }
 
 void IAmRoutingReceiverShadow::ackSetSourceState(const am_Handle_s handle, const am_Error_e error)
 {
-    mSerializer.asyncCall<IAmRoutingReceive,const am_Handle_s,const am_Error_e>(mpRoutingReceiveInterface,&IAmRoutingReceive::ackSetSourceState,handle,error);
+    mSerializer.asyncCall(mpRoutingReceiveInterface,&IAmRoutingReceive::ackSetSourceState,handle,error);
 }
 
 void IAmRoutingReceiverShadow::ackSetSinkSoundProperty(const am_Handle_s handle, const am_Error_e error)
 {
-    mSerializer.asyncCall<IAmRoutingReceive,const am_Handle_s,const am_Error_e>(mpRoutingReceiveInterface,&IAmRoutingReceive::ackSetSinkSoundProperty,handle,error);
+    mSerializer.asyncCall(mpRoutingReceiveInterface,&IAmRoutingReceive::ackSetSinkSoundProperty,handle,error);
 }
 
 void IAmRoutingReceiverShadow::ackSetSourceSoundProperty(const am_Handle_s handle, const am_Error_e error)
 {
-    mSerializer.asyncCall<IAmRoutingReceive,const am_Handle_s,const am_Error_e>(mpRoutingReceiveInterface,&IAmRoutingReceive::ackSetSourceSoundProperty,handle,error);
+    mSerializer.asyncCall(mpRoutingReceiveInterface,&IAmRoutingReceive::ackSetSourceSoundProperty,handle,error);
 }
 
 void IAmRoutingReceiverShadow::ackCrossFading(const am_Handle_s handle, const am_HotSink_e hotSink, const am_Error_e error)
 {
-    mSerializer.asyncCall<IAmRoutingReceive,const am_Handle_s,const am_HotSink_e,const am_Error_e>(mpRoutingReceiveInterface,&IAmRoutingReceive::ackCrossFading,handle,hotSink,error);
+    mSerializer.asyncCall(mpRoutingReceiveInterface,&IAmRoutingReceive::ackCrossFading,handle,hotSink,error);
 }
 
 void IAmRoutingReceiverShadow::ackSourceVolumeTick(const am_Handle_s handle, const am_sourceID_t sourceID, const am_volume_t volume)
 {
-    mSerializer.asyncCall<IAmRoutingReceive,const am_Handle_s,const am_sourceID_t,const am_volume_t>(mpRoutingReceiveInterface,&IAmRoutingReceive::ackSourceVolumeTick,handle,sourceID,volume);
+    mSerializer.asyncCall(mpRoutingReceiveInterface,&IAmRoutingReceive::ackSourceVolumeTick,handle,sourceID,volume);
 }
 
 void IAmRoutingReceiverShadow::ackSinkVolumeTick(const am_Handle_s handle, const am_sinkID_t sinkID, const am_volume_t volume)
 {
-    mSerializer.asyncCall<IAmRoutingReceive,const am_Handle_s,const am_sinkID_t,const am_volume_t>(mpRoutingReceiveInterface,&IAmRoutingReceive::ackSinkVolumeTick,handle,sinkID,volume);
+    mSerializer.asyncCall(mpRoutingReceiveInterface,&IAmRoutingReceive::ackSinkVolumeTick,handle,sinkID,volume);
 }
 
 void IAmRoutingReceiverShadow::hookInterruptStatusChange(const am_sourceID_t sourceID, const am_InterruptState_e interruptState)
@@ -194,12 +194,12 @@ void IAmRoutingReceiverShadow::confirmRoutingRundown(uint16_t rundownHandle, am_
 
 void IAmRoutingReceiverShadow::ackSinkNotificationConfiguration(const am_Handle_s handle, const am_Error_e error)
 {
-    mSerializer.asyncCall<IAmRoutingReceive,const am_Handle_s,const am_Error_e>(mpRoutingReceiveInterface,&IAmRoutingReceive::ackSinkNotificationConfiguration,handle,error);
+    mSerializer.asyncCall(mpRoutingReceiveInterface,&IAmRoutingReceive::ackSinkNotificationConfiguration,handle,error);
 }
 
 void IAmRoutingReceiverShadow::ackSourceNotificationConfiguration(const am_Handle_s handle, const am_Error_e error)
 {
-    mSerializer.asyncCall<IAmRoutingReceive,const am_Handle_s,const am_Error_e>(mpRoutingReceiveInterface,&IAmRoutingReceive::ackSourceNotificationConfiguration,handle,error);
+    mSerializer.asyncCall(mpRoutingReceiveInterface,&IAmRoutingReceive::ackSourceNotificationConfiguration,handle,error);
 }
 
 void IAmRoutingReceiverShadow::hookSinkNotificationDataChange(const am_sinkID_t sinkID, const am_NotificationPayload_s& payload)
@@ -215,7 +215,7 @@ void IAmRoutingReceiverShadow::hookSourceNotificationDataChange(const am_sourceI
 void IAmRoutingReceiverShadow::asyncDeleteVolume(const am_Handle_s handle, const class CAmRoutingAdapterALSAVolume* volume)
 {
     assert(mpObserver!=NULL);
-    mSerializer.asyncCall<IAmRoutingReceiverObserver,const am_Handle_s,const class CAmRoutingAdapterALSAVolume*>(mpObserver,&IAmRoutingReceiverObserver::asyncDeleteVolume,handle,volume);
+    mSerializer.asyncCall(mpObserver,&IAmRoutingReceiverObserver::asyncDeleteVolume,handle,volume);
 }
 
 }
