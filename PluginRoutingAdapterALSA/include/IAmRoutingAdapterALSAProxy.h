@@ -5,6 +5,8 @@
  *
  *  \author: Jens Lorenz, jlorenz@de.adit-jv.com 2013-2016
  *           Mattia Guerra, mguerra@de.adit-jv.com 2016
+ *           Jayanth MC, Jayanth.mc@in.bosch.com 2013-2014
+ *
  *
  *  \copyright The MIT License (MIT)
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -44,7 +46,7 @@ namespace am
 class IAmRoutingAdapterALSAProxy
 {
 public:
-    IAmRoutingAdapterALSAProxy(const ra_Proxy_s & proxy) : mProxy(proxy){}
+    IAmRoutingAdapterALSAProxy(const ra_Proxy_s & proxy) : mProxy(proxy), libHandle(NULL) {}
     virtual ~IAmRoutingAdapterALSAProxy() {}
 
     virtual am_timeSync_t getDelay() const = 0;
