@@ -95,7 +95,7 @@ private:
     CAmSocketHandler              *mpSocketHandler;
     IAmRoutingReceive             *mpRoutingReceiveInterface;
     IAmRoutingReceiverObserver    *mpObserver;
-    CAmSerializer                  mSerializer;
+    V2::CAmSerializer              mSerializer;
 };
 
 } /* namespace am */
