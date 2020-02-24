@@ -33,9 +33,7 @@
 #include <stdlib.h> // for getenv()
 #include <fstream> //for file operations
 #include "CAmRoutingAdapterALSAParser.h"
-#include "CAmDLTLogging.h"
-
-DLT_DECLARE_CONTEXT (ALSARoutingAdapterParser)
+#include "CAmRaAlsaLogging.h"
 
 using namespace std;
 using namespace am;

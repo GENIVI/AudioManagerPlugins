@@ -36,9 +36,7 @@
 #include "audiomanagertypes.h"
 #include "CAmRoutingAdapterALSAVolume.h"
 #include "CAmRoutingAdapterALSASender.h"
-#include "CAmDLTLogging.h"
-
-DLT_DECLARE_CONTEXT (CRaALSAVolume)
+#include "CAmRaAlsaLogging.h"
 
 
 using namespace am;

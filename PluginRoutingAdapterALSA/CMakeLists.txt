@@ -22,14 +22,7 @@ FIND_PACKAGE(PkgConfig)
 PROJECT(PluginRoutingAdapterALSA)
 
 FIND_PACKAGE(AudioManager REQUIRED > 7.3.0)  
-FIND_PACKAGE(AudioManagerUtilities REQUIRED > 7.3.0) 
-
-IF (WITH_DLT)
-    pkg_check_modules(DLT_REQUIRED automotive-dlt>=2.2.0)
-    add_definitions(${DLT_CFLAGS_OTHER})
-    include_directories(${DLT_INCLUDE_DIRS})
-    link_directories(${DLT_LIBRARY_DIRS})
-ENDIF(WITH_DLT)
+FIND_PACKAGE(AudioManagerUtilities REQUIRED > 7.7.0) 
 
 OPTION (WITH_DOCUMENTATION
         "build plugins with documentation" OFF )
@@ -67,14 +60,6 @@ INCLUDE_DIRECTORIES(
     ${LIBXML2_INCLUDE_DIR}
     ${INCLUDE_FOLDER}
 )
-
-IF(WITH_DLT)
-    INCLUDE_DIRECTORIES(${INCLUDE_DIRECTORIES}
-        ${DLT_INCLUDE_DIRS})
-    SET(AM_LINK_LIBS
-        ${AM_LINK_LIBS}
-        ${DLT_LIBRARIES})
-ENDIF(WITH_DLT)
 
 add_definitions(-DROUTING_ADAPTER_ALSA_DEFAULT_CONF_ROOT="${CONF_ROOT}")
 
