@@ -26,6 +26,10 @@
 namespace am {
 namespace gc {
 class CAmMainConnectionElement;
+class CAmRouteElement;
+class CAmSourceElement;
+class CAmElement;
+
 class CAmMainConnectionActionDisconnect : public CAmActionContainer
 {
 public:
@@ -36,13 +40,14 @@ public:
      * @param pMainConnection: pointer to MainConnection Element
      * @return none
      */
-    CAmMainConnectionActionDisconnect(CAmMainConnectionElement* pMainConnection);
+    CAmMainConnectionActionDisconnect(std::shared_ptr<CAmMainConnectionElement > pMainConnection);
     /**
      * @brief It is the destructor of disconnect action at main connection level.
      * @param none
      * @return none
      */
     virtual ~CAmMainConnectionActionDisconnect();
+
 protected:
     /**
      * @brief This API creates the child action object if connection is found which needs to be
@@ -52,12 +57,14 @@ protected:
      *         E_NOT_POSSIBLE on error
      */
     int _execute(void);
+
     /**
      * @brief This API updates the connection state of connection.
      * @param result: status of child action execution
      * @return E_OK
      */
     int _update(const int result);
+
     /**
      * @brief In case of failure this API performs the undo operation if parent has requested for undo.
      * @param none
@@ -65,15 +72,28 @@ protected:
      *         E_OK on success
      */
     int _undo(void);
+
 private:
-    IAmActionCommand* _createActionSetSourceState(CAmMainConnectionElement* pMainConnetion,
-                                                  const am_SourceState_e sourceState);
-    void _setConnectionStateChangeTrigger(void);
+    am_Error_e _createListActionsRouteDisconnect(
+        std::vector<std::shared_ptr<CAmRouteElement > > &listRouteElements);
+    am_Error_e _createActionRouteDisconnect(std::shared_ptr<CAmRouteElement > routeElement);
+
+    am_Error_e _createListActionsSetSourceState(
+        std::vector<std::shared_ptr<CAmRouteElement > > &listRouteElementst,
+        const am_SourceState_e requestedSourceState);
+    am_Error_e _createActionSetSourceState(std::shared_ptr<CAmSourceElement > pSource,
+        const am_SourceState_e requestedSourceState,
+        std::shared_ptr<CAmRouteElement > pRouteElement);
+    bool _checkSharedRouteDisconnected(const CAmRouteElement &);
+    bool _checkSharedSourceDisconnected(const CAmSourceElement &, const CAmRouteElement &);
+
     // connection to be disconnected
-    CAmMainConnectionElement* mpMainConnection;
-    //maximum time by which its child action should be completed
+    std::shared_ptr<CAmMainConnectionElement > mpMainConnection;
+    // maximum time by which its child action should be completed
     bool mActionCompleted;
     // Variables in which parent action will set the parameters.
+    CAmActionParam<gc_SetSourceStateDirection_e> mSetSourceStateDirectionParam;
+
 };
 
 } /* namespace gc */

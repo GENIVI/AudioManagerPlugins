@@ -1,38 +1,41 @@
 /**
 @page cond Conditions
 
-    For a given trigger, a set of processes can be defined in the configuration. A process consist 
+For a given trigger, a set of processes can be defined in the configuration. A process consist 
 of conditions and actions. Within a process there can be multiple conditions. Only if all the 
 conditions evaluate to true then the set of action which follows the conditions gets executed.
  
-    The diagram below shows the structure of a condition.
+The diagram below shows the structure of a condition.
 \image html Conditions.png
 
-    Condition consists of three parts separated by whitespace(s)
-- Left hand side : Left hand side contains the function. For details of function refer \ref functionTable 
-- operator : The operator between the LHS and RHS, most of the operators are self explanatory, 
-except INC and EXC. Some function outputs a list of values, if such a function is used on LHS then 
-INC and EXC can be used to know if a particular value is included(or present) or excluded(or absent)  
-in the list.
-- Right hand side : Unlike LHS, right hand side can have absolute values and macros. If absolute 
-value is used then it should be inside the double quotes, if no double quotes are used then its 
-treated as a macro like CS_CONNECTED, REQUESTING.
+Condition consists of three parts separated by whitespace(s)
+- Left hand side (LHS) : Left hand side contains the function. For details of function refer @ref functionTable
+- operator : The operator relating LHS to RHS (see @ref am::gc::gc_Operator_e "gc_Operator_e"). While most of the
+  operators work on single items, INC and EXC accept on its left side a __list__ of values as returned by some functions.
+  These operators check if a particular value is included (present) or excluded (absent) in the list.
+- Right hand side (RHS) : Unlike LHS, right hand side can have absolute values, enumerated values, macros 
+  (see @ref sectionmacroList) and functions.
+  If absolute value is used then it should be inside the double quotes, if no double quotes are used then its 
+  treated as a macro like CS_CONNECTED, REQUESTING.
 <BR>
 @section Condition Rules
-    Below are rules for writing condition
-- The function used on the LHS and the value used on RHS should be of the same type. Example if LHS 
-uses a function to get the connection state then RHS should also use the connection state.
-- on RHS side if some value is used then it should be inside a double quote, a macro can be used 
-without the quotes.
-- Operator INC and EXC can only be used, if a function which outputs a list is used on LHS.
+Below are rules for writing condition
+ - The function used on the LHS and the value used on RHS should be of the same type. Example if LHS 
+   uses a function to get the connection state then RHS should also use the connection state.
+ - on RHS side if some value is used then it should be inside a double quote, a macro can be used 
+   without the quotes.
+ - Operator INC and EXC can only be used, if a function which outputs a list is used on LHS.
+ - Nesting of functions is allowed. Make sure that the return type of the inner function
+   matches the parameter type of the outer function.
 <BR>  
 
 @section examples Examples
-    Below are some example of the conditions
+Below are some example of the conditions
 @code
     <condition>name(CLASS, REQUESTING) EQ "BASE"</condition>
 @endcode    
-    In this condition LHS is the function which outputs the name of the class which originated this 
+
+In this condition LHS is the function which outputs the name of the class which originated this 
 request, operator is EQ, and the RHS is the absolute name if the class since present inside double 
 quotes. This condition checks if the trigger is requested by a BASE class.
 <BR>
@@ -41,7 +44,8 @@ quotes. This condition checks if the trigger is requested by a BASE class.
 @code
     <condition>connectionState(CONNECTIONOFCLASS, REQUESTING, OTHERS) INC CS_CONNECTED</condition>
 @endcode
-    In this condition LHS is the function which gets the list of connection states of all the 
+
+In this condition LHS is the function which gets the list of connection states of all the 
 connections present in the requesting class, operator is include and the RHS is the macro 
 CS_CONNECTED. REQUESTING means the class which requested the trigger, OTHERS means list of 
 connection would include all the connections except the requesting connection. This condition 
@@ -53,7 +57,7 @@ the requesting connection is in connected state.
 @code
     <condition>connectionState(CONNECTIONOFCLASS,"PHONE") INC CS_CONNECTED</condition>
 @endcode
-    This condition is same as above except, no macro is used in the LHS function, instead the class 
+This condition is same as above except, no macro is used in the LHS function, instead the class 
 name is specified directly. This condition checks if any connection belonging to PHONE class is 
 in connected state.
 <BR>
@@ -68,6 +72,20 @@ which gives the priority of the requesting connection. This condition checks if 
 connection belonging to the requesting class, is less than the priority of the requesting connection.
 <BR>
 <BR>
+
+@code
+    <condition>muteState(SOURCE,peek(SOURCEOFCLASS,"BASE",O_NEWEST)) EQ MS_MUTED</condition>
+@endcode 
+In this condition the inner peek() function of LHS determines the name of the source of the most recently
+established connection assigned to class 'BASE' and passes it as argument to the outer muteState() function.
+The condition checks if that source is muted.
+<BR>
+<BR>
+
+@section sectionFunctionList Predefined Functions
+Conditions usually require to compare a given value against an attribute of
+an element. A family of predefined @subpage functionTable is defined and
+can be used to access such attributes.
 
 @section sectionmacroList List of macros
 - ALL : Depending on where it is used, this macro means all(everything). For example if its used inside 
@@ -84,6 +102,107 @@ requesting connection then this macro can be used as follows
 connectionState(CONNECTIONOFCLASS,REQUESTING,OTHERS).
 -  enumerations: All the enumerations defined in the schema files (both audiomanager.xsd and 
 customtypes.xsd) can be used. Example CS_CONNECTED, SS_OFF etc.
+- Additionally there are macros which allows to assign the trigger parameter to the action parameter.
+Depending on the trigger, only related trigger parameter are received by the policy engine, hence these
+ macros should be used carefully. The below table lists all the macros
 
-
+<table>
+  <tr>
+    <th>macro</th>
+    <th>Meaning</th>
+    <th>Equivalent Function</th>
+  </tr><tr>
+    <td>REQ_TRIG_TYPE</td>
+    <td>This is the @ref am::gc::gc_Trigger_e "trigger type" of the received trigger</td>
+    <td></td>
+  </tr><tr>
+    <td>REQ_SINK_NAME</td>
+    <td>This is the sink name received in trigger parameter</td>
+    <td>name(SINK, REQUESTING)</td>
+  </tr><tr>
+    <td>REQ_SOURCE_NAME</td>
+    <td>This is the source name received in trigger parameter</td>
+    <td>name(SOURCE, REQUESTING)</td>
+  </tr><tr>
+    <td>REQ_DOMAIN_NAME</td>
+    <td>This is the domain name received in trigger parameter</td>
+    <td>name(DOMAIN, REQUESTING)</td>
+  </tr><tr>
+    <td>REQ_GATEWAY_NAME</td>
+    <td>This is the gateway name received in trigger parameter</td>
+    <td></td>
+  </tr><tr>
+    <td>REQ_CLASS_NAME</td>
+    <td>This is the class name received in trigger parameter</td>
+    <td>name(CLASS, REQUESTING)</td>
+  </tr><tr>
+    <td>REQ_CON_NAME</td>
+    <td>This is the connection name received in trigger parameter</td>
+    <td>name(CONNECTION, REQUESTING)</td>
+  </tr><tr>
+    <td>REQ_CON_STATE</td>
+    <td>This is the connection state received in trigger parameter</td>
+    <td>connectionState(USER)</td>
+  </tr><tr>
+    <td>REQ_STATUS</td>
+    <td>This is the status received in trigger parameter</td>
+    <td>error()</td>
+  </tr><tr>
+    <td>REQ_MAIN_VOL</td>
+    <td>This is the main volume received in trigger parameter</td>
+    <td>mainVolume(USER)</td>
+  </tr><tr>
+    <td>REQ_MSP_TYPE</td>
+    <td>This is the main sound property type received in trigger parameter</td>
+    <td>mainSoundPropertyType()</td>
+  </tr><tr>
+    <td>REQ_MSP_VAL</td>
+    <td>This is the main sound property value received in trigger parameter</td>
+    <td>mainSoundPropertyValue(USER)</td>
+  </tr><tr>
+    <td>REQ_SYP_TYPE</td>
+    <td>This is the system property type received in trigger parameter</td>
+    <td>systemPropertyType()</td>
+  </tr><tr>
+    <td>REQ_SYP_VAL</td>
+    <td>This is the system property value received in trigger parameter</td>
+    <td>systemPropertyValue(USER)</td>
+  </tr><tr>
+    <td>REQ_AVAIL_STATE</td>
+    <td>This is the availability state received in trigger parameter</td>
+    <td>availability(USER)</td>
+  </tr><tr>
+    <td>REQ_AVAIL_REASON</td>
+    <td>This is the availability reason received in trigger parameter</td>
+    <td>availabilityReason(USER)</td>
+  </tr><tr>
+    <td>REQ_MUTE_STATE</td>
+    <td>This is the mute state received in trigger parameter</td>
+    <td>muteState(USER)</td>
+  </tr><tr>
+    <td>REQ_INT_STATE</td>
+    <td>This is the interrupt state received in trigger parameter</td>
+    <td>interruptState(USER)</td>
+  </tr><tr>
+    <td>REQ_NP_TYPE</td>
+    <td>This is the notification payload type received in trigger parameter</td>
+    <td>notificationDataType()</td>
+  </tr><tr>
+    <td>REQ_NP_VAL</td>
+    <td>This is the notification payload value received in trigger parameter</td>
+    <td>notificationDataValue()</td>
+  </tr><tr>
+    <td>REQ_NC_TYPE</td>
+    <td>This is the notification configuration type  received in trigger parameter</td>
+    <td>mainNotificationConfigurationType()</td>
+  </tr><tr>
+    <td>REQ_NC_STATUS</td>
+    <td>This is the notification configuration status  received in trigger parameter</td>
+    <td>notificationConfigurationStatus(USER)</td>
+  </tr><tr>
+    <td>REQ_NC_PARAM</td>
+    <td>This is the notification configuration parameter received in trigger parameter</td>
+    <td>notificationConfigurationParam(USER)</td>
+  </tr>
+</table>
 */

@@ -26,7 +26,7 @@
 
 namespace am {
 namespace gc {
-
+class CAmElement;
 class CAmMainConnectionActionSuspend : public CAmActionContainer
 {
 public:
@@ -37,7 +37,7 @@ public:
      * @param pMainConnection: pointer to MainConnection Element
      * @return none
      */
-    CAmMainConnectionActionSuspend(CAmMainConnectionElement* pMainConnection);
+    CAmMainConnectionActionSuspend(std::shared_ptr<CAmMainConnectionElement > pMainConnection);
     /**
      * @brief It is the destructor of suspend action at main connection level.
      * @param none
@@ -54,16 +54,26 @@ protected:
      *         E_NOT_POSSIBLE on error
      */
     int _execute(void);
+
     /**
      * @brief This API updates the connection state of connection.
      * @param result: status of child action execution
      * @return E_OK
      */
     int _update(const int result);
+
 private:
-    IAmActionCommand* _createActionSetSourceState(CAmMainConnectionElement *pMainConnection,
-                                                  const am_SourceState_e sourceState);
-    CAmMainConnectionElement* mpMainConnection;
+    am_Error_e _createListActionsRouteConnect(std::vector< std::shared_ptr< CAmRouteElement > > &listRouteElements);
+    am_Error_e _createActionRouteConnect(std::shared_ptr< CAmRouteElement > routeElement);
+    am_Error_e _createListActionsSetSourceState(
+        std::vector<std::shared_ptr<CAmRouteElement > > &listRouteElements,
+        const am_SourceState_e requestedSourceState);
+    am_Error_e _createActionSetSourceState(std::shared_ptr<CAmSourceElement > pSource,
+        const am_SourceState_e requestedSourceState);
+    bool _sharedConnectionCheck(const CAmRouteElement &);
+
+    std::shared_ptr<CAmMainConnectionElement >    mpMainConnection;
+    CAmActionParam<gc_SetSourceStateDirection_e > mSetSourceStateDirectionParam;
 };
 
 } /* namespace gc */

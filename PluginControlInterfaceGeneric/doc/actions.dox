@@ -1,7 +1,7 @@
 /*!
 \page pageActions Actions
 
-    Policy Engine evaluates the policies and sets the list of actions in action framework. The 
+Policy Engine evaluates the policies and sets the list of actions in action framework. The 
 action framework starts the execution of actions sequentially. The action framework performs the 
 following
  - Execute the list of action sequentially.
@@ -9,13 +9,97 @@ following
  - Composition of actions, a top level action coming from the policy engine, are expanded into 
 multiple low level actions. For example consider a ACTION_CONNECT, policy specifies the connect 
 action, but framework internally depending on the topology expands it to multiple connect request 
-per domain.  
+per domain.
  - Asynchronous routing side request and response handling.
-<BR>
 
 The actions are broadly classified into
-    - Route actions
-    - Volume actions
-    - property actions
+  - @subpage routingActions
+  - @subpage volumeActions
+  - Miscellaneous Actions
+    - @subpage actionSetProperty
+    - @subpage actionSetNotifictionConfiguration
+    - @subpage actionRegister
+    - @subpage actionsetSystemProperty / actionDebug
+
+\section actionTypeList List of Implemented Actions:
+
+<table>
+  <tr>
+    <th>Action Type</th>
+    <th>Description</th>
+    <th>Details</th>
+  </tr><tr>
+    <td>ACTION_CONNECT</td>
+    <td>Establish a new (or reactivate an interrupted / suspended) connection</td>
+    <td>see page @ref actionConnect</td>
+  </tr><tr>
+    <td>ACTION_DISCONNECT</td>
+    <td>Disconnect source from sink and destroy all intermediate route segments 
+        which are not shared with other connections</td>
+    <td>see page @ref actionDisconnect</td>
+  </tr><tr>
+    <td>ACTION_PUSH</td>
+    <td>Disconnect source from sink but retain the connection details on stack for
+        later re-activation</td>
+    <td>see page @ref actionInterrupt</td>
+  </tr><tr>
+    <td>ACTION_POP</td>
+    <td>Re-activate previously 'pushed' connection from stack.</td>
+    <td>see page @ref actionInterrupt</td>
+  </tr><tr>
+    <td>ACTION_SUSPEND</td>
+    <td>Pause streaming, but keep the connection intact</td>
+    <td>see page @ref actionSuspend</td>
+  </tr><tr>
+    <td>ACTION_RESUME</td>
+    <td>Continue previously paused streaming on given connection</td>
+    <td>see page @ref actionSuspend</td>
+  </tr><tr>
+    <td>ACTION_LIMIT</td>
+    <td>Install a maximum value which the sound level may not exceed</td>
+    <td>see page @ref actionSetLimit</td>
+  </tr><tr>
+    <td>ACTION_UNLIMIT</td>
+    <td>Release previously installed sound level limitations</td>
+    <td>see page @ref actionSetLimit</td>
+  </tr><tr>
+    <td>ACTION_MUTE</td>
+    <td>Reduce sound level to inaudibility</td>
+    <td>see page @ref actionSetMute</td>
+  </tr><tr>
+    <td>ACTION_UNMUTE</td>
+    <td>Make sound audible again</td>
+    <td>see page @ref actionSetMute</td>
+  </tr><tr>
+    <td>ACTION_SET_VOLUME</td>
+    <td>Adjust the sound level to given value.\n
+        Affects nominal value only, regardless of any effective limitations.</td>
+    <td>see page @ref actionSetVolume</td>
+  </tr><tr>
+    <td>ACTION_SET_PROPERTY</td>
+    <td>Modify a sound property of a source or sink</td>
+    <td>see page @ref actionSetProperty</td>
+  </tr><tr>
+    <td>ACTION_SET_PROPERTIES</td>
+    <td>Modify multiple sound properties at once</td>
+    <td>> t. b. d.</td>
+  </tr><tr>
+    <td>ACTION_REGISTER</td>
+    <td>Auto-register sources, sinks and/or gateways to the AM</td>
+    <td>see page @ref actionRegister</td>
+  </tr><tr>
+    <td>ACTION_SET_NOTIFICATION_CONFIGURATION</td>
+    <td>Specify conditions when sources and / or sinks fire notification events</td>
+    <td>see page @ref actionSetNotifictionConfiguration</td>
+  </tr><tr>
+    <td>ACTION_SET_SYSTEM_PROPERTY</td>
+    <td>Manipulate a global attribute</td>
+    <td>see page @ref actionsetSystemProperty</td>
+  </tr><tr>
+    <td>ACTION_DEBUG</td>
+    <td>Legacy alias for ACTION_SET_SYSTEM_PROPERTY</td>
+    <td>see page @ref actionsetSystemProperty</td>
+  </tr>
+</table>
 
 */

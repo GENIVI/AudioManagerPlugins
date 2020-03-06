@@ -24,9 +24,9 @@ namespace am {
 
 namespace gc {
 
-CAmRootAction* CAmRootAction::mRootAction = NULL;
-CAmRootAction::CAmRootAction() :
-                                CAmActionContainer(std::string("RootAction"))
+CAmRootAction *CAmRootAction::mRootAction = NULL;
+CAmRootAction::CAmRootAction()
+    : CAmActionContainer(std::string("RootAction"))
 {
 }
 
@@ -34,12 +34,13 @@ CAmRootAction::~CAmRootAction()
 {
 }
 
-CAmRootAction* CAmRootAction::getInstance(void)
+CAmRootAction *CAmRootAction::getInstance(void)
 {
     if (mRootAction == NULL)
     {
         mRootAction = new CAmRootAction;
     }
+
     return mRootAction;
 }
 
@@ -51,6 +52,15 @@ int CAmRootAction::_cleanup(void)
     this->setStatus(AS_NOT_STARTED);
     this->setError(0);
     return 0;
+}
+
+void CAmRootAction::freeInstance()
+{
+    if (mRootAction != NULL)
+    {
+        delete mRootAction;
+        mRootAction = NULL;
+    }
 }
 
 } /* namespace gc */

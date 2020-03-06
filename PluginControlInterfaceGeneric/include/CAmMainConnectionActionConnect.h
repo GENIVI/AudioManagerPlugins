@@ -27,6 +27,10 @@ namespace am {
 namespace gc {
 
 class CAmMainConnectionElement;
+class CAmRouteElement;
+class CAmSourceElement;
+class CAmElement;
+
 class CAmMainConnectionActionConnect : public CAmActionContainer
 {
 
@@ -38,13 +42,14 @@ public:
      * @param pMainConnection: pointer to MainConnection Element
      * @return none
      */
-    CAmMainConnectionActionConnect(CAmMainConnectionElement* pMainConnection);
+    CAmMainConnectionActionConnect(std::shared_ptr<CAmMainConnectionElement > pMainConnection);
     /**
      * @brief It is the destructor of connect action at main connection level.
      * @param none
      * @return none
      */
     virtual ~CAmMainConnectionActionConnect();
+
 protected:
     /**
      * @brief This API creates the child action object if connection is found which needs to be
@@ -54,12 +59,14 @@ protected:
      *         E_NOT_POSSIBLE on error
      */
     int _execute(void);
+
     /**
      * @brief This API updates the connection state of connection.
      * @param result: status of child action execution
      * @return E_OK
      */
     int _update(const int result);
+
     /**
      * @brief In case of failure this API performs the undo operation if parent has requested for undo.
      * @param none
@@ -67,12 +74,21 @@ protected:
      *         E_OK on success
      */
     int _undo(void);
+
 private:
-    IAmActionCommand* _createActionSetSourceState(CAmMainConnectionElement *pMainConnection,
-                                                  const am_SourceState_e sourceState);
-    void _setConnectionStateChangeTrigger(void);
-    CAmMainConnectionElement* mpMainConnection;
-    CAmActionParam<am_CustomConnectionFormat_t> mConnectionFormatParam;
+    am_Error_e _createListActionsRouteConnect(
+        std::vector<std::shared_ptr<CAmRouteElement > > &listRouteElements);
+    am_Error_e _createActionRouteConnect(std::shared_ptr<CAmRouteElement > routeElement);
+    am_Error_e _createListActionsSetSourceState(
+        std::vector<std::shared_ptr<CAmRouteElement > > &listRouteElementst,
+        const am_SourceState_e requestedSourceState);
+    am_Error_e _createActionSetSourceState(std::shared_ptr<CAmSourceElement > pSource,
+        const am_SourceState_e requestedSourceState);
+
+    std::shared_ptr<CAmMainConnectionElement >   mpMainConnection;
+    CAmActionParam<am_CustomConnectionFormat_t>  mConnectionFormatParam;
+    CAmActionParam<gc_SetSourceStateDirection_e> mSetSourceStateDirectionParam;
+
 };
 
 } /* namespace gc */

@@ -21,6 +21,7 @@
 #define GC_ACTIONCONTAINER_H_
 
 #include <map>
+#include <vector>
 #include <time.h>
 #include "IAmAction.h"
 #include "IAmEventObserver.h"
@@ -52,7 +53,6 @@ class CAmActionContainer : public IAmActionCommand
 {
 
 public:
-    CAmActionContainer(const std::string& name = "");
     virtual ~CAmActionContainer();
     /**
      * @brief The function to execute an action and all its child actions.
@@ -64,48 +64,56 @@ public:
      * @return zero means successfully executed and a non zero means some error occurred.
      */
     int execute(void);
+
     /**
      * @brief This function gets the error of an action
      *
      * @return int The error of an aciton.
      */
     int getError(void) const;
+
     /**
      * @brief This function is usde to set error for an action.
      *
      * @param error The new value of error for an action.
      */
     void setError(const int error);
+
     /**
      * @brief This function is used for cleanup of an action.
      *
      * @return int zero for successful execution and viceversa.
      */
     int cleanup(void);
+
     /**
      * @brief This function is used to get the name of an action
      *
      * @return string The name of the action.
      */
     std::string getName(void) const;
+
     /**
      * @brief This function gets the state of the action.
      *
      * @return Actionstate The state of the action.
      */
     ActionState_e getStatus(void) const;
+
     /**
      * @brief This function is used to set the status of an action
      *
      * @param actionState The new status of an action.
      */
     void setStatus(const ActionState_e actionState);
+
     /**
      * @brief This function is used to set the parent action for an action.
      *
      * @param pParentAction The pointer to the parent action.
      */
-    int setParent(IAmActionCommand* pParentAction);
+    int setParent(IAmActionCommand *pParentAction);
+
     /**
      * @brief This function is used to set the action parameter.
      *
@@ -114,7 +122,8 @@ public:
      *
      * @return bool true on success and vice-versa.
      */
-    bool setParam(const std::string& paramName, IAmActionParam* pParam);
+    bool setParam(const std::string &paramName, IAmActionParam *pParam);
+
     /**
      * @brief This function gets the action parameter.
      *
@@ -122,7 +131,8 @@ public:
      *
      * @return IAmActionParam* not NULL if valid
      */
-    IAmActionParam* getParam(const std::string& paramName);
+    IAmActionParam *getParam(const std::string &paramName);
+
     /**
      * @brief This function is used to perform the undo for an action.
      *
@@ -131,6 +141,7 @@ public:
     int undo(void);
     bool getUndoRequired(void);
     void setUndoRequried(const bool undoRequired);
+
     /**
      * @brief This function is to notify the action about the child action's execution or undo
      * status.
@@ -140,6 +151,7 @@ public:
      * @return zero for successful execution of this function and vice versa
      */
     int update(const int result);
+
     /**
      * @brief In order to compose container action one needs to add the child actions, this
      * function allows to add the child action.
@@ -147,7 +159,8 @@ public:
      *  @param command The pointer of the child action
      *  @return int 0 on success and vice versa.
      */
-    int append(IAmActionCommand* command);
+    int append(IAmActionCommand *command);
+
     /**
      * @brief This function allows to add an action just after the currently executing action.
      *
@@ -161,7 +174,8 @@ public:
      *  @param command The pointer to the action that needs to be inserted.
      *  @return int 0 on success and vice versa.
      */
-    int insert(IAmActionCommand* command);
+    int insert(IAmActionCommand *command);
+
     /**
      * @brief This function returns chcek if the action has any child actions or not
      *
@@ -172,7 +186,15 @@ public:
     uint32_t getTimeout(void);
     uint32_t getExecutionTime(void);
     uint32_t getUndoTime(void);
+
+#ifndef UNIT_TEST
 protected:
+#else
+// we need this for the unit test
+public:
+#endif
+    CAmActionContainer(const std::string &name = "");
+
     /**
      * @brief This protected virtual function provides the default implementation for the execute.
      *
@@ -180,18 +202,21 @@ protected:
      *
      */
     virtual int _execute(void);
+
     /**
      * @brief This function provides the default implementation of the undo.
      *
      * @return int  zero means successful execution, error otherwise.
      */
     virtual int _undo(void);
+
     /**
      * @brief This function provides the default cleanup implementation
      *
      * @return  int  zero means successful execution, error otherwise.
      */
     virtual int _cleanup(void);
+
     /**
      * @brief This function provides the default update implementation
      *
@@ -199,6 +224,7 @@ protected:
      * @return int  zero means successful execution, error otherwise.
      */
     virtual int _update(const int result);
+
     /**
      * @brief This function provides the default update implementation. The difference between the
      * above function and current function is, the above function is called after completion
@@ -218,7 +244,8 @@ protected:
      * @param pBaseParam The pointer to the action parameter.
      *
      */
-    void _registerParam(const std::string& paramName, IAmActionParam* pBaseParam);
+    void _registerParam(const std::string &paramName, IAmActionParam *pBaseParam);
+
 private:
     int _incrementIndex(void);
     int _decrementIndex(void);
@@ -228,24 +255,24 @@ private:
     uint32_t _calculateTimeDifference(timespec startTime);
 
     // Name of the action, used mostly for debug purpose.
-    std::string mName;
+    std::string                              mName;
     // The current state of the action
-    ActionState_e mStatus;
+    ActionState_e                            mStatus;
     // The index of the currentlty executing or the undoing child action.
-    int mIndex;
+    int                                      mIndex;
     // The error state of the action, 0 means no error and non zero means error.
-    int mError;
+    int                                      mError;
     // The pointer to the parent action.
-    IAmActionCommand* mParent;
+    IAmActionCommand                        *mParent;
     // The list of the child actions
-    std::vector<IAmActionCommand* > mListChildActions;
+    std::vector<IAmActionCommand * >         mListChildActions;
     // Map for storing the action parameter against parameter name
-    std::map<std::string, IAmActionParam* > mMapParameters;
-    bool mUndoRequired;
-    uint32_t mTimeout;
-    timespec mStartTime;
-    uint32_t mExecutionTime;
-    uint32_t mUndoTime;
+    std::map<std::string, IAmActionParam * > mMapParameters;
+    bool                                     mUndoRequired;
+    uint32_t                                 mTimeout;
+    timespec                                 mStartTime;
+    uint32_t                                 mExecutionTime;
+    uint32_t                                 mUndoTime;
 
 };
 

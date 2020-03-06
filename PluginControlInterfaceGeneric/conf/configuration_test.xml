@@ -1,362 +1,144 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<c:configuration xmlns:c="controller" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="controller audiomanagertypes.xsd ">
-    <listSources>
-        <source>
-            <id>0</id>
-            <domainName>UNKNOWN</domainName>
-            <name>SourceTemplate</name>
-            <volume>0</volume>
-            <visible>TRUE</visible>
-            <className>UNKNOWN</className>
-            <sourceState>SS_ON</sourceState>
-            <connectionFormat>CF_GENIVI_STEREO</connectionFormat>
-            <connectionFormat>CF_GENIVI_MONO</connectionFormat>
-            <interruptState>IS_OFF</interruptState>
-            <availability>
-                <availability>A_AVAILABLE</availability>
-                <availabilityReason>AR_UNKNOWN</availabilityReason>
-            </availability>
-            <soundProperty>
-                <type>SP_GENIVI_TREBLE</type>
-                <value minValue="0" maxValue="10">5</value>
-            </soundProperty>
-            <soundProperty>
-                <type>SP_GENIVI_MID</type>
-                <value minValue="0" maxValue="10">5</value>
-            </soundProperty>
-            <soundProperty>
-                <type>SP_GENIVI_BASS</type>
-                <value minValue="0" maxValue="10">5</value>
-            </soundProperty>
-            <mainSoundProperty>
-                <type>MSP_GENIVI_TREBLE</type>
-                <value minValue="0" maxValue="10">5</value>
-            </mainSoundProperty>
-            <mainSoundProperty>
-                <type>MSP_GENIVI_MID</type>
-                <value minValue="0" maxValue="10">5</value>
-            </mainSoundProperty>
-            <mainSoundProperty>
-                <type>MSP_GENIVI_BASS</type>
-                <value minValue="0" maxValue="10">5</value>
-            </mainSoundProperty>
-            <registrationType>REG_TEMPLATE</registrationType>
-            <isVolumeSupported>TRUE</isVolumeSupported>
-            <priority>1</priority>
-            <listMainSoundPropertiesToSoundProperties>
-                <mapEntry>MSP_UNKNOWN,SP_UNKNOWN</mapEntry>
-                <mapEntry>MSP_GENIVI_TREBLE,SP_GENIVI_TREBLE</mapEntry>
-            </listMainSoundPropertiesToSoundProperties>
-        </source>
-        <source baseName="SourceTemplate">
-            <domainName>PulseAudio</domainName>
-            <name>Media</name>
-            <className>BASE</className>
-            <registrationType>REG_ROUTER</registrationType>
-        </source>
-        <source baseName="SourceTemplate">
-            <domainName>PulseAudio</domainName>
-            <name>RadioTuner</name>
-            <className>BASE</className>
-            <registrationType>REG_ROUTER</registrationType>
-        </source>
-        <source baseName="SourceTemplate">
-            <domainName>PulseAudio</domainName>
-            <name>NavigationAnnouncement</name>
-            <className>NAVI</className>
-            <registrationType>REG_ROUTER</registrationType>
-        </source>
-        <source baseName="SourceTemplate">
-            <domainName>PulseAudio</domainName>
-            <name>TrafficInformation</name>
-            <className>TRAFFIC</className>
-            <registrationType>REG_ROUTER</registrationType>
-        </source>
-    </listSources>  
-    <listSinks>
-        <sink>
-            <id>0</id>
-            <domainName>UNKNOWN</domainName>
-            <name>SinkTemplate</name>
-            <volume>0</volume>
-            <visible>TRUE</visible>
-            <mainVolume>80</mainVolume>
-            <className>UNKNOWN</className>
-            <muteState>MS_UNMUTED</muteState>
-            <connectionFormat>CF_GENIVI_STEREO</connectionFormat>
-            <connectionFormat>CF_GENIVI_MONO</connectionFormat>
-            <availability>
-                <availability>A_AVAILABLE</availability>
-                <availabilityReason>AR_GENIVI_NEWMEDIA</availabilityReason>
-            </availability>
-            <soundProperty>
-                <type>SP_GENIVI_TREBLE</type>
-                <value minValue="0" maxValue="10">5</value>
-            </soundProperty>
-            <soundProperty>
-                <type>SP_GENIVI_MID</type>
-                <value minValue="0" maxValue="10">5</value>
-            </soundProperty>
-            <soundProperty>
-                <type>SP_GENIVI_BASS</type>
-                <value minValue="0" maxValue="10">5</value>
-            </soundProperty>
-            <mainSoundProperty>
-                <type>MSP_GENIVI_TREBLE</type>
-                <value minValue="0" maxValue="10">5</value>
-            </mainSoundProperty>
-            <mainSoundProperty>
-                <type>MSP_GENIVI_MID</type>
-                <value minValue="0" maxValue="10">5</value>
-            </mainSoundProperty>
-            <mainSoundProperty>
-                <type>MSP_GENIVI_BASS</type>
-                <value minValue="0" maxValue="10">5</value>
-            </mainSoundProperty>
-            <registrationType>REG_TEMPLATE</registrationType>
-            <isVolumeSupported>TRUE</isVolumeSupported>
-            <priority>1</priority>
-            <listMainVolumesToNormalizedVolumes>
-                <tableEntry>0,0.0</tableEntry>
-                <tableEntry>10,1.0</tableEntry>
-            </listMainVolumesToNormalizedVolumes>
-            <listNormalizedVolumesToDecibelVolumes>
-                <tableEntry>0.0,-6.0</tableEntry>
-                <tableEntry>1.0,0.0</tableEntry>
-            </listNormalizedVolumesToDecibelVolumes>
-            <listMainSoundPropertiesToSoundProperties>
-                <mapEntry>MSP_UNKNOWN,SP_UNKNOWN</mapEntry>
-                <mapEntry>MSP_GENIVI_TREBLE,SP_GENIVI_TREBLE</mapEntry>
-            </listMainSoundPropertiesToSoundProperties>
-        </sink>
-        <sink baseName="SinkTemplate">
-            <domainName>PulseAudio</domainName>
-            <name>AllSpeakers</name>
-            <className>BASE</className>
-            <registrationType>REG_ROUTER</registrationType>
-        </sink>
-        <sink baseName="SinkTemplate">
-            <domainName>PulseAudio</domainName>
-            <name>FrontSpeakers</name>
-            <className>BASE</className>
-            <registrationType>REG_ROUTER</registrationType>
-        </sink>
-    </listSinks>
-    <listGateways> 
-        <!-- This is a single domain example, therefore no gateway is present -->
-    </listGateways>
-    <listDomains>
-        <domain>
-            <id>0</id>
-            <name>PulseAudio</name>
-            <busName>org.genivi.audiomanager</busName>
-            <nodeName>pulseaudio</nodeName>
-            <early>FALSE</early>
-            <complete>TRUE</complete>
-            <state>DS_CONTROLLED</state>
-            <registrationType>REG_ROUTER</registrationType>
-        </domain>
-    </listDomains>
-    <listClasses>
-        <class>
-            <name>BASE</name>
-            <type>C_PLAYBACK</type>
-            <priority>1</priority>
+<c:generic xmlns:c="controller" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="controller audiomanagertypes.xsd ">
+    <classes>
+        <class name="BASE" type="C_PLAYBACK" priority="1">
             <topology>AllSpeakers=Media^RadioTuner</topology>
         </class>
-        <class>
-            <name>NAVI</name>
-            <type>C_PLAYBACK</type>
-            <priority>1</priority>
+        <class name="NAVI" type="C_PLAYBACK" priority="1">
             <topology>FrontSpeakers=NavigationAnnouncements</topology>
         </class>
-        <class>
-            <name>TRAFFIC</name>
-            <type>C_PLAYBACK</type>
-            <priority>1</priority>
+        <class name="TRAFFIC" type="C_PLAYBACK" priority="1">
             <topology>FrontSpeakers=TrafficInformation</topology>
         </class>
-    </listClasses>
-    <listPolicies>
+    </classes>
+    <system>
+        <templates>
+            <source name="SourceTemplate"  volume="0" visible="TRUE" sourceState="SS_ON"
+                    interruptState="IS_OFF" isVolumeSupported="TRUE" priority="1"
+                    connectionFormat="CF_GENIVI_STEREO;CF_GENIVI_MONO">
+                <availability availability="A_AVAILABLE" availabilityReason="AR_UNKNOWN" />
+                <soundProperty type="SP_GENIVI_TREBLE" value="5" minValue="0" maxValue="10" />
+                <soundProperty type="SP_GENIVI_MID" value="5" minValue="0" maxValue="10" />
+                <soundProperty type="SP_GENIVI_BASS" value="5" minValue="0" maxValue="10" />
+                <mainSoundProperty type="MSP_GENIVI_TREBLE" value="5" minValue="0" maxValue="10" />
+                <mainSoundProperty type="MSP_GENIVI_MID" value="5" minValue="0" maxValue="10" />
+                <mainSoundProperty type="MSP_GENIVI_BASS" value="5" minValue="0" maxValue="10" />
+                <mapMSPtoSP mappingDirection="MD_BOTH">MSP_UNKNOWN,SP_UNKNOWN</mapMSPtoSP>
+                <mapMSPtoSP mappingDirection="MD_BOTH">MSP_GENIVI_TREBLE,SP_GENIVI_TREBLE</mapMSPtoSP>
+            </source>
+            <sink domainName="UNKNOWN" name="SinkTemplate" volume="0" visible="TRUE" mainVolume="80"
+                  className="UNKNOWN" muteState="MS_UNMUTED" isVolumeSupported="TRUE" priority="1"
+                  connectionFormat="CF_GENIVI_STEREO;CF_GENIVI_MONO"
+                  listMainVolumesToNormalizedVolumes="0,0.0;10,1.0" listNormalizedVolumesToDecibelVolumes="0.0,-6;1.0,0">
+                <availability availability="A_AVAILABLE" availabilityReason="AR_GENIVI_NEWMEDIA" />
+                <soundProperty type="SP_GENIVI_TREBLE" value="5" minValue="0" maxValue="10" />
+                <soundProperty type="SP_GENIVI_MID" value="5" minValue="0" maxValue="10" />
+                <soundProperty type="SP_GENIVI_BASS" value="5" minValue="0" maxValue="10" />
+                <mainSoundProperty type="MSP_GENIVI_TREBLE" value="5" minValue="0" maxValue="10" />
+                <mainSoundProperty type="MSP_GENIVI_MID" value="5" minValue="0" maxValue="10" />
+                <mainSoundProperty type="MSP_GENIVI_BASS" value="5" minValue="0" maxValue="10" />
+                <mapMSPtoSP mappingDirection="MD_BOTH">MSP_UNKNOWN,SP_UNKNOWN</mapMSPtoSP>
+                <mapMSPtoSP mappingDirection="MD_BOTH">MSP_GENIVI_TREBLE,SP_GENIVI_TREBLE</mapMSPtoSP>
+            </sink>
+        </templates>
+        <domain id="0" name="PulseAudio" busName="org.genivi.audiomanager" nodeName="pulseaudio" early="FALSE"
+                complete="TRUE" state="DS_CONTROLLED" registrationType="REG_ROUTER">
+            <source baseName="SourceTemplate" name="Media" className="BASE" registrationType="REG_ROUTER" />
+            <source baseName="SourceTemplate" name="RadioTuner" className="BASE" registrationType="REG_ROUTER" />
+            <source baseName="SourceTemplate" name="NavigationAnnouncement" className="NAVI" registrationType="REG_ROUTER" />
+            <source baseName="SourceTemplate" name="TrafficInformation" className="TRAFFIC" registrationType="REG_ROUTER" />
+
+            <sink baseName="SinkTemplate" name="AllSpeakers" className="BASE" registrationType="REG_ROUTER" />
+            <sink baseName="SinkTemplate" name="FrontSpeakers" className="BASE" registrationType="REG_ROUTER" />
+
+            <!-- This is a single domain example, therefore no gateway is present -->
+        </domain>
+    </system>
+    <policies>
         <!--Connect Policy Start-->
-        <policy>
-            <trigger>USER_CONNECTION_REQUEST</trigger>
+        <policy trigger="USER_CONNECTION_REQUEST">
             <process>
                 <condition>name(CLASS, REQUESTING) EQ "BASE"</condition>
                 <condition>connectionState(CONNECTIONOFCLASS, REQUESTING, OTHERS) INC CS_CONNECTED</condition>
-                    <action>
-                        <type>ACTION_MUTE</type>
-                        <param>
-                            <className>"BASE"</className>
-                        </param>
-                    </action>
-                    <action>
-                        <type>ACTION_DISCONNECT</type>
-                        <param>
-                            <className>"BASE"</className>
-                            <connectionState>CS_CONNECTED</connectionState>
-                        </param>
-                    </action>
+
+                <action type="ACTION_MUTE" className="BASE" />
+                <action type="ACTION_DISCONNECT" className="BASE" connectionState="CS_CONNECTED" />
             </process>
             <process>
                 <condition>name(CLASS, REQUESTING) EQ "NAVI"</condition>
-                <action>
-                    <type>ACTION_LIMIT</type>
-                    <param>
-                        <className>"BASE"</className>
-                        <volume>-40</volume>
-                        <pattern>01</pattern>
-                    </param>
-                </action>
+
+                <action type="ACTION_LIMIT" className="BASE" volume="-40" pattern="01" />
             </process>
             <process>
                 <condition>name(CLASS, REQUESTING) EQ "TRAFFIC"</condition>
                 <condition>connectionState(CONNECTIONOFCLASS, "BASE") INC CS_CONNECTED</condition>
-                <action>
-                    <type>ACTION_SUSPEND</type>
-                    <param>
-                        <className>"BASE"</className>
-                    </param>
-                </action>
+
+                <action type="ACTION_SUSPEND" className="BASE" />
             </process>
             <process>
-                <action>
-                    <type>ACTION_MUTE</type>
-                    <param>
-                        <className>REQUESTING</className>
-                        <timeOut>5000</timeOut>
-                    </param>
-                </action>
-                <action>
-                    <type>ACTION_CONNECT</type>
-                    <param>
-                        <className>REQUESTING</className>
-                        <timeOut>5000</timeOut>
-                    </param>
-                </action>
-                <action>
-                    <type>ACTION_UNMUTE</type>
-                    <param>
-                        <className>REQUESTING</className>
-                    </param>
-                </action>
+                <action type="ACTION_MUTE" className="REQUESTING" timeOut="5000" />
+                <action type="ACTION_CONNECT" className="REQUESTING" timeOut="5000" />
+                <action type="ACTION_UNMUTE" className="REQUESTING" />
             </process>
         </policy>
         <!--Connect policy end-->
         <!--Disconnect policy start-->
-        <policy>
-            <trigger>USER_DISCONNECTION_REQUEST</trigger>
+        <policy trigger="USER_DISCONNECTION_REQUEST">
             <process>
-                <action>
-                    <type>ACTION_MUTE</type>
-                    <param>
-                        <className>REQUESTING</className>
-                    </param>
-                </action>
-                <action>
-                    <type>ACTION_DISCONNECT</type>
-                    <param>
-                        <sourceName>REQUESTING</sourceName>
-                        <sinkName>REQUESTING</sinkName>
-                    </param>
-                </action>
-                <action>
-                    <type>ACTION_UNMUTE</type>
-                    <param>
-                        <className>REQUESTING</className>
-                    </param>
-                </action>
+                <action type="ACTION_MUTE" className="REQUESTING" />
+                <action type="ACTION_DISCONNECT" sourceName="REQUESTING" sinkName="REQUESTING" />
+                <action type="ACTION_UNMUTE" className="REQUESTING" />
             </process>
             <process>
                 <condition>name(CLASS, REQUESTING) EQ "NAVI"</condition>
-                <action>
-                    <type>ACTION_UNLIMIT</type>
-                    <param>
-                        <className>"BASE"</className>
-                        <pattern>01</pattern>
-                    </param>
-                </action>
+
+                <action type="ACTION_UNLIMIT" pattern="01" />
             </process>
             <process>
                 <condition>name(CLASS, REQUESTING) EQ "TRAFFIC"</condition>
                 <condition>connectionState(CONNECTIONOFCLASS, "BASE") INC CS_SUSPENDED</condition>
-                <action>
-                    <type>ACTION_RESUME</type>
-                    <param>
-                        <className>"BASE"</className>
-                        <connectionState>CS_SUSPENDED</connectionState>
-                    </param>
-                </action>
+
+                <action type="ACTION_RESUME" className="BASE" connectionState="CS_SUSPENDED" />
             </process>
         </policy>
         <!--Disconnect policy end -->
         <!-- default volume policy start -->
-        <policy>
-            <trigger>USER_SET_VOLUME</trigger>
+        <policy trigger="USER_SET_VOLUME">
             <process>
-                <action>
-                    <type>ACTION_SET_VOLUME</type>
-                    <param>
-                        <sinkName>REQUESTING</sinkName>
-                    </param>
-                </action>
+                <action type="ACTION_SET_VOLUME" sinkName="REQUESTING" />
             </process>
         </policy>
         <!-- default volume policy end -->
         <!-- default mute policy start -->
-        <policy>
-            <trigger>USER_SET_SINK_MUTE_STATE</trigger>
+        <policy trigger="USER_SET_SINK_MUTE_STATE">
             <process>
                 <condition>muteState(USER,REQUESTING) EQ MS_MUTED</condition>
-                <action>
-                    <type>ACTION_MUTE</type>
-                    <param>
-                        <sinkName>REQUESTING</sinkName>
-                    </param>
-                </action>
+
+                <action type="ACTION_MUTE" sinkName="REQUESTING" />
             </process>
             <process>
                 <condition>muteState(USER,REQUESTING) EQ MS_UNMUTED</condition>
-                <action>
-                    <type>ACTION_UNMUTE</type>
-                    <param>
-                        <sinkName>REQUESTING</sinkName>
-                    </param>
-                </action>
+
+                <action type="ACTION_UNMUTE" sinkName="REQUESTING" />
             </process>
         </policy>
         <!-- default mute policy end -->
         <!-- default set sink sound property policy start -->
-        <policy>
-            <trigger>USER_SET_SINK_MAIN_SOUND_PROPERTY</trigger>
+        <policy trigger="USER_SET_SINK_MAIN_SOUND_PROPERTY">
             <process>
-                <action>
-                    <type>ACTION_SET_PROPERTY</type>
-                    <param>
-                        <sinkName>REQUESTING</sinkName>
-                    </param>
-                </action>
+                <action type="ACTION_SET_PROPERTY" sinkName="REQUESTING" />
             </process>
         </policy>
         <!-- default set sink sound property policy end -->
         <!-- default set source sound property policy start -->
-        <policy>
-            <trigger>USER_SET_SOURCE_MAIN_SOUND_PROPERTY</trigger>
+        <policy trigger="USER_SET_SOURCE_MAIN_SOUND_PROPERTY">
             <process>
-                <action>
-                    <type>ACTION_SET_PROPERTY</type>
-                    <param>
-                        <sourceName>REQUESTING</sourceName>
-                    </param>
-                </action>
+                <action type="ACTION_SET_PROPERTY" sourceName="REQUESTING" />
             </process>
         </policy>
         <!-- default set source sound property policy end -->
-    </listPolicies>
-    <listSystemProperties>
-        <systemProperty>
-            <type>SYP_DEBUG_LOG</type>
-            <value>4</value>
-        </systemProperty>
-    </listSystemProperties>
-</c:configuration>
+    </policies>
+    <properties>
+        <systemProperty type="SYP_GLOBAL_LOG_THRESHOLD" value="4" />
+    </properties>
+</c:generic>

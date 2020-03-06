@@ -53,7 +53,6 @@ class CAmActionCommand : public IAmActionCommand
 {
 
 public:
-    CAmActionCommand(const std::string& name = "");
     virtual ~CAmActionCommand();
 
     /**
@@ -65,24 +64,28 @@ public:
      *
      */
     int execute(void);
+
     /**
      * @brief This function is used to get the present error of an action.
      *
      * @return int zero means no error and non zero value means erro.
      */
     int getError(void) const;
+
     /**
      * @brief This function is used to set the action error.
      *
      * @param error The new error value to be set.
      */
     void setError(const int error);
+
     /**
      * @brief This function performs the actions cleanup.
      *
      * @return int zero on success and vice versa.
      */
     int cleanup(void);
+
     /**
      * @brief This function returns the name of action.
      *
@@ -90,25 +93,29 @@ public:
      * @return string The name of an action.
      */
     std::string getName(void) const;
+
     /**
      * @brief This function gets the status of the action.
      *
      * @return ActionState The state of the action.
      */
     ActionState_e getStatus(void) const;
+
     /**
      * @brief This function is used to state the action state.
      *
      * @param state This new state for an action.
      */
     void setStatus(const ActionState_e state);
+
     /**
      * @brief This function is used to set the parent for a given action.
      *
      * @param command This is the pointer to the parent action
      * return int 0 on successful completion of the function or otherwise.
      */
-    int setParent(IAmActionCommand* command);
+    int setParent(IAmActionCommand *command);
+
     /**
      * @brief This function is used to set the Parameter for an action.
      *
@@ -117,7 +124,8 @@ public:
      *
      * @return true on success and vice versa.
      */
-    bool setParam(const std::string& paramName, IAmActionParam* pParam);
+    bool setParam(const std::string &paramName, IAmActionParam *pParam);
+
     /**
      * @brief This function is used to get the Parameter for an action.
      *
@@ -126,7 +134,8 @@ public:
      * @return IAmActionParam* pointer to the base action param. NULL if invalid
      */
 
-    IAmActionParam* getParam(const std::string& paramName);
+    IAmActionParam *getParam(const std::string &paramName);
+
     /**
      * @brief This function is used to perform the undo.
      *
@@ -136,6 +145,7 @@ public:
 
     bool getUndoRequired(void);
     void setUndoRequried(const bool undoRequired);
+
     /**
      * @brief This function is used to update the completion of the child action or the
      * completion of undo operation.
@@ -148,7 +158,10 @@ public:
     uint32_t getTimeout(void);
     uint32_t getExecutionTime(void);
     uint32_t getUndoTime(void);
+
 protected:
+    CAmActionCommand(const std::string &name = "");
+
     /**
      * @brief The default implementation for the _execute.
      *
@@ -157,6 +170,7 @@ protected:
      */
 
     virtual int _execute(void);
+
     /**
      * @brief The default implementation for the  undo.
      *
@@ -164,6 +178,7 @@ protected:
      */
 
     virtual int _undo(void);
+
     /**
      * @brief The default implementation for the update.
      *
@@ -171,12 +186,14 @@ protected:
      * @return zero means success and non zero means error
      */
     virtual int _update(const int result);
+
     /**
      * @brief The default implementation for the cleanup
      *
      * @return int zero means success and vice-versa
      */
     virtual int _cleanup(void);
+
     /**
      * @brief This function is used to add the parameters for an action.
      *
@@ -186,25 +203,27 @@ protected:
      * @param paramName The name of the parameter.
      * @param pParam The pointer to the action parameter.
      */
-    void _registerParam(const std::string& paramName, IAmActionParam* pParam);
+    void _registerParam(const std::string &paramName, IAmActionParam *pParam);
     virtual void _timeout(void);
 
 private:
     uint32_t _calculateTimeDifference(timespec startTime);
+
     // Name of the action, used mostly for debug purpose.
     std::string mName;
     // Map for storing the action parameter against parameter name
-    std::map<std::string, IAmActionParam* > mMapParameters;
+    std::map<std::string, IAmActionParam * > mMapParameters;
     // The current state of the action
-    ActionState_e mStatus;
+    ActionState_e                mStatus;
     // The error state of the action, 0 means no error and non zero means error.
-    int mError;
-    IAmActionCommand* mParent;
-    bool mUndoRequired;
+    int                          mError;
+    IAmActionCommand            *mParent;
+    bool                         mUndoRequired;
     Tcallback<CAmActionCommand > mpTimerCallback;
-    uint32_t mTimeout;
-    sh_timerHandle_t mTimerHandle;
-    void timeout(void* data);
+    uint32_t                     mTimeout;
+    sh_timerHandle_t             mTimerHandle;
+    void timeout(void *data);
+
     timespec mStartTime;
     uint32_t mExecutionTime;
     uint32_t mUndoTime;

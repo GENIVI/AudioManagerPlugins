@@ -19,183 +19,114 @@
  *****************************************************************************/
 
 #include <algorithm>
+#include <sstream>
 #include "CAmClassElement.h"
-#include "CAmControlReceive.h"
 #include "CAmMainConnectionElement.h"
 #include "CAmGatewayElement.h"
 #include "CAmLogger.h"
 #include "CAmSinkElement.h"
 #include "CAmSourceElement.h"
+#include "CAmSystemElement.h"
+#include "CAmRootAction.h"
+#include "CAmPersistenceWrapper.h"
+
 
 namespace am {
 namespace gc {
 
-CAmClassElement::CAmClassElement(const gc_Class_s& gcClass, CAmControlReceive* pControlReceive) :
-                                CAmElement(gcClass.name, pControlReceive),
-                                mpControlReceive(pControlReceive),
-                                mClass(gcClass)
+#define CLASS_LEVEL_SINK "*"
+
+CAmClassElement::CAmClassElement(const gc_Class_s &gcClass, IAmControlReceive *pControlReceive)
+    : CAmLimitableElement(ET_CLASS, gcClass.name, pControlReceive)
+    , mClass(gcClass)
+    , mSourceClassID(0)
+    , mSinkClassID(0)
 {
-    std::vector<gc_TopologyElement_s >::iterator itListTopologyElements;
-    for (itListTopologyElements = mClass.listTopologies.begin();
-                    itListTopologyElements != mClass.listTopologies.end(); ++itListTopologyElements)
-    {
-        if ((*itListTopologyElements).codeID == MC_SINK_ELEMENT)
-        {
-            mListOwnedSinkElements.push_back((*itListTopologyElements).name);
-        }
-        if ((*itListTopologyElements).codeID == MC_SOURCE_ELEMENT)
-        {
-            mListOwnedSourceElements.push_back((*itListTopologyElements).name);
-        }
-        if ((*itListTopologyElements).codeID == MC_GATEWAY_ELEMENT)
-        {
-            mListOwnedGatewayElements.push_back((*itListTopologyElements).name);
-        }
-    }
+    mClassLastVolume.className           = gcClass.name;
+    mLastMainConnectionsVolume.className = gcClass.name;
+    mLastMainSoundProperties.className   = gcClass.name;
 }
 
 CAmClassElement::~CAmClassElement()
 {
 }
 
-bool CAmClassElement::isSourceSinkPairBelongtoClass(const std::string& sinkName,
-                                                    const std::string& sourceName)
+bool CAmClassElement::isSourceSinkPairBelongtoClass(const std::string &sinkName,
+    const std::string &sourceName) const
 {
-    return (isSourceBelongtoClass(sourceName) && isSinkBelongtoClass(sinkName));
+    bool isSourceBelongingToClass = isElementBelongtoClass(sourceName, ET_SOURCE);
+    bool isSinkBelongingToClass   = isElementBelongtoClass(sinkName, ET_SINK);
+    if (((true == isSourceBelongingToClass) && (true == isSinkBelongingToClass)) ||
+        ((true == isSourceBelongingToClass) && (mClass.type == C_PLAYBACK)) ||
+        ((true == isSinkBelongingToClass) && (mClass.type == C_CAPTURE)))
+    {
+        return true;
+    }
+
+    return false;
+
 }
 
-void CAmClassElement::disposeConnection(const am_mainConnectionID_t mainConnectionID)
+void CAmClassElement::disposeConnection(
+    const std::shared_ptr<CAmMainConnectionElement > pMainConnection)
 {
-    std::vector<CAmMainConnectionElement* >::iterator itListMainConnections;
-    CAmMainConnectionElement* pMainConnnection = CAmMainConnectionFactory::getElement(
-                    mainConnectionID);
-    if (pMainConnnection != NULL)
+    std::vector<std::shared_ptr<CAmMainConnectionElement > >::iterator itListMainConnections;
+    std::set<std::string >::iterator                                   itListLastMainConnections;
+
+    if (nullptr != pMainConnection)
     {
-        CAmMainConnectionFactory::destroyElement(mainConnectionID);
-    }
-    for (itListMainConnections = mListMainConnections.begin();
-                    itListMainConnections != mListMainConnections.end(); ++itListMainConnections)
-    {
-        if (*itListMainConnections == pMainConnnection)
-        {
-            break;
-        }
-    }
-    if (itListMainConnections != mListMainConnections.end())
-    {
-        mListMainConnections.erase(itListMainConnections);
+        // remove link between class element and main connection element
+        detach(std::static_pointer_cast < CAmElement > (pMainConnection));
+        pMainConnection->removeRouteElements();
+        CAmMainConnectionFactory::destroyElement(pMainConnection->getID());
     }
 }
 
-CAmMainConnectionElement* CAmClassElement::getMainConnection(
-                const std::string& sourceName, const std::string& sinkName,
-                std::vector<am_ConnectionState_e >& listConnectionStates, const gc_Order_e order)
+std::shared_ptr<CAmMainConnectionElement > CAmClassElement::getMainConnection(
+    const std::string &sourceName, const std::string &sinkName,
+    const std::vector<am_ConnectionState_e > &listConnectionStates, const gc_Order_e order)
 {
-    std::vector<CAmMainConnectionElement* > listMainConnections;
-    std::vector<CAmMainConnectionElement* >::iterator itListMainConnections;
-    std::vector<CAmMainConnectionElement* >::reverse_iterator itListReverseMainConnections;
-    CAmMainConnectionElement* pMainConnection = NULL;
+    // compose filter
     CAmConnectionListFilter filterObject;
     filterObject.setSourceName(sourceName);
     filterObject.setSinkName(sinkName);
+    filterObject.setClassName(mName);
     filterObject.setListConnectionStates(listConnectionStates);
-    getListMainConnections(listMainConnections,filterObject);
-    int32_t tempPriority = 0;
-    int32_t tempPriority1;
-    switch (order)
-    {
-    case O_HIGH_PRIORITY:
-        for (itListMainConnections = listMainConnections.begin();
-                        itListMainConnections != listMainConnections.end(); itListMainConnections++)
-        {
-            (*itListMainConnections)->getPriority(tempPriority1);
-            // store the first connection pointer found in queue which is in given state
-            if (pMainConnection == NULL)
-            {
-                LOG_FN_DEBUG("  connection found with ID:", (*itListMainConnections)->getID());
-                pMainConnection = *itListMainConnections;
-                pMainConnection->getPriority(tempPriority);
-            }
-            else if (tempPriority > tempPriority1) // update connection pointer if higher priority connection is found with given state.  Lower number means higher priority.
-            {
-                pMainConnection = *itListMainConnections;
-                pMainConnection->getPriority(tempPriority);
-                LOG_FN_DEBUG("  higher priority connection found with ID:Priority:",
-                             (*itListMainConnections)->getID(), tempPriority);
-            }
-        }
-        break;
-    case O_LOW_PRIORITY:
-        for (itListMainConnections = listMainConnections.begin();
-                        itListMainConnections != listMainConnections.end(); itListMainConnections++)
-        {
 
-            (*itListMainConnections)->getPriority(tempPriority1);
-            // store the first connection pointer found in queue which is in given state
-            if (pMainConnection == NULL)
-            {
-                LOG_FN_DEBUG("  connection found with ID:", (*itListMainConnections)->getID());
-                pMainConnection = *itListMainConnections;
-                pMainConnection->getPriority(tempPriority);
-            }
-            else if (tempPriority < tempPriority1) // update connection pointer if higher priority connection is found with given state. Higher number means lower priority
-            {
-                LOG_FN_DEBUG("  lower priority connection found with ID:",
-                             (*itListMainConnections)->getID());
-                pMainConnection = *itListMainConnections;
-                pMainConnection->getPriority(tempPriority);
-            }
-        }
-        break;
-    case O_NEWEST:
-        itListReverseMainConnections = listMainConnections.rbegin();
-        if (itListReverseMainConnections != listMainConnections.rend())
-        {
-            pMainConnection = *itListReverseMainConnections;
-        }
-        break;
-    case O_OLDEST:
-        LOG_FN_DEBUG("Number of connections =", mListMainConnections.size());
-        itListMainConnections = listMainConnections.begin();
-        if (itListMainConnections != listMainConnections.end())
-        {
-            pMainConnection = *itListMainConnections;
-        }
-        break;
-    default:
-        break;
+    // get sorted list of applicable connections
+    std::vector<std::shared_ptr<CAmMainConnectionElement > > listMainConnections;
+    CAmMainConnectionFactory::getListElements(listMainConnections, filterObject, order);
+
+    if (listMainConnections.size() > 0)
+    {
+        return listMainConnections[0];
     }
-    LOG_FN_EXIT();
-    return pMainConnection;
-}
-
-void CAmClassElement::getListMainConnections(std::vector<CAmMainConnectionElement* >& listMainConnections,
-                                             const CAmConnectionListFilter& fobject)
-{
-    listMainConnections = std::for_each(mListMainConnections.begin(), mListMainConnections.end(),
-                                        fobject).getListMainConnection();
-}
-
-am_Error_e CAmClassElement::createMainConnection(const std::string& sourceName,
-                                                 const std::string& sinkName,
-                                                 am_mainConnectionID_t& mainConnectionID)
-{
-    CAmMainConnectionElement* pMainConnection = NULL;
-    gc_Route_s route;
-    am_Error_e result = E_NOT_POSSIBLE;
-    CAmSourceElement* pSourceElement;
-    CAmSinkElement* pSinkElement;
-    std::vector < am_Route_s > listRoutes;
-
-    pSourceElement = CAmSourceFactory::getElement(sourceName);
-    pSinkElement = CAmSinkFactory::getElement(sinkName);
-    if ((pSourceElement == NULL) || (pSinkElement == NULL))
+    else
     {
-        LOG_FN_ERROR("Source or sink doesn't exist");
+        return nullptr;
+    }
+}
+
+
+am_Error_e CAmClassElement::createMainConnection(const std::string &sourceName,
+    const std::string &sinkName,
+    am_mainConnectionID_t &mainConnectionID)
+{
+    std::shared_ptr<CAmMainConnectionElement > pMainConnection = nullptr;
+    gc_Route_s                                 route;
+    am_Error_e                                 result = E_NOT_POSSIBLE;
+    std::vector < am_Route_s >                 listRoutes;
+    std::shared_ptr<CAmSourceElement >         pSourceElement = CAmSourceFactory::getElement(sourceName);
+    std::shared_ptr<CAmSinkElement >           pSinkElement   = CAmSinkFactory::getElement(sinkName);
+
+    if ((nullptr == pSourceElement) || (nullptr == pSinkElement))
+    {
+        LOG_FN_ERROR(__FILENAME__, __func__, "Source or sink doesn't exist");
         return E_NOT_POSSIBLE;
     }
+
     pMainConnection = CAmMainConnectionFactory::getElement(sourceName + ":" + sinkName);
-    if (pMainConnection != NULL)
+    if (nullptr != pMainConnection)
     {
         result = E_ALREADY_EXISTS;
     }
@@ -208,219 +139,237 @@ am_Error_e CAmClassElement::createMainConnection(const std::string& sourceName,
          * 4. if the route is present then use that route for connection creation.
          */
         result = mpControlReceive->getRoute(false, pSourceElement->getID(), pSinkElement->getID(),
-                                            listRoutes);
-        if (result != E_OK)
+                listRoutes);
+        if ((E_OK != result) || (true == listRoutes.empty()))
         {
-            LOG_FN_ERROR("getting route list from daemon failed");
+            LOG_FN_ERROR(__FILENAME__, __func__, "getting route list from daemon failed");
         }
         else
         {
-            result = _getRoute(sourceName, sinkName, route);
-            if (result != E_OK)
+            std::shared_ptr<CAmSystemElement > pSystemElement = nullptr;
+            pSystemElement = CAmSystemFactory::getElement(SYSTEM_ELEMENT_NAME);
+            result         = _getPreferredRoute(sourceName, sinkName, route);
+            if ((result != E_OK) && (pSystemElement->isNonTopologyRouteAllowed() == true))
             {
-                LOG_FN_ERROR(getName(), "failed to get route");
+                LOG_FN_INFO(__FILENAME__, __func__, getName(), "failed to get route from topology");
+                /*
+                 * Preferred route not found from topology could be unknown source or sink !! select
+                 * the first route from daemon.
+                 */
+                route.sinkID   = listRoutes.begin()->sinkID;
+                route.sourceID = listRoutes.begin()->sourceID;
+                route.route    = listRoutes.begin()->route;
+                route.name     = sourceName + ":" + sinkName;
+                result         = E_OK;
             }
             else
             {
                 result = _validateRouteFromTopology(listRoutes, route);
             }
         }
+
         if (result == E_OK)
         {
             // create main connection object
             pMainConnection = CAmMainConnectionFactory::createElement(route, mpControlReceive);
         }
+
+        if (pMainConnection != nullptr)
+        {
+            // attach the route elements to the main connection
+            std::vector<std::shared_ptr<CAmRouteElement > >           listRouteElements;
+            std::vector<std::shared_ptr<CAmRouteElement > >::iterator itListRouteElements;
+            pMainConnection->getListRouteElements(listRouteElements);
+            for (itListRouteElements = listRouteElements.begin();
+                 itListRouteElements != listRouteElements.end(); itListRouteElements++)
+            {
+                pMainConnection->attach(*itListRouteElements);
+                if (result != E_OK)
+                {
+                    // its an error need to decide
+                    LOG_FN_DEBUG("route element attach to main connection failed, result is:",
+                        result);
+                }
+            }
+
+            result = pMainConnection->attach(pSourceElement);
+            if (result != E_OK)
+            {
+                /*its an error need to decide */
+                LOG_FN_DEBUG("source element attach to main connection failed, result is:", result);
+            }
+
+            result = pMainConnection->attach(pSinkElement);
+            if (result != E_OK)
+            {
+                /*its an error need to decide */
+                LOG_FN_DEBUG("sink element attach to main connection failed, result is:", result);
+
+            }
+
+            result = attach(pMainConnection);
+            if (result != E_OK)
+            {
+                /*its an error need to decide */
+                LOG_FN_DEBUG("main connection element attach to class element failed, result is:",
+                    result);
+            }
+        }
     }
-    if (pMainConnection != NULL)
+
+    if (nullptr != pMainConnection)
     {
         // set mainConnectionID to return parameter
         mainConnectionID = pMainConnection->getID();
-        pushMainConnectionInQueue(pMainConnection);
+        CAmMainConnectionFactory::moveToEnd(pMainConnection->getName(), O_NEWEST);
+        updateMainConnectionQueue();
         result = E_OK;
     }
+
     return result;
 }
 
-am_Error_e CAmClassElement::_validateRouteFromTopology(std::vector<am_Route_s >& listRoutes,
-                                                       gc_Route_s& topologyRoute)
+am_Error_e CAmClassElement::_validateRouteFromTopology(std::vector<am_Route_s > &listRoutes,
+    gc_Route_s &topologyRoute) const
 {
-    am_Error_e result = E_NOT_POSSIBLE;
-    std::vector<am_Route_s >::iterator itListRoutes;
-    std::vector<am_RoutingElement_s >::iterator itdaemonRoute;
+    am_Error_e                                          result = E_NOT_POSSIBLE;
+    std::vector<am_Route_s >::iterator                  itListRoutes;
+    std::vector<am_RoutingElement_s >::iterator         itdaemonRoute;
     std::vector<am_RoutingElement_s >::reverse_iterator ittopologyRoute;
-    LOG_FN_ENTRY(listRoutes.size());
+    LOG_FN_ENTRY(__FILENAME__, __func__, listRoutes.size());
     for (itListRoutes = listRoutes.begin(); itListRoutes != listRoutes.end(); ++itListRoutes)
     {
         if (itListRoutes->route.size() != topologyRoute.route.size())
         {
-            LOG_FN_DEBUG("routes size don't match", itListRoutes->route.size(), "=",
-                         topologyRoute.route.size());
+            LOG_FN_DEBUG(__FILENAME__, __func__, "routes size don't match", itListRoutes->route.size(), "=", topologyRoute.route.size());
             continue;
         }
+
         for (itdaemonRoute = itListRoutes->route.begin(), ittopologyRoute = topologyRoute.route.rbegin();
-                        itdaemonRoute != itListRoutes->route.end();
-                        ++itdaemonRoute, ++ittopologyRoute)
+             itdaemonRoute != itListRoutes->route.end();
+             ++itdaemonRoute, ++ittopologyRoute)
         {
-            LOG_FN_INFO("checking next element");
+            LOG_FN_INFO(__FILENAME__, __func__, "checking next element");
             if ((itdaemonRoute->sinkID != ittopologyRoute->sinkID) || (itdaemonRoute->sourceID
-                            != ittopologyRoute->sourceID))
+                                                                       != ittopologyRoute->sourceID))
             {
                 break;
             }
         }
+
         if (itdaemonRoute == itListRoutes->route.end())
         {
-            topologyRoute.sinkID = itListRoutes->sinkID;
+            topologyRoute.sinkID   = itListRoutes->sinkID;
             topologyRoute.sourceID = itListRoutes->sourceID;
-            topologyRoute.route = itListRoutes->route;
-            result = E_OK;
+            topologyRoute.route    = itListRoutes->route;
+            result                 = E_OK;
             break;
         }
     }
+
     return result;
 }
-am_Error_e CAmClassElement::setLimitState(const gc_LimitState_e limitState,
-                                          const gc_LimitVolume_s& limitVolume,
-                                          const uint32_t pattern)
+
+am_Error_e CAmClassElement::_checkElementPresentInTopology(const std::vector<gc_TopologyElement_s> &topology,
+    const std::string &elementName,
+    gc_ClassTopologyCodeID_e type) const
 {
+    std::vector<gc_TopologyElement_s >::const_iterator itListTopologyElements;
+    for (itListTopologyElements = topology.begin();
+         itListTopologyElements != topology.end(); ++itListTopologyElements)
+    {
+        if (type == itListTopologyElements->codeID)
+        {
+            if (elementName == itListTopologyElements->name)
+            {
+                return E_OK;
+            }
+
+            if (itListTopologyElements->name == TOPOLOGY_SYMBOL_ASTERISK)
+            {
+                gc_Element_e elementtype = (type == MC_SINK_ELEMENT) ? ET_SINK : ET_SOURCE;
+                if (true == _checkElementInSubjectList(elementName, elementtype))
+                {
+                    return E_OK;
+                }
+            }
+        }
+    }
+
+    return E_UNKNOWN;
+}
+
+am_Error_e CAmClassElement::_getRouteFromTopology(const std::vector<gc_TopologyElement_s> &topology,
+    const std::string &mainSourceName,
+    const std::string &mainSinkName,
+    gc_Route_s &route) const
+{
+    am_RoutingElement_s                                routingElement;
+    std::shared_ptr<CAmGatewayElement >                pGatewayElement = nullptr;
+    std::vector<gc_TopologyElement_s >::const_iterator itListTopologyElements;
+    int                                                gatewayFoundCounter = 0;
+    bool                                               sourceFound         = false;
+    std::shared_ptr<CAmSinkElement >                   pMainSinkElement    = CAmSinkFactory::getElement(mainSinkName);
+    std::shared_ptr<CAmSourceElement >                 pMainSourceElement  = CAmSourceFactory::getElement(
+            mainSourceName);
+
+    if ((nullptr == pMainSourceElement) || (nullptr == pMainSinkElement))
+    {
+        LOG_FN_ERROR(__FILENAME__, __func__, "main source or main sink doesn't exist");
+        return E_NOT_POSSIBLE;
+    }
+
+    LOG_FN_INFO(__FILENAME__, __func__, "source name : sink name", mainSourceName, mainSinkName);
+    if (0 == isSourceSinkPairBelongtoClass(mainSinkName, mainSourceName))
+    {
+        LOG_FN_ERROR(__FILENAME__, __func__, " Not able to get source and sink");
+        return E_UNKNOWN;
+    }
+
     /*
-     * Add the volume limit in the map, in case if the same pattern is already present
-     * overwrite the limit.
+     * Verify if the sink name is present in the topology
      */
-    if (limitState == LS_LIMITED)
+    if (E_OK != _checkElementPresentInTopology(topology, mainSinkName))
     {
-        mMapLimitVolumes[pattern] = limitVolume;
-        LOG_FN_DEBUG("ADDED", limitVolume.limitType, limitVolume.limitVolume);
+        return E_NOT_POSSIBLE;
     }
-    else if (limitState == LS_UNLIMITED)
-    {
-        /*
-         * The pattern is a bit mask to clear the volume limit, clear the entries
-         * which match the pattern
-         */
-        std::map<uint32_t, gc_LimitVolume_s >::iterator itMapLimitVolumes(mMapLimitVolumes.begin());
-        for (; itMapLimitVolumes != mMapLimitVolumes.end();)
-        {
-            if ((itMapLimitVolumes->first & (~pattern)) == 0)
-            {
-                itMapLimitVolumes = mMapLimitVolumes.erase(itMapLimitVolumes);
-                LOG_FN_DEBUG("ERASED");
-            }
-            else
-            {
-                ++itMapLimitVolumes;
-            }
-        }
-    }
-    return E_OK;
-}
 
-gc_LimitState_e CAmClassElement::getLimitState(void)
-{
-    return mMapLimitVolumes.empty() ? LS_UNLIMITED : LS_LIMITED;
-}
-
-am_Error_e CAmClassElement::getClassLimitVolume(const am_volume_t volume,
-                                                gc_LimitVolume_s& limitVolume)
-{
-    limitVolume.limitType = LT_UNKNOWN;
-    limitVolume.limitVolume = 0;
-
-    am_volume_t current(0);
-    am_volume_t lowest(volume);
-    std::map<uint32_t, gc_LimitVolume_s >::iterator itMapLimitVolumes(mMapLimitVolumes.begin());
-    for (; itMapLimitVolumes != mMapLimitVolumes.end(); ++itMapLimitVolumes)
-    {
-        if (itMapLimitVolumes->second.limitType == LT_ABSOLUTE)
-        {
-            current = itMapLimitVolumes->second.limitVolume;
-            if (itMapLimitVolumes->second.limitVolume == AM_MUTE)
-            {
-                // in case of mute, no comparison is required.
-                limitVolume = itMapLimitVolumes->second;
-                break;
-            }
-        }
-        else
-        {
-            current = volume + itMapLimitVolumes->second.limitVolume;
-        }
-        if (lowest > current)
-        {
-            lowest = current;
-            limitVolume = itMapLimitVolumes->second;
-        }
-    }
-    return E_OK;
-}
-
-void CAmClassElement::getListMainConnections(
-                std::vector<CAmMainConnectionElement* >& listConnections)
-{
-    listConnections = mListMainConnections;
-}
-
-am_Error_e CAmClassElement::_getRoute(const std::string& mainSourceName,
-                                      const std::string& mainSinkName, gc_Route_s& route)
-{
-    CAmSinkElement *pMainSinkElement, *pSinkElement;
-    CAmSourceElement *pMainSourceElement, *pSourceElement;
-    am_RoutingElement_s routingElement;
-    CAmGatewayElement* pGatewayElement;
-    std::vector<gc_TopologyElement_s >::iterator itListTopologyElements;
-    int gatewayFoundCounter = 0;
-    bool sourceFound = false;
-
-    LOG_FN_ENTRY(mainSourceName, mainSinkName);
-    if (isSourceSinkPairBelongtoClass(mainSinkName, mainSourceName) == 0)
-    {
-        return E_UNKNOWN;
-    }
-    //search Main sink ID
-    pMainSinkElement = CAmSinkFactory::getElement(mainSinkName);
-    pMainSourceElement = CAmSourceFactory::getElement(mainSourceName);
-    // check if sink element is found
-    if ((NULL == pMainSourceElement) || (NULL == pMainSinkElement))
-    {
-        LOG_FN_ERROR(" Not able to get source and sink");
-        return E_UNKNOWN;
-    }
-    route.sinkID = pMainSinkElement->getID();
+    route.sinkID   = pMainSinkElement->getID();
     route.sourceID = pMainSourceElement->getID();
-    route.name = pMainSourceElement->getName() + ":" + pMainSinkElement->getName();
+    route.name     = pMainSourceElement->getName() + ":" + pMainSinkElement->getName();
     // This field would be overwritten during topology validation.
     routingElement.connectionFormat = 0;
-    routingElement.domainID = pMainSinkElement->getDomainID();
-    routingElement.sinkID = pMainSinkElement->getID();
-    //search for gateway and source element
-    for (itListTopologyElements = mClass.listTopologies.begin();
-                    itListTopologyElements != mClass.listTopologies.end(); itListTopologyElements++)
+    routingElement.domainID         = pMainSinkElement->getDomainID();
+    routingElement.sinkID           = pMainSinkElement->getID();
+    // search for gateway and source element
+    for (itListTopologyElements = topology.begin();
+         itListTopologyElements != topology.end();
+         itListTopologyElements++)
     {
         // if topology element is source
         if (MC_SOURCE_ELEMENT == itListTopologyElements->codeID)
         {
             // get the source element by name
-            pSourceElement = CAmSourceFactory::getElement(itListTopologyElements->name);
-            if (NULL == pSourceElement)
+            std::shared_ptr<CAmSourceElement > pSourceElement = CAmSourceFactory::getElement(
+                    itListTopologyElements->name);
+            if (((nullptr != pSourceElement) &&
+                 (mainSourceName == pSourceElement->getName())) ||
+                ((itListTopologyElements->name == TOPOLOGY_SYMBOL_ASTERISK) &&
+                 (true == _checkElementInSubjectList(mainSourceName, ET_SOURCE))))
             {
-                continue;
-            }
-            //check if source is as per request
-            if (mainSourceName == pSourceElement->getName())
-            {
+
                 routingElement.sourceID = pMainSourceElement->getID();
                 route.route.push_back(routingElement);
                 sourceFound = true;
                 break;
             }
-
         }
-        //if topology element is gateway
+        // if topology element is gateway
         else if (MC_GATEWAY_ELEMENT == itListTopologyElements->codeID)
         {
             // get the gateway element by name
             pGatewayElement = CAmGatewayFactory::getElement(itListTopologyElements->name);
-            if (NULL == pGatewayElement)
+            if (nullptr == pGatewayElement)
             {
                 /*
                  * Gateway does not exist. source is not found. so this gateway not
@@ -429,27 +378,30 @@ am_Error_e CAmClassElement::_getRoute(const std::string& mainSourceName,
                  */
                 for (int i = 0; i < gatewayFoundCounter; i++)
                 {
-                    //remove sink ID
+                    // remove sink ID
                     routingElement = route.route.back();
                     route.route.pop_back();
                 }
+
                 gatewayFoundCounter++;
                 int loopCount = 0;
                 while (loopCount < gatewayFoundCounter)
                 {
                     itListTopologyElements++;
-                    if (itListTopologyElements == mClass.listTopologies.end())
+                    if (itListTopologyElements == topology.end())
                     {
                         break;
                     }
+
                     while (MC_RBRACKET_CODE != itListTopologyElements->codeID)
                     {
                         if (MC_GATEWAY_ELEMENT == itListTopologyElements->codeID)
                         {
                             gatewayFoundCounter++;
                         }
+
                         itListTopologyElements++;
-                        if (itListTopologyElements == mClass.listTopologies.end())
+                        if (itListTopologyElements == topology.end())
                         {
                             break;
                         }
@@ -457,15 +409,17 @@ am_Error_e CAmClassElement::_getRoute(const std::string& mainSourceName,
 
                     loopCount++;
                 }
+
                 gatewayFoundCounter = 0;
                 continue;
             }
+
             // increment the gatewayfound counter
             gatewayFoundCounter++;
-            //get the source and sink ID of gateway
+            // get the source and sink ID of gateway
             routingElement.sourceID = pGatewayElement->getSourceID();
             route.route.push_back(routingElement);
-            routingElement.sinkID = pGatewayElement->getSinkID();
+            routingElement.sinkID   = pGatewayElement->getSinkID();
             routingElement.domainID = pGatewayElement->getSinkDomainID();
         }
         // if topology element is )
@@ -478,318 +432,712 @@ am_Error_e CAmClassElement::_getRoute(const std::string& mainSourceName,
                 routingElement = route.route.back();
                 route.route.pop_back();
             }
+
             gatewayFoundCounter = 0;
         }
     }
+
     // if source is found then form the pair of source and sink to be connected
     return (sourceFound == true) ? E_OK : E_UNKNOWN;
 }
 
-void CAmClassElement::updateMainConnectionQueue(void)
+am_Error_e CAmClassElement::_getPreferredRoute(const std::string &mainSourceName,
+    const std::string &mainSinkName, gc_Route_s &route) const
 {
-    std::vector<CAmMainConnectionElement* >::iterator itListMainConnections;
-    CAmMainConnectionElement* pMainConnection;
-    int state;
-    /**
-     * First find the iterator to the connected connection
-     */
-    for (itListMainConnections = mListMainConnections.begin();
-                    itListMainConnections != mListMainConnections.end(); ++itListMainConnections)
+    am_Error_e                                                       result = E_NOT_POSSIBLE;
+    std::vector<std::vector< gc_TopologyElement_s> >::const_iterator itListTopologies;
+    for (itListTopologies = mClass.listTopologies.begin();
+         itListTopologies != mClass.listTopologies.end();
+         ++itListTopologies)
     {
-        (*itListMainConnections)->getState(state);
-        if (state == CS_CONNECTED)
+        result = _getRouteFromTopology((*itListTopologies),
+                mainSourceName,
+                mainSinkName,
+                route);
+        if (E_OK == result)
         {
             break;
         }
     }
-    if (itListMainConnections != mListMainConnections.end())
-    {
-        pMainConnection = *itListMainConnections;
-        mListMainConnections.erase(itListMainConnections);
-        mListMainConnections.push_back(pMainConnection);
-    }
+
+    return result;
 }
 
-void CAmClassElement::pushMainConnectionInQueue(CAmMainConnectionElement* pMainConnection)
+void CAmClassElement::updateMainConnectionQueue(void)
 {
-    std::vector<CAmMainConnectionElement* >::iterator itListMainConnection;
-    itListMainConnection = std::find(mListMainConnections.begin(), mListMainConnections.end(),
-                                     pMainConnection);
-    if (itListMainConnection != mListMainConnections.end())
+    /*
+     * If there is connected or suspended connection change its order to
+     * the top of queue
+     */
+    std::vector<std::shared_ptr<CAmMainConnectionElement > > listMainConnections;
+    CAmConnectionListFilter filter;
+    filter.setClassName(mName);
+    filter.setListConnectionStates({CS_CONNECTED, CS_SUSPENDED});
+    CAmMainConnectionFactory::getListElements(listMainConnections, filter);
+    if (listMainConnections.size() > 0)
     {
-        mListMainConnections.erase(itListMainConnection);
+        CAmMainConnectionFactory::moveToEnd(listMainConnections[0]->getName(), O_NEWEST);
     }
-    mListMainConnections.push_back(pMainConnection);
-    updateMainConnectionQueue();
 }
 
 am_Error_e CAmClassElement::_register(void)
 {
     am_SourceClass_s sourceClassInstance;
-    sourceClassInstance.sourceClassID = 0;
-    sourceClassInstance.name = mClass.name;
+    am_SinkClass_s   sinkClassInstance;
+
+    if (mClass.classID < DYNAMIC_ID_BOUNDARY)
+    {
+        sourceClassInstance.sourceClassID = mClass.classID;
+        sinkClassInstance.sinkClassID     = mClass.classID;
+    }
+    else
+    {
+        sourceClassInstance.sourceClassID = 0;
+        sinkClassInstance.sinkClassID     = 0;
+    }
+
+    sourceClassInstance.name                = mClass.name;
+    sourceClassInstance.listClassProperties = mClass.listClassProperties;
 
     // store source class in DB
     if (E_OK == mpControlReceive->enterSourceClassDB(sourceClassInstance.sourceClassID,
             sourceClassInstance))
     {
-        if (mClass.type == C_PLAYBACK)
+        if (C_PLAYBACK == mClass.type)
         {
             setID(sourceClassInstance.sourceClassID);
         }
     }
     else
     {
-        LOG_FN_ERROR(" Error while registering source Class");
+        LOG_FN_ERROR(__FILENAME__, __func__, " Error while registering source Class");
         return E_DATABASE_ERROR;
     }
-    am_SinkClass_s sinkClassInstance;
-    sinkClassInstance.sinkClassID = 0;
-    sinkClassInstance.name = mClass.name;
 
+    sinkClassInstance.name                = mClass.name;
+    sinkClassInstance.listClassProperties = mClass.listClassProperties;
     // store sink class in DB
     if (E_OK == mpControlReceive->enterSinkClassDB(sinkClassInstance,
             sinkClassInstance.sinkClassID))
     {
-        if (mClass.type == C_CAPTURE)
+        if (C_CAPTURE == mClass.type)
         {
             setID(sinkClassInstance.sinkClassID);
+            LOG_FN_ERROR(__FILENAME__, __func__, " Error while registering sink Class");
         }
     }
     else
     {
-        LOG_FN_ERROR(" Error while registering source Class");
+        LOG_FN_ERROR(__FILENAME__, __func__, " Error while registering source Class");
         return E_DATABASE_ERROR;
     }
-    return E_OK;
 
+    mSinkClassID   = sinkClassInstance.sinkClassID;
+    mSourceClassID = sourceClassInstance.sourceClassID;
+    return E_OK;
 }
 
 am_Error_e CAmClassElement::_unregister(void)
 {
-	if (mClass.type == C_PLAYBACK)
-	{
-		mpControlReceive->removeSourceClassDB(getID());
-	}
-	else if (mClass.type == C_CAPTURE)
-	{
-		mpControlReceive->removeSinkClassDB(getID());
-	}
+    if (C_PLAYBACK == mClass.type)
+    {
+        mpControlReceive->removeSourceClassDB(getID());
+    }
+    else if (C_CAPTURE == mClass.type)
+    {
+        mpControlReceive->removeSinkClassDB(getID());
+    }
+
     return E_OK;
 }
-	
-	bool CAmClassElement::isSourceBelongtoClass(const std::string& sourceName)
-{
-    std::vector<std::string >::iterator itListOwnedSourceElements;
-    //check if source belong to this class element
-    itListOwnedSourceElements = find(mListOwnedSourceElements.begin(),
-                                     mListOwnedSourceElements.end(), sourceName);
-    return (itListOwnedSourceElements != mListOwnedSourceElements.end());
-}
-bool CAmClassElement::isSinkBelongtoClass(const std::string& sinkName)
-{
-    std::vector<std::string >::iterator itListOwnedSinkElements;
-    //check if source belong to this class element
-    itListOwnedSinkElements = find(mListOwnedSinkElements.begin(), mListOwnedSinkElements.end(),
-                                   sinkName);
-    return (itListOwnedSinkElements != mListOwnedSinkElements.end());
 
-}
-
-CAmClassElement* CAmClassFactory::getElement(const std::string sourceName,
-                                             const std::string sinkName)
+std::shared_ptr<CAmClassElement > CAmClassFactory::getElement(const std::string sourceName,
+    const std::string sinkName)
 {
-    CAmClassElement* pClassElement = NULL;
-    std::vector<CAmClassElement* > listElements;
-    std::vector<CAmClassElement* >::iterator itListElements;
+    std::shared_ptr<CAmClassElement >                         pClassElement = nullptr;
+    std::vector<std::shared_ptr<CAmClassElement > >           listElements;
+    std::vector<std::shared_ptr<CAmClassElement > >::iterator itListElements;
     getListElements(listElements);
     for (itListElements = listElements.begin(); itListElements != listElements.end();
-                    ++itListElements)
+         ++itListElements)
     {
         if ((*itListElements)->isSourceSinkPairBelongtoClass(sinkName, sourceName))
         {
             pClassElement = *itListElements;
         }
     }
+
     return pClassElement;
 }
 
-void CAmClassFactory::getElementsBySource(const std::string sourceName,
-                                          std::vector<CAmClassElement* >& listClasses)
+void CAmClassFactory::getElementsBySource(
+    const std::string sourceName,
+    std::vector<std::shared_ptr<CAmClassElement > > &listClasses)
 {
-    std::vector<CAmClassElement* > listElements;
-    std::vector<CAmClassElement* >::iterator itListElements;
+    std::vector<std::shared_ptr<CAmClassElement > >           listElements;
+    std::vector<std::shared_ptr<CAmClassElement > >::iterator itListElements;
     getListElements(listElements);
     for (itListElements = listElements.begin(); itListElements != listElements.end();
-                    ++itListElements)
+         ++itListElements)
     {
-        if ((*itListElements)->isSourceBelongtoClass(sourceName))
+        if ((*itListElements)->isElementBelongtoClass(sourceName, ET_SOURCE))
         {
             listClasses.push_back(*itListElements);
         }
     }
 }
 
-void CAmClassFactory::getElementsBySink(const std::string sinkName,
-                                        std::vector<CAmClassElement* >& listClasses)
+void CAmClassFactory::getElementsBySink(
+    const std::string sinkName,
+    std::vector<std::shared_ptr<CAmClassElement > > &listClasses)
 {
-    std::vector<CAmClassElement* > listElements;
-    std::vector<CAmClassElement* >::iterator itListElements;
+    std::vector<std::shared_ptr<CAmClassElement > >           listElements;
+    std::vector<std::shared_ptr<CAmClassElement > >::iterator itListElements;
     getListElements(listElements);
     for (itListElements = listElements.begin(); itListElements != listElements.end();
-                    ++itListElements)
+         ++itListElements)
     {
-        if ((*itListElements)->isSinkBelongtoClass(sinkName))
+        if ((*itListElements)->isElementBelongtoClass(sinkName, ET_SINK))
         {
             listClasses.push_back(*itListElements);
         }
     }
 }
 
-CAmClassElement* CAmClassFactory::getElementByConnection(const std::string& connectionName)
+am_sourceID_t CAmClassElement::getSourceClassID(void) const
 {
-    CAmClassElement* pClassElement = NULL;
-    std::vector<CAmClassElement* > listElements;
-    std::vector<CAmClassElement* >::iterator itListElements;
-    bool found = false;
+    return mSourceClassID;
+}
+
+am_sinkID_t CAmClassElement::getSinkClassID(void) const
+{
+    return mSinkClassID;
+}
+
+std::shared_ptr<CAmClassElement > CAmClassFactory::getElementBySourceClassID(
+    const am_sourceClass_t sourceClassID)
+{
+    std::vector<std::shared_ptr<CAmClassElement > >           listElements;
+    std::vector<std::shared_ptr<CAmClassElement > >::iterator itListElements;
     getListElements(listElements);
     for (itListElements = listElements.begin(); itListElements != listElements.end();
-                    ++itListElements)
+         ++itListElements)
     {
-        std::vector<CAmMainConnectionElement* >::iterator itListMainConnections;
-        std::vector<CAmMainConnectionElement* > listMainConnections;
-        (*itListElements)->getListMainConnections(listMainConnections);
-        for (itListMainConnections = listMainConnections.begin();
-                        itListMainConnections != listMainConnections.end(); ++itListMainConnections)
+        if ((*itListElements)->getSourceClassID() == sourceClassID)
         {
-            if ((*itListMainConnections)->getName() == connectionName)
+            return (*itListElements);
+        }
+    }
+
+    return NULL;
+}
+
+std::shared_ptr<CAmClassElement > CAmClassFactory::getElementBySinkClassID(
+    const am_sinkClass_t sinkClassID)
+{
+    std::vector<std::shared_ptr<CAmClassElement > >           listElements;
+    std::vector<std::shared_ptr<CAmClassElement > >::iterator itListElements;
+    getListElements(listElements);
+    for (itListElements = listElements.begin(); itListElements != listElements.end();
+         ++itListElements)
+    {
+        if ((*itListElements)->getSinkClassID() == sinkClassID)
+        {
+            return (*itListElements);
+        }
+    }
+
+    return NULL;
+}
+
+std::shared_ptr<CAmClassElement > CAmClassFactory::getElementByConnection(
+    const std::string &connectionName)
+{
+    auto pConnection = CAmMainConnectionFactory::getElement(connectionName);
+    if (pConnection != nullptr)
+    {
+        return CAmClassFactory::getElement(pConnection->getClassName());
+    }
+
+    return nullptr;
+}
+
+gc_Class_e CAmClassElement::getClassType() const
+{
+    return mClass.type;
+}
+
+bool CAmClassElement::isPerSinkClassVolumeEnabled(void) const
+{
+    std::vector<am_ClassProperty_s>::const_iterator itMapClassProperty;
+    for ( itMapClassProperty = mClass.listClassProperties.begin();
+          itMapClassProperty != mClass.listClassProperties.end();
+          itMapClassProperty++
+          )
+    {
+        if ((*itMapClassProperty).classProperty == CP_PER_SINK_CLASS_VOLUME_SUPPORT)
+        {
+            return ((*itMapClassProperty).value == 0) ? false : true;
+        }
+    }
+
+    return false;
+}
+
+bool CAmClassElement::_checkElementInSubjectList(const std::string &elementName, const gc_Element_e type) const
+{
+    std::vector<std::shared_ptr<CAmElement > >           listOfSubjects;
+    std::vector<std::shared_ptr<CAmElement > >::iterator itListSubjects;
+    gc_ElementTypeName_s                                 element;
+
+    element.elementName = elementName;
+    element.elementType = type;
+    getListElements(element, listOfSubjects);
+    if (listOfSubjects.size() > 0)
+    {
+        return true;
+    }
+
+    return false;
+}
+
+bool CAmClassElement::isElementBelongtoClass(const std::string &elementName, gc_Element_e elementType) const
+{
+    if (true == _checkElementInSubjectList(elementName, elementType))
+    {
+        return true;
+    }
+
+    /*
+     * Verify if both source and sink belong to topology
+     */
+    gc_ClassTopologyCodeID_e                                         topologyType = (elementType == ET_SINK) ? MC_SINK_ELEMENT : MC_SOURCE_ELEMENT;
+    std::vector<std::vector< gc_TopologyElement_s> >::const_iterator itListTopologies;
+    for (itListTopologies = mClass.listTopologies.begin();
+         itListTopologies != mClass.listTopologies.end();
+         ++itListTopologies)
+    {
+        if ( E_OK == _checkElementPresentInTopology((*itListTopologies), elementName, topologyType))
+        {
+            return true;
+        }
+        else
+        {
+            LOG_FN_DEBUG(__FILENAME__, __func__, "Element :", elementName, "not found for class :",
+                getName());
+        }
+    }
+
+    return false;
+}
+
+bool CAmClassElement::isVolumePersistencySupported() const
+{
+    return mClass.isVolumePersistencySupported;
+}
+
+am_Error_e CAmClassElement::restoreVolume(gc_LastClassVolume_s &lastClassVolume)
+{
+    am_Error_e result = E_UNKNOWN;
+    mClassLastVolume = lastClassVolume;
+    return result;
+}
+
+void CAmClassElement::restoreLastMainConnectionsVolume(gc_LastMainConnectionsVolume_s &lastMainConnectionsVolume)
+{
+    mLastMainConnectionsVolume = lastMainConnectionsVolume;
+}
+
+std::string CAmClassElement::getVolumeString()
+{
+    std::string                            volumeString;
+    std::vector<gc_SinkVolume_s>::iterator itlistSinks;
+
+    if ((!mClassLastVolume.className.empty()) &&
+        (!mClassLastVolume.listSinkVolume.empty())
+        )
+    {
+        volumeString = "{" + mClassLastVolume.className + ",";
+        // sample format of volume string :: {BASE,[sink1:10][sink2:20][*:30]}
+        for (itlistSinks = mClassLastVolume.listSinkVolume.begin();
+             itlistSinks != mClassLastVolume.listSinkVolume.end(); itlistSinks++)
+        {
+            LOG_FN_DEBUG(__FILENAME__, __func__, "sink name is:", itlistSinks->sinkName);
+            std::stringstream mainVolumeString;
+            mainVolumeString << itlistSinks->mainVolume;
+            volumeString += "[" + itlistSinks->sinkName + ":" + mainVolumeString.str() + "]";
+        }
+
+        volumeString += "}";
+    }
+
+    return volumeString;
+}
+
+std::string CAmClassElement::getLastMainConnectionsVolumeString()
+{
+    std::string                                    mainConnectionsVolumeString;
+    std::vector<gc_SinkVolume_s>::iterator         itlistSinks;
+    std::vector<gc_LastMainConVolInfo_s>::iterator itlistLastMainConVolInfo;
+
+    if ((!mLastMainConnectionsVolume.className.empty()) &&
+        (!mLastMainConnectionsVolume.listLastMainConVolInfo.empty()))
+    {
+        mainConnectionsVolumeString = "{" + mLastMainConnectionsVolume.className + ",";
+        // sample format of last main connection volume string :: {BASE,[source1:sink1=30][source2:sink2=10]}
+        for (itlistLastMainConVolInfo = mLastMainConnectionsVolume.listLastMainConVolInfo.begin();
+             itlistLastMainConVolInfo != mLastMainConnectionsVolume.listLastMainConVolInfo.end(); itlistLastMainConVolInfo++)
+        {
+            std::stringstream mainVolumeString;
+            mainVolumeString << itlistLastMainConVolInfo->mainVolume;
+            mainConnectionsVolumeString += "[" + itlistLastMainConVolInfo->mainConnectionName + "=" + mainVolumeString.str() + "]";
+        }
+
+        mainConnectionsVolumeString += "}";
+    }
+
+    return mainConnectionsVolumeString;
+}
+
+std::string CAmClassElement::getMainConnectionString()
+{
+    std::vector<std::shared_ptr<CAmMainConnectionElement>> connectionList;
+    CAmConnectionListFilter                                filter;
+    filter.setClassName(mName);
+    filter.setListConnectionStates( { CS_CONNECTED, CS_SUSPENDED, CS_DISCONNECTED } );
+    CAmMainConnectionFactory::getListElements(connectionList, filter);
+
+    std::string                                            mainConnectionString;
+    for (const auto & pMainConnection : connectionList)
+    {
+        if (    pMainConnection->getMainSource()->isPersistencySupported()
+             || pMainConnection->getMainSink()->isPersistencySupported())
+        {
+            LOG_FN_DEBUG(__FILENAME__, __func__, "main connection name is:", pMainConnection->getName());
+            mainConnectionString += pMainConnection->getName() + ";";
+        }
+    }
+    if (mainConnectionString.length() > 0)
+    {
+        mainConnectionString = "{" + mName + "," + mainConnectionString + "}";
+    }
+
+    return mainConnectionString;
+}
+
+std::string CAmClassElement::getLastMainSoundPropertiesString()
+{
+    std::string                                    mainSoundPropertiesString;
+    std::set<gc_LastMainSoundProperty_s>::iterator itlistLastSoundProperty;
+
+    if (!mLastMainSoundProperties.className.empty())
+    {
+        // sample format of last main sound properties string
+        // {BASE,[ET_SINK_sink1=(1:5)(2:6)(3:7)][ET_SOURCE_source1=(1:5)(2:6)(3:7)]}
+        if (mLastMainSoundProperties.listLastMainSoundProperties.size() > 0)
+        {
+            mainSoundPropertiesString = "{" + mLastMainSoundProperties.className + ",";
+            for (auto &itListLastMainSoundProperties : mLastMainSoundProperties.listLastMainSoundProperties)
             {
-                found = true;
-                break;
+                std::stringstream elementType;
+                elementType << itListLastMainSoundProperties.elementInfo.elementType;
+
+                mainSoundPropertiesString += "[" + elementType.str() + "_"
+                    + itListLastMainSoundProperties.elementInfo.elementName
+                    + "=";
+                LOG_FN_ERROR(__FILENAME__, __func__, "element name and Type:",
+                    itListLastMainSoundProperties.elementInfo.elementName,
+                    itListLastMainSoundProperties.elementInfo.elementType);
+                for (auto &itListLastMainElementSoundProperties : itListLastMainSoundProperties.listLastMainSoundProperty)
+                {
+                    std::stringstream soundPropertyType;
+                    soundPropertyType << itListLastMainElementSoundProperties.type;
+                    std::stringstream soundPropertyValue;
+                    soundPropertyValue << itListLastMainElementSoundProperties.value;
+
+                    mainSoundPropertiesString += "(" + soundPropertyType.str() + ":"
+                        + soundPropertyValue.str() + ")";
+                }
+
+                mainSoundPropertiesString += "]";
+            }
+
+            mainSoundPropertiesString += "}";
+        }
+    }
+
+    return mainSoundPropertiesString;
+}
+
+am_Error_e CAmClassElement::getLastVolume(const std::string &sinkName,
+    am_mainVolume_t &mainVolume)
+{
+    std::string                            strCompare(isPerSinkClassVolumeEnabled() ? sinkName : CLASS_LEVEL_SINK);
+    std::vector<gc_SinkVolume_s>::iterator itlistSink;
+
+    for (itlistSink = mClassLastVolume.listSinkVolume.begin();
+         itlistSink != mClassLastVolume.listSinkVolume.end(); itlistSink++)
+    {
+        if (itlistSink->sinkName == strCompare)
+        {
+            LOG_FN_DEBUG(__FILENAME__, __func__, "class last main volume is:", mainVolume, sinkName);
+            mainVolume = itlistSink->mainVolume;
+            return E_OK;
+        }
+    }
+
+    if (mClass.defaultVolume != AM_MUTE)
+    {
+        mainVolume = mClass.defaultVolume;
+        LOG_FN_DEBUG(__FILENAME__, __func__, "class default main volume is:", mainVolume);
+    }
+
+    return E_OK;
+}
+
+am_Error_e CAmClassElement::getLastVolume(
+    std::shared_ptr<CAmMainConnectionElement > pMainConnection,
+    am_mainVolume_t &mainVolume)
+{
+    am_Error_e result = E_UNKNOWN;
+
+    if (pMainConnection != nullptr)
+    {
+        /* 1. check if last main connection volume is present, if present then return the same
+         * 2. if last main connection volume not present then check if last class level volume
+         * is present, if present then return the same
+         * 3. if last class volume not present then return the default class volume
+         */
+        std::vector<gc_LastMainConVolInfo_s>::iterator itlistLastMainConVolInfo;
+        for ( itlistLastMainConVolInfo = mLastMainConnectionsVolume.listLastMainConVolInfo.begin();
+              itlistLastMainConVolInfo != mLastMainConnectionsVolume.listLastMainConVolInfo.end();
+              itlistLastMainConVolInfo++)
+        {
+            if (itlistLastMainConVolInfo->mainConnectionName == pMainConnection->getName())
+            {
+                mainVolume = itlistLastMainConVolInfo->mainVolume;
+                LOG_FN_DEBUG(__FILENAME__, __func__, "last main connection", pMainConnection->getName(), "main volume is:", mainVolume);
+                result = E_OK;
+                return result;
             }
         }
-        if (found == true)
+
+        std::shared_ptr<CAmSinkElement > pSinkElement = pMainConnection->getMainSink();
+        if (pSinkElement != nullptr)
         {
+            result = getLastVolume(pSinkElement->getName(), mainVolume);
+            return result;
+        }
+    }
+
+    return E_NOT_POSSIBLE;
+}
+
+am_Error_e CAmClassElement::setLastVolume(
+    std::shared_ptr<CAmMainConnectionElement > pMainConnection,
+    const std::string &sinkName, am_mainVolume_t mainVolume)
+{
+    am_Error_e result = E_UNKNOWN;
+
+    if (pMainConnection != nullptr)
+    {
+        result = _setLastMainConnectionVolume(pMainConnection);
+        /*check if class level volume to be stored */
+        std::shared_ptr<CAmSourceElement > pSourceElement = pMainConnection->getMainSource();
+        std::shared_ptr<CAmSinkElement >   pSinkElement   = pMainConnection->getMainSink();
+        if ((nullptr != pSinkElement) && (nullptr != pSourceElement))
+        {
+            result = _setLastClassVolume(pSinkElement->getName(), pMainConnection->getMainVolume());
+        }
+    }
+
+    if (!sinkName.empty())
+    {
+        result = _setLastClassVolume(sinkName, mainVolume);
+    }
+
+    return result;
+}
+
+am_Error_e CAmClassElement::_setLastClassVolume(const std::string &sinkName, am_mainVolume_t mainVolume)
+{
+    std::string                            localSinkName = sinkName;
+    std::vector<gc_SinkVolume_s>::iterator itlistSink;
+    am_Error_e                             result = E_UNKNOWN;
+
+    if ((isVolumePersistencySupported() == false) &&
+        (isPerSinkClassVolumeEnabled() == false))
+    {
+        return E_OK;
+    }
+
+    LOG_FN_DEBUG(__FILENAME__, __func__, getName(), sinkName, mainVolume);
+    if (false == isPerSinkClassVolumeEnabled())
+    {
+        localSinkName = "*";
+    }
+
+    for ( itlistSink = mClassLastVolume.listSinkVolume.begin();
+          itlistSink != mClassLastVolume.listSinkVolume.end(); itlistSink++)
+    {
+        // if sink is already exist then update only its main volume in the list
+        if (itlistSink->sinkName == localSinkName)
+        {
+            itlistSink->mainVolume = mainVolume;
+            result                 = E_OK;
             break;
         }
     }
-    if (itListElements != listElements.end())
-    {
-        pClassElement = *itListElements;
-    }
-    return pClassElement;
-}
 
-am_MuteState_e CAmClassElement::getMuteState() const
-{
-    am_MuteState_e muteState = MS_UNMUTED;
-    std::map<uint32_t, gc_LimitVolume_s >::const_iterator itMapLimitVolumes;
-    for (itMapLimitVolumes = mMapLimitVolumes.begin(); itMapLimitVolumes != mMapLimitVolumes.end();
-                    ++itMapLimitVolumes)
+    // if sink is not found in the list then consider it as new sink and insert in to the list
+    if (itlistSink == mClassLastVolume.listSinkVolume.end())
     {
-        if ((itMapLimitVolumes->second.limitType == LT_ABSOLUTE) && ((itMapLimitVolumes->second.limitVolume
-                        == AM_MUTE)))
+        gc_SinkVolume_s sinkVolume;
+        sinkVolume.sinkName   = localSinkName;
+        sinkVolume.mainVolume = mainVolume;
+        mClassLastVolume.listSinkVolume.push_back(sinkVolume);
+        result = E_OK;
+    }
+
+    if (true == isPerSinkClassVolumeEnabled())
+    {
+        std::shared_ptr<CAmSinkElement > pSink = CAmSinkFactory::getElement(localSinkName);
+        if (nullptr != pSink)
         {
-            muteState = MS_MUTED;
-            break;
+            am_MainSoundProperty_s mainSoundProperty;
+            mainSoundProperty.type  = MSP_SINK_PER_CLASS_VOLUME_TYPE(getID());
+            mainSoundProperty.value = mainVolume;
+            LOG_FN_DEBUG("type:value", mainSoundProperty.type, mainSoundProperty.value);
+            int16_t oldValue;
+            pSink->getMainSoundPropertyValue(mainSoundProperty.type, oldValue);
+            if (oldValue != mainSoundProperty.value)
+            {
+                result = mpControlReceive->changeMainSinkSoundPropertyDB(
+                        mainSoundProperty, pSink->getID());
+            }
         }
     }
-    return muteState;
+
+    return result;
 }
 
-CAmConnectionListFilter::CAmConnectionListFilter() :
-                                mSourceName(""),
-                                mSinkName("")
+am_Error_e CAmClassElement::_setLastMainConnectionVolume(
+    std::shared_ptr<CAmMainConnectionElement > pMainConnection)
 {
-    mListConnectionStates.clear();
-    mListExceptSinks.clear();
-    mListExceptSources.clear();
-}
-void CAmConnectionListFilter::setSourceName(std::string sourceName)
-{
-    mSourceName = sourceName;
-}
-
-void CAmConnectionListFilter::setSinkName(std::string sinkName)
-{
-    mSinkName = sinkName;
-}
-
-void CAmConnectionListFilter::setListConnectionStates(
-                std::vector<am_ConnectionState_e >& listConnectionStates)
-{
-    mListConnectionStates = listConnectionStates;
-}
-
-void CAmConnectionListFilter::setListExceptSourceNames(std::vector<std::string >& listExceptSources)
-{
-    mListExceptSources = listExceptSources;
-}
-
-void CAmConnectionListFilter::setListExceptSinkNames(std::vector<std::string >& listExceptSinks)
-{
-    mListExceptSinks = listExceptSinks;
-}
-
-std::vector<CAmMainConnectionElement* >& CAmConnectionListFilter::getListMainConnection()
-{
-    return mListMainConnections;
-}
-
-void CAmConnectionListFilter::operator()(CAmMainConnectionElement* pMainConnection)
-{
-    if (pMainConnection == NULL)
+    if (pMainConnection != nullptr)
     {
-        return;
-    }
-    int state;
-    pMainConnection->getState(state);
-    std::string sourceName = pMainConnection->getMainSourceName();
-    std::string sinkName = pMainConnection->getMainSinkName();
-    if (_stringMatchFilter(mSourceName, sourceName) && _stringMatchFilter(mSinkName, sinkName)
-        && _connetionStateFilter((am_ConnectionState_e)state)
-        && _exceptionNamesFilter(mListExceptSources, sourceName)
-        && _exceptionNamesFilter(mListExceptSinks, sinkName))
-    {
-        mListMainConnections.push_back(pMainConnection);
-    }
+        std::vector<gc_LastMainConVolInfo_s >::iterator itlistLastMainConVolInfo;
+        std::shared_ptr<CAmSourceElement >              pSourceElement = pMainConnection->getMainSource();
+        std::shared_ptr<CAmSinkElement >                pSinkElement   = pMainConnection->getMainSink();
+        if ((nullptr == pSinkElement) || (nullptr == pSourceElement))
+        {
+            return E_NOT_POSSIBLE;
+        }
 
-}
+        /*set last main connection volume if main source or main sink supports
+         * volume persistence
+         */
+        if (pSourceElement->isVolumePersistencySupported() || pSinkElement->isVolumePersistencySupported())
+        {
+            for ( itlistLastMainConVolInfo = mLastMainConnectionsVolume.listLastMainConVolInfo.begin();
+                  itlistLastMainConVolInfo != mLastMainConnectionsVolume.listLastMainConVolInfo.end(); itlistLastMainConVolInfo++)
+            {
+                // if main connection  is already exist then update only its main volume in the list
+                if (itlistLastMainConVolInfo->mainConnectionName == pMainConnection->getName())
+                {
+                    LOG_FN_INFO(__FILENAME__, __func__, "main connection is exsist and its volume is :", pMainConnection->getMainVolume());
+                    itlistLastMainConVolInfo->mainVolume = pMainConnection->getMainVolume();
+                    return E_OK;
+                }
+            }
 
-bool CAmConnectionListFilter::_stringMatchFilter(std::string filterName, std::string inputName)
-{
-    bool result = false;
-    if (filterName == "")
-    {
-        result = true;
+            // if main connection is not found in the list then consider it as new main connection and insert in to the list
+            if (itlistLastMainConVolInfo == mLastMainConnectionsVolume.listLastMainConVolInfo.end())
+            {
+                LOG_FN_INFO(__FILENAME__, __func__, "new main connection : ", pMainConnection->getName(), "its volume :", pMainConnection->getMainVolume());
+                gc_LastMainConVolInfo_s lastMainConVolInfo;
+                lastMainConVolInfo.mainConnectionName = pMainConnection->getName();
+                lastMainConVolInfo.mainVolume         = pMainConnection->getMainVolume();
+                mLastMainConnectionsVolume.listLastMainConVolInfo.push_back(lastMainConVolInfo);
+                return E_OK;
+            }
+        }
+        else
+        {
+            LOG_FN_INFO(__FILENAME__, __func__, "volume persistence not supported for main source:",
+                pSourceElement->getName(), "or main sink", pSinkElement->getName());
+            return E_OK;
+        }
     }
     else
     {
-        if (filterName == inputName)
+        LOG_FN_INFO(__FILENAME__, __func__, "invalid main connection");
+        return E_NOT_POSSIBLE;
+    }
+}
+
+void CAmClassElement::setLastSoundProperty(const gc_ElementTypeName_s &elementInfo,
+    const am_MainSoundProperty_s &mainSoundProperty)
+{
+    if (false == _updateListLastMainSoundProperty(elementInfo, mainSoundProperty))
+    {
+        gc_LastMainSoundProperty_s lastMainSoundProperty;
+        lastMainSoundProperty.elementInfo = elementInfo;
+        lastMainSoundProperty.listLastMainSoundProperty.push_back(mainSoundProperty);
+        mLastMainSoundProperties.listLastMainSoundProperties.push_back(lastMainSoundProperty);
+    }
+}
+
+am_Error_e CAmClassElement::getLastSoundProperty(
+    const gc_ElementTypeName_s &elementInfo,
+    std::vector<am_MainSoundProperty_s > &listLastMainSoundProperty)
+{
+    for (auto &itListLastMainSoundProperties : mLastMainSoundPropertiesFromPersistence.listLastMainSoundProperties)
+    {
+        if ((itListLastMainSoundProperties.elementInfo.elementType == elementInfo.elementType) &&
+            (itListLastMainSoundProperties.elementInfo.elementName == elementInfo.elementName))
         {
-            result = true;
+            listLastMainSoundProperty = itListLastMainSoundProperties.listLastMainSoundProperty;
+            return E_OK;
         }
     }
-    return result;
+
+    return E_NON_EXISTENT;
 }
-bool CAmConnectionListFilter::_connetionStateFilter(am_ConnectionState_e connectionState)
+
+bool CAmClassElement::_updateListLastMainSoundProperty(const gc_ElementTypeName_s &elementInfo,
+    const am_MainSoundProperty_s &mainSoundProperty)
 {
-    bool result = false;
-    if (std::find(mListConnectionStates.begin(), mListConnectionStates.end(), connectionState) != mListConnectionStates.end())
+    for (auto &itListLastMainSoundProperties : mLastMainSoundProperties.listLastMainSoundProperties)
     {
-        result = true;
+        if ((itListLastMainSoundProperties.elementInfo.elementType == elementInfo.elementType) &&
+            (itListLastMainSoundProperties.elementInfo.elementName == elementInfo.elementName))
+        {
+            for (auto &itListLastMainSoundProperty : itListLastMainSoundProperties.listLastMainSoundProperty )
+            {
+                if (itListLastMainSoundProperty.type == mainSoundProperty.type)
+                {
+                    itListLastMainSoundProperty.value = mainSoundProperty.value;
+                    return true;
+                }
+            }
+
+            itListLastMainSoundProperties.listLastMainSoundProperty.push_back(mainSoundProperty);
+            return true;
+        }
     }
-    return result;
+
+    return false;
 }
-bool CAmConnectionListFilter::_exceptionNamesFilter(std::vector<std::string >& listString,
-                                                  std::string input)
+
+void CAmClassElement::restoreMainSoundProperties(gc_LastMainSoundProperties_s &lastMainSoundProperties)
 {
-    bool result = true;
-    if (std::find(listString.begin(), listString.end(), input) != listString.end())
-    {
-        result = false;
-    }
-    return result;
+    mLastMainSoundPropertiesFromPersistence = lastMainSoundProperties;
+}
+
+std::shared_ptr<CAmElement > CAmClassElement::getElement()
+{
+    return CAmClassFactory::getElement(getName());
 }
 
 } /* namespace gc */

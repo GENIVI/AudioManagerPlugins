@@ -19,31 +19,42 @@
 
 #include "CAmTimerEvent.h"
 #include "CAmLogger.h"
+#include "CAmControllerPlugin.h"
 
 namespace am {
 namespace gc {
 
-CAmTimerEvent* CAmTimerEvent::mpTimerInstance = NULL;
-CAmTimerEvent::CAmTimerEvent() :
-                                mpCAmSocketHandler(0),
-                                mpTimerCallback(this, &CAmTimerEvent::timerCallback),
-                                mpControlSend(NULL)
+CAmTimerEvent *CAmTimerEvent::mpTimerInstance = NULL;
+CAmTimerEvent::CAmTimerEvent()
+    : mpCAmSocketHandler(0)
+    , mpTimerCallback(this, &CAmTimerEvent::timerCallback)
+    , mpPlugin(NULL)
 {
 }
 
-CAmTimerEvent* CAmTimerEvent::getInstance(void)
+CAmTimerEvent *CAmTimerEvent::getInstance(void)
 {
     if (mpTimerInstance == NULL)
     {
         mpTimerInstance = new CAmTimerEvent;
     }
+
     return mpTimerInstance;
 }
 
-void CAmTimerEvent::setSocketHandle(CAmSocketHandler* psocketHandler, CAmControlSend* pControlSend)
+void CAmTimerEvent::freeInstance()
+{
+    if (NULL != mpTimerInstance)
+    {
+        delete mpTimerInstance;
+        mpTimerInstance = NULL;
+    }
+}
+
+void CAmTimerEvent::setSocketHandle(CAmSocketHandler *psocketHandler, CAmControllerPlugin *pPlugin)
 {
     mpCAmSocketHandler = psocketHandler;
-    mpControlSend = pControlSend;
+    mpPlugin           = pPlugin;
 }
 
 CAmTimerEvent::~CAmTimerEvent()
@@ -54,14 +65,14 @@ CAmTimerEvent::~CAmTimerEvent()
     }
 }
 
-void CAmTimerEvent::timerCallback(const sh_timerHandle_t handle, void* userData)
+void CAmTimerEvent::timerCallback(const sh_timerHandle_t handle, void *userData)
 {
-    CAmTimerEvent* pTimerEvent = (CAmTimerEvent*)userData;
-    std::list<gc_TimerClient_s* >::iterator itListClients;
+    CAmTimerEvent                           *pTimerEvent = (CAmTimerEvent *)userData;
+    std::list<gc_TimerClient_s * >::iterator itListClients;
 
     if (userData == NULL)
     {
-        LOG_FN_ERROR("NULL user data in timer callback");
+        LOG_FN_ERROR(__FILENAME__, __func__, "NULL user data in timer callback");
         return;
     }
 
@@ -71,8 +82,8 @@ void CAmTimerEvent::timerCallback(const sh_timerHandle_t handle, void* userData)
     {
         if ((*itListClients)->handle == handle)
         {
-            LOG_FN_INFO(": handle=", handle, " itListTimerClient->handle=",
-                        (*itListClients)->handle);
+            LOG_FN_INFO(__FILENAME__, __func__, ": handle=", handle, " itListTimerClient->handle=",
+                (*itListClients)->handle);
             // notify timer event
             (*itListClients)->pClient->Call(handle, (*itListClients)->pParam);
             break;
@@ -82,40 +93,41 @@ void CAmTimerEvent::timerCallback(const sh_timerHandle_t handle, void* userData)
             itListClients++;
         }
     }
-    mpControlSend->iterateActions();
+
+    mpPlugin->iterateActions();
 }
 
-bool CAmTimerEvent::setTimer(IAmShTimerCallBack* pClient, void* pParam, int32_t msec,
-                             sh_timerHandle_t& handle)
+bool CAmTimerEvent::setTimer(IAmShTimerCallBack *pClient, void *pParam, int32_t msec,
+    sh_timerHandle_t &handle)
 {
-    gc_TimerClient_s* pTimerClient;
-    am_Error_e error;
+    gc_TimerClient_s *pTimerClient;
+    am_Error_e        error;
 
     // MAX 10 sec
     if (msec > MAX_TIMER_VALUE)
     {
-        LOG_FN_ERROR("  OUT:  out of range", msec);
+        LOG_FN_ERROR(__FILENAME__, __func__, "  OUT:  out of range", msec);
         return false;
     }
 
     pTimerClient = new gc_TimerClient_s();
     if (pTimerClient == NULL)
     {
-        LOG_FN_ERROR("  OUT:  Client=NULL");
+        LOG_FN_ERROR(__FILENAME__, __func__, "  OUT:  Client=NULL");
         return false;
     }
 
-    pTimerClient->pClient = pClient;
-    pTimerClient->pParam = pParam;
-    pTimerClient->handle = 0;
-    (pTimerClient->timeSpecInstance).tv_sec = msec / SEC;
+    pTimerClient->pClient                    = pClient;
+    pTimerClient->pParam                     = pParam;
+    pTimerClient->handle                     = 0;
+    (pTimerClient->timeSpecInstance).tv_sec  = msec / SEC;
     (pTimerClient->timeSpecInstance).tv_nsec = (msec % SEC) * NSEC;
 
     error = mpCAmSocketHandler->addTimer(pTimerClient->timeSpecInstance, &mpTimerCallback, handle,
-                                         (void*)this);
+            (void *)this);
     if (error != E_OK)
     {
-        LOG_FN_ERROR("  OUT:  addTimer Error");
+        LOG_FN_ERROR(__FILENAME__, __func__, "  OUT:  addTimer Error");
         delete pTimerClient;
         return false;
     }
@@ -123,13 +135,13 @@ bool CAmTimerEvent::setTimer(IAmShTimerCallBack* pClient, void* pParam, int32_t 
     pTimerClient->handle = handle;
     mListClients.push_back(pTimerClient);
 
-    LOG_FN_DEBUG("  OUT handle=", handle);
+    LOG_FN_DEBUG(__FILENAME__, __func__, "  OUT handle=", handle);
     return true;
 }
 
-void CAmTimerEvent::removeTimer(sh_timerHandle_t& handle)
+void CAmTimerEvent::removeTimer(sh_timerHandle_t &handle)
 {
-    std::list<gc_TimerClient_s* >::iterator itListClients;
+    std::list<gc_TimerClient_s * >::iterator itListClients;
 
     itListClients = mListClients.begin();
     while (itListClients != mListClients.end())
@@ -143,9 +155,10 @@ void CAmTimerEvent::removeTimer(sh_timerHandle_t& handle)
             {
                 delete (*itListClients);
             }
+
             // remove from the list
             itListClients = mListClients.erase(itListClients);
-            handle = 0;
+            handle        = 0;
             break;
         }
         // set interval time and increment iterator
@@ -154,7 +167,6 @@ void CAmTimerEvent::removeTimer(sh_timerHandle_t& handle)
             itListClients++;
         }
     }
-
 }
 
 } /* namespace gc */

@@ -1,0 +1,253 @@
+/*!
+\page pagePersistence Persistency User Manual  
+
+following types types of data stored in the persistence area by 
+the generic controller
+1. \ref lastMainConnection
+2. \ref lastClassVolume
+3. \ref lastMainConnectionVolume
+4. \ref lastMainSoundProperties
+5. \ref lastSystemProperties
+
+Additionally, the system allows for additional values to be memorized in
+persistent storage (see \ref specificPersistency).
+
+\section lastMainConnection Last Main Connection
+\subsection storeMainConnection  Storing of last main connection
+ 
+The main connection information is stored in the internal data structure 
+as soon as the main connection is established for the given class, later if same 
+main connection is disconnected then it will be removed from internal data structure.  
+    
+The data saved in the persistence area from the internal data structure only 
+once, i.e when Audiomanager is getting shutdown, the generic controller 
+transfers data from internal data structure to persistence area using the 
+persistence interface. The main objective behind this is to reduce the number 
+of write cycles to the persistence area, following example illustrate in more 
+detail.
+\image html Persistence_LastMainConnection.png
+
+ 
+The main connection data stored in the persistence are in the Key, Value format,
+@code
+lastMainConnection = {BASE,source1:sink1;source2:sink2;}{PHONE,source3:sink3;source4:sink4;}
+@endcode
+The last main connection is stored in the persistence area only if the main source 
+or main sink supports the persistence property in the generic controller configuration file
+
+The configurable parameter in the controller configuration file is as:
+@code
+<source ... isPersistencySupported="TRUE">
+ .....
+</source>
+@endcode
+
+\subsection recoverMainConnection  Recover Last Main Connection
+
+If Audio Manager restarted and main connections are stored in the persistence 
+area during the last shutdown cycle then the main connections are restored from 
+persistence area, after all the domain registrations are completed. 
+If any one of the domain is not registered in stipulated time then timeout 
+will happen and only the possible main connections for already registered 
+domains will be restored from the persistence area. The domain registration 
+timeout parameter is configurable in the generic controller configuration file.
+
+@code
+  <properties>
+    <systemProperty type="SYP_REGISTRATION_DOMAIN_TIMEOUT" value="1000"/>
+  </properties>
+@endcode
+
+In current implementation, main connections for the registered domains will be restored in the 
+@ref am::am_ConnectionState_e "CS_UNKNOWN" state and can be connected based on the user 
+policy. The new trigger is defined in the generic controller configuration for 
+connecting user specified main connection for e.g.
+@code
+<policy trigger="SYSTEM_ALL_DOMAIN_REGISTRATION_COMPLETE">
+ <process>
+    <condition>error() EQ E_OK </condition>
+    <action type="ACTION_POP" className="N:BASE" order="O_NEWEST"/>
+   </process>
+ </policy>
+@endcode
+
+The trigger SYSTEM_ALL_DOMAIN_REGISTRATION_COMPLETE is send to the policy engine 
+with the following error codes<BR>
+a. E_OK : If all domain are registered in stipulated time then this error code 
+will be issued along with the trigger.<BR>
+b. EQ E_DATABASE_ERROR : This error will be issued, if there is any problem 
+with persistence database (e.g read operation failed due to some reason)<BR>
+c. EQ E_NOT_POSSIBLE : This error will be issued, if all domain not registered 
+in stipulated time limit.<BR>
+
+In case of  E_OK user can specify which last main connection to be connected  
+and for other error codes user can specify the appropriate policy to handle the 
+persistence database error and the domain registration time out.
+
+
+\section lastClassVolume  Last Class-Level Volume
+\subsection storeClassVolume Store Last class Level Volume
+The class level volume initially stored in the local structure as soon as the 
+volume is set to the sink belonging to that class.  The data copied from local 
+structure to persistence area during the Audio Manger shutdown process, same as 
+mentioned in last main connection support. 
+
+@image html Persistence_ClassVolumeStore.png
+ 
+In the above diagram consider main connection created between source1 and sink1 
+with the main volume set to 20 after that another main connection created 
+between source2 and sink2 and main volume set to 30, in this case last class 
+level volume store in the local data structure will be 30 and if the Audiomanger 
+is shutdown at this stage then last class level volume 30 will be stored in the 
+persistence area for the Base class hence the final data written to persistence 
+area is as:
+@code
+lastClassVolume = {BASE,[*:30]}{PHONE,[*:60]}
+@endcode
+Here * indicates all sinks belonging to BASE class will use the same volume 
+i.e 30 during the restoring of volume for the next cycle.
+The class level volume is stored in persistence area only if the persistence 
+property is supported by the class in the generic controller configuration file, 
+The configurable parameter in the controller configuration file is as:
+@code
+<class ... name="BASE" isVolumePersistencySupported="TRUE"/>
+    ...
+</class>
+@endcode
+If CP_PER_SINK_CLASS_VOLUME_SUPPORT property is set in the configuration file 
+then individual volume of sink will be stored in the persistence area
+@code
+<class name="BASE" isVolumePersistencySupported="TRUE"/>
+    ...
+    <property type="CP_PER_SINK_CLASS_VOLUME_SUPPORT" value="1"/>
+</class>
+@endcode
+
+@image html Persistence_LastClassVolume.png
+
+In the above diagram consider main connection created between source1 and sink1 
+of Base class with the main volume set to 30, after that another main connection 
+of Phone class is created between source2 and sink1 and main volume set to 50, 
+in this case last class level volume store for sink1 of Base class is 30 and 
+last class level volume store for sink1 of Phone class is 50
+
+The following format in which the volume information will be stored in the 
+persistence area
+@code
+lastClassVolume = {BASE,[sink1:30]}{PHONE,[sink1:50]}
+@endcode
+
+\subsection recoverClassVolume Recover Last Class-Level Volume
+If Audio Manager restarted and class volume information stored in the 
+persistence area during the last shutdown then the class level volume will be 
+read from persistence area and stored in the local data structure during the 
+audiomanager startup later when connection is in the process the volume from the 
+local data structure searched and if available then it will be assigned to the 
+main sink before connection is established.
+
+\section lastMainConnectionVolume  Last Main-Connection Level Volume
+\subsection storeMainConnectionVolume Store Last Main-Connection Level Volume
+The main connection level volume stored in the local data structure as soon as 
+the volume is set to the sink belonging to that main connection. The data copied 
+from local structure to persistence area during the Audio Manger shutdown process.
+
+@image html Persistence_MainConnectionVolumeStore.png
+
+In the above diagram consider main connection created for Base class between 
+source1 and sink1 with the main volume set to 20 , in this case mainconnection1 
+volume store in the local data structure will be 20 after that another main 
+connection created for the Base class between source2 and sink2 , in this case 
+mainconnection2 volume store in the local data structure will be 30. 
+If the Audio manger is shutdown at this stage then last main connection volume 
+for Base class will be stored in the persistence area is as:
+@code
+lastMainConnectionVolume = {BASE,[source1:sink1=20][source2:sink2=30]}{PHONE,[source3:sink3=50][source4:sink4=60]}
+@endcode
+The main connection level volume is stored in persistence area only if the volume 
+persistence property is supported by main source or main sink in the generic controller 
+configuration file.
+The configurable parameter in the controller configuration file is as:
+@code
+<source .. isVolumePersistencySupported="TRUE"/>
+ ...
+</source>
+@endcode
+
+\subsection recoverMainConnectionVolume Recover Last Main-Connection Level Volume
+If Audio Manager restarted and main connection level volume information stored 
+in the persistence area during the last shutdown then the last main connection 
+level volume will be read from persistence area and stored in the local data 
+structure during the Audiomanager startup later when connection is in the process 
+the last main connection volume from the local data structure searched and if 
+available then it will be assigned to the main source or sink before connection 
+is established.<BR>
+<b>Note:</b> If last class level volume as well as last main connection level volume 
+support is configured in the configuration file then the precedence will be 
+given to the last main connection level volume 
+
+
+\section specificPersistency Product-Specific Implementation of Persistency
+Generic controller defines IAmPersistence implementation for using persistence. 
+The default Implementation of IAmPersistence will write the persistence data to 
+a file. The default file path is /var/ADIT/persistence/gc_persistence.txt.
+This can be overridden by setting an environmental variable before starting the 
+Audiomanager.<BR>
+><I>export GENERIC_CONTROLLER_PERSISTENCE_FILE_PATH=/xxx/yyy.txt</I><BR>
+where xxx is the directory path and yyy is the persistence file name
+
+
+This default persistence implementation can also be overridden by user. The user 
+can implement its own IAmPersistence implementation and provide the library 
+path to the AudioManager in command line, details of the command line argument 
+are as below<BR>
+><I>AudioManager -T -Z /usr/lib/libCustomPersistence.so</I><BR>
+Here “libCustomPersistence.so” is the product specific implementation of persistency 
+
+\section lastMainSoundProperties Last Main Sound Properties
+Main objective is to store source/sink sound properties to the 
+persistence media during the AM shutdown and it should get restore back to the respective 
+source / sink during the next AM startup
+
+The following sample format in which the last main sound properties information will be stored in the 
+persistence area
+@code
+lastMainSoundProperies = {BASE,[SINK_sink1=(1:5)(2:6)(3:7)][SOURCE_source1=(1:5)(2:6)(3:7)]}
+{PHONE,[SINK_sink2=(1:2)(2:10)(3:16)]}
+@endcode 
+
+The last main sound properties will be stored in the persistence area only if the 
+isPersistenceSupported attribute of that sound property is enable in the configuration file
+
+The sample configurable parameter in the controller configuration file is as:
+@code
+<mainSoundProperty type="MSP_GENIVI_TREBLE" ...isPersistenceSupported = “TRUE” />
+ .....
+@endcode
+
+\subsection recoverLastMainSoundProperties Recover Last Main Sound Properties
+
+The last main sound properties will be restored from the persistence area, once all domain registration completed 
+to know the status of sound property restore, system property can be requested from the command line 
+application to AM to check the current status "SYP_REGSTRATION_SOUND_PROP_RESTORED"
+
+\section lastSystemProperties Last System Properties
+
+The following sample format in which the system properties information will be stored in the 
+persistence area
+@code
+lastSystemProperty = {[1:2][2:10][3:16]}
+@endcode 
+
+The system properties will be stored in the persistence area only if the 
+isPersistenceSupported attribute of system property is enable in the configuration file
+
+sample configurable parameter in the controller configuration file is as:
+@code
+<systemProperty type="SYP_GLOBAL_LOG_THRESHOLD" ...isPersistenceSupported = “TRUE” />
+ .....
+@endcode
+
+\subsection recoverSystemProperties Recover System Properties
+
+The system properties will be restore from the persistence area during Audio Manager startup
+*/

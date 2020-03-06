@@ -25,29 +25,31 @@
 #include "CAmTypes.h"
 #include "CAmEventSubject.h"
 #include "CAmSocketHandler.h"
-#include "CAmControlSend.h"
 
 namespace am {
 namespace gc {
-
-template <class TClass> class Tcallback : public IAmShTimerCallBack
+class CAmControllerPlugin;
+template <class TClass>
+class Tcallback : public IAmShTimerCallBack
 {
 private:
-    TClass* mInstance;
-    void (TClass::*mFunction)(void* userData);
+    TClass *mInstance;
+    void    (TClass::*mFunction)(void *userData);
 
 public:
-    Tcallback(TClass* instance, void (TClass::*function)(void* userData)) :
-                                    mInstance(instance), //
-                                    mFunction(function)
+    Tcallback(TClass *instance, void (TClass::*function)(void *userData))
+        : mInstance(instance)
+        ,                                                //
+        mFunction(function)
     {
     }
-    ;
-    void Call(sh_timerHandle_t handle, void* userData)
+
+    void Call(sh_timerHandle_t handle, void *userData)
     {
         (void)handle;
         (*mInstance.*mFunction)(userData);
     }
+
 };
 
 class CAmTimerEvent
@@ -57,47 +59,54 @@ public:
     {
         MAX_UINT_VALUE = 2147483647
     };
+
     enum
     {
         USER_TIMER = 0
     };
+
     enum
     {
         NSEC = 1000 * 1000
     };            // nsec = 1 (1,000 * 1,000) msec
+
     enum
     {
         SEC = 1000
     };                    // sec = 1,000 msec
+
     enum
     {
         MAX_TIMER_VALUE = 10 * 1000
-    };   // MAX 10 sec
+    };      // MAX 10 sec
 
     virtual ~CAmTimerEvent();
-    static CAmTimerEvent* getInstance();
+    static CAmTimerEvent *getInstance();
+    static void freeInstance();
 
-    bool setTimer(IAmShTimerCallBack* pClient, void* pParam, int32_t msec,
-                  sh_timerHandle_t& handle);
-    void removeTimer(sh_timerHandle_t& handle);
-    void setSocketHandle(CAmSocketHandler* psocketHandler, CAmControlSend* pControlSend);
+    bool setTimer(IAmShTimerCallBack *pClient, void *pParam, int32_t msec,
+        sh_timerHandle_t &handle);
+    void removeTimer(sh_timerHandle_t &handle);
+    void setSocketHandle(CAmSocketHandler *psocketHandler, CAmControllerPlugin *pPlugin);
+
 protected:
     struct gc_TimerClient_s
     {
-        IAmShTimerCallBack* pClient;
-        void* pParam;
+        IAmShTimerCallBack *pClient;
+        void *pParam;
         sh_timerHandle_t handle;
         timespec timeSpecInstance;
     };
+
 private:
     CAmTimerEvent();
-    void timerCallback(sh_timerHandle_t handle, void* userData);
+    void timerCallback(sh_timerHandle_t handle, void *userData);
 
-    static CAmTimerEvent* mpTimerInstance;
-    CAmSocketHandler* mpCAmSocketHandler;
+    static CAmTimerEvent              *mpTimerInstance;
+    CAmSocketHandler                  *mpCAmSocketHandler;
     TAmShTimerCallBack<CAmTimerEvent > mpTimerCallback;
-    std::list<gc_TimerClient_s* > mListClients;
-    CAmControlSend* mpControlSend;
+    std::list<gc_TimerClient_s * >     mListClients;
+    CAmControllerPlugin               *mpPlugin;
 };
 
 } /* namespace gc */

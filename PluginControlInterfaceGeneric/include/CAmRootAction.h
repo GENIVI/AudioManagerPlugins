@@ -36,7 +36,8 @@ public:
     /**
      * @brief Static function to get the instance of the root action.
      */
-    static CAmRootAction* getInstance(void);
+    static CAmRootAction *getInstance(void);
+    static void freeInstance(void);
 
     virtual ~CAmRootAction();
 protected:
@@ -46,10 +47,11 @@ protected:
      * @return 0 on success, non zero otherwise.
      */
     int _cleanup();
+
 private:
     CAmRootAction();
 
-    static CAmRootAction* mRootAction;
+    static CAmRootAction *mRootAction;
 };
 
 } /* namespace gc */

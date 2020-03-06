@@ -17,24 +17,47 @@
  * All rights reserved.
  *
  *****************************************************************************/
-
+#include <algorithm>
 #include "CAmMainConnectionActionConnect.h"
 #include "CAmMainConnectionElement.h"
 #include "CAmSourceElement.h"
-#include "CAmSourceActionSetState.h"
-#include "CAmRouteActionConnect.h"
 #include "CAmLogger.h"
 #include "CAmTriggerQueue.h"
+#include "CAmRouteActionConnect.h"
+#include "CAmSourceActionSetState.h"
+
 
 namespace am {
 namespace gc {
 
 CAmMainConnectionActionConnect::CAmMainConnectionActionConnect(
-                CAmMainConnectionElement* pMainConnection) :
-                                CAmActionContainer(std::string("CAmMainConnectionActionConnect")),
-                                mpMainConnection(pMainConnection)
+    std::shared_ptr<CAmMainConnectionElement > pMainConnection)
+    : CAmActionContainer(std::string("CAmMainConnectionActionConnect"))
+    , mpMainConnection(pMainConnection)
 {
     this->_registerParam(ACTION_PARAM_CONNECTION_FORMAT, &mConnectionFormatParam);
+    this->_registerParam(ACTION_PARAM_SET_SOURCE_STATE_DIRECTION, &mSetSourceStateDirectionParam);
+
+    if (mpMainConnection)
+    {
+        switch (mpMainConnection->getState())
+        {
+            // target reached or in transition
+            case CS_CONNECTED:
+            case CS_DISCONNECTING:
+            case CS_CONNECTING:
+                break;
+
+            // starting points
+            case CS_UNKNOWN:
+            case CS_DISCONNECTED:
+            case CS_SUSPENDED:
+                mpMainConnection->setState(CS_CONNECTING);
+                mpMainConnection->setStateChangeTrigger((am_Error_e)getError());
+                break;
+        }
+        mpMainConnection->registerTransitionAction(this);
+    }
 }
 
 CAmMainConnectionActionConnect::~CAmMainConnectionActionConnect()
@@ -43,50 +66,51 @@ CAmMainConnectionActionConnect::~CAmMainConnectionActionConnect()
 
 int CAmMainConnectionActionConnect::_execute(void)
 {
-    if (NULL == mpMainConnection)
+    if (nullptr == mpMainConnection)
     {
-        LOG_FN_ERROR("  Parameters not set.");
+        LOG_FN_ERROR(__FILENAME__, __func__, "  Parameters not set.");
         return E_NOT_POSSIBLE;
     }
-    int state;
-    mpMainConnection->getState(state);
-    if(CS_CONNECTED == state)
+
+    LOG_FN_INFO(__FILENAME__, __func__, mpMainConnection->getName(), mpMainConnection->getState());
+
+    am_ConnectionState_e state = mpMainConnection->getState();
+    if (CS_CONNECTED == state)
     {
         return E_OK; // already connected
     }
 
-    IAmActionCommand* pAction(NULL);
-    std::vector<CAmRouteElement*> listRouteElements;
-    std::vector<CAmRouteElement*>::iterator itListRouteElements;
-    mpMainConnection->getListRouteElements(listRouteElements);
-    for (itListRouteElements = listRouteElements.begin();
-                    itListRouteElements != listRouteElements.end();
-                    ++itListRouteElements)
+    if (mpMainConnection->getRouteAvailability() != A_AVAILABLE)
     {
-        // create router connect action for each element
-        pAction = new CAmRouteActionConnect(*itListRouteElements);
-        if (NULL != pAction)
-        {
-            am_CustomConnectionFormat_t connectionFormat;
-            if (mConnectionFormatParam.getParam(connectionFormat))
-            {
-                pAction->setParam(ACTION_PARAM_CONNECTION_FORMAT, &mConnectionFormatParam);
-            }
-            pAction->setUndoRequried(getUndoRequired());
-            append(pAction);
-        }
+        return E_NOT_POSSIBLE;
     }
 
-    /*
-     * Finally append the set soruce state action
-     */
-    pAction = _createActionSetSourceState(mpMainConnection, SS_ON);
-    if (NULL != pAction)
+    std::vector<std::shared_ptr<CAmRouteElement > >           listRouteElements;
+    std::vector<std::shared_ptr<CAmRouteElement > >::iterator itListRouteElements;
+    mpMainConnection->getListRouteElements(listRouteElements);
+    gc_SetSourceStateDirection_e setSourceStateDirection = SD_MAINSINK_TO_MAINSOURCE;
+    mSetSourceStateDirectionParam.getParam(setSourceStateDirection);
+    if (setSourceStateDirection == SD_MAINSINK_TO_MAINSOURCE)
     {
-        append(pAction);
+        // reverse the vector
+        std::reverse(listRouteElements.begin(), listRouteElements.end());
     }
-    mpMainConnection->setState(CS_CONNECTING);
-    _setConnectionStateChangeTrigger();
+
+    if (E_OK != _createListActionsRouteConnect(listRouteElements))
+    {
+        return E_NOT_POSSIBLE;
+    }
+
+    if (E_OK != _createListActionsSetSourceState(listRouteElements, SS_ON))
+    {
+        return E_NOT_POSSIBLE;
+    }
+
+    if (state != CS_CONNECTING)
+    {
+        mpMainConnection->setState(CS_CONNECTING);
+        mpMainConnection->setStateChangeTrigger(static_cast<am_Error_e>(getError()));
+    }
     return E_OK;
 }
 
@@ -94,7 +118,8 @@ int CAmMainConnectionActionConnect::_undo(void)
 {
     // update main connection state in Audio Manager daemon
     mpMainConnection->setState(CS_DISCONNECTING);
-    _setConnectionStateChangeTrigger();
+    mpMainConnection->setStateChangeTrigger(static_cast<am_Error_e>(getError()));
+
     return E_OK;
 }
 
@@ -103,8 +128,7 @@ int CAmMainConnectionActionConnect::_update(const int result)
     am_ConnectionState_e connectionState(CS_UNKNOWN);
     if ((E_OK == result) && (AS_COMPLETED == getStatus()))
     {
-        am_SourceState_e sourceState;
-        mpMainConnection->getMainSource()->getState((int&)sourceState);
+        am_SourceState_e sourceState = mpMainConnection->getMainSource()->getState();
         if (sourceState == SS_ON)
         {
             connectionState = CS_CONNECTED;
@@ -119,39 +143,97 @@ int CAmMainConnectionActionConnect::_update(const int result)
         connectionState = CS_DISCONNECTED;
     }
 
-    if(connectionState != CS_UNKNOWN)
+    if (connectionState != CS_UNKNOWN)
     {
         // update main connection state in Audio Manager daemon
         mpMainConnection->setState(connectionState);
-        _setConnectionStateChangeTrigger();
+        mpMainConnection->updateMainVolume();
+        mpMainConnection->setStateChangeTrigger(static_cast<am_Error_e>(getError()));
+
+        mpMainConnection->unregisterTransitionAction(this);
     }
+
     return E_OK;
 }
 
-IAmActionCommand* CAmMainConnectionActionConnect::_createActionSetSourceState(CAmMainConnectionElement *pMainConnection,
-                                                                              const am_SourceState_e sourceState)
+am_Error_e CAmMainConnectionActionConnect::_createListActionsRouteConnect(
+    std::vector<std::shared_ptr<CAmRouteElement > > &listRouteElements)
 {
-    IAmActionCommand* pAction(NULL);
-    CAmSourceElement* pMainSource = pMainConnection->getMainSource();
-    if (pMainSource != NULL)
+    am_Error_e error = E_OK;
+    for (auto itListRouteElements : listRouteElements)
     {
-        pAction = new CAmSourceActionSetState(pMainSource);
-        if (pAction != NULL)
+        error = _createActionRouteConnect(itListRouteElements);
+        if (error != E_OK)
         {
-            CAmActionParam<am_SourceState_e> sourceStateParam(sourceState);
-            pAction->setParam(ACTION_PARAM_SOURCE_STATE, &sourceStateParam);
+            break;
         }
     }
-    return pAction;
+
+    return error;
 }
 
-void CAmMainConnectionActionConnect::_setConnectionStateChangeTrigger(void)
+am_Error_e CAmMainConnectionActionConnect::_createActionRouteConnect(std::shared_ptr<CAmRouteElement > routeElement)
 {
-    gc_ConnectionStateChangeTrigger_s* ptrigger = new gc_ConnectionStateChangeTrigger_s;
-    ptrigger->connectionName = mpMainConnection->getName();
-    mpMainConnection->getState((int&)(ptrigger->connectionState));
-    ptrigger->status = (am_Error_e)getError();
-    CAmTriggerQueue::getInstance()->pushTop(SYSTEM_CONNECTION_STATE_CHANGE,ptrigger);
+    // create router connect action for each element'
+    IAmActionCommand *pAction = new CAmRouteActionConnect(routeElement);
+    if (NULL != pAction)
+    {
+        am_CustomConnectionFormat_t connectionFormat;
+        if (mConnectionFormatParam.getParam(connectionFormat))
+        {
+            pAction->setParam(ACTION_PARAM_CONNECTION_FORMAT, &mConnectionFormatParam);
+        }
+
+        pAction->setUndoRequried(getUndoRequired());
+        append(pAction);
+    }
+
+    return E_OK;
+}
+
+am_Error_e CAmMainConnectionActionConnect::_createListActionsSetSourceState(std::vector<std::shared_ptr<CAmRouteElement > > &listRouteElements, const am_SourceState_e requestedSourceState)
+{
+    am_Error_e                               error = E_OK;
+    std::vector<CAmRouteElement *>::iterator itListRouteElements;
+    for (auto itListRouteElements : listRouteElements)
+    {
+        error = _createActionSetSourceState(itListRouteElements->getSource(), requestedSourceState);
+        if (error != E_OK)
+        {
+            break;
+        }
+    }
+
+    return error;
+}
+
+am_Error_e CAmMainConnectionActionConnect::_createActionSetSourceState(std::shared_ptr<CAmSourceElement > pSource, const am_SourceState_e requestedSourceState)
+{
+    am_Error_e        error = E_NOT_POSSIBLE;
+    IAmActionCommand *pAction(NULL);
+    if (pSource != nullptr)
+    {
+        am_SourceState_e sourceState = pSource->getState();
+        if (static_cast<am_SourceState_e>(sourceState) != SS_UNKNNOWN)
+        {
+            pAction = new CAmSourceActionSetState(pSource);
+            if (pAction != NULL)
+            {
+                CAmActionParam<am_SourceState_e> sourceStateParam(requestedSourceState);
+                pAction->setParam(ACTION_PARAM_SOURCE_STATE, &sourceStateParam);
+
+                pAction->setUndoRequried(getUndoRequired());
+                append(pAction);
+                error = E_OK;
+            }
+        }
+        else
+        {
+            error = E_OK;
+        }
+    }
+
+    return error;
 }
 
 } /* namespace gc */

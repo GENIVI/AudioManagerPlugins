@@ -1,33 +1,229 @@
 /*!
-\page pageTrigger Trigger
-
-    Generic Controller is a Plug-in of AudioManager Daemon, it implements the IAmControlSend and uses
- the IAmControlReceive. Any hookxxx or CbAckxxx functions in IAmControlSends called by AudioManager 
-are the entry point for the controller's execution, these are triggers. In response to the 
-trigger, controller executes a set of sequential action(s).
-
-    The diagram below shows the internals of the generic controller functioning 
-\image html TriggerConcept.png
-
-     Action framework manages two Queues, trigger queue and action queue. All the triggers are  
-first Queued by the action framework. Only when the action Queue is empty, single trigger is dequeued 
-and forwarded along with the trigger parameters to policy engine. policy engine evaluates the 
-policies and gives the set of actions which are added in action Queue. After which the action 
-framework executes the actions till all the actions are executed successfully. 
-
-@section triggerDesc Trigger Descriptions
-
-    The triggers which are generated from command interface have a prefix "USER" whereas the triggers
-from the routing interface have prefix "SYSTEM"
-\image html TriggerDesc.png
-
-@section triggerParams Trigger Parameters
-     The trigger parameters are the parameter which are part of the trigger. Example a connect 
-request from the command side would have source ID and sink ID as the trigger parameter. Each  
-trigger has its own set of trigger parameters. The trigger parameters can be used in configuration
-for condition evaluation and are accessible using a macro REQUESTING.
-
-    The table below shows all possible trigger and the trigger parameters applicable for each 
-trigger. 
-\image html TriggerParams.png
-*/
+ * @page pageTrigger Trigger
+ * 
+ * Trigger objects memorize details of an event for later processing. Different events need
+ * different information to memorize, so the various trigger types support different parameters.
+ * 
+ * > For example a connect request from the command side would have source ID and sink ID as the
+ * > trigger parameter whereas an availability-change notification from routing side has a 
+ * > source or sink name, the availability status and a reason for the change.
+ * 
+ * The trigger parameters can be used in configuration for action initialization as well as
+ * for condition evaluation. They are accessible through macros (see @ref sectionmacroList) 
+ * and functions (see @ref functionTable).
+ * 
+ * Below are lists of the various trigger types (see @ref am::gc::gc_Trigger_e "gc_Trigger_e")
+ * along with the macros they support:
+ * 
+ * ### Requests received from Command-Side #
+ * 
+ * <table>
+ *   <tr>
+ *     <th>Trigger Type</th>
+ *     <th>Command-Side Request</th>
+ *     <th>Supported Macros / Functions</th>
+ *   </tr><tr>
+ *     <td>USER_CONNECTION_REQUEST</td>
+ *     <td>@ref am::IAmCommandReceive::connect "connect()"</td>
+ *     <td>REQ_SINK_NAME,\n
+ *         REQ_SOURCE_NAME,\n
+ *         REQ_CLASS_NAME</td>
+ *   </tr><tr>
+ *     <td>USER_DISCONNECTION_REQUEST</td>
+ *     <td>@ref am::IAmCommandReceive::disconnect "disconnect()"</td>
+ *     <td>REQ_SINK_NAME,\n
+ *         REQ_SOURCE_NAME,\n
+ *         REQ_CLASS_NAME</td>
+ *   </tr><tr>
+ *     <td>USER_SET_SINK_MUTE_STATE</td>
+ *     <td>@ref am::IAmCommandReceive::setSinkMuteState "setSinkMuteState()"</td>
+ *     <td>REQ_SINK_NAME,\n
+ *         @ref am::am_MuteState_e "REQ_MUTE_STATE"</td>
+ *   </tr><tr>
+ *     <td>USER_SET_VOLUME</td>
+ *     <td>@ref am::IAmCommandReceive::setVolume "setVolume()",\n
+ *         @ref am::IAmCommandReceive::volumeStep "volumeStep()"</td>
+ *     <td>REQ_SINK_NAME\n
+ *         @ref am::am_mainVolume_t "REQ_MAIN_VOL",\n
+ *         isVolumeStep()</td>
+ *   </tr><tr>
+ *     <td>USER_SET_SINK_MAIN_SOUND_PROPERTY</td>
+ *     <td>@ref am::IAmCommandReceive::setMainSinkSoundProperty "setMainSinkSoundProperty()"</td>
+ *     <td>REQ_SINK_NAME,\n
+ *         @ref am::am_CustomMainSoundPropertyType_t "REQ_MSP_TYPE",\n
+ *         REQ_MSP_VAL</td>
+ *   </tr><tr>
+ *     <td>USER_SET_SINK_MAIN_SOUND_PROPERTIES</td>
+ *     <td>@ref am::IAmCommandReceive::setMainSinkSoundProperties "setMainSinkSoundProperties()"</td>
+ *     <td> >t. b. d.</td>
+ *   </tr><tr>
+ *     <td>USER_SET_SOURCE_MAIN_SOUND_PROPERTY</td>
+ *     <td>@ref am::IAmCommandReceive::setMainSourceSoundProperty "setMainSourceSoundProperty()"</td>
+ *     <td>REQ_SOURCE_NAME,\n
+ *         @ref am::am_CustomMainSoundPropertyType_t "REQ_MSP_TYPE",\n
+ *         REQ_MSP_VAL</td>
+ *   </tr><tr>
+ *     <td>USER_SET_SOURCE_MAIN_SOUND_PROPERTIES</td>
+ *     <td>@ref am::IAmCommandReceive::setMainSourceSoundProperties "setMainSourceSoundProperties()"</td>
+ *     <td> >t. b. d.</td>
+ *   </tr><tr>
+ *     <td>USER_SET_SYSTEM_PROPERTY</td>
+ *     <td>@ref am::IAmCommandReceive::setSystemProperty "setSystemProperty()"</td>
+ *     <td>@ref am::am_CustomSystemPropertyType_t "REQ_SYP_TYPE",\n
+ *         REQ_SYP_VAL</td>
+ *   </tr><tr>
+ *     <td>USER_SET_SINK_MAIN_NOTIFICATION_CONFIGURATION</td>
+ *     <td>@ref am::IAmCommandReceive::setMainSinkNotificationConfiguration "setMainSinkNotificationConfiguration()"</td>
+ *     <td>REQ_SINK_NAME,\n
+ *         @ref am::am_CustomNotificationType_t "REQ_NC_TYPE",\n
+ *         @ref am::am_NotificationStatus_e "REQ_NC_STATUS",\n
+ *         REQ_NC_PARAM</td>
+ *   </tr><tr>
+ *     <td>USER_SET_SOURCE_MAIN_NOTIFICATION_CONFIGURATION</td>
+ *     <td>@ref am::IAmCommandReceive::setMainSourceNotificationConfiguration "setMainSourceNotificationConfiguration()"</td>
+ *     <td>REQ_SOURCE_NAME,\n
+ *         @ref am::am_CustomNotificationType_t "REQ_NC_TYPE",\n
+ *         @ref am::am_NotificationStatus_e "REQ_NC_STATUS",\n
+ *         REQ_NC_PARAM</td>
+ *   </tr>
+ * </table>
+ * 
+ * ### Notifications received from Routing-Side #
+ * 
+ * <table>
+ *   <tr>
+ *     <th>Trigger Type</th>
+ *     <th>Routing-Side Notification</th>
+ *     <th>Supported Macros / Functions</th>
+ *   </tr><tr>
+ *     <td>SYSTEM_SOURCE_AVAILABILITY_CHANGED</td>
+ *     <td>@ref am::IAmRoutingReceive::hookSourceAvailablityStatusChange "hookSourceAvailablityStatusChange()"</td>
+ *     <td>REQ_SOURCE_NAME,\n
+ *         @ref am::am_Availability_e "REQ_AVAIL_STATE",\n
+ *         @ref am::am_CustomAvailabilityReason_t "REQ_AVAIL_REASON"</td>
+ *   </tr><tr>
+ *     <td>SYSTEM_SINK_AVAILABILITY_CHANGED</td>
+ *     <td>@ref am::IAmRoutingReceive::hookSinkAvailablityStatusChange "hookSinkAvailablityStatusChange()"</td>
+ *     <td>REQ_SINK_NAME,\n
+ *         @ref am::am_Availability_e "REQ_AVAIL_STATE",\n
+ *         @ref am::am_CustomAvailabilityReason_t "REQ_AVAIL_REASON"</td>
+ *   </tr><tr>
+ *     <td>SYSTEM_INTERRUPT_STATE_CHANGED</td>
+ *     <td>@ref am::IAmRoutingReceive::hookInterruptStatusChange "hookInterruptStatusChange()"</td>
+ *     <td>REQ_SOURCE_NAME,\n
+ *         @ref am::am_InterruptState_e "REQ_INT_STATE"</td>
+ *   </tr><tr>
+ *     <td>SYSTEM_SINK_NOTIFICATION_DATA_CHANGED</td>
+ *     <td>@ref am::IAmRoutingReceive::hookSinkNotificationDataChange "hookSinkNotificationDataChange()"</td>
+ *     <td>REQ_SINK_NAME,\n
+ *         @ref am::am_CustomNotificationType_t "REQ_NP_TYPE",\n
+ *         REQ_NP_VAL</td>
+ *   </tr><tr>
+ *     <td>SYSTEM_SOURCE_NOTIFICATION_DATA_CHANGED</td>
+ *     <td>@ref am::IAmRoutingReceive::hookSourceNotificationDataChange "hookSourceNotificationDataChange()"</td>
+ *     <td>REQ_SOURCE_NAME,\n
+ *         @ref am::am_CustomNotificationType_t "REQ_NP_TYPE",\n
+ *         REQ_NP_VAL</td>
+ *   </tr><tr>
+ *     <td>SYSTEM_DOMAIN_REGISTRATION_COMPLETE</td>
+ *     <td>@ref am::IAmRoutingReceive::hookDomainRegistrationComplete "hookDomainRegistrationComplete()"</td>
+ *     <td>REQ_DOMAIN_NAME</td>
+ *   </tr>
+ * </table>
+ * 
+ * ### Commands received from Routing-Side #
+ * 
+ * These triggers are risen after an element has been successfully announced to /
+ * unannounced from the GenIVI daemon.
+ * 
+ * <table>
+ *   <tr>
+ *     <th>Trigger Type</th>
+ *     <th>Routing-Side Request</th>
+ *     <th>Supported Macros / Functions</th>
+ *   </tr><tr>
+ *     <td>SYSTEM_REGISTER_DOMAIN</td>
+ *     <td>@ref am::IAmRoutingReceive::registerDomain "registerDomain()"</td>
+ *     <td>REQ_DOMAIN_NAME,\n
+ *         @ref am::am_Error_e "REQ_STATUS" (always E_OK)</td>
+ *   </tr><tr>
+ *     <td>SYSTEM_REGISTER_SOURCE</td>
+ *     <td>@ref am::IAmRoutingReceive::registerSource "registerSource()"</td>
+ *     <td>REQ_SOURCE_NAME,\n
+ *         @ref am::am_Error_e "REQ_STATUS" (always E_OK)</td>
+ *   </tr><tr>
+ *     <td>SYSTEM_REGISTER_SINK</td>
+ *     <td>@ref am::IAmRoutingReceive::registerSink "registerSink()"</td>
+ *     <td>REQ_SINK_NAME,\n
+ *         @ref am::am_Error_e "REQ_STATUS" (always E_OK)</td>
+ *   </tr><tr>
+ *     <td>SYSTEM_REGISTER_GATEWAY</td>
+ *     <td>@ref am::IAmRoutingReceive::registerGateway "registerGateway()"</td>
+ *     <td>REQ_GATEWAY_NAME,\n
+ *         @ref am::am_Error_e "REQ_STATUS" (always E_OK)</td>
+ *   </tr><tr>
+ *     <td>SYSTEM_DEREGISTER_DOMAIN</td>
+ *     <td>@ref am::IAmRoutingReceive::deregisterDomain "deregisterDomain()"</td>
+ *     <td>REQ_DOMAIN_NAME,\n
+ *         @ref am::am_Error_e "REQ_STATUS" (always E_OK)</td>
+ *   </tr><tr>
+ *     <td>SYSTEM_DEREGISTER_SOURCE</td>
+ *     <td>@ref am::IAmRoutingReceive::deregisterSource "deregisterSource()"</td>
+ *     <td>REQ_SOURCE_NAME,\n
+ *         @ref am::am_Error_e "REQ_STATUS" (always E_OK)</td>
+ *   </tr><tr>
+ *     <td>SYSTEM_DEREGISTER_SINK</td>
+ *     <td>@ref am::IAmRoutingReceive::deregisterSink "deregisterSink()"</td>
+ *     <td>REQ_SINK_NAME,\n
+ *         @ref am::am_Error_e "REQ_STATUS" (always E_OK)</td>
+ *   </tr><tr>
+ *     <td>SYSTEM_DEREGISTER_GATEWAY</td>
+ *     <td>@ref am::IAmRoutingReceive::deregisterGateway "deregisterGateway()"</td>
+ *     <td>REQ_GATEWAY_NAME,\n
+ *         @ref am::am_Error_e "REQ_STATUS" (always E_OK)</td>
+ *   </tr>
+ * </table>
+ * 
+ * ### Miscellaneous internal Notifications #
+ * 
+ * <table>
+ *   <tr>
+ *     <th>Trigger Type</th>
+ *     <th>Description</th>
+ *     <th>Supported Macros / Functions</th>
+ *   </tr><tr>
+ *     <td>SYSTEM_CONNECTION_STATE_CHANGE</td>
+ *     <td>The connection status of a connection has changed</td>
+ *     <td>REQ_CON_NAME,\n
+ *         @ref am::am_ConnectionState_e "REQ_CON_STATE",\n
+ *         @ref am::am_Error_e "REQ_STATUS"</td>
+ *   </tr><tr>
+ *     <td>SYSTEM_SINK_MUTE_STATE_CHANGED</td>
+ *     <td></td>
+ *     <td>(not implemented)</td>
+ *   </tr><tr>
+ *     <td>SYSTEM_SINK_MAIN_SOUND_PROPERTY_CHANGED</td>
+ *     <td></td>
+ *     <td>(not implemented)</td>
+ *   </tr><tr>
+ *     <td>SYSTEM_SOURCE_MAIN_SOUND_PROPERTY_CHANGED</td>
+ *     <td></td>
+ *     <td>(not implemented)</td>
+ *   </tr><tr>
+ *     <td>SYSTEM_VOLUME_CHANGED</td>
+ *     <td></td>
+ *     <td>(not implemented)</td>
+ *   </tr><tr>
+ *     <td>SYSTEM_STORED_SINK_VOLUME</td>
+ *     <td>The nominal volume of the main sink of a connection has been stored to persistence data</td>
+ *     <td>REQ_CON_NAME,\n
+ *         @ref am::am_mainVolume_t "REQ_MAIN_VOL"</td>
+ *   </tr><tr>
+ *     <td>SYSTEM_ALL_DOMAIN_REGISTRATION_COMPLETE</td>
+ *     <td>From now on all configured domains with all their configured sources and sinks
+ *         have been explicitly or implicitly registered to the AM. It can be used to
+           @ref recoverMainConnection from persistent storage area.</td>
+ *     <td>@ref am::am_Error_e "REQ_STATUS"</td>
+ *   </tr>
+ * </table>
+ */

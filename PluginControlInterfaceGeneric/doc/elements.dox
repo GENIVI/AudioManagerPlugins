@@ -1,691 +1,945 @@
 /*!
   \page elems Elements
-    The elements consists of source, sink, gateways, domains and classes. The converter is not yet
-supported.Refer to Genivi AudioManager documentation for the details 
-<a href="http://docs.projects.genivi.org/AudioManager/architecturepage.html">http://docs.projects.genivi.org/AudioManager/architecturepage.html</a>
 
-    The configuration for each elements includes all the fields defined in the audiomanager data
-structure, in addition some extra fields(like registration type, priority) specific to the generic 
-controller are also defined. The details of each elements is covered in coming sections.
+  The system topology is specified in the <system> tag, having the structure shown below:
+
+  \section elementconfiguration Element Configuration
+     \code
+      <system>
+        <templates>
+          ...
+        </templates>
+
+        <!-- element instances -->
+        <domain baseName="templateName">
+          <source baseName="templateName" ... 
+            <gateway baseName"templateName" ... />
+          </source>
+          <sink baseName="temmplateName" ...
+            <gateway baseName"templateName" ... />
+          </sink>
+            <gateway baseName"templateName" ... />
+        </domain>
+        <source name="mediaSource" baseName="ABCD" ... />
+        <sink name="sink1" baseName="temmplateName" ... />
+        <gateway name="sink2" baseName"templateName" ... />
+      </system>
+     \endcode
+ 
+The following are the important points of configuration structure
+  - All the elements are defined inside the system tag
+  - First there are templates. The templates are ways to define a repetitive 
+      information at once, give it some good name and use it later using the same good name.
+      For example if there are multiple sources in a configuration with same information repeated,
+      then define a template and while defining the source give proper baseName. All the fields defined 
+      in the template would be automatically copied to the source saving user typing effort. The Generic 
+      controller parsing code would initialize the source with the template data, at the same time allow to 
+      override the information by explicitly writing it. The templates can be 
+      defined at element level like for domain, source, sink, gateway, at the same time templates
+      can be defined for more granular level like sound properties list, mainsound properties etc.
+  - Following the templates is the domain, domain may contain source and sinks. If the source
+      and sinks are present inside domain tag then the domain name for source/sinks can be omitted. The
+      Generic controller parser can automatically determine it.
+  - Similarly gateway can be present inside the source and sinks, the parser code can 
+      automatically determine the sourcename and sink name for the gateway.
+  - At the same time the source/sink/gateway can also be defined out side the domain tag, but then
+      all the fields are required which otherwise could have been automatically determined.
+
+Each element is described in detail in upcoming sections.
+  - @subpage srcs
+  - @subpage snks
+  - @subpage gws
+  - @subpage doms
+  - @subpage unknownElems
+  - @subpage misc
+
+  The converter is not yet supported. Refer to Genivi AudioManager documentation for the details 
+  (http://docs.projects.genivi.org/AudioManager/architecturepage.html)
+
+  \section templatesection Templates
+  In the <templates> tag prototypes for several topology elements can be defined. They follow
+  the same syntax as element instance specification itself. Concrete elements inherit from
+  such prototypes through the attribute 'baseName'.
+
+  \code
+    <templates>
+      <!-- globally defined scaling maps. Can be referred in volume maps -->
+      <scaleConversionMap name "templateName1">-20., 0.;-10.,5.;...</scaleConversionMap>
+      <scaleConversionMap name "templateName2">0.,0.;10.,2.5;20.,5.;...</scaleConversionMap>
+
+      <!-- Prototypes for topology elements -->
+      <domain name="templateName" ... /domain>
+      <source name "templateName" ... /source>
+      <sink name "templateName" ... /sink>
+      <gateway name "templateName" ... /gateway>
+
+      <!-- Prototypes for element properties -->
+      <soundProperties name "templateName" ... />
+      <mainSoundProperties name "templateName" ... />
+      <connectionFormat name "templateName" ... />
+      <listmapMSPToSP name "templateName" ... />
+      <listmapMSPToSP name "templateName" ... />
+      <conversionMatrix  name "templateName" ... />
+    </templates>
+  \endcode
+
+  Additionally, global objects such as conversion maps can be defined.
+  E. g. the <scaleConversionMap> tag can be used to re-scale numerical values. It expects a
+  unique name attribute and as content a series of semicolon-separated pairs of decimal values,
+  each pair separated by a comma. Such a conversion map can be referred in the <sourceVolumeMap>
+  or <sinkVolumeMap> tag as well as in the <listMainVolumesToNormalizedVolumes> and
+  <listMainVolumesToNormalizedVolumes> tags instead of explicitly giving the series of values.
+
+  \note Usage of global mapping definitions in source or sink prototypes (templates) is currently not supported.
+
+
+\page unknownElems Unknown Element 
+
+Unknown Element is the one which is not present in the configuration.Generic controller 
+treats an element as Unknown element,
+    - If an element is registered which is not present in the configuration.
+    - If an element's class ID is invalid.<br>
+In a production scenario this should not happen, because all the sources and sinks would 
+be known in advance, but unknown element could be registered during the development phase. 
+In order to support this, a special source/sink class with name ‘default‘ is registered by the 
+controller at start up only if the system property SYP_GC_REGISTRATION_ALLOW_UNKNOWN_ELEMENT (Please see Reserved Properties 
+\ref reservedProp for details) is set. All unknown source/sink would be added to 
+default class during registration.
+A connection request for unknown source sink, would handled like a no topology 
+case i.e. first route returned by AM would be used as is. Additionally the keyword ‘default’ 
+can be used in the policy like any other class name. The configuration for the default class 
+can also be specified in the configuration; in that case this information would override 
+what controller registers for “default” class.
+
+
 */
 
 /*!
   \page srcs Sources
   \section srcList Source List
-  The configuration contains a list of audio sources described as below.
-  \subsection srcListEx Example
- \code
- <listSources>
-    <source>
+      \code
+        <source name="src1" ... >
+            ...
+        </source>
         ...
-    </source>
-    ...
- </listSources>
- \endcode
+        <source name="myFavoriteSource" ... >
+            ...
+        </source>
+      \endcode
+
+  The configuration contains a list of audio sources described as below.
 
  \section Source
  The source has following elements and attributes
+
  \subsection srcAttr XML Attributes
- <table>
-  <tr>
-    <td>Attribute</td>
-    <td>Description</td>
-    <td>Values</td>
-    <td>Mandatory(M)/Optional(O)</td>
-  </tr>
-  <tr>
-    <td>baseName</td>
-    <td>The name of the base source definition, from where the current source definition is inherited.</td>
-    <td>character string within quotes("")</td>
-    <td>O</td>
-  </tr>
-</table> 
- \subsection srcElements XML Elements
- <table>
-  <tr>
-    <td>Element</td>
-    <td>Description</td>
-    <td>Values</td>
-    <td>Mandatory(M)/Optional(O)</td>
-  </tr>
-  <tr>
-    <td>id</td>
-    <td>Identifier of the source</td>
-    <td>16-bit unsiged integer value. The values 1 - 99 are static IDs. If 0 is specified by the user, the audiomanager assigns value dynamically starting from 100.</td>
-    <td>M</td>
-  </tr>
-  <tr>
-    <td>domainName</td>
-    <td>The name of the domain to which the source belongs to.</td>
-    <td>character string</td>
-    <td>M</td>
-  </tr>
-  <tr>
-    <td>name</td>
-    <td>The name of the source.</td>
-    <td>character string</td>
-    <td>M</td>
-  </tr>
-  <tr>
-    <td>volume</td>
-    <td>The routing side volume value of the source at start up.</td>
-    <td>16-bit signed integer</td>
-    <td>O</td>
-  </tr>
-  <tr>
-    <td>visible</td>
-    <td>Whether the source is visible to application or not</td>
-    <td>TRUE - visible<br>FALSE - not visible</td>
-    <td>O</td>
-  </tr>
-  <tr>
-    <td>className</td>
-    <td>The class/type of source, e.g Entertainment, Notifications or Phone etc.</td>
-    <td>character string</td>
-    <td>O</td>
-  </tr>
-  <tr>
-    <td>sourceState</td>
-    <td>The class/type of source, e.g Entertainment, Notifications or Phone etc.</td>
-    <td>character string</td>
-    <td>O</td>
-  </tr>
-  <tr>
-    <td>connectionFormat</td>
-    <td>The list of connection formats supported by source. This is an optional element.</td>
-    <td>The element contains a list of element "connectionFormat". The the entry "connectionFormat" has following predefined values<>
-        CF_UNKNOWN - The connection format is known<br>
-        CF_GENIVI_MONO - The connection format is mono<br>
-        CF_GENIVI_STEREO - The connection format is stereo<br>
-        CF_GENIVI_ANALOG - The connection format is analog<br>
-        CF_GENIVI_AUTO - The connection format is auto<br>
-        The user defined connection formats can also be defined in customtypes.xsd
-    </td>
-    <td>O</td>
-  </tr>
-  <tr>
-    <td>interruptState</td>
-    <td>The interrupt state of the source.</td>
-    <td> The allowed values are below.<br>
-         IS_UNKNOWN - Interrupt state is not known<br>
-         IS_OFF - Interrupt state is off.<br>
-         IS_INTERRUPTED - Interrupt state is off.
-    </td>
-    <td>O</td>
-  </tr>
-  <tr>
-    <td>mainNotificationConfiguration</td>
-    <td>The list of main notification configurations.</td>
-    <td>The list of element "notificationConfiguration". The explanation of the notification configuration entry in the list is \ref notifConf "here"</td>
-    <td>O</td>
-  </tr>
-  <tr>
-    <td>notificationConfiguration</td>
-    <td>The list of notification configurations.</td>
-    <td>The list of element "notificationConfiguration". The explanation of the notification configuration entry in the list is \ref notifConf "here"</td>
-    <td>O</td>
-  </tr>
-  <tr>
-    <td>availability</td>
-    <td>The information about source's availability and availability reason.</td>
-    <td>The explanation of the availability is \ref avl "here"</td>
-    <td>O</td>
-  </tr>
-  <tr>
-    <td>soundProperty</td>
-    <td>The list of sound properties.</td>
-    <td>Contains the list of elements "soundProperty". The explanation of the sound property is \ref sndProp "here"</td>
-    <td>O</td>
-  </tr>
-  <tr>
-    <td>mainSoundProperty</td>
-    <td>The list of main sound properties.</td>
-    <td>Contains the list of elements "mainSoundProperty". The explanation of the main sound property is \ref mainSndProp "here"</td>
-    <td>O</td>
-  </tr>
-  <tr>
-    <td>registrationType</td>
-    <td>The ownership for registering the source.</td>
-    <td>REG_CONTROLLER - The controller registers the source.<br>
-        REG_ROUTER - The routing adapter registers the source.<br>
-        REG_TEMPLATE - The source is not registered but used as a template
-    </td>
-    <td>O</td>
-  </tr>
-  <tr>
-    <td>isVolumeSupported</td>
-    <td>Whether the volume is supported by the source</td>
-    <td>TRUE - The volume is supported<br>
-        FALSE - The volume is not supported
-    </td>
-    <td>O</td>
-  </tr>
-  <tr>
-    <td>priority</td>
-    <td>The priority of the source</td>
-    <td>unsigned integer</td>
-    <td>O</td>
-  </tr>
-  <tr>
-    <td>listMainSoundPropertiesToSoundProperties</td>
-    <td>The list of mapping between main sound property and sound property</td>
-    <td></td>
-    <td>O</td>
-  </tr>
-  <tr>
-    <td></td>
-    <td></td>
-    <td></td>
-    <td>O</td>
-  </tr>
-</table> 
+
+<table>
+<tr>
+  <th>Name</th>
+  <th>required</th>
+  <th>Description</th>
+  <th>Value</th>
+</tr>
+<tr>
+  <td>baseName</td>
+  <td>no</td>
+  <td>This is the name of the template from which source information would be populated</td>
+  <td>String\n
+      Default Value: ""</td>
+</tr>
+<tr>
+  <td>registrationType</td>
+  <td>no</td>
+  <td>The ownership of registration, controller or router.</td>
+  <td>REG_CONTROLLER\n
+      REG_ROUTER\n
+      Default: REG_ROUTER</td>y
+</tr>
+<tr>
+  <td>isVolumeChangeSupported</td>
+  <td>no</td>
+  <td>The source supports volume change requests</td>
+  <td>TRUE/FALSE\n
+      Default: TRUE</td>
+</tr>
+<tr>
+  <td>isPersistencySupported</td>
+  <td>no</td>
+  <td>The source supports last main connection persistence</td>
+  <td>TRUE/FALSE\n
+      Default: FALSE</td>
+</tr>
+<tr>
+  <td>isVolumePersistencySupported</td>
+  <td>no</td>
+  <td>The source supports last main volume persistence</td>
+  <td>TRUE/FALSE\n
+      Default: FALSE</td>
+</tr>
+<tr>
+  <td>priority</td>
+  <td>no</td>
+  <td>The priority for the source</td>
+  <td>Unsigned integer\n
+      Default: 50</td>
+</tr>
+<tr>
+  <td>sourceVolumeMap</td>
+  <td>no</td>
+  <td>Optional mapping from internal volume representation (1/10th deciBel in the range -3000 ... 0)
+      to routing side volume</td>
+  <td>For details refer \ref srcVolMap\n
+      Default: direct mapping</td>
+</tr>
+<tr>
+  <td>minVolume</td>
+  <td>no</td>
+  <td>This is the minimum Volume for the source. Use to define the source volume range.</td>
+  <td>16 bit integer\n
+      Default: 0</td>
+</tr>
+<tr>
+  <td>maxVolume</td>
+  <td>no</td>
+  <td>This is the maxVolume, Volume for the source. Use to define the source volume range.</td>
+  <td>16 bit integer\n
+      Default:0</td>
+</tr>
+<tr>
+  <td>mapMSPToSPTemplateName</td>
+  <td>no</td>
+  <td>The name of the template from which the MSPToSP Mapping Map is copied</td>
+  <td>Refer Section \ref mspTospMap String\n
+      Default:blank</td>
+</tr>
+<tr>
+  <td>id</td>
+  <td>no</td>
+  <td>The id for the source</td>
+  <td>16 bit unsigned integer\n 
+      default: 0 assigned by AM during registration</td>
+</tr>
+<tr>
+  <td>domainName</td>
+  <td>no</td>
+  <td>The name of the domain to which source belongs</td>
+  <td>String. If the source definition is contained inside the domain structure then the 
+      domain name of the containing domain would be used.</td>
+</tr>
+<tr>
+  <td>name</td>
+  <td><b>yes</b></td>
+  <td>Name of the source</td>
+  <td>String.</td>
+</tr>
+<tr>
+  <td>volume</td>
+  <td>no</td>
+  <td>The volume of the source.</td>
+  <td>16 bit integer.\n
+      Default: 0</td>
+</tr>
+<tr>
+  <td>visible</td>
+  <td>no</td>
+  <td>The source is visible to the command side interface</td>
+  <td>Boolean\n
+      Default: true</td>
+</tr>
+<tr>
+  <td>className</td>
+  <td><b>yes</b></td>
+  <td>The class name to which source belongs</td>
+  <td>string</td>
+</tr>
+<tr>
+  <td>sourceState</td>
+  <td>no</td>
+  <td>The state of the source</td>
+  <td>am_SourceState_e\n
+      default: SS_UNKNOWN</td>
+</tr>
+<tr>
+  <td>interruptState</td>
+  <td>no</td>
+  <td>The interrupt state of the source</td>
+  <td>am_InterruptState_e\n
+      Default: IS_UNKNOWN</td>
+</tr>
+<tr>
+  <td>connectionFormat</td>
+  <td>no</td>
+  <td>The list of supported connection formats</td>
+  <td>Refer Section \ref connFormats\n
+      Semi-colon separated string.</td>
+</tr>
+<tr>
+  <td>soundPropertiesTemplateName</td>
+  <td>no</td>
+  <td>The name of the template from which the sound properties would be copied</td>
+  <td>For details refer \ref sndProp String\n
+      Default: blank</td>
+</tr>
+<tr>
+  <td>mainSoundPropertiesTemplateName</td>
+  <td>no</td>
+  <td>The name of the template from which the main sound properties would be copied</td>
+  <td>For details refer \ref mainSndProp String\n
+      Default: blank</td>
+</tr>
+<tr>
+  <td>notificationConfigurationsTemplateName</td>
+  <td>no</td>
+  <td>The name of the template from which the notification configuration list would be copied</td>
+  <td>Refer Section \ref notifConf String\n
+      Default: blank</td>
+</tr>
+<tr>
+  <td>mainNotificationConfigurationsTemplateName</td>
+  <td>no</td>
+  <td>The name of the template from which the list of main notification configuration would be copied</td>
+  <td>Refer Section \ref mainNotifConf String\n
+      Default: blank</td>
+</tr>
+<tr>
+  <td>connectionFormatsTemplateName</td>
+  <td>no</td>
+  <td>The name of the template from which the connection format list would be copied</td>
+  <td>Refer Section \ref connFormats\n
+      String\n
+      Default: blank</td>
+</tr>
+</table>
+
+ \subsection srcElements XML Child-Elements
+<table>
+<tr>
+  <th>Name</th>
+  <th>required</th>
+  <th>Description</th>
+  <th>Value</th>
+</tr>
+<tr>
+  <td>notificationConfiguration</td>
+  <td>no</td>
+  <td>List of notification configuration</td>
+  <td>Refer Section \ref notifConf\n
+      Complex Type</td>
+</tr>
+<tr>
+  <td>mainNotificationConfiguration</td>
+  <td>no</td>
+  <td>List of main notification configuration</td>
+  <td>Refer Section \ref mainNotifConf\n
+      Complex Type</td>
+</tr>
+<tr>
+  <td>availability</td>
+  <td>no</td>
+  <td>Availability and availability reason for source</td>
+  <td>Refer Section \ref avl\n
+      Complex Type</td>
+</tr>
+<tr>
+  <td>soundProperty</td>
+  <td>no</td>
+  <td>list of sound properties for source</td>
+  <td>For details refer \ref sndProp\n
+      Complex Type</td>
+</tr>
+<tr>
+  <td>mainSoundProperty</td>
+  <td>no</td>
+  <td>list of main sound properties for source</td>
+  <td>For details refer \ref mainSndProp\n
+      complex type</td>
+</tr>
+<tr>
+  <td>mapMSPtoSP</td>
+  <td>no</td>
+  <td>The mapping between sound property and main sound property and vice versa.</td>
+  <td>Refer Section \ref mspTospMap\n
+      complex type</td>
+</tr>
+<tr>
+  <td>gateway</td>
+  <td>no</td>
+  <td>The gateway definition of which this source is part</td>
+  <td>Refer Section \ref gws\n
+      Complex type.\n
+      If the gateway description is written under the source and the sourceName for gateway can be skipped.</td>
+</tr>
+</table>
 
  \subsection exSrc1 Example 1 - Source Definition
  \code
-    <source>
-        <id>0</id>
-        <domainName>ExampleDomain</domainName>
-        <name>Media</name>
-        <volume>80</volume>
-        <visible>TRUE</visible>
-        <className>Entertainment</className>
-        <sourceState>SS_ON</sourceState>
-        <connectionFormat>CF_GENIVI_STEREO</connectionFormat>
-        <connectionFormat>CF_GENIVI_MONO</connectionFormat>
-        <interruptState>IS_OFF</interruptState>
-        <availability>
-            <availability>A_AVAILABLE</availability>
-            <availabilityReason>AR_UNKNOWN</availabilityReason>
-        </availability>
-        <soundProperty>
-            <type>SP_GENIVI_TREBLE</type>
-            <value minValue="0" maxValue="10">5</value>
-        </soundProperty>
-        <soundProperty>
-            <type>SP_GENIVI_MID</type>
-            <value minValue="0" maxValue="10">5</value>
-        </soundProperty>
-        <soundProperty>
-            <type>SP_GENIVI_BASS</type>
-            <value minValue="0" maxValue="10">5</value>
-        </soundProperty>
-        <mainSoundProperty>
-            <type>MSP_GENIVI_TREBLE</type>
-            <value minValue="0" maxValue="10">5</value>
-        </mainSoundProperty>
-        <mainSoundProperty>
-            <type>MSP_GENIVI_MID</type>
-            <value minValue="0" maxValue="10">5</value>
-        </mainSoundProperty>
-        <mainSoundProperty>
-            <type>MSP_GENIVI_BASS</type>
-            <value minValue="0" maxValue="10">5</value>
-        </mainSoundProperty>
-        <registrationType>REG_TEMPLATE</registrationType>
-        <isVolumeSupported>TRUE</isVolumeSupported>
-        <priority>1</priority>
-        <listMainSoundPropertiesToSoundProperties>
-            <mapEntry>MSP_UNKNOWN,SP_UNKNOWN</mapEntry>
-            <mapEntry>MSP_GENIVI_TREBLE,SP_GENIVI_TREBLE</mapEntry>
-        </listMainSoundPropertiesToSoundProperties>
-    </source>
+      <source id="0" domainName="Domain1" name="Source1" volume="80" visible="TRUE" className="Class1"
+        sourceState="SS_ON" connectionFormat="CF_GENIVI_MONO;CF_GENIVI_STEREO" interruptState="IS_OFF" 
+        isVolumeSupported="FALSE" priority="1" minVolume="-1920" maxVolume="1920">
+        <availability availability="A_AVAILABLE" availabilityReason="AR_UNKNOWN" />
+        <soundProperty type="SP_GENIVI_TREBLE" value="5" minValue="0" maxValue="10" />
+        <soundProperty type="SP_GENIVI_MID" value="5" minValue="0" maxValue="10" />
+        <soundProperty type="SP_GENIVI_BASE" value="5" minValue="0" maxValue="10" />
+        <mainSoundProperty type="MSP_GENIVI_TREBLE" value="5" minValue="0" maxValue="10" />
+        <mainSoundProperty type="MSP_GENIVI_MID" value="5" minValue="0" maxValue="10" />
+        <mainSoundProperty type="MSP_GENIVI_BASS" value="5" minValue="0" maxValue="10" />
+        <mapMSPtoSP mappingDirection="MD_BOTH">MSP_GENIVI_TREBLE,SP_GENIVI_TREBLE</mapMSPtoSP>
+        <mapMSPtoSP mappingDirection="MD_BOTH">MSP_GENIVI_MID,SP_GENIVI_MID</mapMSPtoSP>
+        <mapMSPtoSP mappingDirection="MD_BOTH">MSP_GENIVI_BASS,SP_GENIVI_BASS</mapMSPtoSP>
+      </source>
  \endcode
+The above example shows the example of the source configuration. If the source is present
+inside the domain tag then the domain name is optional, Generic controller would 
+automatically assign the domain name inside which the source is present.
 
  \subsection exSrc2 Example 2 - Inheritance of Source Definition
  \code
-    <source>
-        <id>0</id>
-        <domainName>NONE</domainName>
-        <name>SourceTemplate</name>
-        <volume>80</volume>
-        <visible>TRUE</visible>
-        <className>NONE</className>
-        <sourceState>SS_ON</sourceState>
-        <connectionFormat>CF_GENIVI_STEREO</connectionFormat>
-        <connectionFormat>CF_GENIVI_MONO</connectionFormat>
-        <interruptState>IS_OFF</interruptState>
-        <availability>
-            <availability>A_AVAILABLE</availability>
-            <availabilityReason>AR_UNKNOWN</availabilityReason>
-        </availability>
-        <soundProperty>
-            <type>SP_GENIVI_TREBLE</type>
-            <value minValue="0" maxValue="10">5</value>
-        </soundProperty>
-        <soundProperty>
-            <type>SP_GENIVI_MID</type>
-            <value minValue="0" maxValue="10">5</value>
-        </soundProperty>
-        <soundProperty>
-            <type>SP_GENIVI_BASS</type>
-            <value minValue="0" maxValue="10">5</value>
-        </soundProperty>
-        <mainSoundProperty>
-            <type>MSP_GENIVI_TREBLE</type>
-            <value minValue="0" maxValue="10">5</value>
-        </mainSoundProperty>
-        <mainSoundProperty>
-            <type>MSP_GENIVI_MID</type>
-            <value minValue="0" maxValue="10">5</value>
-        </mainSoundProperty>
-        <mainSoundProperty>
-            <type>MSP_GENIVI_BASS</type>
-            <value minValue="0" maxValue="10">5</value>
-        </mainSoundProperty>
-        <registrationType>REG_TEMPLATE</registrationType>
-        <isVolumeSupported>TRUE</isVolumeSupported>
-        <priority>1</priority>
-        <listMainSoundPropertiesToSoundProperties>
-            <mapEntry>MSP_UNKNOWN,SP_UNKNOWN</mapEntry>
-            <mapEntry>MSP_GENIVI_TREBLE,SP_GENIVI_TREBLE</mapEntry>
-        </listMainSoundPropertiesToSoundProperties>
-    </source>
-
-    <source baseName="SourceTemplate">
-        <domainName>ExampleDomain</domainName>
-        <name>Media</name>
-        <className>Entertainment</className>
-        <registrationType>REG_CONTROLLER</registrationType>
-    </source>
+    <templates>
+      <source id="0" domainName="Domain1" name="SourceTemplate" volume="80" visible="TRUE" className="BASE"
+        sourceState="SS_ON" connectionFormat="CF_GENIVI_MONO;CF_GENIVI_STEREO" interruptState="IS_OFF" 
+        isVolumeSupported="FALSE" priority="1" minVolume="-1920" maxVolume="1920">
+        <availability availability="A_AVAILABLE" availabilityReason="AR_UNKNOWN" />
+        <soundProperty type="SP_GENIVI_TREBLE" value="5" minValue="0" maxValue="10" />
+        <soundProperty type="SP_GENIVI_MID" value="5" minValue="0" maxValue="10" />
+        <soundProperty type="SP_GENIVI_BASE" value="5" minValue="0" maxValue="10" />
+        <mainSoundProperty type="MSP_GENIVI_TREBLE" value="5" minValue="0" maxValue="10" />
+        <mainSoundProperty type="MSP_GENIVI_MID" value="5" minValue="0" maxValue="10" />
+        <mainSoundProperty type="MSP_GENIVI_BASS" value="5" minValue="0" maxValue="10" />
+        <mapMSPtoSP mappingDirection="MD_BOTH">MSP_GENIVI_TREBLE,SP_GENIVI_TREBLE</mapMSPtoSP>
+        <mapMSPtoSP mappingDirection="MD_BOTH">MSP_GENIVI_MID,SP_GENIVI_MID</mapMSPtoSP>
+        <mapMSPtoSP mappingDirection="MD_BOTH">MSP_GENIVI_BASS,SP_GENIVI_BASS</mapMSPtoSP>
+      </source>
+    </templates>
+      ... 
+      <source baseName="SourceTemplate" name="Media" isVolumeSupported="TRUE" />
  \endcode
- The example above is an advanced example where the source with name "Media" is derived from template "SourceTemplate". The template which is not expected to be registered should have "registrationType" as "REG_TEMPLATE". But note that "Media" which inherrits the template "SourceTemplate" should override "registrationType" to "REG_CONTROLLER" or "REG_ROUTING" based on registration ownership is with controller or routing adapter.
+The source template is defined in the templates section. The example above is an advanced
+example where the source with name "Media" is derived from template "SourceTemplate". 
+
 
   \page snks Sinks
   \section sinkList Sink List
   The configuration contains a list of audio sink described as below.
   \subsection sinkListEx Example
  \code
- <listSinks>
-    <sink>
-        ...
-    </sink>
     <sink>
         ...
     </sink>
     ...
- </listSinks>
+    <sink>
+        ...
+    </sink>
  \endcode
 
  \section Sink
  The sink has following elements and attributes
+
  \subsection sinkAttr XML Attributes
- <table>
-  <tr>
-    <td>Attribute</td>
-    <td>Description</td>
-    <td>Values</td>
-    <td>Mandatory(M)/Optional(O)</td>
-  </tr>
-  <tr>
-    <td>baseName</td>
-    <td>The name of the base sink definition, from where the current sink definition is inherit ed.</td>
-    <td>character string within quotes("")</td>
-    <td>O</td>
-  </tr>
-</table> 
- \subsection sinkElements XML Elements
- <table>
-  <tr>
-    <td>Element</td>
-    <td>Description</td>
-    <td>Values</td>
-    <td>Mandatory(M)/Optional(O)</td>
-  </tr>
-  <tr>
-    <td>id</td>
-    <td>Identifier of the sink</td>
-    <td>16-bit unsiged integer value. The values 1 - 99 are static IDs. If 0 is specified by the user, the audiomanager assigns value dynamicaly statrting from 100.</td>
-    <td>M</td>
-  </tr>
-  <tr>
-    <td>domainName</td>
-    <td>The name of the domain to which the sink belongs to.</td>
-    <td>character string</td>
-    <td>M</td>
-  </tr>
-  <tr>
-    <td>name</td>
-    <td>The name of the sink.</td>
-    <td>character string</td>
-    <td>M</td>
-  </tr>
-  <tr>
-    <td>volume</td>
-    <td>The routing side volume value of the sink at start up.</td>
-    <td>16-bit signed integer</td>
-    <td>O</td>
-  </tr>
-  <tr>
-    <td>visible</td>
-    <td>Whether the sink is visible to application or not</td>
-    <td>TRUE - visible<br>FALSE - not visible</td>
-    <td>O</td>
-  </tr>
- <tr>
-    <td>mainVolume</td>
-    <td>The user side volume value of the sink at start up.</td>
-    <td>16-bit signed integer</td>
-    <td>O</td>
-  </tr>
-  <tr>
-    <td>className</td>
-    <td>The class/type of sink, e.g Base, Interrupt or Phone etc.</td>
-    <td>character string</td>
-    <td>O</td>
-  </tr>
- <tr>
-    <td>muteState</td>
-    <td>The mute state of sink.</td>
-    <td>MS_MUTED - sink is in mute state<br>
-        MS_UNMUTED - sink is in un-mute state</td>
-    <td>O</td>
-  </tr>
-  <tr>
-    <td>connectionFormat</td>
-    <td>The list of connection formats supported by sink. This is an optional element.</td>
-    <td>The element contains a list of element "connectionFormat". The the entry "connectionFormat" has following predefined values<>
-        CF_UNKNOWN - The connection format is known<br>
-        CF_GENIVI_MONO - The connection format is mono<br>
-        CF_GENIVI_STEREO - The connection format is stereo<br>
-        CF_GENIVI_ANALOG - The connection format is analog<br>
-        CF_GENIVI_AUTO - The connection format is auto<br>
-        The user defined connection formats can also be defined in customtypes.xsd
-    </td>
-    <td>O</td>
-  </tr>
-  <tr>
-    <td>mainNotificationConfiguration</td>
-    <td>The list of main notification configurations.</td>
-    <td>The list of element "notificationConfiguration". The explanation of the notification configuration entry in the list is \ref notifConf "here"</td>
-    <td>O</td>
-  </tr>
-  <tr>
-    <td>notificationConfiguration</td>
-    <td>The list of notification configurations.</td>
-    <td>The list of element "notificationConfiguration". The explanation of the notification configuration entry in the list is \ref notifConf "here"</td>
-    <td>O</td>
-  </tr>
-  <tr>
-    <td>availability</td>
-    <td>The information about sink's availability and availability reason.</td>
-    <td>The explanation of the availability is \ref avl "here"</td>
-    <td>O</td>
-  </tr>
-  <tr>
-    <td>soundProperty</td>
-    <td>The list of sound properties.</td>
-    <td>Contains the list of elements "soundProperty". The explanation of the sound property is \ref sndProp "here"</td>
-    <td>O</td>
-  </tr>
-  <tr>
-    <td>mainSoundProperty</td>
-    <td>The list of main sound properties.</td>
-    <td>Contains the list of elements "mainSoundProperty". The explanation of the main sound property is \ref mainSndProp "here"</td>
-    <td>O</td>
-  </tr>
-  <tr>
-    <td>registrationType</td>
-    <td>The ownership for registering the sink.</td>
-    <td>REG_CONTROLLER - The controller registers the sink.<br>
-        REG_ROUTER - The routing adapter registers the sink.<br>
-        REG_TEMPLATE - The sink is not registered but used as a template
-    </td>
-    <td>O</td>
-  </tr>
-  <tr>
-    <td>isVolumeSupported</td>
-    <td>Whether the volume change is supported by the sink</td>
-    <td>TRUE - The volume is supported<br>
-        FALSE - The volume is not supported
-    </td>
-    <td>O</td>
-  </tr>
-  <tr>
-    <td>priority</td>
-    <td>The priority of the sink</td>
-    <td>unsigned integer</td>
-    <td>O</td>
-  </tr>
-  <tr>
-    <td>listMainVolumesToNormalizedVolumes</td>
-    <td>The list of mapping between main/user volume and normalized volumes</td>
-    <td>The list of element "tableEntry"</td>
-    <td>O</td>
-  </tr>
-  <tr>
-    <td>listNormalizedVolumesToDecibelVolumes</td>
-    <td>The list of mapping between normalized volumes and decibel/router volumes</td>
-    <td>The list of element "tableEntry"</td>
-    <td>O</td>
-  </tr>
-  <tr>
-    <td>listMainSoundPropertiesToSoundProperties</td>
-    <td>The list of mapping between main sound property and sound property</td>
-    <td>The list of element "mapEntry"</td>
-    <td>O</td>
-  </tr>
-</table> 
+<table>
+<tr>
+  <th>Name</th>
+  <th>required</th>
+  <th>Description</th>
+  <th>Value</th>
+</tr>
+<tr>
+  <td>baseName</td>
+  <td>no</td>
+  <td>The name of the template from which sink structure would be copied</td>
+  <td>String<br /> default: blank</td>
+</tr>
+<tr>
+  <td>registrationType</td>
+  <td>no</td>
+  <td>The owner of sink registration router or controller</td>
+  <td>REG_CONTROLLER / REG_ROUTER\n
+      default: REG_ROUTER</td>
+</tr>
+<tr>
+  <td>isVolumeSupported</td>
+  <td>no</td>
+  <td>The sink supports volume change request</td>
+  <td>Boolean\n
+      default: True</td>
+</tr>
+<tr>
+  <td>isPersistencySupported</td>
+  <td>no</td>
+  <td>Sink supports main connection persistence</td>
+  <td>Boolean\n
+      default: False</td>
+</tr>
+<tr>
+  <td>isVolumePersistencySupported</td>
+  <td>no</td>
+  <td>Sink supports last main volume persistence</td>
+  <td>Boolean\n
+      Default: False</td>
+</tr>
+<tr>
+  <td>priority</td>
+  <td>no</td>
+  <td>Sink priority</td>
+  <td>Unsigned integer\n
+      default: 50</td>
+</tr>
+<tr>
+  <td>listMainVolumesToNormalizedVolumes</td>
+  <td>no</td>
+  <td>Mapping table between main (user) volume and normalized volume</td>
+  <td>Refer Section \ref mvTonvMap\n
+      String: the semi-colon separated string</td>
+</tr>
+<tr>
+  <td>listNormalizedVolumesToDecibelVolumes</td>
+  <td>no</td>
+  <td>Mapping table between normalized volume and deciBel (routing side) volume</td>
+  <td>Refer Section \ref  nvTodvMap\n
+      String: the semi-colon separated string</td>
+</tr>
+<tr>
+  <td>sinkVolumeMap</td>
+  <td>no</td>
+  <td>Optional mapping from internal volume representation (1/10th deciBel in the range -3000 ... 0)
+      to routing side volume</td>
+  <td>For details refer \ref snkVolMap\n
+      Default: direct mapping</td>
+</tr>
+<tr>
+  <td>mapMSPToSPTemplateName</td>
+  <td>no</td>
+  <td>The name of the template from which the MSP to SP mapping map would be copied</td>
+  <td>String\n
+      Default: ""</td>
+</tr>
+<tr>
+  <td>id</td>
+  <td>no</td>
+  <td>Sink ID</td>
+  <td>unsigned integer\
+      Default: 0</td>
+</tr>
+<tr>
+  <td>domainName</td>
+  <td>no</td>
+  <td>Name of the domain to which this sink belongs</td>
+  <td>String\n
+      Default: blank, if sink is written inside the domain Node then the same domain name
+      would be used, in such a case this field is optional.</td>
+</tr>
+<tr>
+  <td>name</td>
+  <td><b>yes</b></td>
+  <td>Name of the sink</td>
+  <td>String</td>
+</tr>
+<tr>
+  <td>volume</td>
+  <td>no</td>
+  <td>The volume of the sink</td>
+  <td>16 bit integer\n
+      Default: 0</td>
+</tr>
+<tr>
+  <td>visible</td>
+  <td>no</td>
+  <td>sink is visible or not.</td>
+  <td>Boolean\n
+      Default: True</td>
+</tr>
+<tr>
+  <td>mainVolume</td>
+  <td>no</td>
+  <td>The main volume of the sink</td>
+  <td>16 bit integer\n
+      Default: 0</td>
+</tr>
+<tr>
+  <td>className</td>
+  <td><b>yes</b></td>
+  <td>Name of the class to which the sink belongs</td>
+  <td>String</td>
+</tr>
+<tr>
+  <td>muteState</td>
+  <td>no</td>
+  <td>Mute state of the sink</td>
+  <td>am_muteState_e\n
+      default: MS_UNMUTED</td>
+</tr>
+<tr>
+  <td>connectionFormat</td>
+  <td>no</td>
+  <td>The list of connection formats supported</td>
+  <td>Refer Section \ref connFormats\n
+      String: semi-colon separated string of the supported connection formats</td>
+</tr>
+<tr>
+  <td>soundPropertiesTemplateName</td>
+  <td>no</td>
+  <td>The name of the template from which the sound properties would be populated</td>
+  <td>For details refer \ref sndProp\n
+      String\n
+      Default: ""</td>
+</tr>
+<tr>
+  <td>mainSoundPropertiesTemplateName</td>
+  <td>no</td>
+  <td>The name of the template from which the main sound properties would be populated</td>
+  <td>For details refer \ref mainSndProp\n
+      String\n
+      Default: ""</td>
+</tr>
+<tr>
+  <td>notificationConfigurationsTemplateName</td>
+  <td>no</td>
+  <td>The name of the template from which the notification configuration would be populated</td>
+  <td>Refer Section \ref notifConf\n
+      String\n
+      Default: ""</td>
+</tr>
+<tr>
+  <td>mainNotificationConfigurationsTemplateName</td>
+  <td>no</td>
+  <td>The name of the template from which the main notification configuration would be populated</td>
+  <td>Refer Section \ref mainNotifConf\n
+      String\n
+      Default: ""</td>
+</tr>
+<tr>
+  <td>connectionFormatsTemplateName</td>
+  <td>no</td>
+  <td>The name of the template from which the connection format list would be populated.</td>
+  <td>Refer Section \ref connFormats\n
+      String\n
+      Default: ""</td>
+</tr>
+</table>
+
+ \subsection sinkElements XML Child-Elements
+<table>
+<tr>
+  <th>Name</th>
+  <th>required</th>
+  <th>Description</th>
+  <th>Value</th>
+</tr>
+<tr>
+  <td>notificationConfiguration</td>
+  <td>no</td>
+  <td>The list of notification configuration for the sink.</td>
+  <td>Refer Section \ref notifConf<br/>
+      Complex Type</td>
+</tr>
+<tr>
+  <td>mainNotificationConfiguration</td>
+  <td>no</td>
+  <td>The list of the main notification configuration</td>
+  <td>Refer Section \ref mainNotifConf <br/>
+      Complex Type</td>
+</tr>
+<tr>
+  <td>Availability</td>
+  <td>no</td>
+  <td>The availability and the availability reason for the sink</td>
+  <td>Refer Section \ref avl <br/>
+      Complex Type</td>
+</tr>
+<tr>
+  <td>soundProperty</td>
+  <td>no</td>
+  <td>The list of the sound properties of the sink</td>
+  <td>For details refer \ref sndProp <br/>
+      Complex Type</td>
+</tr>
+<tr>
+  <td>mainSoundProperty</td>
+  <td>no</td>
+  <td>The list of the main sound properties of the sink.</td>
+  <td>For details refer \ref mainSndProp <br/>
+      Complex Type</td>
+</tr>
+<tr>
+  <td>mapMSPtoSP</td>
+  <td>no</td>
+  <td>The main sound property to sound property mapping and vice versa.</td>
+  <td>Refer Section \ref mspTospMap <br/>
+      Complex Type</td>
+</tr>
+<tr>
+  <td>Gateway</td>
+  <td>no</td>
+  <td>The gateway definition of which sink is the part. If gateway is defined 
+      inside sink then the sinkName attribute for the gateway could be skipped.</td>
+  <td>Refer Section \ref gws <br/>
+      Complex Type</td>
+</tr>
+</table>
+
  \subsection exSink1 Example 1 - Sink Definition
  \code
-    <sink>
-    <id>0</id>
-        <domainName>ExampleDomain</domainName>
-        <name>Stereo1</name>
-        <volume>80</volume>
-        <visible>TRUE</visible>
-        <mainVolume>10</mainVolume>
-        <className>BASE</className>
-        <muteState>MS_UNMUTED</muteState>
-        <registrationType>REG_ROUTER</registrationType>
-    </sink>
+      <sink id="0" domainName="Domain1" name="stereo1" volume="0" visible="TRUE" mainVolume="80" className="BASE"
+        muteState="MS_UNMUTED" connectionFormat="CF_GENIVI_MONO;CF_GENIVI_STEREO" 
+        isVolumeSupported="TRUE" priority="1"
+        listMainVolumesToNormalizedVolumes="0,0.0;1,0.01;2,0.02;3,0.03;4,0.04;5,0.05;6,0.06;7,0.07;8,0.08;9,0.09;10,0.1;11,0.11;12,0.12;14,0.14;15,0.15;17,0.17;20,0.2;22,0.22;25,0.25;28,0.28;31,0.31;35,0.35;40,0.4;45,0.45;50,0.5;56,0.56;62,0.62;70,0.7;80,0.8;90,0.9;100,1.0;"
+        listNormalizedVolumesToDecibelVolumes="0.0,-192.0;0.01,-40.0;0.02,-34.0;0.03,-30.0;0.04,-27.0;0.05,-26.0;0.06,-24.0;0.07,-23.0;0.08,-22.0;0.09,-21.0;0.1,-20.0;0.11,-19.0;0.12,-18.0;0.14,-17.0;0.15,-16.0;0.17,-15.0;0.2,-14.0;0.22,-13.0;0.25,-12.0;0.28,-11.0;0.31,-10.0;0.35,-9.0;0.4,-8.0;0.45,-7.0;0.5,-6.0;0.56,-5.0;0.62,-4.0;0.7,-3.0;0.8,-2.0;0.9,-1.0;1.0,0.0;">
+        <availability availability="A_AVAILABLE" availabilityReason="AR_UNKNOWN" />
+        <soundProperty type="SP_GENIVI_TREBLE" value="5" minValue="0" maxValue="10" />
+        <soundProperty type="SP_GENIVI_MID" value="5" minValue="0" maxValue="10" />
+        <soundProperty type="SP_GENIVI_BASE" value="5" minValue="0" maxValue="10" />
+        <mainSoundProperty type="MSP_GENIVI_TREBLE" value="5" minValue="0" maxValue="10" />
+        <mainSoundProperty type="MSP_GENIVI_MID" value="5" minValue="0" maxValue="10" />
+        <mainSoundProperty type="MSP_GENIVI_BASS" value="5" minValue="0" maxValue="10" />
+        <mapMSPtoSP mappingDirection="MD_BOTH">MSP_GENIVI_TREBLE,SP_GENIVI_TREBLE</mapMSPtoSP>
+        <mapMSPtoSP mappingDirection="MD_BOTH">MSP_GENIVI_MID,SP_GENIVI_MID</mapMSPtoSP>
+        <mapMSPtoSP mappingDirection="MD_BOTH">MSP_GENIVI_BASS,SP_GENIVI_BASS</mapMSPtoSP>
+      </sink>
  \endcode
-    In the above example, a sink with name stereo1 is shown. It will be registered by router and will get the id dynamically. It is visible to complete system and belong to BASE class.
+In the above example, a sink with name stereo1 is shown. If this sink element is present
+inside the domain tag then the domainName attribute is optional. The Generic controller
+will automatically assign the name of the domain inside which the sink is present.
 
  \subsection exSink2 Example 2 - Inherited Sink Definition
  \code
-    <sink>
-        <id>0</id>
-        <domainName>NONE</domainName>
-        <name>SinkTemplate</name>
-        <volume>80</volume>
-        <visible>TRUE</visible>
-        <mainVolume>10</mainVolume>
-        <className>NONE</className>
-        <muteState>MS_UNMUTED</muteState>
-        <connectionFormat>CF_GENIVI_STEREO</connectionFormat>
-        <connectionFormat>CF_GENIVI_MONO</connectionFormat>
-        <availability>
-            <availability>A_AVAILABLE</availability>
-            <availabilityReason>AR_UNKNOWN</availabilityReason>
-        </availability>
-        <soundProperty>
-            <type>SP_GENIVI_TREBLE</type>
-            <value minValue="0" maxValue="10">5</value>
-        </soundProperty>
-        <soundProperty>
-            <type>SP_GENIVI_MID</type>
-            <value minValue="0" maxValue="10">5</value>
-        </soundProperty>
-        <soundProperty>
-            <type>SP_GENIVI_BASS</type>
-            <value minValue="0" maxValue="10">5</value>
-        </soundProperty>
-        <mainSoundProperty>
-            <type>MSP_GENIVI_TREBLE</type>
-            <value minValue="0" maxValue="10">5</value>
-        </mainSoundProperty>
-        <mainSoundProperty>
-            <type>MSP_GENIVI_MID</type>
-            <value minValue="0" maxValue="10">5</value>
-        </mainSoundProperty>
-        <mainSoundProperty>
-            <type>MSP_GENIVI_BASS</type>
-            <value minValue="0" maxValue="10">5</value>
-        </mainSoundProperty>
-        <registrationType>REG_TEMPLATE</registrationType>
-        <isVolumeSupported>TRUE</isVolumeSupported>
-        <priority>1</priority>
-        <listMainVolumesToNormalizedVolumes>
-                    <tableEntry>0,0.0</tableEntry>
-                    <tableEntry>1,0.01</tableEntry>
-        </listMainVolumesToNormalizedVolumes>
-        <listNormalizedVolumesToDecibelVolumes>
-                    <tableEntry>0.0,-192.0</tableEntry>
-                    <tableEntry>0.01,-40.0</tableEntry>
-        </listNormalizedVolumesToDecibelVolumes>
-            <listMainSoundPropertiesToSoundProperties>
-                <mapEntry>MSP_UNKNOWN,SP_UNKNOWN</mapEntry>
-                <mapEntry>MSP_GENIVI_TREBLE,SP_GENIVI_TREBLE</mapEntry>
-            </listMainSoundPropertiesToSoundProperties>
-        </sink>
-        <sink baseName="SinkTemplate">
-            <domainName>ExampleDomain</domainName>
-            <name>Stereo2</name>
-            <className>Entertainment</className>
-        <registrationType>REG_ROUTER</registrationType>
-    </sink>
+    <templates>
+      <scaleConversionMap name="MainVolumeScale">0,0.0;1,0.01;2,0.02;3,0.03;4,0.04;5,0.05;6,0.06;7,0.07;8,0.08;9,0.09;10,0.1;11,0.11;12,0.12;14,0.14;15,0.15;17,0.17;20,0.2;22,0.22;25,0.25;28,0.28;31,0.31;35,0.35;40,0.4;45,0.45;50,0.5;56,0.56;62,0.62;70,0.7;80,0.8;90,0.9;100,1.0</scaleConversionMap>
+      <sink id="0" domainName="Domain1" name="SinkTemplate" volume="0" visible="TRUE" mainVolume="80" className="BASE"
+        muteState="MS_UNMUTED" connectionFormat="CF_GENIVI_MONO;CF_GENIVI_STEREO" 
+        isVolumeSupported="TRUE" priority="1" registrationType="REG_ROUTER"
+        listNormalizedVolumesToDecibelVolumes="0.0,-192.0;0.01,-40.0;0.02,-34.0;0.03,-30.0;0.04,-27.0;0.05,-26.0;0.06,-24.0;0.07,-23.0;0.08,-22.0;0.09,-21.0;0.1,-20.0;0.11,-19.0;0.12,-18.0;0.14,-17.0;0.15,-16.0;0.17,-15.0;0.2,-14.0;0.22,-13.0;0.25,-12.0;0.28,-11.0;0.31,-10.0;0.35,-9.0;0.4,-8.0;0.45,-7.0;0.5,-6.0;0.56,-5.0;0.62,-4.0;0.7,-3.0;0.8,-2.0;0.9,-1.0;1.0,0.0;">
+        <availability availability="A_AVAILABLE" availabilityReason="AR_UNKNOWN" />
+        <soundProperty type="SP_GENIVI_TREBLE" value="5" minValue="0" maxValue="10" />
+        <soundProperty type="SP_GENIVI_MID" value="5" minValue="0" maxValue="10" />
+        <soundProperty type="SP_GENIVI_BASE" value="5" minValue="0" maxValue="10" />
+        <mainSoundProperty type="MSP_GENIVI_TREBLE" value="5" minValue="0" maxValue="10" />
+        <mainSoundProperty type="MSP_GENIVI_MID" value="5" minValue="0" maxValue="10" />
+        <mainSoundProperty type="MSP_GENIVI_BASS" value="5" minValue="0" maxValue="10" />
+        <mapMSPtoSP mappingDirection="MD_BOTH">MSP_GENIVI_TREBLE,SP_GENIVI_TREBLE</mapMSPtoSP>
+        <mapMSPtoSP mappingDirection="MD_BOTH">MSP_GENIVI_MID,SP_GENIVI_MID</mapMSPtoSP>
+        <mapMSPtoSP mappingDirection="MD_BOTH">MSP_GENIVI_BASS,SP_GENIVI_BASS</mapMSPtoSP>
+      </sink>
+    </templates>
+    ...
+    <sink baseName="SinkTemplate" name="Stereo0" listMainVolumesToNormalizedVolumes="MainVolumeScale"/>
  \endcode
-    This is the advanced usage of the configuration inheritance feature. Here a template class called
-sinkTemplate is defined using registrationType as REG_TEMPLATE. A Template sink is not 
-registred but is only a template for other sinks. In the above example only the field name, 
-domainName and name, className and registerationtype is overwritten for sink Stereo2, remaining fields are 
-initialized from the sinkTemplate. 
-    over the time we observed that most of the fields of elements are same from one element to 
-other. In order to reduce the typing efforts of the user, the concept of template/inheritance was 
-implemented. As per this feature the element can provide the baseName attribute. This element  whose 
-name is present as baseNamwe would be used to initialize all the fields of the element. only the 
-fields which are explicitly mentioned in the derived element are overwritten.
+
+This is the advanced usage of the configuration inheritance feature. In the above case
+all the information for the sink stereo0 would be copied from the sinkTemplate. Only
+the name would be changed to 'Stereo0' and the user volume conversion table is taken from
+the global mapping.
+
 
  \page gws Gateways
  \section lstGws Gateway List
  The configuration contains the list of the gateways described as below.
  \subsection exGwList Example
  \code
- <listGateways>
-    <gateway>
+     <gateway>
         ...
     </gateway>
     ...
- </listGateways>
+     <gateway>
+        ...
+    </gateway>
  \endcode
  \section gw Gateway
  The gateway has following XML attributes and elements.
 
  \subsection gwAttr XML Attributes
- <table>
-  <tr>
-    <td>Attribute</td>
-    <td>Description</td>
-    <td>Values</td>
-    <td>Mandatory(M)/Optional(O)</td>
-  </tr>
-  <tr>
-    <td>baseName</td>
-    <td>The name of the base gateway definition, from where the current gateway definition is inherited.</td>
-    <td>character string within quotes("")</td>
-    <td>O</td>
-  </tr>
-</table> 
+<table>
+<tr>
+<td>
+<p>Name</p>
+</td>
+<td>
+<p>M/O</p>
+</td>
+<td>
+<p>Description</p>
+</td>
+<td>
+<p>Value</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>registrationType</p>
+</td>
+<td>
+<p>O</p>
+</td>
+<td>
+<p>The responsible entity for registration of this gateway</p>
+</td>
+<td>
+<p>REG_CONTROLLER<br /> REG_ROUTER<br /> Default:REG_ROUTER</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>baseName</p>
+</td>
+<td>
+<p>O</p>
+</td>
+<td>
+<p>The name of the template from which this gateway is data is copied</p>
+</td>
+<td>
+<p>String</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>id</p>
+</td>
+<td>
+<p>O</p>
+</td>
+<td>
+<p>The ID for the gatewat</p>
+</td>
+<td>
+<p>Unsigned 16 bit integer<br /> default: 0</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>name</p>
+</td>
+<td>
+<p>M</p>
+</td>
+<td>
+<p>The name of the gateway.</p>
+</td>
+<td>
+<p>String<br /> Default:</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>conversionMatrix</p>
+</td>
+<td>
+<p>O</p>
+</td>
+<td>
+<p>The convertion matrix for the gateway</p>
+</td>
+<td>
+Refer Section \ref convMatrix
+<p>String, semi-colon sparated string<br /> Default:</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>conversionMatrixTemplateName</p>
+</td>
+<td>
+<p>O</p>
+</td>
+<td>
+<p>The name of the template from which the conversion matrix is copied</p>
+</td>
+<td>
+Refer Section \ref convMatrix
+<p>Default: Empty</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>sinkName</p>
+</td>
+<td>
+<p>O</p>
+</td>
+<td>
+<p>The name of the gatway sink</p>
+</td>
+<td>
+<p>String</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>sourceName</p>
+</td>
+<td>
+<p>O</p>
+</td>
+<td>
+<p>The name of the gateway source</p>
+</td>
+<td>
+<p>string</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>controldomainName</p>
+</td>
+<td>
+<p>O</p>
+</td>
+<td>
+<p>The name of the domain which will register the gateway. If gateway is included inside the domain node then this field can be skipped.</p>
+</td>
+<td>
+<p>String</p>
+</td>
+</tr>
+</table>
+
+
+
  \subsection gwElems XML Elements
- <table>
-  <tr>
-    <td>Element</td>
-    <td>Description</td>
-    <td>Values</td>
-    <td>Mandatory(M)/Optional(O)</td>
-  </tr>
-  <tr>
-    <td>id</td>
-    <td>This is identifier of the gateway</td>
-    <td>16-bit unsigned integer. The value 1-99 are reserved for the static IDs. If 0 is specified by the user, the audio manager dynamically assigns the value starting with 100</td>
-    <td>O</td>
-  </tr>
-  <tr>
-    <td>name</td>
-    <td>The name of the gateway.</td>
-    <td>character string</td>
-    <td>M</td>
-  </tr>
-  <tr>
-    <td>conversionMatrix</td>
-    <td>The matrix contains the conversion capability of the gateway between sink audio format to source audio format.</td>
-    <td>contains the convertible audio format pairs, e.g. if mono to stereo conversion is possible by gateway, then the containt of the element would be, CF_GENIVI_MONO,CF_GENIVI_STEREO</td>
-    <td>O</td>
-  </tr>
-  <tr>
-    <td>sinkName</td>
-    <td>The name of the sink side of the gateway</td>
-    <td>character string</td>
-    <td>M</td>
-  </tr>
-  <tr>
-    <td>sourceName</td>
-    <td>The name of the source side of the gateway</td>
-    <td>character string</td>
-    <td>M</td>
-  </tr>
-  <tr>
-    <td>controlDomainName</td>
-    <td>The name of the domain which would register this gateway</td>
-    <td>character string</td>
-    <td>M</td>
-  </tr>
-  <tr>
-    <td>registrationType</td>
-    <td>The ownership for registering the gateway.</td>
-    <td>REG_CONTROLLER - The controller registers the gateway.<br>
-        REG_ROUTER - The routing adapter registers the gateway.<br>
-        REG_TEMPLATE - The gateway is not registered but used as a template
-    </td>
-    <td>O</td>
-  </tr>
- </table>
+Gateway has no Elements.
+
  \subsection exGw1 Example - 1 Gateway Definition
  \code
-    <gateway>
-        <id>0</id>
-        <name>ExampleGateway</name>
-        <conversionMatrix>CF_GENIVI_MONO,CF_GENIVI_STEREO</conversionMatrix>
-        <conversionMatrix>CF_GENIVI_STEREO,CF_GENIVI_STEREO</conversionMatrix>
-        <conversionMatrix>1</conversionMatrix>
-        <sinkName>GatewaySink</sinkName>
-        <sourceName>GatewaySource</sourceName>
-        <controlDomainName>ExampleDomain</controlDomainName>
-        <registrationType>REG_CONTROLLER</registrationType>
-    </gateway>
+    <gateway id="0" name="Gateway1" domainName="Domain1" sinkName="sink1" sourceName="source1" 
+    registrationType="REG_ROUTER" conversionMatrix="CF_GENIVI_MONO,CF_GENIVI_STEREO;CF_GENIVI_STEREO,CF_GENIVI_STEREO"/>
  \endcode
+
  \subsection exGw2 Example - 2 Inheritance of Gateway Definition
  \code
-    <gateway>
-        <id>0</id>
-        <name>GatewayTemplate</name>
-        <conversionMatrix>CF_GENIVI_MONO,CF_GENIVI_STEREO</conversionMatrix>
-        <conversionMatrix>CF_GENIVI_STEREO,CF_GENIVI_STEREO</conversionMatrix>
-        <sinkName>Unknown</sinkName>
-        <sourceName>Unknown</sourceName>
-        <controlDomainName>ExampleDomain</controlDomainName>
-        <registrationType>REG_TEMPLATE</registrationType>
-    </gateway>
-    <gateway baseName="GatewayTemplate">
-        <name>ExampleGateway</name>
-        <sinkName>GatewaySink</sinkName>
-        <sourceName>GatewaySource</sourceName>
-        <registrationType>REG_CONTROLLER</registrationType>
-    </gateway>
+    <templates>
+        <gateway name="GatewayTemplate" domainName="Domain1" registrationType="REG_ROUTER" conversionMatrix="CF_GENIVI_MONO,CF_GENIVI_STEREO;CF_GENIVI_STEREO,CF_GENIVI_STEREO"/>
+    </templates>
+    ...
+    <domain ...>
+    ...
+    <source name="source" ...>
+        ...
+        <gateway baseName="GatewayTemplate" name="GatewayInsideSource" sinkName="sink1"/>
+    </source>
+    ...
+    <sink name="sink" ...>
+        ...
+        <gateway baseName="GatewayTemplate" name="GatewayInsideSink" sourceName="source1"/>
+    </sink>
+    ...
+    </domain>
+    <gateway baseName="GatewayTemplate" name="Gateway1" domainName="domain" sourceName="source1" sinkName="sink1"/> 
  \endcode
- The above example shows how the gateway definition can be inheritted from template gateway definition. The template definition should have value "REG_TEMPLATE" for the element "registrationType". The same should be overriden by the gateway inheriting the template.
+The above example shows how the gateway definition can be inheritted from template 
+gateway definition. Also note that if gateway is present inside the source and sink tag
+ the source/sink name is optional respectively. 
 
  \page doms Domains
  \section lstDom Domain List
  The configuration contains the list of audio domains described as below.
  \subsection exDomList  Example
  \code
- <listDomains>
     <domain>
       ...
     </domain>
     ...
- </listDomains>
+    <domain>
+      ...
+    </domain>
  \endcode
 
  \section dom Domain
@@ -694,231 +948,197 @@ fields which are explicitly mentioned in the derived element are overwritten.
  \subsection domAttr XML Attributes
  <table>
   <tr>
-    <td>Attribute</td>
-    <td>Description</td>
-    <td>Values</td>
-    <td>Mandatory(M)/Optional(O)</td>
-  </tr>
-  <tr>
-    <td>baseName</td>
-    <td>The name of the base source definition, from where the current source definition is inherited.</td>
-    <td>character string within quotes("")</td>
-    <td>O</td>
-  </tr>
-</table> 
- \subsection domElem XML Elements
- <table>
-  <tr>
-    <td>Element</td>
-    <td>Description</td>
-    <td>Values</td>
-    <td>Mandatory(M)/Optional(O)</td>
+    <th>Name</th>
+    <th>Required</th>
+    <th>Description</th>
+    <th>Value</th>
   </tr>
   <tr>
     <td>id</td>
-    <td>Identifier of the domain</td>
-    <td>16-bit unsiged integer value. The user should assign value 0. The value of the domain ID is dynamically assigned by audiomanager.</td>
-    <td>O</td>
+    <td>no</td>
+    <td>The id for the domain. If this attribute is not present the ID would be 0, which means AM would assign the appropriate ID.</td>
+    <td>16 bit unsigned integer.</td>
   </tr>
   <tr>
-    <td>name</td>
-    <td>The name of the domain.</td>
-    <td>character string</td>
-    <td>M</td>
+    <td><b>name</b></td>
+    <td><b>yes</b></td>
+    <td>The name of the domain</td>
+    <td>String</td>
   </tr>
   <tr>
     <td>busName</td>
-    <td>The name of the bus</td>
-    <td>character string</td>
-    <td>O</td>
+    <td>no/yes</td>
+    <td>The name of the bus for the domain. Required if registrationType is set to REG_CONTROLLER.</td>
+    <td>String</td>
   </tr>
   <tr>
     <td>nodeName</td>
-    <td>The node name</td>
-    <td>character string</td>
-    <td>O</td>
+    <td>no</td>
+    <td>The name of the node for the domain</td>
+    <td>String</td>
   </tr>
   <tr>
     <td>early</td>
-    <td>Indicates early domain or not</td>
-    <td>TRUE - early domain<br>FALSE - not an early domain</td>
-    <td>O</td>
+    <td>no</td>
+    <td>Set to TRUE if domain may start its activities before audio-manager is up</td>
+    <td>Boolean<br /> Default: FALSE</td>
   </tr>
   <tr>
     <td>complete</td>
-    <td>Indicates domain registration complete or not</td>
-    <td>TRUE - domain registration complete<br>FALSE - domain registration not complete</td>
-    <td>O</td>
+    <td>no</td>
+    <td>Set to TRUE if <b>all</b> domain sources/sinks/gateways are listed as child elements, thus domain definition is complete</td>
+    <td>Boolean<br /> Default: FALSE</td>
   </tr>
   <tr>
     <td>state</td>
-    <td>Domain state</td>
-    <td>DS_UNKNOWN - domain state unknown<br>
-        DS_CONTROLLED -  domain is a controlled domain<br>
-        DS_INDEPENDENT_STARTUP - domain is independent starting up<br>
-        DS_INDEPENDENT_RUNDOWN - domain is independent running down</td>
-    <td>O</td>
-  </tr>
-  <tr>
-    <td>registrationType</td>
-    <td>The ownership for registering the domain.</td>
-    <td>REG_CONTROLLER - The controller registers the domain.<br>
-        REG_TEMPLATE - The domain is not registered but used as a template
-        Domain cannot be registered by the controller.
-    </td>
-    <td>O</td>
-   </tr>
-</table>
- \subsection exDom1 Example - 1 Domain Definition
- \code
-    <domain>
-        <id>0</id>
-        <name>domain1</name>  
-        <busName>org.genivi.audiomanager.routing</busName>
-        <nodeName>node1</nodeName> 
-        <early>FALSE</early>     
-        <complete>TRUE</complete>
-        <state>DS_CONTROLLED</state>
-        <registrationType>REG_ROUTER</registrationType>
-    </domain>
- \endcode
- \subsection exDom2 Example - 2 Inheritance of Domain Definition
- \code
-    <domain>
-        <id>0</id>
-        <name>DomainTemplate</name>  
-        <busName>org.genivi.audiomanager.routing</busName>
-        <nodeName>node</nodeName> 
-        <early>FALSE</early>     
-        <complete>TRUE</complete>
-        <state>DS_CONTROLLED</state>
-        <registrationType>REG_TEMPLATE</registrationType>
-    </domain>
-
-    <domain baseName="DomainTemplate">
-        <name>domain1</name>  
-        <nodeName>node1</nodeName> 
-        <registrationType>REG_ROUTER</registrationType>
-    </domain>
-
-    <domain baseName="domain1">
-        <name>domain2</name>  
-        <nodeName>node2</nodeName> 
-    </domain>
- \endcode
-
-  \page clselems Class
-  \section classList Class List
-  The configuration contains a list of connection classes described as below.
-  \subsection clsListEx Example
- \code
- <listClasses>
-    <class>
-        ...
-    </class>
-    ...
- </listClasses>
- \endcode
-
- \section Class
- The connection class has following elements and attributes
- \subsection clsAttr XML Attributes
- <table>
-  <tr>
-    <td>Attribute</td>
-    <td>Description</td>
-    <td>Values</td>
-    <td>Mandatory(M)/Optional(O)</td>
+    <td>no</td>
+    <td>The state of the Domain</td>
+    <td>am::am_DomainState_e<br/>DS_CONTROLLED<br/>DS_INDEPENDENT_STARTUP<br/>DS_INDEPENDENT_RUNDOWN<br /> Default: DS_UNKNOWN</td>
   </tr>
   <tr>
     <td>baseName</td>
-    <td>The name of the base class definition, from where the current class definition is inheritted.</td>
-    <td>character string within quotes("")</td>
-    <td>O</td>
-  </tr>
-</table> 
- \subsection clsElements XML Elements
- <table>
-  <tr>
-    <td>Element</td>
-    <td>Description</td>
-    <td>Values</td>
-    <td>Mandatory(M)/Optional(O)</td>
-  </tr>
-  <tr>
-    <td>name</td>
-    <td>The name of the class.</td>
-    <td>character string</td>
-    <td>M</td>
-  </tr>
-  <tr>
-    <td>type</td>
-    <td>The type of the class.</td>
-    <td>C_UNKNOWN: The class type is unknown.<br>
-        C_PLAYBACK: The class type is Playback.<br>
-        C_RECORD: The class type is Record.</td>
-    <td>O</td>
-  </tr>
-  <tr>
-    <td>priority</td>
-    <td>The priority of the class.</td>
-    <td>unsigned integer</td>
-    <td>O</td>
-  </tr>
-  <tr>
-    <td>topology</td>
-    <td>This is the list of topologies. The topology represents the controllers preferred route between a source and sink. for detailed explaination refer \ref exClsTopology.</td>
-    <td>string</td>
-    <td>M</td>
+    <td>no</td>
+    <td>The name of the template from which the domain definition be copied</td>
+    <td>String</td>
   </tr>
   <tr>
     <td>registrationType</td>
-    <td>The ownership for registering the class.</td>
-    <td>REG_CONTROLLER - The controller registers the class..<br>
-        REG_TEMPLATE - The class is not registered but used as a template<br>
-        Class registration ownership cannot be REG_ROUTER.
-    </td>
-    <td>O</td>
+    <td>no</td>
+    <td>The responsibility of the registration is with controller or router</td>
+    <td>am::gc::gc_Registration_e<br />REG_NONE<br /> REG_CONTROLLER<br /> REG_ROUTER<br /> Default: REG_ROUTER</td>
   </tr>
-</table> 
+ </table>
+
+ \subsection domElem XML Elements
+ <table>
+  <tr>
+    <th>Name</th>
+    <th>Required</th>
+    <th>Description</td>
+  </tr>
+  <tr>
+    <td>source</td>
+    <td>no</td>
+    <td>Zero or more source elements. Please refer to page \ref srcs.</td>
+  </tr>
+  <tr>
+    <td>sink</td>
+    <td>no</td>
+    <td>Zero or more sink elements. Please refer to page \ref snks.</td>
+  </tr>
+  <tr>
+    <td>gateway</td>
+    <td>no</td>
+    <td>Zero or more gateway elements. Please refer to page \ref gws.</td>
+  </tr>
+</table>
+
+ \subsection exDom1 Example - 1 Domain Definition
+ \code
+  <domain id="0" name="Domain1" busName="bus" nodeName="node" registrationType="REG_ROUTER">
+    <source name= ... />
+    <sink name= ... />
+    <gateway name= ... />
+  </domain>
+ \endcode
+
+
+  \page clselems Classes
+
+  Each source or sink element is assigned to a class element, which host common attributes.
+  Multiple sources or sinks can be assigned to the same class. The details of such class
+  elements are not announced from the routing side and must be specified for the controller.
+  This section goes above the system topology and also specifies the allowed audio routes.
+
+  The configuration contains a list of connection classes described as below.
+
+  ### Example #
+
+ \code
+    <classes>
+        <class name="MyEntertainClass" ...>
+            <topology> ... </topology>
+            <property type="CP_PER_SINK_CLASS_VOLUME_SUPPORT" value="1" />
+        </class>
+        <!-- more classes here -->
+    </classes>
+ \endcode
+ 
+ \section Class
+ The connection class has following elements and attributes
+ \subsection clsAttr XML Attributes
+<table>
+  <tr>
+    <th>Name</th>
+    <th>Required</th>
+    <th>Description</th>
+    <th>Value</th>
+  </tr><tr>
+    <td>id</td>
+    <td>no</td>
+    <td>ID for class.</td>
+    <td>If this value is not specified or zero then AM would assign the class ID.<br/> 
+        Otherwise the class would be registered with that ID.</td>
+  </tr><tr>
+    <td>name</td>
+    <td><b>yes</b></td>
+    <td>The name for the class</td>
+    <td>This is a mandatory value, a unique name for class should be specified</td>
+  </tr><tr>
+    <td>type</td>
+    <td>no</td>
+    <td>Type of class: \ref am::gc::gc_Class_e "gc_Class_e"</td>
+    <td>Default value is C_PLAYBACK</td>
+  </tr><tr>
+    <td>priority</td>
+    <td>no</td>
+    <td>Priority for the class</td>
+    <td>Integer value <br /> Default value 50</td>
+  </tr><tr>
+    <td>isVolumePersistenceSupported</td>
+    <td>no</td>
+    <td>Class support for last volume persistence.</td>
+    <td>Boolean, defaults to FALSE</td>
+  </tr><tr>
+    <td>defaultVolume</td>
+    <td>no</td>
+    <td>Default volume for class in case volume not found in persistence</td>
+    <td>Signed 16 bit integer</td>
+  </tr>
+</table>
+
+ \subsection clsElements XML Elements
+<table>
+  <tr>
+    <th>Name</th>
+    <th>Required</th>
+    <th>Description</th>
+    <th>Value</th>
+  </tr><tr>
+    <td>topology</td>
+    <td>no</td>
+    <td>This is the list of allowed / preferred route between source and sink
+        (see section \ref exClsTopology).</td>
+    <td>String</td>
+  </tr><tr>
+    <td>property</td>
+    <td>no</td>
+    <td>This is the list of class property. Key value pair</td>
+    <td>Refer Section \ref clsPropList List of class property</td>
+  </tr>
+</table>
+
  
  \subsection exCls1 Example 1 - Class Definition
  \code
-    <class>
-        <name>Class1</name>
-        <type>C_PLAYBACK</type>
-        <priority>50</priority>
+    <class name="Class1" type="C_PLAYBACK" priority="50" registrationType="REG_CONTROLLER">
         <topology>Sink1^Sink2=Gateway1(Source1^Source2)^Source3</topology>
-        <registrationType>REG_CONTROLLER</registrationType>
+        <topology>Sink1=Gateway3(Source4)</topology>
+        <property type="CP_PER_SINK_CLASS_VOLUME_SUPPORT" value="0" />
     </class>
  \endcode
     In the above example, a class with name Class1 is shown. All the tags are self-explanatory except
 topology. For topology explanation please refer the Topology section \ref exClsTopology.
-
- \subsection exCls2 Example 2 - Class Definition
- \code
-    <class>
-        <name>ClassTemplate</name>
-        <type>C_PLAYBACK</type>
-        <priority>50</priority>
-        <registrationType>REG_TEMPLATE</registrationType>
-    </class>
-    <class baseName="ClassTemplate">
-        <name>BASE</name>
-        <topology>Sink1^Sink2=Gateway1(Source1^Source2)^Source3</topology>
-        <registrationType>REG_CONTROLLER</registrationType>
-    </source>
- \endcode
-    This is the advanced usage of the configuration inheritance feature. Here a template class called
-ClassTemplate is defined using registrationType as REG_TEMPLATE. A Template class is not 
-registered but is only a template for other classes. In the above example only the fields name, 
-topology and registrationType is overwritten for class BASE, remaining fields are 
-initialized from the classTemplate. 
-    over the time we observed that most of the fields of elements are same from one element to 
-other. In order to reduce the typing efforts of the user, the concept of template/inheritance was 
-implemented. As per this feature the element can provide the baseName attribute. This element  whose 
-name is present as baseNamwe would be used to initialize all the fields of the element. only the 
-fields which are explicitly mentioned in the derived element are overwritten.
 
 \subsection exClsTopology Topology
     Topology string represents the preferred route between sources and sinks.  The topology 
@@ -931,162 +1151,508 @@ gateway in front.
     The topology string for the above diagram is Sink1^Sink2=Gateway1(Source1^Source2)^Source3. The 
 above topology means that Source1, Source2 and Source3 can be connected to either Sink1 or Sink2. 
 Source3 connects directly to the sinks, whereas the Source1 and Source2 connect via gateway 
-Gateway1.  
+Gateway1.<BR>  
+	The controller support multiple topologies, meaning we can have a list of topologies as 
+shown below
+sink1 = source1
+sink2 = GW (source2^source3)
+The multiple topologies allows to specify the preferred route in more granular level, in context to 
+above to equations 
+- source1 preferred route to sink1 is direct, whereas
+- source2 and source3 preferred route is via gateway GW.<BR>
+In the above case if a connection is requested for source1 to sink2, the controller has no 
+preferred route.<BR> 
+
+The multiple topology also means that the controller can work even without a topology. If the 
+preferred route for a given source and sink is not specified in the topology configuration, in that
+case controller would read the value of the system property “SYP_GC_ALLOW_ONLY_TOPOLOGY_ROUTE” (Please see
+\ref reservedProp for details of reserved system Property). 
+If system property allows routes outside topology then controller would make use of the 
+routes retrieved from the Audio Manager daemon. The flowchart below shows how controller would 
+determine a route for a source/sink.
+ \image html source_sink_route.png
+
 
 
  \page misc Miscellaneous
- \section mainSndProp Main Sound Property
- The main sound property consists of following elements
-\subsection mspElems XML Elements
- <table>
-  <tr>
-    <td>Elements</td>
-    <td>Description</td>
-    <td>Values</td>
-    <td>Mandatory(M)/Optional(O)</td>
-  </tr>
-  <tr>
-    <td>type</td>
-    <td>The type of the main sound property</td>
-    <td>The following types are predefined types<br>
-        MSP_UNKNOWN - The main sound property is unknown<br>
-        MSP_GENIVI_TREBLE - The main sound property for treble<br>
-        MSP_GENIVI_BASS - The main sound property for bass<br>
-        MSP_GENIVI_MID - The main sound property for mid<br>
-        However, the user is free to define customized main sound property types in customtypes.xsd
-    </td>
-    <td>M</td>
-  </tr>
-  <tr>
-    <td>value</td>
-    <td>The value of the sound property</td>
-    <td>16-bit signed integer<br>
-        The element "value" can have two attributes "minValue" and "maxValue" to spacify the allowed minimum and maximum value of the main sound property respectively.
-    </td>
-    <td>M</td>
-  </tr>
-</table> 
- \subsection exMainSndProp Example - Main Sound Property
+ \section srcVolMap Source Volume Map
+ 
+ This attribute present in the source allows to define the source volume map, i.e. 
+ mapping between any arbitrary subset of the internal volume representation
+ (integer in the range -3000 ... 0, understood as 1/10th deciBel)
+ to the range supported by the routing side.
+
+ \note Although fractional values are allowed and considered in interpolation,
+       the value actually passed to the routing side is always rounded to the nearest integer.
+
+ The template can be defined as  
+    Example-1
  \code
-    <mainSoundProperty>
-        <type>MSP_GENIVI_TREBLE</type>
-        <value minValue="0" maxValue="10">5</value>
-    </mainSoundProperty>
+    <templates>
+      <!--define the mapping in a named global table -->
+      <scaleConversionMap name="sourceMap1">-2800,10.0;-100,20.0</scaleConversionMap>
+      ...
+    </templates>
+
+    <!--The above map can be is in some source as shown below -->
+    <source name="myFavoriteSource" ... sourceVolumeMap="sourceMap1"/>
  \endcode
 
+ \note Usage of global mapping definitions in source or sink templates is currently not supported.
+
+ Example-2
+ \code
+    <!-- linear conversion -->
+    <source name="..." sourceVolumeMap="-3000.0,-200.0;0.0,0.0" ... />
+    <!-- approximated curve conversion -->
+    <source name="..." sourceVolumeMap="-2000,-200.0;-1900,-199.0;-1800,-197.0;-1700,-195.0;-1600,-192.0;-1500,-190;-1000,-175.0;-500,-150;0,0" />
+ \endcode
+
+The first example maps the internal source volume in a straight between [-300.0dB ... 0.0dB] 
+to range [-200.0 ... 0.0]. 
+
+It is possible to define a piece wise linear approximation by defining more points\
+as shown in the second example. The Generic controller uses a straight line approximation
+between two consecutive points.
+    \image html volume_mapping.png 
+
+
+
+ \section snkVolMap Sink Volume Map
+ 
+ This attribute present in the sink is the counterpart of above @ref srcVolMap 
+ and allows to define the routing-side scaling of the sink volume,
+ i.e. mapping between the internal sink volume in 1/10th of deciBels and routing side volume.
+
+ \note Although fractional values are allowed and considered in interpolation,
+       the value actually passed to the routing side is always rounded to the nearest integer.
+
+ The conversion map can be defined in either of below formats:
+
+ Example-1
+ \code
+    <templates>
+      <!--define the mapping in a named global table -->
+      <scaleConversionMap name="sourceMap1">-2800,10.0;-100,20.0</scaleConversionMap>
+      ...
+    </templates>
+
+    <!--refer the template in a actual sink definition -->
+    <sink name="sink1" ... sinkVolumeMap="sinkMap1"/>
+ \endcode
+
+\note Usage of global mapping definitions in source or sink templates is currently not supported.
+
+Example-2
+ \code
+    <!-- linear conversion -->
+    <sink name="..." sinkVolumeMap="-2000,-200.0;0.0,0.0" ... />
+    <!-- approximated curve conversion -->
+    <sink name="..." sinkVolumeMap="-2000,-200.0;-1900,-199.0;-1800,-197.0;-1700,-195.0;-1600,-192.0;-1500,-190;-1000,-175.0;-500,-150;0,0" />
+ \endcode
+
+
  \section sndProp Sound Property
- The sound property consists of following elements
-\subsection mspElems XML Elements
- <table>
-  <tr>
-    <td>Elements</td>
-    <td>Description</td>
-    <td>Values</td>
-    <td>Mandatory(M)/Optional(O)</td>
-  </tr>
-  <tr>
-    <td>type</td>
-    <td>The type of the sound property</td>
-    <td>The following types are predefined types<br>
-        SP_UNKNOWN - The sound property is unknown<br>
-        SP_GENIVI_TREBLE - The sound property for treble<br>
-        SP_GENIVI_BASS - The sound property for bass<br>
-        SP_GENIVI_MID - The sound property for mid<br>
-        However, the user is free to define customized sound property types in customtypes.xsd
-    </td>
-    <td>M</td>
-  </tr>
-  <tr>
-    <td>value</td>
-    <td>The value of the sound property</td>
-    <td>16-bit signed integer<br>
-        The element "value" can have two attributes "minValue" and "maxValue" to spacify the allowed minimum and maximum value of the sound property respectively.
-    </td>
-    <td>M</td>
-  </tr>
+The sound property consists of following elements
+\subsection spAttributes Sound Propety XML Attributes
+<table>
+<tr>
+<td>
+<p>Name</p>
+</td>
+<td>
+<p>M/O</p>
+</td>
+<td>
+<p>Description</p>
+</td>
+<td>
+<p>Value</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>type</p>
+</td>
+<td>
+<p>M</p>
+</td>
+<td>
+<p>The sound property type. The following types are predefined types<br /> MSP_UNKNOWN - The main sound property is unknown<br /> MSP_GENIVI_TREBLE - The main sound property for treble<br /> MSP_GENIVI_BASS - The main sound property for bass<br /> MSP_GENIVI_MID - The main sound property for mid<br /> However, the user is free to define customized main sound property types in customtypes.xsd</p>
+</td>
+<td>
+<p>int16_t</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>value</p>
+</td>
+<td>
+<p>M</p>
+</td>
+<td>
+<p>The value of the sound property.</p>
+</td>
+<td>
+<p>Signed 16 bit integer</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>minValue</p>
+</td>
+<td>
+<p>O</p>
+</td>
+<td>
+<p>The min value for the sound property value</p>
+</td>
+<td>
+<p>Signed 16 bit integer</p>
+<p>Default: max 16 bit signed integer.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>maxValue</p>
+</td>
+<td>
+<p>O</p>
+</td>
+<td>
+<p>The max value for the sound property value.</p>
+</td>
+<td>
+<p>Signed 16 bit integer</p>
+<p>Default: min 16 bit signed integer.</p>
+</td>
+</tr>
 </table> 
  \subsection exSndProp Example - Sound Property
  \code
-    <soundProperty>
-        <type>SP_GENIVI_TREBLE</type>
-        <value minValue="0" maxValue="10">5</value>
-    </soundProperty>
+    <source ... >
+    ...
+    <soundProperty type="SP_GENIVI_TREBLE" value="5" minValue="0" maxValue="10"/>
+    ...
+    </source>
+    <!-- The list of sound property template can be defined as -->
+    <soundProperties name="soundPropertyTemplate1">
+            <soundProperty type="SP_GENIVI_TREBLE" value="5" />
+            <soundProperty type="SP_GENIVI_BASS" value="5" />
+    </soundProperties>
+    <!-- Template can be used as below -->
+    <source soundPropertiesTemplateName="soundPropertyTemplate1">
  \endcode
+
+
+ \section mainSndProp Main Sound Property
+The main sound property consists of following elements
+ \subsection mspAttributes main Sound Property Attributes 
+<table>
+<tr>
+<td>Name>
+<td>M/O</td>
+<td>Description</td>
+<td>Values</td>
+</tr>
+<tr>
+<td>type</td>
+<td>M</td>
+<td>The following types are predefined types<br /> MSP_UNKNOWN - The main sound property is unknown<br /> MSP_GENIVI_TREBLE - The main sound property for treble<br /> MSP_GENIVI_BASS - The main sound property for bass<br /> MSP_GENIVI_MID - The main sound property for mid<br /> However, the user is free to define customized main sound property types in customtypes.xsd</td>
+<td>signed 16 bit integer</td>
+</tr>
+<tr>
+<td>value</td>
+<td>M</td>
+<td>16-bit signed integer<br /> The element "value" can have two attributes "minValue" and "maxValue" to spacify the allowed minimum and maximum value of the main sound property respectively.</td>
+<td>signed 16 bit integer</td>
+</tr>
+<tr>
+<td>maxValue</td>
+<td>O</td>
+<td>The max value for the sound property</td>
+<td>
+<p>signed 16 bit integer</p>
+<p>Default: max 16 bit signed integer</p>
+</td>
+</tr>
+<tr>
+<td>minValue</td>
+<td>O</td>
+<td>The min value for the sound property</td>
+<td>
+<p>signed 16 bit integer</p>
+<p>Default: min 16 bit signed integer.</p>
+</td>
+</tr>
+
+</table> 
+ \subsection exMainSndProp Example - Main Sound Property
+ \code
+    <source ... >
+    ...
+    <mainSoundProperty type="MSP_GENIVI_TREBLE" value="5" minValue="0" maxValue="10"/>
+    ...
+    </source>
+    <!-- The list of sound property template can be defined as -->
+    <mainSoundProperties name="mainSoundPropertyTemplate1">
+            <mainSoundProperty type="SP_GENIVI_TREBLE" value="5" />
+            <mainSoundProperty type="SP_GENIVI_BASS" value="5" />
+    </soundProperties>
+    <!-- Template can be used as below -->
+    <source mainSoundPropertiesTemplateName="mainSoundPropertyTemplate1">
+ \endcode
+
+
  \section avl Availabilty
- The availability consists of following elements.
- \subsection avlElems The XML Elements
- <table>
-  <tr>
-    <td>Elements</td>
-    <td>Description</td>
-    <td>Values</td>
-    <td>Mandatory(M)/Optional(O)</td>
-  </tr>
-  <tr>
-    <td>availability</td>
-    <td>Specify whether the source/sink is available or not</td>
-    <td>A_UNKNOWN - availability unknow<br>
-        A_AVAILABLE - available<br>
-        A_UNAVAILABLE - unavailable</td>
-    <td>M</td>
-  </tr>
-  <tr>
-    <td>availabilityReason</td>
-    <td>The reason for the availability change</td>
-    <td>The following availabilty change reasons are predefined types<br>
-        AR_UNKNOWN - The availability change reason is unknown<br>
-        AR_GENIVI_NEWMEDIA - The availability change reason is new media<br>
-        AR_GENIVI_SAMEMEDIA - The availability change reason is the same media<br>
-        AR_GENINVI_NOMEDIA - The availability change reason is no media<br>
-        AR_GENIVI_TEMPERATURE - The availability change reason is temperature<br>
-        AR_GENIVI_VOLTAGE - The availability change reason is voltage<br>
-        AR_GENIVI_ERRORMEDIA - The availability change reason is erroneous media<br>
-        </td>
-    <td>M</td>
-  </tr>
- </table>
+The availability consists of following elements.
+ \subsection avlAtrributes Availability attributes
+<table>
+<tr>
+<td>Name</td>
+<td>M/O</td>
+<td>Description</td>
+<td>Values</td>
+</tr>
+<tr>
+<td>availability</td>
+<td>M</td>
+<td>Specify whether the source/sink is available or not</td>
+<td>A_UNKNOWN - availability unknow<br/> A_AVAILABLE - available<br/> A_UNAVAILABLE - unavailable</td>
+</tr>
+<tr>
+<td>availabilityReason</td>
+<td>M</td>
+<td>The reason for the availability change&nbsp;</td>
+<td>The following availabilty change reasons are predefined types<br/> 
+AR_UNKNOWN - The availability change reason is unknown<br/>
+AR_GENIVI_NEWMEDIA - The availability change reason is new media<br/>
+AR_GENIVI_SAMEMEDIA - The availability change reason is the same media<br/>
+AR_GENINVI_NOMEDIA - The availability change reason is no media<br/>
+AR_GENIVI_TEMPERATURE - The availability change reason is temperature<br/>
+AR_GENIVI_VOLTAGE - The availability change reason is voltage<br/>
+AR_GENIVI_ERRORMEDIA - The availability change reason is erroneous media<br/>
+</td>
+</tr>
+</table>
+
  \subsection exAvl Example - Availability
  \code
-    <availability>
-        <availability>A_AVAILABLE</availability>
-        <availabilityReason>AR_GENIVI_NEWMEDIA</availabilityReason>
-    </availability>
+    <availability availability="A_AVAILABLE" availabilityReason="AR_GENIVI_NEWMEDIA"/>
  \endcode
+
+
  \section notifConf Notification Configuration
- The notification configuratio contains following elements.
- \subsection mspElems XML Elements
- <table>
-  <tr>
-    <td>Elements</td>
-    <td>Description</td>
-    <td>Values</td>
-    <td>Mandatory(M)/Optional(O)</td>
-  </tr>
-  <tr>
-    <td>type</td>
-    <td>The notification type</td>
-    <td>The notification type has following predefined value<br>
-        NT_UNKNOWN - unknow<br>
-        The user defined notification types can be defined in customtypes.xsd
-        </td>
-    <td>M</td>
-  </tr>
-  <tr>
-    <td>status</td>
-    <td>The status of notification</td>
-    <td>NS_UNKNOWN - The notification status is unknown<br>
-        NS_OFF - The notification is off<br>
-        NS_PERIODIC - The notification is periodic<br>
-        NS_MINIMUM - The notification is for Minimun<br>
-        NS_MAXIMUM - The notification is for Maximum<br>
-        NS_CHANGE - The notification is for changes</td>
-    <td>M</td>
-  </tr>
-  <tr>
-    <td>parameter</td>
-    <td>The notification parameter.</td>
-    <td>16-bit signed number</td>
-    <td>M</td>
-  </tr>
+The notification configuration contains following attributes
+ \subsection ncAttributes Notification Configuration XML Attributes
+<table>
+<tr>
+<td>Name</td>
+<td>M/O</td>
+<td>Description</td>
+<td>Values</td>
+</tr>
+<tr>
+<td>type</td>
+<td>M</td>
+<td>The type of Notification configuration</td>
+<td>The notification type has following predefined value<br /> NT_UNKNOWN - unknow<br /> The user defined notification types can be defined in customtypes.xsd</td>
+</tr>
+<tr>
+<td>status</td>
+<td>M</td>
+<td>The status of notification</td>
+<td>NS_UNKNOWN - The notification status is unknown<br /> NS_OFF - The notification is off<br /> NS_PERIODIC - The notification is periodic<br /> NS_MINIMUM - The notification is for Minimun<br /> NS_MAXIMUM - The notification is for Maximum<br /> NS_CHANGE - The notification is for changes</td>
+</tr>
+<tr>
+<td>parameter</td>
+<td>M</td>
+<td>The notification parameter.</td>
+<td>16-bit signed number</td>
+</tr>
 </table> 
+
+ \subsection exnc Example - Notification Configuration
+ \code
+    <notificationConfiguration type="NT_UNKNOWN" status="NS_PERIODIC" parameter="10"/>
+    <!-- Template usage-->
+    <notificationConfigurations name="nctemplate">
+        <notificationConfiguration type="NT_UNKNOWN" status="NS_PERIODIC" parameter="10"/>
+    </notificationConfigurations>
+    <source ... notificationConfigurationsTemplateName="ncTemplate" ... />
+ \endcode
+
+
+ \section mainNotifConf Main Notification Configuration
+The main notification configuration contains following attributes
+ \subsection mncAttributes Main Notification Configuration XML Attributes
+<table>
+<tr>
+<td>Name</td>
+<td>M/O</td>
+<td>Description</td>
+<td>Values</td>
+</tr>
+<tr>
+<td>type</td>
+<td>M</td>
+<td>The type of Notification configuration</td>
+<td>The notification type has following predefined value<br /> NT_UNKNOWN - unknow<br /> The user defined notification types can be defined in customtypes.xsd</td>
+</tr>
+<tr>
+<td>status</td>
+<td>M</td>
+<td>The status of notification</td>
+<td>NS_UNKNOWN - The notification status is unknown<br /> NS_OFF - The notification is off<br /> NS_PERIODIC - The notification is periodic<br /> NS_MINIMUM - The notification is for Minimun<br /> NS_MAXIMUM - The notification is for Maximum<br /> NS_CHANGE - The notification is for changes</td>
+</tr>
+<tr>
+<td>parameter</td>
+<td>M</td>
+<td>The notification parameter.</td>
+<td>16-bit signed number</td>
+</tr>
+</table> 
+
+ \subsection exmnc Example - Notification Configuration
+ \code
+    <mainNotificationConfiguration type="NT_UNKNOWN" status="NS_PERIODIC" parameter="10"/>
+        <!-- Template usage-->
+    <notificationConfigurations name="nctemplate">
+        <notificationConfiguration type="NT_UNKNOWN" status="NS_PERIODIC" parameter="10"/>
+    </notificationConfigurations>
+    <source ... mainNotificationConfigurationsTemplateName="ncTemplate" ... />
+    
+ \endcode
+
+
+ \section connFormats ConnectionFormats
+The connection formats is a string type, it is written as xml attribute, list of 
+connection formats separated by ';'. Example Below
+\code
+    <source ... connectionFormat="CF_GENIVI_MONO;CF_GENIVI_STEREO"/>
+    <!-- Below is template example  -->
+    <connectionFormat name="conn1">CF_GENIVI_MONO;CF_GENIVI_STEREO</connectionFormat>
+    <source ... connectionFormatsTemplateName = "conn1" ...>
+\endcode
+
+
+\section mvTonvMap Main Volume to Normalized Volume Map
+
+Normally the command-side client has its own scale for treating volume values, 
+e.g. [0 ... 40] or [0 ... 100]. These values need to be converted into the internal
+volume format, which is integer in the range [-3000 ... 0].
+For historical reason this is done in a 2-step conversion, which both must be defined though
+a mapping table.
+
+This first map converts from Main (User, Command-Side) Volume to an intermediate normalized volume
+, defined as a semicolon separated string. Its elements are comma-separated pairs of numerical values.
+The first value is an integer within a user-defined range, the second is a
+decimal in the range 0.0 ... 1.0.
+
+Linear interpolation is used between any two specified pairs.
+
+\note Although syntactically valid for all types of elements, in current implementation
+it is only supported for sink elements. It can be specified either in a sink template
+or in any of the sink instances.
+
+\code
+    <sink ... mainVolumesToNormalizedVolumes="0,0.0;10,1.0" ... />
+\endcode
+
+Alternatively, the conversion map can be globally defined in the <templates> section
+and referred by its name in the sink instance definition.
+
+\code
+  <templates>
+    <scaleConversionMap name="MainVolumeScale">0,0.0;1,0.8;10,1.0</scaleConversionMap>
+    ...
+  </templates>
+
+  <sink ... mainVolumesToNormalizedVolumes="MainVolumeScale" ... />
+\endcode
+
+
+\section nvTodvMap Normalized Volume to Decibel volume Map
+
+This second map is the sequel of above \ref mvTonvMap and converts from normalized volume
+to deciBel volume, defined as a semicolon separated string. Its elements are comma-separated pairs
+of numerical values.The first value is above decimal in the range [0.0 ... 1.0], the second is the
+audible volume in deciBel. The latter is internally converted to integer representing 
+1/10th of deciBel.
+
+Linear interpolation is used between any two specified pairs.
+
+\note The given value is multiplied by 10 and converted to integer before
+being passed to the routing side. Thus the resulting precision is 0.1.
+
+\note Although syntactically valid for all types of elements, in current implementation
+it is only supported for sink elements. It can be specified either in a sink template
+or in any of the sink instances.
+
+\code
+  <sink ... normalizedVolumesToDecibelVolumes="0.0,-255.0;1.0,0.0" ... />
+\endcode
+
+The same alternative syntax as in above \ref mvTonvMap using a globally defined conversion
+table is also valid for this field.
+
+\section convMatrix Conversion Matrix for Gateway
+This is also a semi-colon separated string. This describes conversion matrix for 
+the gateway. The pair for a connection fortmat is separated by comma and the list of such pairs
+are semi-colon separated.
+
+\code
+    <gateay ... conversionMatrix="CF_GENIVI_MONO,CF_GENIVI_MONO;CF_GENIVI_STEREO,CF_GENIVI_STEREO" ... />
+    <!-- The above example means that Gateway can supports from MONO to Stereo and Stereo to Stereo -->
+    <!-- Below is template example  -->
+    <conversionMatrix name="convMatrix1">CF_GENIVI_MONO,CF_GENIVI_MONO;CF_GENIVI_STEREO,CF_GENIVI_STEREO</conversionMatrix>
+    <source ... conversionMatrix="convMatrix1" ... />
+\endcode
+
+
+\section mspTospMap MSP to SP Map.
+
+This map is present in both source and sink. This map defines 1:1 mapping between 
+SP to MSP. It can be one directional mapping or bi-directional. SP could be mapped to 
+MSP but not vice-versa this is one directional mapping. In bidirectional mapping
+SP is mapped to MSP and vice-versa.
+
+\code
+    <source>
+        ...
+        <listmapMSPToSP>
+            <mapMSPtoSP mappingDirection="MD_BOTH">MSP_GENIVI_BASS,SP_GENIVI_BASS</mapMSPtoSP>
+            <mapMSPtoSP mappingDirection="MD_BOTH">MSP_GENIVI_TREBLE,SP_GENIVI_TREBLE</mapMSPtoSP>
+        </listmapMSPToSP>
+        ...
+    </source>
+    <!-- Example for template -->
+        <listmapMSPToSP name="MSP2SP2">
+            <mapMSPtoSP mappingDirection="MD_BOTH">MSP_GENIVI_BASS,SP_GENIVI_BASS</mapMSPtoSP>
+            <mapMSPtoSP mappingDirection="MD_BOTH">MSP_GENIVI_TREBLE,SP_GENIVI_TREBLE</mapMSPtoSP>
+        </listmapMSPToSP>
+    <source ... mapMSPToSPTemplateName="MSP2SP2" ... />
+\endcode
+
+
+\section clsPropList Class Property List
+    This is the list of class sound property. Examples are below
+\code
+    <class>
+         <property type="CP_PER_SINK_CLASS_VOLUME_SUPPORT" value="0" />
+         <property type="CP_XXX" value="1" />
+    </class>
+\endcode
+
+\section sysPropList system Property List
+    This is the list of system property. Examples are below
+\code
+    <properties>
+        <systemProperty type="SYP_GLOBAL_LOG_THRESHOLD" value="4" />
+        <systemProperty type="SYP_REGISTRATION_ALLOW_UNKNOWN_ELEMENT" value="1" />
+    </properties>
+
+\endcode
+
 */

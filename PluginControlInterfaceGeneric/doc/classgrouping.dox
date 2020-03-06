@@ -1,17 +1,18 @@
 /**
 @page clsGrouping Reducing the number of Policies
 
-    In modern automotive infotainment systems, the number of Audio sources/sinks have exponentially 
+In modern automotive infotainment systems, the number of Audio sources/sinks have exponentially 
  increased. As a result, specifying the connection rules using sources/sinks may result in a 
  a huge matrix. In this section we would like to suggest couple of ideas which can be used to reduce
  the number of policies.
  
 
 <h4>Grouping using classes</h4>  
-    The source and sinks can be grouped in the class. Instead of specifying the policy for each 
+The source and sinks can be grouped in the class. Instead of specifying the policy for each 
 and every source, user can use class names while writing policy. This can be used to reduce the 
 number of Policies. 
-    Consider a system with following sources USBmediaplayer, CDplayer, RadioTuner, a2dpplayer, navigation,  
+
+Consider a system with following sources USBmediaplayer, CDplayer, RadioTuner, a2dpplayer, navigation,  
 reverseparkWarning, lowfuelWarning, HFPvoice etc. If we want to specify the rules for each  
 source connect request,  when already other source is connected it would be a big matrix. Instead 
 we can classify the sources  based on the class, say sources like USBmediaplayer,  CDplayer, 
@@ -32,7 +33,7 @@ change/maintain the policies very easily during the product development.
    Another idea is to assign priority to each source and sink and use the priority for writing the
 policy.
 
-    Consider the above example in addition to defining classes we assign priorities to the sources. 
+Consider the above example in addition to defining classes we assign priorities to the sources. 
 Lets say USBmediaplayer, CDplayer, RadioTuner and a2dpplayer have a priority 51. navigation, 
  reverseparkingWarning and lowfuelWarning have a priority of 50 and HFPVoice has a priority of 49.
  Now its possible to write the policies like

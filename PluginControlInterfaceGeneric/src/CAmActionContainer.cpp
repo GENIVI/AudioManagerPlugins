@@ -24,22 +24,25 @@
 namespace am {
 namespace gc {
 
-CAmActionContainer::CAmActionContainer(const std::string& name) :
-                                mName(name),
-                                mStatus(AS_NOT_STARTED),
-                                mIndex(0),
-                                mError(0),
-                                mParent(NULL),
-                                mUndoRequired(false),
-                                mTimeout(INFINITE_TIMEOUT),
-                                mExecutionTime(0),
-                                mUndoTime(0)
+CAmActionContainer::CAmActionContainer(const std::string &name)
+    : mName(name)
+    , mStatus(AS_NOT_STARTED)
+    , mIndex(0)
+    , mError(0)
+    , mParent(NULL)
+    , mUndoRequired(false)
+    , mTimeout(INFINITE_TIMEOUT)
+    , mExecutionTime(0)
+    , mUndoTime(0)
 {
     mStartTime.tv_nsec = mStartTime.tv_sec = 0;
+
+    LOG_FN_DEBUG(__FILENAME__, __func__, " as ", mName);
 }
 
 CAmActionContainer::~CAmActionContainer(void)
 {
+    LOG_FN_DEBUG(__FILENAME__, __func__, " as ", mName);
 }
 
 void CAmActionContainer::setError(const int error)
@@ -57,30 +60,35 @@ std::string CAmActionContainer::getName(void) const
     return mName;
 }
 
-int CAmActionContainer::setParent(IAmActionCommand* pParentAction)
+int CAmActionContainer::setParent(IAmActionCommand *pParentAction)
 {
     if (mParent != NULL)
     {
-        unregisterObserver((IAmEventObserver*)mParent);
+        unregisterObserver((IAmEventObserver *)mParent);
         mParent = NULL;
     }
+
     mParent = pParentAction;
-    registerObserver((IAmEventObserver*)pParentAction);
+    registerObserver((IAmEventObserver *)pParentAction);
     return 0;
 }
 
-int CAmActionContainer::append(IAmActionCommand* command)
+int CAmActionContainer::append(IAmActionCommand *command)
 {
     if (command != NULL)
     {
-        LOG_FN_ENTRY(mName, "appending", command->getName());
+
         mListChildActions.push_back(command);
         command->setParent(this);
+
+        LOG_FN_DEBUG(__FILENAME__, __func__, command->getName(), " to ", mName,
+            "having", mListChildActions.size(), "children");
     }
+
     return 0;
 }
 
-int CAmActionContainer::insert(IAmActionCommand* command)
+int CAmActionContainer::insert(IAmActionCommand *command)
 {
     if (isEmpty())
     {
@@ -92,7 +100,7 @@ int CAmActionContainer::insert(IAmActionCommand* command)
          * Get Current executing child action
          * if none are executing add at the begining
          */
-        std::vector<IAmActionCommand* >::iterator itListChildActions;
+        std::vector<IAmActionCommand * >::iterator itListChildActions;
         itListChildActions = mListChildActions.begin();
         for (; itListChildActions != mListChildActions.end(); ++itListChildActions)
         {
@@ -101,9 +109,14 @@ int CAmActionContainer::insert(IAmActionCommand* command)
                 break;
             }
         }
+
         mListChildActions.insert(itListChildActions, command);
         command->setParent(this);
+
+        LOG_FN_DEBUG(__FILENAME__, __func__, command->getName(), " to ", mName,
+            "having", mListChildActions.size(), "children");
     }
+
     return 0;
 }
 
@@ -117,31 +130,39 @@ void CAmActionContainer::setStatus(const ActionState_e state)
     mStatus = state;
 }
 
-bool CAmActionContainer::setParam(const std::string& paramName, IAmActionParam* pParam)
+bool CAmActionContainer::setParam(const std::string &paramName, IAmActionParam *pParam)
 {
-    bool returnvalue = false;
-    std::map<std::string, IAmActionParam* >::iterator itMapActionParams;
-    itMapActionParams = mMapParameters.find(paramName);
+    if ((pParam == NULL) || (paramName == ""))
+    {
+        return false;
+    }
+
+    auto itMapActionParams = mMapParameters.find(paramName);
     if (itMapActionParams != mMapParameters.end())
     {
+        // copy value of given parameter
         itMapActionParams->second->clone(pParam);
-        returnvalue = true;
+        return true;
     }
-    return returnvalue;
+
+    LOG_FN_WARN(__FILENAME__, __func__, mName, "UNHANDLED parameter", paramName);
+    return false;
 }
-IAmActionParam* CAmActionContainer::getParam(const std::string& paramName)
+
+IAmActionParam *CAmActionContainer::getParam(const std::string &paramName)
 {
-    IAmActionParam* pActionParam = NULL;
-    std::map<std::string, IAmActionParam* >::iterator itMapActionParameters;
+    IAmActionParam                                    *pActionParam = NULL;
+    std::map<std::string, IAmActionParam * >::iterator itMapActionParameters;
     itMapActionParameters = mMapParameters.find(paramName);
     if (itMapActionParameters != mMapParameters.end())
     {
         pActionParam = itMapActionParameters->second;
     }
+
     return pActionParam;
 }
 
-void CAmActionContainer::_registerParam(const std::string& paramName, IAmActionParam* pParam)
+void CAmActionContainer::_registerParam(const std::string &paramName, IAmActionParam *pParam)
 {
     mMapParameters[paramName] = pParam;
 }
@@ -149,7 +170,6 @@ void CAmActionContainer::_registerParam(const std::string& paramName, IAmActionP
 int CAmActionContainer::execute(void)
 {
     int index;
-    LOG_FN_ENTRY(mName);
     int32_t elapsedTimeinms;
     /**
      * first call self execute
@@ -169,12 +189,14 @@ int CAmActionContainer::execute(void)
             update(getError());
         }
     }
+
     if (AS_EXECUTING == getStatus())
     {
         index = _getIndex();
         while (index < _getNumChildActions())
         {
             index = _getIndex();
+            IAmActionCommand *child = mListChildActions[mIndex];
             /*
              * calculate the time in milli-second
              */
@@ -183,27 +205,39 @@ int CAmActionContainer::execute(void)
             {
                 if (elapsedTimeinms > getTimeout())
                 {
-                    /*
-                     * declare a timeout
-                     */
-                    setError(1);
-                    setStatus(AS_COMPLETED);
+                    LOG_FN_ERROR(__FILENAME__, __func__, mName, "TimeOut occurred after", elapsedTimeinms
+                            , "ms before executing child #", index, child->getName());
+
+                    // roll-back previous steps
+                    update(E_ABORTED);
+                    break;
                 }
-                else
+                else if (child->getStatus() == AS_NOT_STARTED)
                 {
-                    mListChildActions[mIndex]->setTimeout(getTimeout() - elapsedTimeinms);
+                    child->setTimeout(getTimeout() - elapsedTimeinms);
                 }
+
+                LOG_FN_DEBUG(__FILENAME__, __func__, mStatus, mName, "invoking child #", index
+                        , child->getStatus(), child->getName(), "with timeout", child->getTimeout());
             }
-            mListChildActions[index]->execute();
-            if (mListChildActions[index]->getStatus() == AS_EXECUTING)
+            else
+            {
+                LOG_FN_DEBUG(__FILENAME__, __func__, mStatus, mName, "invoking child #", index
+                        , child->getStatus(), child->getName());
+            }
+            child->execute();
+
+            if (child->getStatus() == AS_EXECUTING)
             {
                 break;
             }
+
             if (getStatus() != AS_EXECUTING)
             {
                 break;
             }
         }
+
         if ((index >= _getNumChildActions()) && (getStatus() == AS_EXECUTING))
         {
             update(getError());
@@ -213,15 +247,13 @@ int CAmActionContainer::execute(void)
     {
         update(getError());
     }
-    LOG_FN_EXIT(mName, getStatus());
     return 0;
 }
 
 int CAmActionContainer::undo(void)
 {
-    int error;
+    int           error;
     ActionState_e state = getStatus();
-    LOG_FN_ENTRY(mName);
     if ((state == AS_ERROR_STOPPED) || (state == AS_COMPLETED && getError() == 0))
     {
         if (getUndoRequired() == true)
@@ -230,6 +262,7 @@ int CAmActionContainer::undo(void)
             setError(_undo());
             mUndoTime = _calculateTimeDifference(mStartTime);
         }
+
         if (mListChildActions.size() > 0)
         {
             setStatus(AS_UNDOING);
@@ -239,6 +272,7 @@ int CAmActionContainer::undo(void)
             setStatus(AS_UNDO_COMPLETE);
         }
     }
+
     state = getStatus();
     if (state == AS_UNDOING)
     {
@@ -246,8 +280,12 @@ int CAmActionContainer::undo(void)
         {
             _setIndex(mListChildActions.size() - 1);
         }
+
         while (_getIndex() >= 0)
         {
+            LOG_FN_DEBUG(__FILENAME__, __func__, mStatus, mName
+                    , "invoking child #", _getIndex(), mListChildActions[_getIndex()]->getName());
+
             state = mListChildActions[_getIndex()]->getStatus();
             error = mListChildActions[_getIndex()]->getError();
             if ((state == AS_ERROR_STOPPED) || (state == AS_COMPLETED && error == 0)
@@ -260,8 +298,10 @@ int CAmActionContainer::undo(void)
                     break;
                 }
             }
+
             _decrementIndex();
         }
+
         if (_getIndex() < 0)
         {
             update(getError());
@@ -271,13 +311,15 @@ int CAmActionContainer::undo(void)
     {
         update(getError());
     }
-    LOG_FN_EXIT(mName, mStatus);
+
     return 0;
 }
 
 int CAmActionContainer::update(const int result)
 {
-    LOG_FN_ENTRY("update called for ", mName, "result=", result, getStatus());
+    LOG_FN_DEBUG(__FILENAME__, __func__, mStatus, mName, (am_Error_e)result
+            , "having", mListChildActions.size(), "sub-actions"
+            , "after", _calculateTimeDifference(mStartTime), "ms");
 
     setError(result);
     _update(result, _getIndex());
@@ -309,26 +351,29 @@ int CAmActionContainer::update(const int result)
             notify(getError());
         }
     }
-    LOG_FN_EXIT(mName);
+
     return 0;
 }
 
 int CAmActionContainer::cleanup(void)
 {
-    LOG_FN_ENTRY(mName);
-    std::vector<IAmActionCommand* >::iterator itListChildActions;
-    ActionState_e state;
+    std::vector<IAmActionCommand * >::iterator itListChildActions;
+    ActionState_e                              state;
     /**
      * If the current state of the action is undo complete then change the state of
      * all the child actions which are not started to complete.
      */
+    int index = 0;
     for (itListChildActions = mListChildActions.begin();
-                    itListChildActions != mListChildActions.end();)
+         itListChildActions != mListChildActions.end();)
     {
         state = (*itListChildActions)->getStatus();
         if ((state == AS_UNDO_COMPLETE) || (state == AS_COMPLETED)
             || ((state == AS_NOT_STARTED) && (getStatus() == AS_UNDO_COMPLETE)))
         {
+            LOG_FN_DEBUG(__FILENAME__, __func__, mStatus, mName
+                    , "invoking child #", index, state, (*itListChildActions)->getName());
+
             (*itListChildActions)->cleanup();
             delete (*itListChildActions);
             itListChildActions = mListChildActions.erase(itListChildActions);
@@ -337,17 +382,17 @@ int CAmActionContainer::cleanup(void)
         {
             break;
         }
+        index++;
     }
+
     if (itListChildActions == mListChildActions.end())
     {
         _cleanup();
     }
+
     _setIndex(0);
-    mStartTime.tv_nsec = 0;
-    mStartTime.tv_sec = 0;
-    mExecutionTime = 0;
-    mUndoTime = 0;
-    LOG_FN_EXIT(mName);
+    mExecutionTime     = 0;
+    mUndoTime          = 0;
     return 0;
 }
 
@@ -365,6 +410,7 @@ int CAmActionContainer::_update(const int result)
 {
     return 0;
 }
+
 int CAmActionContainer::_update(const int result, const int index)
 {
     return 0;
@@ -384,6 +430,7 @@ bool CAmActionContainer::getUndoRequired(void)
 {
     return mUndoRequired;
 }
+
 void CAmActionContainer::setUndoRequried(const bool undoRequired)
 {
     mUndoRequired = undoRequired;
@@ -405,10 +452,12 @@ int CAmActionContainer::_getIndex()
 {
     return mIndex;
 }
+
 void CAmActionContainer::_setIndex(int index)
 {
     mIndex = index;
 }
+
 int CAmActionContainer::_getNumChildActions(void)
 {
     return mListChildActions.size();
@@ -426,36 +475,38 @@ uint32_t CAmActionContainer::getTimeout(void)
 
 uint32_t CAmActionContainer::getExecutionTime(void)
 {
-    uint32_t totalChildExecutionTime = 0;
-    std::vector<IAmActionCommand* >::iterator itListChildActions;
+    uint32_t                                   totalChildExecutionTime = 0;
+    std::vector<IAmActionCommand * >::iterator itListChildActions;
     for (itListChildActions = mListChildActions.begin();
-                    itListChildActions != mListChildActions.end(); ++itListChildActions)
+         itListChildActions != mListChildActions.end(); ++itListChildActions)
     {
         totalChildExecutionTime += (*itListChildActions)->getExecutionTime();
     }
+
     return mExecutionTime + totalChildExecutionTime;
 }
 
 uint32_t CAmActionContainer::getUndoTime(void)
 {
-    uint32_t totalChildUndoTime = 0;
-    std::vector<IAmActionCommand* >::iterator itListChildActions;
+    uint32_t                                   totalChildUndoTime = 0;
+    std::vector<IAmActionCommand * >::iterator itListChildActions;
     for (itListChildActions = mListChildActions.begin();
-                    itListChildActions != mListChildActions.end(); ++itListChildActions)
+         itListChildActions != mListChildActions.end(); ++itListChildActions)
     {
         totalChildUndoTime += (*itListChildActions)->getExecutionTime();
     }
+
     return mUndoTime + totalChildUndoTime;
 }
 
 uint32_t CAmActionContainer::_calculateTimeDifference(timespec startTime)
 {
     timespec delta;
-    int32_t elapsedTimeinms = 0;
+    int32_t  elapsedTimeinms = 0;
     timespec endTime;
     clock_gettime(CLOCK_MONOTONIC, &endTime);
     delta.tv_nsec = delta.tv_sec = 0;
-    delta.tv_sec = endTime.tv_sec - startTime.tv_sec;
+    delta.tv_sec  = endTime.tv_sec - startTime.tv_sec;
     if (startTime.tv_nsec < startTime.tv_nsec)
     {
         delta.tv_nsec = endTime.tv_nsec + MAX_NS - startTime.tv_nsec;
@@ -465,6 +516,7 @@ uint32_t CAmActionContainer::_calculateTimeDifference(timespec startTime)
     {
         delta.tv_nsec = endTime.tv_nsec - startTime.tv_nsec;
     }
+
     elapsedTimeinms = (delta.tv_sec * 1000) + (delta.tv_nsec / 1000000);
     return elapsedTimeinms;
 }

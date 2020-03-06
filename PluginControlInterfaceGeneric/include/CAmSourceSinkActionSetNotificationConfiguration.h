@@ -23,7 +23,8 @@
 
 #include "CAmLogger.h"
 #include "CAmActionCommand.h"
-#include "CAmControlReceive.h"
+#include "CAmHandleStore.h"
+
 
 namespace am {
 namespace gc {
@@ -32,10 +33,10 @@ template <typename Telement>
 class CAmSourceSinkActionSetNotificationConfiguration : public CAmActionCommand
 {
 public:
-    CAmSourceSinkActionSetNotificationConfiguration(Telement* pElement) :
-                                    CAmActionCommand(
-                                                    std::string("CAmActionSetNotificationConfiguration")),
-                                    mpElement(pElement)
+    CAmSourceSinkActionSetNotificationConfiguration(std::shared_ptr<Telement > pElement)
+        : CAmActionCommand("CAmActionSetNotificationConfiguration")
+        , mpElement(pElement)
+        , mHandle({H_UNKNOWN, 0})
     {
         this->_registerParam(ACTION_PARAM_NOTIFICATION_CONFIGURATION_TYPE, &mNotificationType);
         this->_registerParam(ACTION_PARAM_NOTIFICATION_CONFIGURATION_STATUS, &mNotificationStatus);
@@ -49,17 +50,18 @@ public:
 protected:
     int _execute(void)
     {
-        LOG_FN_ENTRY();
-        if ((NULL == mpElement) || (false
-                        == mNotificationType.getParam(mNotificationConfiguration.type))
+        LOG_FN_ENTRY(__FILENAME__, __func__);
+        if ((nullptr == mpElement)
+            || (false == mNotificationType.getParam(mNotificationConfiguration.type))
             || (false == mNotificationStatus.getParam(mNotificationConfiguration.status))
             || (false == mNotificationparam.getParam(mNotificationConfiguration.parameter)))
         {
-            LOG_FN_ERROR(" Parameters not set");
+            LOG_FN_ERROR(__FILENAME__, __func__, "Parameters not set");
             return E_NOT_POSSIBLE;
         }
+
         mpElement->getMainNotificationConfigurations(mNotificationConfiguration.type,
-                                                    mOldNotificationConfiguration);
+            mOldNotificationConfiguration);
         return _setRoutingSideNotificationConfiguration(mNotificationConfiguration);
     }
 
@@ -82,52 +84,57 @@ protected:
                 mpElement->setMainNotificationConfiguration(mNotificationConfiguration);
             }
         }
-        //unregister the observer
-        mpElement->getControlReceive()->unregisterObserver(this);
+
+        // unregister the observer
+        CAmHandleStore::instance().clearHandle(mHandle);
+
         return E_OK;
     }
 
     void _timeout(void)
     {
-        CAmControlReceive* pControlReceive = mpElement->getControlReceive();
-        pControlReceive->abortAction();
+        mpElement->getControlReceive()->abortAction(mHandle);
     }
 
 private:
     int _setRoutingSideNotificationConfiguration(
-                    am_NotificationConfiguration_s& notificationConfiguration)
+        am_NotificationConfiguration_s &notificationConfiguration)
     {
-        int result(E_NOT_POSSIBLE);
-        CAmControlReceive* pControlReceive = mpElement->getControlReceive();
+        int                result(E_NOT_POSSIBLE);
+        IAmControlReceive *pControlReceive = mpElement->getControlReceive();
         if (mpElement->getType() == ET_SOURCE)
         {
-            result = pControlReceive->setSourceNotificationConfiguration(mpElement->getID(),
-                                                                       mNotificationConfiguration);
+            result = pControlReceive->setSourceNotificationConfiguration(mHandle, mpElement->getID(),
+                    mNotificationConfiguration);
         }
         else
         {
-            result = pControlReceive->setSinkNotificationConfiguration(
-                            mpElement->getID(), mNotificationConfiguration);
+            result = pControlReceive->setSinkNotificationConfiguration(mHandle,
+                    mpElement->getID(), mNotificationConfiguration);
         }
+
         if (result == E_OK)
         {
-            pControlReceive->registerObserver(this);
+            CAmHandleStore::instance().saveHandle(mHandle, this);
             result = E_WAIT_FOR_CHILD_COMPLETION;
         }
         else
         {
             this->setError(result);
         }
+
         return result;
     }
 
-    Telement* mpElement;
-    am_NotificationConfiguration_s mNotificationConfiguration;
-    am_NotificationConfiguration_s mOldNotificationConfiguration;
+    std::shared_ptr<Telement >                   mpElement;
+    am::am_Handle_s                              mHandle;
+    am_NotificationConfiguration_s               mNotificationConfiguration;
+    am_NotificationConfiguration_s               mOldNotificationConfiguration;
     CAmActionParam<am_CustomNotificationType_t > mNotificationType;
-    CAmActionParam<am_NotificationStatus_e > mNotificationStatus;
-    CAmActionParam<int16_t > mNotificationparam;
+    CAmActionParam<am_NotificationStatus_e >     mNotificationStatus;
+    CAmActionParam<int16_t >                     mNotificationparam;
 }
+
 ;
 
 } /* namespace gc */

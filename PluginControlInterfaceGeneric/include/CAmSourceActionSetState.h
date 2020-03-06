@@ -26,6 +26,8 @@
 namespace am {
 namespace gc {
 class CAmSourceElement;
+class CAmElement;
+
 class CAmSourceActionSetState : public CAmActionCommand
 {
 public:
@@ -36,13 +38,15 @@ public:
      * @param pSourcelement: pointer to CAmSourceElement Class object
      * @return none
      */
-    CAmSourceActionSetState(CAmSourceElement* pSourceElement);
+    CAmSourceActionSetState(CAmSourceElement *pSourceElement);
+    CAmSourceActionSetState(std::shared_ptr<CAmSourceElement > pSourceElement);
     /**
      * @brief It is the destructor of set source state action at router level.
      * @param none
      * @return none
      */
     virtual ~CAmSourceActionSetState();
+
 protected:
     /**
      * @brief This API invokes the control receive class function to send request to AM. It
@@ -53,12 +57,14 @@ protected:
      *         E_OK on success
      */
     int _execute(void);
+
     /**
      * @brief This API unregister the observer which was set in _execute function.
      * @param result: status of child action execution
      * @return E_OK
      */
     int _update(const int result);
+
     /**
      * @brief In case of failure this API performs the undo operation if parent has requested for undo.
      * @param none
@@ -68,14 +74,17 @@ protected:
      */
     int _undo(void);
     void _timeout(void);
+
 private:
     // pointer to source object whose state need to be changed
-    CAmSourceElement* mpSourceElement;
+    std::shared_ptr<CAmSourceElement > mpSourceElement;
+    am::am_Handle_s                    mHandle;
+
     // new state of source expected at the end of this action
-    am_SourceState_e mState;
+    am_SourceState_e                   mState;
     // old state in which source was before completion of this action
-    am_SourceState_e mOldState;
-    CAmActionParam<am_SourceState_e > mSourceStateParam;
+    am_SourceState_e                   mOldState;
+    CAmActionParam<am_SourceState_e >  mSourceStateParam;
 
 };
 

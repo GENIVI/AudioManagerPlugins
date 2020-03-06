@@ -33,48 +33,57 @@ public:
     IAmPolicyReceive()
     {
     }
+
     virtual ~IAmPolicyReceive()
     {
     }
-    virtual am_Error_e setListActions(std::vector<gc_Action_s >& listActions,
-                                      gc_ActionList_e actionListType = AL_NORMAL) =0;
-    virtual bool isDomainRegistrationComplete(const std::string& domainName) =0;
-    virtual bool isRegistered(const gc_Element_e elementType, const std::string& elementName) =0;
+
+    virtual am_Error_e setListActions(std::vector<gc_Action_s > &listActions,
+        gc_ActionList_e actionListType = AL_NORMAL) = 0;
+    virtual bool isDomainRegistrationComplete(const std::string &domainName) = 0;
+    virtual bool isRegistered(const gc_Element_e elementType, const std::string &elementName) = 0;
     virtual am_Error_e getAvailability(const gc_Element_e elementType,
-                                       const std::string& elementName,
-                                       am_Availability_s& availability) =0;
-    virtual am_Error_e getState(const gc_Element_e elementType, const std::string& elementName,
-                                int& elementState) = 0;
+        const std::string &elementName,
+        am_Availability_s &availability) = 0;
     virtual am_Error_e getInterruptState(const gc_Element_e elementType,
-                                         const std::string& elementName,
-                                         am_InterruptState_e& interruptState) =0;
-    virtual am_Error_e getMuteState(const gc_Element_e elementType, const std::string& elementName,
-                                    am_MuteState_e& MuteState) =0;
+        const std::string &elementName,
+        am_InterruptState_e &interruptState) = 0;
+    virtual am_Error_e getMuteState(const gc_Element_e elementType, const std::string &elementName,
+        am_MuteState_e &MuteState) = 0;
     virtual am_Error_e getMainSoundProperty(const gc_Element_e elementType,
-                                            const std::string& elementName,
-                                            const am_CustomMainSoundPropertyType_t propertyType,
-                                            int16_t& value) =0;
+        const std::string &elementName,
+        const am_CustomMainSoundPropertyType_t propertyType,
+        int16_t &value) = 0;
     virtual am_Error_e getSoundProperty(const gc_Element_e elementType,
-                                        const std::string& elementName,
-                                        const am_CustomSoundPropertyType_t propertyType,
-                                        int16_t &Value) =0;
+        const std::string &elementName,
+        const am_CustomSoundPropertyType_t propertyType,
+        int16_t &Value) = 0;
     virtual am_Error_e getSystemProperty(const am_CustomSystemPropertyType_t systempropertyType,
-                                         int16_t& Value) =0;
-    virtual am_Error_e getVolume(const gc_Element_e elementType, const std::string& elementName,
-                                 am_volume_t& DeviceVolume) =0;
-    virtual am_Error_e getMainVolume(const gc_Element_e elementType, const std::string& elementName,
-                                     am_mainVolume_t& volume) =0;
+        int16_t &Value) = 0;
+    virtual am_Error_e getVolume(const gc_Element_e elementType, const std::string &elementName,
+        am_volume_t &DeviceVolume) = 0;
+    virtual am_Error_e getMainVolume(const gc_Element_e elementType, const std::string &elementName,
+        am_mainVolume_t &volume) = 0;
     virtual am_Error_e getListMainConnections(const gc_Element_e elementType,
-                                              const std::string& name,
-                                              std::vector<gc_ConnectionInfo_s >& listConnectionInfos) =0;
+        const std::string &name,
+        std::vector<gc_ConnectionInfo_s > &listConnectionInfos) = 0;
     virtual am_Error_e getListNotificationConfigurations(const gc_Element_e elementType,
-                                                         const std::string& name,
-                                                         std::vector<am_NotificationConfiguration_s >& listNotificationConfigurations) =0;
+        const std::string &name,
+        std::vector<am_NotificationConfiguration_s > &listNotificationConfigurations) = 0;
     virtual am_Error_e getListMainNotificationConfigurations(const gc_Element_e elementType,
-                                                             const std::string& name,
-                                                             std::vector<am_NotificationConfiguration_s >& listMainNotificationConfigurations) =0;
-virtual am_Error_e getListMainConnections(const std::string& name,
-                                                  std::vector<gc_ConnectionInfo_s >& listConnectionInfos,gc_Order_e order) =0;
+        const std::string &name,
+        std::vector<am_NotificationConfiguration_s > &listMainNotificationConfigurations) = 0;
+    virtual am_Error_e getListMainConnections(const std::string &name,
+        std::vector<gc_ConnectionInfo_s > &listConnectionInfos, gc_Order_e order) = 0;
+    virtual am_Error_e getDomainInfoByID(const am_domainID_t domainID, am_Domain_s &domainInfo) = 0;
+    virtual am_Error_e getListGatewaysOfDomain(
+        const am_domainID_t domainID,
+        std::vector<am_gatewayID_t > &listGatewaysIDs) const = 0;
+    virtual am_Error_e getListSinksOfDomain(const am_domainID_t domainID,
+        std::vector<am_sinkID_t > &listSinkIDs) const = 0;
+    virtual am_Error_e getListSourcesOfDomain(const am_domainID_t domainID,
+        std::vector<am_sourceID_t > &listSourceIDs) const = 0;
+
 };
 
 } /* namespace gc */

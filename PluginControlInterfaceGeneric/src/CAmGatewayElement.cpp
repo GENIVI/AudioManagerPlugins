@@ -24,28 +24,49 @@
 namespace am {
 namespace gc {
 
-CAmGatewayElement::CAmGatewayElement(const gc_Gateway_s& gateway,
-                                     CAmControlReceive* pControlReceive) :
-                                CAmElement(gateway.name, pControlReceive),
-                                mGateway(gateway),
-                                mpControlReceive(pControlReceive)
+CAmGatewayElement::CAmGatewayElement(const gc_Gateway_s &gateway, IAmControlReceive *pControlReceive)
+    : CAmElement(ET_GATEWAY, gateway.name, pControlReceive)
+    , mGateway(gateway)
 {
-    setType (ET_GATEWAY);
 }
 
 CAmGatewayElement::~CAmGatewayElement()
 {
+    std::vector<std::shared_ptr<CAmElement > >           listOfSubjects;
+    std::vector<std::shared_ptr<CAmElement > >::iterator itListSubjects;
+    getListElements(ET_SOURCE, listOfSubjects);
+
+    for (itListSubjects = listOfSubjects.begin(); itListSubjects != listOfSubjects.end();
+         ++itListSubjects)
+    {
+        if (nullptr != (*itListSubjects))
+        {
+            detach(*itListSubjects);
+        }
+    }
+
+    getListElements(ET_SINK, listOfSubjects);
+
+    for (itListSubjects = listOfSubjects.begin(); itListSubjects != listOfSubjects.end();
+         ++itListSubjects)
+    {
+        if (nullptr != (*itListSubjects))
+        {
+            detach(*itListSubjects);
+        }
+    }
 }
 
 am_Error_e CAmGatewayElement::_register(void)
 {
     am_gatewayID_t gatewayID(0);
-    am_Error_e result = E_DATABASE_ERROR;
+    am_Error_e     result = E_DATABASE_ERROR;
     if (E_OK == mpControlReceive->enterGatewayDB(mGateway, gatewayID))
     {
         setID(gatewayID);
         result = E_OK;
     }
+
     return result;
 }
 
@@ -57,9 +78,11 @@ am_Error_e CAmGatewayElement::_unregister(void)
         setID(0);
         result = E_OK;
     }
+
     return result;
 
 }
+
 am_sinkID_t CAmGatewayElement::getSinkID(void)
 {
     return mGateway.sinkID;
@@ -69,13 +92,20 @@ am_sourceID_t CAmGatewayElement::getSourceID(void)
 {
     return mGateway.sourceID;
 }
+
 am_domainID_t CAmGatewayElement::getSourceDomainID(void)
 {
     return mGateway.domainSourceID;
 }
+
 am_domainID_t CAmGatewayElement::getSinkDomainID(void)
 {
     return mGateway.domainSinkID;
+}
+
+std::shared_ptr<CAmElement > CAmGatewayElement::getElement()
+{
+    return CAmGatewayFactory::getElement(getName());
 }
 
 } /* namespace gc */

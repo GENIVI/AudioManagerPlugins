@@ -39,7 +39,7 @@ public:
      *        pControlReceive: pointer to control receive class instance
      * @return none
      */
-    CAmDomainElement(const gc_Domain_s& domain, CAmControlReceive* pControlReceive);
+    CAmDomainElement(const gc_Domain_s &domain, IAmControlReceive *pControlReceive);
     /**
      * @brief It is the destructor of class element class.
      * @param none
@@ -47,20 +47,24 @@ public:
      */
     virtual ~CAmDomainElement();
     virtual am_Error_e setState(const am_DomainState_e state);
-    am_Error_e getState(int& state) const;
+    am_Error_e getState(int &state) const;
+
+    am_Error_e getDomainInfo(am_Domain_s &domainInfo) const;
+    const gc_Domain_s &getConfig() const;
+
 protected:
 
     virtual am_Error_e _register(void);
     virtual am_Error_e _unregister(void);
 
 private:
-    CAmControlReceive* mpControlReceive;
     gc_Domain_s mDomain;
 };
 
 class CAmDomainFactory : public CAmFactory<gc_Domain_s, CAmDomainElement >
 {
 };
+
 } /* namespace gc */
 } /* namespace am */
 #endif /* GC_DOMAINELEMENT_H_ */

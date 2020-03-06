@@ -23,7 +23,8 @@
 
 #include "CAmLogger.h"
 #include "CAmActionCommand.h"
-#include "CAmControlReceive.h"
+#include "CAmHandleStore.h"
+
 
 namespace am {
 namespace gc {
@@ -32,9 +33,10 @@ template <typename Telement>
 class CAmSourceSinkActionSetSoundProperty : public CAmActionCommand
 {
 public:
-    CAmSourceSinkActionSetSoundProperty(Telement* pElement) :
-                                    CAmActionCommand(std::string("CAmActionSetSoundProperty")),
-                                    mpElement(pElement)
+    CAmSourceSinkActionSetSoundProperty(std::shared_ptr<Telement > pElement)
+        : CAmActionCommand(std::string("CAmActionSetSoundProperty"))
+        , mpElement(pElement)
+        , mHandle({H_UNKNOWN, 0})
     {
         this->_registerParam(ACTION_PARAM_PROPERTY_TYPE, &mPropertyTypeParam);
         this->_registerParam(ACTION_PARAM_PROPERTY_VALUE, &mPropertyValueParam);
@@ -47,20 +49,22 @@ public:
 protected:
     int _execute(void)
     {
-        if ((NULL == mpElement) || (false == mPropertyTypeParam.getParam(mMainSoundProperty.type))
+        if ((nullptr == mpElement) || (false == mPropertyTypeParam.getParam(mMainSoundProperty.type))
             || (false == mPropertyValueParam.getParam(mMainSoundProperty.value)))
         {
-            LOG_FN_ERROR(" Parameters not set");
+            LOG_FN_ERROR(__FILENAME__, __func__, "Parameters not set");
             return E_NOT_POSSIBLE;
         }
 
         mOldMainSoundProperty = mMainSoundProperty;
-        if(E_OK != mpElement->getMainSoundPropertyValue(mOldMainSoundProperty.type,
-                                             mOldMainSoundProperty.value))
+        if (E_OK != mpElement->getMainSoundPropertyValue(mOldMainSoundProperty.type,
+                mOldMainSoundProperty.value))
         {
-            LOG_FN_ERROR("COULD NOT GET SOUND PROPERTY VALUE");
+            LOG_FN_ERROR(__FILENAME__, __func__, "COULD NOT GET SOUND PROPERTY VALUE");
             return E_NOT_POSSIBLE;
         }
+
+        setUndoRequried(true);
         return _setRoutingSideProperty(mMainSoundProperty);
     }
 
@@ -75,65 +79,68 @@ protected:
         {
             // Result need not be checked as, even if undo is failed nothing can be done.
             mpElement->setMainSoundPropertyValue(mOldMainSoundProperty.type,
-                                                 mOldMainSoundProperty.value);
+                mOldMainSoundProperty.value);
         }
         else
         {
             if ((E_OK == result) && (this->getStatus() == AS_COMPLETED))
             {
                 mpElement->setMainSoundPropertyValue(mMainSoundProperty.type,
-                                                     mMainSoundProperty.value);
+                    mMainSoundProperty.value);
             }
         }
-        //unregister the observer
-        mpElement->getControlReceive()->unregisterObserver(this);
+
+        // unregister the observer
+        CAmHandleStore::instance().clearHandle(mHandle);
         return E_OK;
     }
 
     void _timeout(void)
     {
-        CAmControlReceive* pControlReceive = mpElement->getControlReceive();
-        pControlReceive->abortAction();
+        mpElement->getControlReceive()->abortAction(mHandle);
     }
 
 private:
-    int _setRoutingSideProperty(am_MainSoundProperty_s& mainSoundProperty)
+    int _setRoutingSideProperty(am_MainSoundProperty_s &mainSoundProperty)
     {
-        int result(E_NOT_POSSIBLE);
+        int                result(E_NOT_POSSIBLE);
         am_SoundProperty_s soundProperty;
-        CAmControlReceive* pControlReceive = mpElement->getControlReceive();
-        if (E_OK != mpElement->mainSoundPropertyToSoundProperty(mMainSoundProperty, soundProperty))
+        IAmControlReceive *pControlReceive = mpElement->getControlReceive();
+        if (E_OK != mpElement->mainSoundPropertyToSoundProperty(mainSoundProperty, soundProperty))
         {
-            LOG_FN_ERROR("not able to convert main sound property to sound property");
-            return mpElement->setMainSoundPropertyValue(mMainSoundProperty.type,
-                                                        mMainSoundProperty.value);
-
+            LOG_FN_ERROR(__FILENAME__, __func__, "not able to convert main sound property to sound property");
+            return mpElement->setMainSoundPropertyValue(mainSoundProperty.type,
+                mainSoundProperty.value);
         }
+
         if (mpElement->getType() == ET_SOURCE)
         {
-            result = pControlReceive->setSourceSoundProperty(mpElement->getID(), soundProperty);
+            result = pControlReceive->setSourceSoundProperty(mHandle, mpElement->getID(), soundProperty);
         }
         else
         {
-            result = pControlReceive->setSinkSoundProperty(mpElement->getID(), soundProperty);
+            result = pControlReceive->setSinkSoundProperty(mHandle, mpElement->getID(), soundProperty);
         }
+
         if (result == E_OK)
         {
-            pControlReceive->registerObserver(this);
+            CAmHandleStore::instance().saveHandle(mHandle, this);
             result = E_WAIT_FOR_CHILD_COMPLETION;
         }
         else
         {
             this->setError(result);
         }
+
         return result;
     }
 
-    Telement* mpElement;
-    am_MainSoundProperty_s mMainSoundProperty;
-    am_MainSoundProperty_s mOldMainSoundProperty;
+    std::shared_ptr<Telement > mpElement;
+    am::am_Handle_s            mHandle;
+    am_MainSoundProperty_s     mMainSoundProperty;
+    am_MainSoundProperty_s     mOldMainSoundProperty;
     CAmActionParam<am_CustomMainSoundPropertyType_t > mPropertyTypeParam;
-    CAmActionParam<int16_t > mPropertyValueParam;
+    CAmActionParam<int16_t >   mPropertyValueParam;
 };
 
 } /* namespace gc */

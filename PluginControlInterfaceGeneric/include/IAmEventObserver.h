@@ -29,10 +29,13 @@ public:
     IAmEventObserver()
     {
     }
+
     virtual ~IAmEventObserver()
     {
     }
-    virtual int update(const int result)=0;
+
+    virtual int update(const int result) = 0;
+
 };
 
 } /* namespace gc */

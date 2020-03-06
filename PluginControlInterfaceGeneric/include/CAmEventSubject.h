@@ -44,7 +44,8 @@ public:
      *
      * @return 0 on success and non zero on error.
      */
-    int unregisterObserver(IAmEventObserver* pObserver);
+    int unregisterObserver(IAmEventObserver *pObserver);
+
     /**
      * @brief This function registers a new observer.
      *
@@ -52,8 +53,8 @@ public:
      *
      * @return 0 on success and non zero on error.
      */
-    int registerObserver(IAmEventObserver* pObserver);
-protected:
+    int registerObserver(IAmEventObserver *pObserver);
+
     /**
      * @brief On any state change, this function notifies all the registered observer.
      *
@@ -61,9 +62,10 @@ protected:
      * @return 0 on success and non zero on error.
      */
     int notify(const int result);
+
 private:
     // List of the registred observer
-    std::vector<IAmEventObserver* > mListObservers;
+    std::vector<IAmEventObserver * > mListObservers;
 
 };
 

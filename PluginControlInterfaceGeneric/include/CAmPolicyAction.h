@@ -25,33 +25,32 @@ namespace am {
 namespace gc {
 
 class IAmPolicySend;
-class CAmControlReceive;
 class CAmClassElement;
 
 class CAmPolicyAction : public CAmActionContainer
 {
 public:
-    CAmPolicyAction(const std::vector<gc_Action_s > &listAction, IAmPolicySend* pPolicySend,
-                    CAmControlReceive* pControlReceive);
+    CAmPolicyAction(const std::vector<gc_Action_s > &listAction, IAmPolicySend *pPolicySend,
+        IAmControlReceive *pControlReceive);
     virtual ~CAmPolicyAction();
 protected:
     int _execute(void);
     int _update(const int Result);
+
 private:
     void _createActions(gc_Action_s &policyAction,
-                        std::vector<IAmActionCommand * >& listFrameworkActions);
-    void _getClassList(gc_Action_s &policyAction, std::vector<CAmClassElement * >& listClasses);
-    void _getActions(gc_Action_s &policyAction, std::vector<IAmActionCommand * >& listFrameworks);
+        std::vector<IAmActionCommand * > &listFrameworkActions);
     std::string _getParam(std::map<std::string, std::string > &map, const std::string &elementName);
-    void _setActionParameters(std::map<std::string, std::string >& mapParams,
-                              IAmActionCommand *pAction);
-    am_Error_e _getListNames(std::string name, std::vector<std::string >& listNames);
+    void _setActionParameters(std::map<std::string, std::string > &mapParams,
+        IAmActionCommand *pAction);
+    am_Error_e _getListNames(std::string name, std::vector<std::string > &listNames);
 
     std::vector<gc_Action_s > mListActions;
-    IAmPolicySend* mpPolicySend;
+    IAmPolicySend            *mpPolicySend;
     std::map<std::string, std::vector<am_ConnectionState_e > > mMapConnectionStates;
-    CAmControlReceive* mpControlReceive;
+    IAmControlReceive        *mpControlReceive;
 };
+
 }
 }
-#endif //GC_POLICYACTION_H_
+#endif // GC_POLICYACTION_H_

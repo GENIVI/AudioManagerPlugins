@@ -21,6 +21,7 @@
 #define GC_IACTION_H_
 
 #include <string>
+#include <ostream>
 #include "IAmEventObserver.h"
 #include "CAmEventSubject.h"
 
@@ -59,6 +60,31 @@ enum ActionState_e
      */
     AS_ERROR_STOPPED
 };
+
+/*
+ * Resolve numeric values to symbolic names for logging
+ */
+inline std::ostream &operator<<(std::ostream &out, const ActionState_e &st)
+{
+    switch (st)
+    {
+    case AS_NOT_STARTED:
+        return (out << "AS_NOT_STARTED");
+    case AS_EXECUTING:
+        return (out << "AS_EXECUTING");
+    case AS_COMPLETED:
+        return (out << "AS_COMPLETED");
+    case AS_UNDOING:
+        return (out << "AS_UNDOING");
+    case AS_UNDO_COMPLETE:
+        return (out << "AS_UNDO_COMPLETE");
+    case AS_ERROR_STOPPED:
+        return (out << "AS_ERROR_STOPPED");
+    default:
+        return (out << "AS_undefined(" << (int)st << ")");
+    }
+}
+
 /**
  * This is the abstract class for action parameters.
  *
@@ -71,13 +97,30 @@ enum ActionState_e
 class IAmActionParam
 {
 public:
+    IAmActionParam()
+        : mValid(false)
+    {
+    }
+
     virtual ~IAmActionParam()
     {
     }
+
+    /**
+     * @brief determine if the value of this parameter has been initialized
+     */
+    inline bool isSet() const
+    {
+        return mValid;
+    }
+
     /**
      * @brief The clone interface to set the parameters.
      */
-    virtual void clone(IAmActionParam*)=0;
+    virtual void clone(const IAmActionParam *rhs) = 0;
+
+protected:
+    bool mValid;
 };
 
 /**
@@ -118,6 +161,7 @@ public:
     virtual ~IAmActionCommand()
     {
     }
+
     /**
      * @brief This function is used to call the execute.
      *
@@ -125,18 +169,21 @@ public:
      *             positive values mean action completed execution.
      */
     virtual int execute(void) = 0;
+
     /**
      * @brief This function is used for undo of the procedure.
      *
      * @return int zero return means undo was successful and non zero value indicates error.
      */
     virtual int undo(void) = 0;
+
     /**
      * @brief This is called for cleanup of the action.
      *
      * @return int zero return means undo was successful and non zero value indicates error.
      */
     virtual int cleanup(void) = 0;
+
     /**
      * @brief This function is used to register the parent action. The registered parent is
      * an observer for the child action.
@@ -145,21 +192,25 @@ public:
      *
      * @return int: zero on success, non zero for error.
      */
-    virtual int setParent(IAmActionCommand* cmd) = 0;
+    virtual int setParent(IAmActionCommand *cmd) = 0;
+
     /*
      * @brief This function is used to get the status of the action.
      *
      * @return ActionState the present state of the action.
      */
     virtual ActionState_e getStatus(void) const = 0;
+
     /**
      * @brief This function is used to set the status of an action.
      */
     virtual void setStatus(const ActionState_e) = 0;
+
     /**
      * @brief This function is used to get the error of an action.
      */
     virtual int getError(void) const = 0;
+
     /**
      * @brief This function is used to set the error of an action.
      *
@@ -168,13 +219,15 @@ public:
     virtual void setError(const int error) = 0;
 
     virtual bool getUndoRequired(void) = 0;
-    virtual void setUndoRequried(const bool undoRequired)=0;
+    virtual void setUndoRequried(const bool undoRequired) = 0;
+
     /**
      * @brief This function is used to get the action name.
      *
      * @return string The name of an action.
      */
     virtual std::string getName(void) const = 0;
+
     /**
      * @brief This function is used to set parameter for an action. The parameter for an
      * action is stored as a map, parameter name against the action parameter.
@@ -184,7 +237,8 @@ public:
      *
      * @return bool true means success and vice versa.
      */
-    virtual bool setParam(const std::string& paramName, IAmActionParam* pAction)=0;
+    virtual bool setParam(const std::string &paramName, IAmActionParam *pAction) = 0;
+
     /**
      * @brief This function is used to get the action parameter.
      *
@@ -192,13 +246,13 @@ public:
      *
      * @return IAmActionParam* pointer to the base action param, NULL if invalid
      */
-    virtual IAmActionParam* getParam(const std::string& paramName) = 0;
+    virtual IAmActionParam *getParam(const std::string &paramName) = 0;
 
-    virtual int update(const int result)=0;
-    virtual void setTimeout(uint32_t timeout)=0;
-    virtual uint32_t getTimeout(void)=0;
-    virtual uint32_t getExecutionTime(void)=0;
-    virtual uint32_t getUndoTime(void)=0;
+    virtual int update(const int result)      = 0;
+    virtual void setTimeout(uint32_t timeout) = 0;
+    virtual uint32_t getTimeout(void)       = 0;
+    virtual uint32_t getExecutionTime(void) = 0;
+    virtual uint32_t getUndoTime(void)      = 0;
 
 };
 
@@ -206,18 +260,18 @@ template <class T1>
 class CAmActionParam : public IAmActionParam
 {
 private:
-    T1 mParameterValue;
-    bool mValid;
+    T1   mParameterValue;
 public:
-    CAmActionParam() :
-                                    mValid(false)
+    CAmActionParam()
     {
     }
+
     CAmActionParam(T1 param)
     {
         mParameterValue = param;
-        mValid = true;
+        mValid          = true;
     }
+
     /**
      * @brief This function sets the parameter.
      *
@@ -226,8 +280,9 @@ public:
     void setParam(T1 param)
     {
         mParameterValue = param;
-        mValid = true;
+        mValid          = true;
     }
+
     /**
      * @brief This function gets the parameter.
      *
@@ -235,14 +290,16 @@ public:
      * @return bool true if the parameter is valid and vice versa. If a getparam is called
      * before setting a parameter false is returned.
      */
-    bool getParam(T1& param)
+    bool getParam(T1 &param) const
     {
         if (mValid == true)
         {
             param = mParameterValue;
         }
+
         return mValid;
     }
+
     /*
      * @brief This function clones a parameter.
      *
@@ -262,11 +319,12 @@ public:
      *   mSinkparam.getParam(sinkName);
      * @endcode
      */
-    void clone(IAmActionParam* param)
+    void clone(const IAmActionParam *param)
     {
-        CAmActionParam<T1 > *pParam = (CAmActionParam<T1 >*)param;
+        auto pParam = static_cast<const CAmActionParam<T1 > *>(param);
         mValid = pParam->getParam(mParameterValue);
     }
+
 };
 
 } /* namespace gc */
