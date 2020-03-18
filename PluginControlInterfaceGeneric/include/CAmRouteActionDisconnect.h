@@ -26,6 +26,7 @@
 namespace am {
 namespace gc {
 class CAmRouteElement;
+class CAmElement;
 class CAmRouteActionDisconnect : public CAmActionCommand
 {
 public:
@@ -36,13 +37,14 @@ public:
      * @param pRouteElement The pointer to route element
      * @return none
      */
-    CAmRouteActionDisconnect(CAmRouteElement* pRouteElement);
+    CAmRouteActionDisconnect(std::shared_ptr<CAmRouteElement > pRouteElement);
     /**
      * @brief It is the destructor of disconnect action at router level.
      * @param none
      * @return none
      */
     virtual ~CAmRouteActionDisconnect();
+
 protected:
     /**
      * @brief This API invokes the control receive class function to send request to AM. It
@@ -53,12 +55,14 @@ protected:
      *         E_OK on success
      */
     int _execute(void);
+
     /**
      * @brief This API updates the connection state of router level connection.
      * @param result: status of child action execution
      * @return E_OK
      */
     int _update(const int result);
+
     /**
      * @brief In case of failure this API performs the undo operation if parent has requested for undo.
      * @param none
@@ -68,12 +72,14 @@ protected:
      */
     int _undo(void);
     void _timeout(void);
+
 private:
-    //pointer to route class object containing source and sink information between which disconnect need to be done.
-    CAmRouteElement* mpRouteElement;
+    // pointer to route class object containing source and sink information between which disconnect need to be done.
+    std::shared_ptr<CAmRouteElement > mpRouteElement;
+    am::am_Handle_s                   mHandle;
 
 };
 
-}/* namespace gc */
-}/* namespace am */
+} /* namespace gc */
+} /* namespace am */
 #endif /* GC_ROUTEACTIONDISCONNECT_H_ */

@@ -1,20 +1,20 @@
 /*!
-\page routingActions Routing
+\page routingActions Routing Actions
 
-    This group of actions are related to main connection, like establishing a connection, 
+This group of actions are related to main connection, like establishing a connection, 
 disconnecting a connection, removing a main connection from database.
 
 Following is the list of the routing actions
-    - ACTION_CONNECT : This action establish the main connection.
-    - ACTION_DISCONNECT: This action disconnects a main connection and removes from the database.
+    - ACTION_CONNECT : This action establish the main connection (see page @subpage actionConnect).
+    - ACTION_DISCONNECT: This action disconnects a main connection and removes from the database (see page @subpage actionDisconnect).
     - ACTION_PUSH : This action disconnects a main connection but doesn't remove the connection from database.
-    - ACTION_POP : This action connects a main connection which was pushed.
-    - ACTION_SUSPEND: This action Suspends a main connection, meaning changes the main source state to SS_PAUSE
-    - ACTION_RESUME: This action resumes a main connection which is suspended. 
+    - ACTION_POP : This action connects a main connection which was pushed (see page @subpage actionInterrupt).
+    - ACTION_SUSPEND: This action Suspends a main connection, meaning changes the main source state to SS_PAUSE.
+    - ACTION_RESUME: This action resumes a main connection which is suspended (see page @subpage actionSuspend). 
 
-\section secStTr MainConenction State Transition
+\section secStTr MainConnection State Transition
 
-    The diagram below shows the state transition of the main Connection.
+The diagram below shows the state transition of the main Connection.
 \image html ConnectionStateTransition.png
 
 */

@@ -23,12 +23,11 @@
 
 #include "CAmElement.h"
 #include "CAmTypes.h"
+#include "CAmSourceElement.h"
+#include "CAmSinkElement.h"
 namespace am {
 namespace gc {
 
-class CAmControlReceive;
-class CAmSourceElement;
-class CAmSinkElement;
 
 class CAmRouteElement : public CAmElement
 {
@@ -40,7 +39,7 @@ public:
      *        pControlReceive: control receive class pointer
      * @return none
      */
-    CAmRouteElement(const gc_RoutingElement_s& routingElement, CAmControlReceive* pControlReceive);
+    CAmRouteElement(const gc_RoutingElement_s &routingElement, IAmControlReceive *pControlReceive);
     /**
      * @brief It is the destructor of route element class.
      * @param none
@@ -48,42 +47,59 @@ public:
      */
     virtual ~CAmRouteElement();
     /**
-     * @brief It is the used to get name of this route that is concatenation by source and sink name
-     * @return name of route
-     */
-    std::string getName(void) const;
-    /**
      * @brief It is the used to get the ID of sink of this route.
      * @return ID of sink that belongs to this route
      */
     am_sinkID_t getSinkID(void) const;
+
     /**
      * @brief It is the used to get the ID of source of this route.
      * @return ID of source that belongs to this route
      */
     am_sourceID_t getSourceID(void) const;
+
     /**
      * @brief It is the used to get source element involved in this route
      * @return source element
      */
-    CAmSourceElement* getSource(void) const;
+    std::shared_ptr<CAmSourceElement > getSource(void) const;
+
     /**
      * @brief It is the used to get sink element involved in this route
      * @return sink element
      */
-    CAmSinkElement* getSink(void) const;
+    std::shared_ptr<CAmSinkElement > getSink(void) const;
+
+    /**
+     * @brief Set the connection state of this route
+     */
+    void setState(am_ConnectionState_e state);
+
+    /**
+     * @brief Get the connection state of this route
+     * @return connection state
+     */
+    am_ConnectionState_e getState() const;
+
     /**
      * @brief It is the used to get the connection format
      * @param none
      * @return format of connection
      */
     am_CustomConnectionFormat_t getConnectionFormat(void) const;
-    am_Error_e getPriority(int32_t& priority) const;
-    am_Error_e getVolume(am_volume_t& volume) const;
-private:
-    //store the source/sink/domain ID and connection format
-    gc_RoutingElement_s mRoutingElement;
 
+    int32_t getPriority(void) const override;
+
+    std::shared_ptr<CAmElement > getElement();
+    am_domainID_t getDomainId(void) const;
+    void setDomainId(am_domainID_t domainID);
+
+private:
+    // store the source/sink/domain ID and connection format
+    gc_RoutingElement_s                mRoutingElement;
+    am_ConnectionState_e               mState;
+    std::shared_ptr<CAmSinkElement >   mpSinkElement;
+    std::shared_ptr<CAmSourceElement > mpSourceElement;
 };
 
 class CAmRouteFactory : public CAmFactory<gc_RoutingElement_s, CAmRouteElement>
@@ -91,6 +107,6 @@ class CAmRouteFactory : public CAmFactory<gc_RoutingElement_s, CAmRouteElement>
 
 };
 
-}/* namespace gc */
-}/* namespace am */
+} /* namespace gc */
+} /* namespace am */
 #endif /* GC_ROUTEELEMENT_H_ */

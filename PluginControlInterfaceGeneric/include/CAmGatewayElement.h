@@ -21,7 +21,6 @@
 #ifndef GC_GATEWAYELEMENT_H_
 #define GC_GATEWAYELEMENT_H_
 
-#include "CAmControlReceive.h"
 #include "CAmElement.h"
 
 namespace am {
@@ -34,10 +33,10 @@ public:
      * @brief It is the constructor of gateway element class. Initialize the member
      * variables with default value.It will be invoked during gateway element registration.
      * @param gatewayConfiguration: details of gateway element as defined in configuration file
-     *        pControlReceive: pointer to CAmControlReceive Class object
+     *        pControlReceive: pointer to IAmControlReceive interface provided by AM daemon
      * @return none
      */
-    CAmGatewayElement(const gc_Gateway_s& gatewayConfiguration, CAmControlReceive* pControlReceive);
+    CAmGatewayElement(const gc_Gateway_s &gatewayConfiguration, IAmControlReceive *pControlReceive);
     /**
      * @brief It is the destructor of gateway element class.
      * @param none
@@ -50,6 +49,7 @@ public:
      * @return main sink element pointer
      */
     am_sinkID_t getSinkID(void);
+
     /**
      * @brief This API is used to get the main source element pointer of gateway.
      * @param none
@@ -60,14 +60,15 @@ public:
     am_domainID_t getSourceDomainID(void);
     am_domainID_t getSinkDomainID(void);
 
+    std::shared_ptr<CAmElement > getElement();
+
 protected:
     am_Error_e _register(void);
     am_Error_e _unregister(void);
 
 private:
-    //variable to store configuration of gateway as define in configuration file
+    // variable to store configuration of gateway as define in configuration file
     gc_Gateway_s mGateway;
-    CAmControlReceive* mpControlReceive;
 };
 
 class CAmGatewayFactory : public CAmFactory<gc_Gateway_s, CAmGatewayElement >

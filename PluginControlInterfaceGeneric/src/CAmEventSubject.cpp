@@ -32,18 +32,19 @@ CAmEventSubject::~CAmEventSubject()
 {
 }
 
-int CAmEventSubject::registerObserver(IAmEventObserver* pObserver)
+int CAmEventSubject::registerObserver(IAmEventObserver *pObserver)
 {
     if (pObserver != NULL)
     {
         mListObservers.push_back(pObserver);
     }
+
     return 0;
 }
 
-int CAmEventSubject::unregisterObserver(IAmEventObserver* pObserver)
+int CAmEventSubject::unregisterObserver(IAmEventObserver *pObserver)
 {
-    std::vector<IAmEventObserver* >::iterator itListObservers;
+    std::vector<IAmEventObserver * >::iterator itListObservers;
     itListObservers = mListObservers.begin();
     for (; itListObservers != mListObservers.end(); ++itListObservers)
     {
@@ -53,12 +54,13 @@ int CAmEventSubject::unregisterObserver(IAmEventObserver* pObserver)
             break;
         }
     }
+
     return 0;
 }
 
 int CAmEventSubject::notify(const int result)
 {
-    std::vector<IAmEventObserver* >::iterator itListObservers;
+    std::vector<IAmEventObserver * >::iterator itListObservers;
     itListObservers = mListObservers.begin();
     if (itListObservers != mListObservers.end())
     {

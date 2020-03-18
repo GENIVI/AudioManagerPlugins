@@ -1,0 +1,63 @@
+/**
+
+ @page actionsetSystemProperty Action Set System Property
+
+ <b>Name:</b> ACTION_SET_SYSTEM_PROPERTY<BR>
+ <b>Description:</b> This action sets the system property.
+
+<table>
+<tr>
+<th>Name</th>
+<th>Mandatory/Optional</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+
+<tr>
+<td>propertyType / debugType </td>
+<td>M</td>
+<td>string</td>
+<td>This is the property type</td>
+</tr>
+
+<tr>
+<td>propertyValue / debugValue </td>
+<td>M</td>
+<td>16 bit integer / string.</td>
+<td>This is the property value.
+</td>
+</tr>
+
+<tr>
+<td>timeOut</td>
+<td>O</td>
+<td>integer</td>
+<td>This is the timeout value in milliseconds. This is optional if not specified default value DEFAULT_ASYNC_ACTION_TIME is used.
+The value of DEFAULT_ASYNC_ACTION_TIME is 5000 i.e 5 seconds. It is also possible to specify the infinite timeout i.e -1.</td>
+</tr>
+</table>
+
+ <b>Example Configuration:</b>
+     Below are some examples of the action configuration
+ \code
+    <action type="ACTION_SET_SYSTEM_PROPERTY" propertyType="SYP_DEBUG_LOG" propertyValue="4"/>
+ \endcode
+    The above example sets the debug system property threshold value to 4.
+
+    The propertyValue also considers MACRO input in addition to numeric values.
+
+
+In addition to ACTION_SET_SYSTEM_PROPERTY, ACTION_DEBUG can also be used for set system property.
+The parameters for type can be 'propertyType' or 'debugtype' and similarly for value it can be 'propertyvalue' or 'debugValue'.
+
+At present it only supports changing the dlt log message threshold level.
+
+ <b>Example Configuration:</b>
+     Below are some examples of the action configuration using ACTION_DEBUG and its respective parameters
+ \code
+    <action type="ACTION_DEBUG" debugType="SYP_DEBUG_LOG" debugValue="4"/>
+ \endcode
+    The above example sets the debug threshold value to 4 i.e only the dlt log messages with level
+below info would be sent.
+
+*/

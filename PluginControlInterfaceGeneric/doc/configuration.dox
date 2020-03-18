@@ -1,17 +1,63 @@
 /**
 @page configuration Configuration
 
-@section Overview
-    The configuration of Generic controller is XML based. The rationale behind choosing XML based 
-configuration was, the users can use various already available XML tools for quickly editing 
-configuration. Additionally a schema for XML configuration is also provided which can be used for 
-validating the configuration. AudioManager allows to extend the product specific custom data types, 
-the same approach is used in our schema. AudioManager data types are defined in the  
-our schema(audiomanagertypes.xsd) and the extended data types can be defined by the user in a 
-separate schema(customtypes.xsd).
+The configuration of Generic controller is XML based. The rationale behind 
+XML tools for quickly editing configuration. The following points were main 
+driving force behind the current configuration structure 
+    - Reduce users typing effort 
+    - Simple and self-explanatory configuration in other words better readability
+    - Reduce the configuration file size to improve the start-up performance of AM.<br>
 
-    The configuration consist the following
-    - Elements: Description for source, sink, gateways, domains and classes.
-    - Policy: Description of the product specific business logic.<BR>
+By default, the configuration file is located at
+>   /etc/audiomanager/controller/generic.xml
+but alternative locations can be specified through the environment variable GENERIC_CONTROLLER_CONFIGURATION.
+
+Schema for XML configuration is also provided which can be used for validating 
+the configuration. The validation can be done offline or online. Offline means 
+on the development system and online means on the target. 
+    - Offline validation: 'xmllint --schema schema_file  configuration_file'
+    - Online validation:  GC can perform the validation, but GC should be compiled GC with AMCO_SCHEMA_VALIDATION.
+
+AudioManager allows extending the product specific custom data types (example main 
+sound property, sound property etc.); the same philosophy is used in our approach. 
+AudioManager defined data types are defined in the schema (audiomanagertypes.xsd) 
+and the extended data types pertaining to a project can be defined by the user 
+in a separate schema (customtypes.xsd).
+
+The outline structure of the configuration is as follows<br>
+@code
+<?xml version="1.0" encoding="UTF-8"?>
+<c:generic xmlns:c="controller" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="controller audiomanagertypes.xsd ">
+    <classes>
+         <!-- classes with details -->
+    </classes>
+    <system>
+        <!-- templates, domains, sources, sinks etc. ... -->
+    </system>
+    <policies>
+        <!-- behavior configuration -->
+    </policies>
+    <properties>
+        <!-- some global settings -->
+    </properties>
+</c:generic>
+@endcode
+
+Configuration details are explained on these pages
+    - @subpage clselems : global common properties of sources and sinks and possible connection paths
+    - @subpage elems : Description for source, sink, gateways, domains.
+    - @subpage pagePolicy : Description of the product specific business logic.
+    - @subpage systemProperties : General project-specific settings
+
+The salient points of the above structure are as below
+1.  There is a support for templates.
+2.  For elements hierarchical as well as flat structure is possible. Source/Sinks 
+can be within the domain, gateway can be within the source/sinks. The advantage of hierarchical 
+structure is there are some fields which can be automatically derived and it saves user typing efforts. 
+For example if a source is written within  a domain tag then the domain name field for the source could be automatically 
+derived from the name of the domain in which it is present.
+3.  Most of the data is now changed to attributes in order to reduce the file size of the 
+configuration file.
+4.  The list would be ‘;’ separated, example the list of connection formats CF_XXX;CF_XYZ
 
 */

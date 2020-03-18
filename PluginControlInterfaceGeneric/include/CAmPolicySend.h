@@ -49,7 +49,16 @@ public:
      * @return E_UNKNOWN on internal error
      *         E_OK on success
      */
-    am_Error_e startupInterface(IAmPolicyReceive* pPolicyReceive);
+    am_Error_e startupInterface(IAmPolicyReceive *pPolicyReceive);
+
+    /**
+     * @brief It is the API providing the interface to stop the policy engine.
+     * It shuts down policy engine and config reader instances
+     * @param signal: the signal number sent by the system to stop or shutdown AM
+     * @return: none
+     */
+    void rundownInterface(const int16_t signal);
+
     /**
      * @brief It is the API providing the interface to framework to pass the hook of
      * register domain request from routing adaptor to policy engine.
@@ -58,7 +67,8 @@ public:
      * @return E_NOT_POSSIBLE on internal error
      *         E_OK on success
      */
-    am_Error_e hookRegisterDomain(const std::string& domainName, const am_Error_e status);
+    am_Error_e hookRegisterDomain(const std::string &domainName, const am_Error_e status);
+
     /**
      * @brief It is the API providing the interface to framework to pass the hook of
      * register source request to policy engine.
@@ -67,7 +77,8 @@ public:
      * @return E_NOT_POSSIBLE on internal error
      *         E_OK on success
      */
-    am_Error_e hookRegisterSource(const std::string& sourceName, const am_Error_e status);
+    am_Error_e hookRegisterSource(const std::string &sourceName, const am_Error_e status);
+
     /**
      * @brief It is the API providing the interface to framework to pass the hook of
      * register sink request to policy engine.
@@ -76,7 +87,8 @@ public:
      * @return E_NOT_POSSIBLE on internal error
      *         E_OK on success
      */
-    am_Error_e hookRegisterSink(const std::string& sinkName, const am_Error_e status);
+    am_Error_e hookRegisterSink(const std::string &sinkName, const am_Error_e status);
+
     /**
      * @brief It is the API providing the interface to framework to pass the hook of
      * register gateway request to policy engine.
@@ -85,7 +97,8 @@ public:
      * @return E_NOT_POSSIBLE on internal error
      *         E_OK on success
      */
-    am_Error_e hookRegisterGateway(const std::string& gatewayName, const am_Error_e status);
+    am_Error_e hookRegisterGateway(const std::string &gatewayName, const am_Error_e status);
+
     /**
      * @brief It is the API providing the interface to framework to pass the hook of
      * unregister domain request from routing adaptor to policy engine.
@@ -94,7 +107,8 @@ public:
      * @return E_NOT_POSSIBLE on internal error
      *         E_OK on success
      */
-    am_Error_e hookDeregisterDomain(const std::string& domainName, const am_Error_e status);
+    am_Error_e hookDeregisterDomain(const std::string &domainName, const am_Error_e status);
+
     /**
      * @brief It is the API providing the interface to framework to pass the hook of
      * unregister source request to policy engine.
@@ -103,7 +117,8 @@ public:
      * @return E_NOT_POSSIBLE on internal error
      *         E_OK on success
      */
-    am_Error_e hookDeregisterSource(const std::string& sourceName, const am_Error_e status);
+    am_Error_e hookDeregisterSource(const std::string &sourceName, const am_Error_e status);
+
     /**
      * @brief It is the API providing the interface to framework to pass the hook of
      * unregister sink request to policy engine.
@@ -112,7 +127,8 @@ public:
      * @return E_NOT_POSSIBLE on internal error
      *         E_OK on success
      */
-    am_Error_e hookDeregisterSink(const std::string& sinkName, const am_Error_e status);
+    am_Error_e hookDeregisterSink(const std::string &sinkName, const am_Error_e status);
+
     /**
      * @brief It is the API providing the interface to framework to pass the hook of
      * unregister gateway request to policy engine.
@@ -121,7 +137,8 @@ public:
      * @return E_NOT_POSSIBLE on internal error
      *         E_OK on success
      */
-    am_Error_e hookDeregisterGateway(const std::string& gatewayName, const am_Error_e status);
+    am_Error_e hookDeregisterGateway(const std::string &gatewayName, const am_Error_e status);
+
     /**
      * @brief It is the API providing the interface to framework to pass the hook of
      * domain registration complete request from routing adaptor to policy engine.
@@ -129,7 +146,17 @@ public:
      * @return E_NOT_POSSIBLE on internal error
      *         E_OK on success
      */
-    am_Error_e hookDomainRegistrationComplete(const std::string& domainName);
+    am_Error_e hookDomainRegistrationComplete(const std::string &domainName);
+
+    /**
+     * @brief It is the API providing the interface to framework to pass the hook of
+     * domain registration complete request from routing adaptor to policy engine.
+     * @param error: The result of the all domain registration, success or timeout
+     * @return E_NOT_POSSIBLE on internal error
+     *         E_OK on success
+     */
+    am_Error_e hookAllDomainRegistrationComplete(const am_Error_e &error);
+
     /**
      * @brief It is the API providing the interface to framework to pass the hook of
      * connection request from application to policy engine.
@@ -139,8 +166,9 @@ public:
      * @return E_NOT_POSSIBLE on internal error
      *         E_OK on success
      */
-    am_Error_e hookConnectionRequest(const std::string& className, const std::string& sourceName,
-                                     const std::string& sinkName);
+    am_Error_e hookConnectionRequest(const std::string &className, const std::string &sourceName,
+        const std::string &sinkName);
+
     /**
      * @brief It is the API providing the interface to framework to pass the hook of
      * disconnection request from application to policy engine.
@@ -150,8 +178,9 @@ public:
      * @return E_NOT_POSSIBLE on internal error
      *         E_OK on success
      */
-    am_Error_e hookDisconnectionRequest(const std::string& className, const std::string& sourceName,
-                                        const std::string& sinkname);
+    am_Error_e hookDisconnectionRequest(const std::string &className, const std::string &sourceName,
+        const std::string &sinkname);
+
     /**
      * @brief It is the API providing the interface to framework to pass the hook of
      * source availability change request from routing adaptor to policy engine.
@@ -160,8 +189,9 @@ public:
      * @return E_NOT_POSSIBLE on internal error
      *         E_OK on success
      */
-    am_Error_e hookSourceAvailabilityChange(const std::string& sourceName,
-                                            const am_Availability_s& availabilityInstance);
+    am_Error_e hookSourceAvailabilityChange(const std::string &sourceName,
+        const am_Availability_s &availabilityInstance);
+
     /**
      * @brief It is the API providing the interface to framework to pass the hook of
      * sink availability change request from routing adaptor to policy engine.
@@ -170,8 +200,9 @@ public:
      * @return E_NOT_POSSIBLE on internal error
      *         E_OK on success
      */
-    am_Error_e hookSinkAvailabilityChange(const std::string& sinkName,
-                                          const am_Availability_s& availabilityInstance);
+    am_Error_e hookSinkAvailabilityChange(const std::string &sinkName,
+        const am_Availability_s &availabilityInstance);
+
     /**
      * @brief It is the API providing the interface to framework to pass the hook of
      * source interrupt change request from routing adaptor to policy engine.
@@ -180,8 +211,9 @@ public:
      * @return E_NOT_POSSIBLE on internal error
      *         E_OK on success
      */
-    am_Error_e hookSourceInterruptStateChange(const std::string& sourceName,
-                                              const am_InterruptState_e interruptState);
+    am_Error_e hookSourceInterruptStateChange(const std::string &sourceName,
+        const am_InterruptState_e interruptState);
+
     /**
      * @brief It is the API providing the interface to framework to pass the hook of
      * setting main source sound property request from application to policy engine.
@@ -190,8 +222,20 @@ public:
      * @return E_NOT_POSSIBLE on internal error
      *         E_OK on success
      */
-    am_Error_e hookSetMainSourceSoundProperty(const std::string& sourceName,
-                                              const am_MainSoundProperty_s& soundProperty);
+    am_Error_e hookSetMainSourceSoundProperty(const std::string &sourceName,
+        const am_MainSoundProperty_s &soundProperty);
+
+    /**
+     * @brief It is the API providing the interface to framework to pass the hook of
+     * setting main source sound properties request from application to policy engine.
+     * @param sourceName: name of main source
+     *        listMainSoundProperty: new list of main sound property
+     * @return E_NOT_POSSIBLE on internal error
+     *         E_OK on success
+     */
+    am_Error_e hookSetMainSourceSoundProperties(const std::string &sourceName,
+        const std::vector<am_MainSoundProperty_s> &listMainsoundProperty);
+
     /**
      * @brief It is the API providing the interface to framework to pass the hook of
      * setting main sink sound property request from application to policy engine.
@@ -200,8 +244,20 @@ public:
      * @return E_NOT_POSSIBLE on internal error
      *         E_OK on success
      */
-    am_Error_e hookSetMainSinkSoundProperty(const std::string& sinkName,
-                                            const am_MainSoundProperty_s& soundProperty);
+    am_Error_e hookSetMainSinkSoundProperty(const std::string &sinkName,
+        const am_MainSoundProperty_s &soundProperty);
+
+    /**
+     * @brief It is the API providing the interface to framework to pass the hook of
+     * setting main sink sound properties request from application to policy engine.
+     * @param sinkName: name of main sink
+     *        listMainSoundProperty: new list of main sound property
+     * @return E_NOT_POSSIBLE on internal error
+     *         E_OK on success
+     */
+    am_Error_e hookSetMainSinkSoundProperties(const std::string &sinkName,
+        const std::vector<am_MainSoundProperty_s> &listMainsoundProperty);
+
     /**
      * @brief It is the API providing the interface to framework to pass the hook of
      * setting system property request from application to policy engine.
@@ -209,7 +265,17 @@ public:
      * @return E_NOT_POSSIBLE on internal error
      *         E_OK on success
      */
-    am_Error_e hookSetSystemProperty(const am_SystemProperty_s& systemProperty);
+    am_Error_e hookSetSystemProperty(const am_SystemProperty_s &systemProperty);
+
+    /**
+     * @brief It is the API providing the interface to framework to pass the hook of
+     * setting system properties request from application to policy engine.
+     * @param listSystemProperty: new list of system property
+     * @return E_NOT_POSSIBLE on internal error
+     *         E_OK on success
+     */
+    am_Error_e hookSetSystemProperties(const std::vector<am_SystemProperty_s> &listSystemProperty);
+
     /**
      * @brief It is the API providing the interface to framework to pass the hook of
      * sink notification configuration from application to policy engine.
@@ -219,8 +285,9 @@ public:
      *         E_OK on success
      */
     am_Error_e hookSetMainSinkNotificationConfiguration(
-                    const std::string& sinkName,
-                    const am_NotificationConfiguration_s& notificationConfiguration);
+        const std::string &sinkName,
+        const am_NotificationConfiguration_s &notificationConfiguration);
+
     /**
      * @brief It is the API providing the interface to framework to pass the hook of
      * source notification configuration from application to policy engine.
@@ -230,8 +297,9 @@ public:
      *         E_OK on success
      */
     am_Error_e hookSetMainSourceNotificationConfiguration(
-                    const std::string& sourceName,
-                    const am_NotificationConfiguration_s& notificationConfiguration);
+        const std::string &sourceName,
+        const am_NotificationConfiguration_s &notificationConfiguration);
+
     /**
      * @brief It is the API providing the interface to framework to pass the hook of
      * sink notification data change from application to policy engine.
@@ -240,8 +308,9 @@ public:
      * @return E_NOT_POSSIBLE on internal error
      *         E_OK on success
      */
-    am_Error_e hookSinkNotificationDataChanged(const std::string& sinkName,
-                                               const am_NotificationPayload_s& payload);
+    am_Error_e hookSinkNotificationDataChanged(const std::string &sinkName,
+        const am_NotificationPayload_s &payload);
+
     /**
      * @brief It is the API providing the interface to framework to pass the hook of
      * source notification data change from application to policy engine.
@@ -250,8 +319,8 @@ public:
      * @return E_NOT_POSSIBLE on internal error
      *         E_OK on success
      */
-    am_Error_e hookSourceNotificationDataChanged(const std::string& sourceName,
-                                                 const am_NotificationPayload_s& payload);
+    am_Error_e hookSourceNotificationDataChanged(const std::string &sourceName,
+        const am_NotificationPayload_s &payload);
 
     /**
      * @brief It is the API providing the interface to framework to pass the hook of
@@ -261,7 +330,8 @@ public:
      * @return E_NOT_POSSIBLE on internal error
      *         E_OK on success
      */
-    am_Error_e hookVolumeChange(const std::string& sinkName, const am_mainVolume_t mainVolume);
+    am_Error_e hookVolumeChange(const std::string &sinkName, const am_mainVolume_t mainVolume, bool isStep);
+
     /**
      * @brief It is the API providing the interface to framework to pass the hook of
      * change mute state request from application to policy engine.
@@ -270,10 +340,13 @@ public:
      * @return E_NOT_POSSIBLE on internal error
      *         E_OK on success
      */
-    am_Error_e hookSetSinkMuteState(const std::string& sinkName, const am_MuteState_e muteState);
-    am_Error_e hookConnectionStateChange(const std::string& connectionName,
-                                                   const am_ConnectionState_e& connectionState,
-                                                   am_Error_e& status);
+    am_Error_e hookSetSinkMuteState(const std::string &sinkName, const am_MuteState_e muteState);
+    am_Error_e hookConnectionStateChange(const std::string &connectionName,
+        const am_ConnectionState_e &connectionState,
+        am_Error_e &status);
+    am_Error_e hookStoredMainConnectionVolume(const std::string &connectionName,
+        const am_mainVolume_t mainVolume);
+
     /**
      * @brief This API returns the list of configuration data of a sink by list of names.
      * @param listNames The list of the sink names
@@ -281,8 +354,9 @@ public:
      * @return E_NOT_POSSIBLE on internal error
      *         E_OK on success
      */
-    am_Error_e getListElements(const std::vector<std::string >& listNames,
-                               std::vector<gc_Sink_s >& listSinks);
+    am_Error_e getListElements(const std::vector<std::string > &listNames,
+        std::vector<gc_Sink_s > &listSinks);
+
     /**
      * @brief This API returns the list of configuration data of a source by list of names.
      * @param listNames The list of the source names
@@ -290,8 +364,9 @@ public:
      * @return E_NOT_POSSIBLE on internal error
      *         E_OK on success
      */
-    am_Error_e getListElements(const std::vector<std::string >& listNames,
-                               std::vector<gc_Source_s >& listSources);
+    am_Error_e getListElements(const std::vector<std::string > &listNames,
+        std::vector<gc_Source_s > &listSources);
+
     /**
      * @brief This API returns the list of configuration data of a gateway by list of names.
      * @param listNames The list of the sink names
@@ -299,25 +374,15 @@ public:
      * @return E_NOT_POSSIBLE on internal error
      *         E_OK on success
      */
-    am_Error_e getListElements(const std::vector<std::string >& listNames,
-                               std::vector<gc_Gateway_s >& listGateways);
-    /**
-     * @brief This API returns the list of configuration data of a domain by list of names.
-     * @param listNames The list of the domains names
-     * @param listDomains The list of domain configuration data.
-     * @return E_NOT_POSSIBLE on internal error
-     *         E_OK on success
-     */
-    am_Error_e getListElements(const std::vector<std::string >& listNames,
-                               std::vector<gc_Domain_s >& listDomains);
-    am_Error_e getListSystemProperties(std::vector<am_SystemProperty_s >& listSystemProperties);
-    am_Error_e getListClasses(std::vector<gc_Class_s >& listClasses);
+    am_Error_e getListElements(const std::vector<std::string > &listNames,
+        std::vector<gc_Gateway_s > &listGateways);
 
 private:
     template <typename TinElement, typename ToutElement>
-    void _copyElementData(const TinElement& inputData, ToutElement& outputData);
+    void _copyElementData(const TinElement &inputData, ToutElement &outputData);
+
     // pointer to policy engine class to get the actions as per configuration file
-    CAmPolicyEngine* mpPolicyEngine;
+    CAmPolicyEngine *mpPolicyEngine;
 };
 
 } /* namespace gc */

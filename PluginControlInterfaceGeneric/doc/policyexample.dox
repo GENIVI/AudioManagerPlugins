@@ -45,77 +45,30 @@ class and consider the remaining two source as INTERRUPT class.
 
    This translates to the configuration as below
 \code
-    <policy>
-        <trigger>USER_CONNECTION_REQUEST</trigger>
+    <policy trigger="USER_CONNECTION_REQUEST"/>
         <process>
             <condition>name(CLASS, REQUESTING) EQ "BASE"</condition>
             <condition>connectionState(CONNECTIONOFCLASS, REQUESTING, OTHERS) INC CS_CONNECTED</condition>
-            <action>
-                <type>ACTION_PUSH</type>
-                <param>
-                    <className>"BASE"</className>
-                </param>
-            </action>
-            <action>
-                <type>ACTION_CONNECT</type>
-                <param>
-                    <sourceName>REQUESTING</sourceName>
-                    <sinkName>REQUESTING</sinkName>
-                </param>
-            </action>
+            <action type="ACTION_PUSH" className="N:BASE"/>
+            <action type="ACTION_CONNECT" sourceName="REQUESTING" sinkName="REQUESTING"/>
         </process>
         <process>
             <condition>name(CLASS, REQUESTING) EQ "INTERRUPT"</condition>
             <condition>connectionState(CONNECTIONOFCLASS, REQUESTING, ALL) INC CS_CONNECTED</condition>
-            <action>
-                <type>ACTION_LIMIT</type>
-                <param>
-                    <className>"BASE"</className>
-                    <volume>-500</volume>
-                </param>
-            </action>
-            <action>
-                <type>ACTION_CONNECT</type>
-                <param>
-                    <sourceName>REQUESTING</sourceName>
-                    <sinkName>REQUESTING</sinkName>
-                </param>
-            </action>
+            <action type="ACTION_LIMIT" className="N:BASE" volume="-500"/>
+            <action type="ACTION_CONNECT" sourceName="REQUESTING" sinkName="REQUESTING"/>
         </process>
     </policy>
-    <policy>
-        <trigger>USER_DISCONNECTION_REQUEST</trigger>
+    <policy trigger="USER_DISCONNECTION_REQUEST"/>
         <process>
             <condition>name(CLASS, REQUESTING) EQ "BASE"</condition>
-            <action>
-                <type>ACTION_DISCONNECT</type>
-                <param>
-                    <className>REQUESTING</className>
-                    <connectionState>CS_CONNECTED</connectionState>
-                </param>
-            </action>
-            <action>
-                <type>ACTION_POP</type>
-                <param>
-                    <className>"BASE"</className>
-                </param>
-            </action>
+            <action type="ACTION_DISCONNECT" className="REQUESTING" connectionState="CS_CONNECTED"/>
+            <action type="ACTION_POP" className="N:BASE"/>
         </process>
         <process>
             <condition>name(CLASS, REQUESTING) EQ "INTERRUPT"</condition>
-            <action>
-                <type>ACTION_DISCONNECT</type>
-                <param>
-                    <className>REQUESTING</className>
-                    <connectionState>CS_CONNECTED</connectionState>
-                </param>
-            </action>
-            <action>
-                <type>ACTION_UNLIMIT</type>
-                <param>
-                    <className>"BASE"</className>
-                </param>
-            </action>
+            <action type="ACTION_DISCONNECT" className="REQUESTING" connectionState="CS_CONNECTED"/>
+            <action type="ACTION_UNLIMIT" className="N:BASE"/>
         </process>
     </policy>
 

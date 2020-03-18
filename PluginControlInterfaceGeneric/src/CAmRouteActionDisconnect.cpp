@@ -19,17 +19,18 @@
  *****************************************************************************/
 
 #include "CAmRouteActionDisconnect.h"
-#include "CAmControlReceive.h"
 #include "CAmRouteElement.h"
+#include "CAmHandleStore.h"
 #include "CAmLogger.h"
 
 namespace am {
 
 namespace gc {
 
-CAmRouteActionDisconnect::CAmRouteActionDisconnect(CAmRouteElement* pRouteElement) :
-                                CAmActionCommand(std::string("CAmRouterActionDisconnect")),
-                                mpRouteElement(pRouteElement)
+CAmRouteActionDisconnect::CAmRouteActionDisconnect(std::shared_ptr<CAmRouteElement > pRouteElement)
+    : CAmActionCommand(std::string("CAmRouterActionDisconnect"))
+    , mpRouteElement(pRouteElement)
+    , mHandle({H_UNKNOWN, 0})
 {
 }
 
@@ -39,44 +40,46 @@ CAmRouteActionDisconnect::~CAmRouteActionDisconnect()
 
 int CAmRouteActionDisconnect::_execute(void)
 {
-    if (NULL == mpRouteElement)
+    if (nullptr == mpRouteElement)
     {
-        LOG_FN_ERROR(" Parameters not set");
+        LOG_FN_ERROR(__FILENAME__, __func__, " Parameters not set");
         return E_NOT_POSSIBLE;
     }
-am_ConnectionState_e connectionState;
-    CAmControlReceive* pControlReceive = mpRouteElement->getControlReceive();
-    mpRouteElement->getState((int&)connectionState);
-    if ((CS_DISCONNECTED ==  connectionState)|| (CS_UNKNOWN == connectionState))
+
+    IAmControlReceive   *pControlReceive = mpRouteElement->getControlReceive();
+    am_ConnectionState_e connectionState = mpRouteElement->getState();
+    if ((CS_DISCONNECTED == connectionState) || (CS_UNKNOWN == connectionState))
     {
         return E_OK;
     }
 
-    int result = pControlReceive->disconnect(mpRouteElement->getID());
+    int result = pControlReceive->disconnect(mHandle, mpRouteElement->getID());
     if (E_OK == result)
     {
-        pControlReceive->registerObserver(this);
+        CAmHandleStore::instance().saveHandle(mHandle, this);
         mpRouteElement->setState(CS_DISCONNECTING);
         result = E_WAIT_FOR_CHILD_COMPLETION;
     }
+
     return result;
 }
 
 int CAmRouteActionDisconnect::_undo(void)
 {
-    am_connectionID_t connectionID(0);
-    CAmControlReceive* pControlReceive = mpRouteElement->getControlReceive();
-    int result = pControlReceive->connect(connectionID,
-                                          mpRouteElement->getConnectionFormat(),
-                                          mpRouteElement->getSourceID(),
-                                          mpRouteElement->getSinkID());
+    am_connectionID_t  connectionID(0);
+    IAmControlReceive *pControlReceive = mpRouteElement->getControlReceive();
+    int                result          = pControlReceive->connect(mHandle, connectionID,
+            mpRouteElement->getConnectionFormat(),
+            mpRouteElement->getSourceID(),
+            mpRouteElement->getSinkID());
     if (E_OK == result)
     {
-        pControlReceive->registerObserver(this);
+        CAmHandleStore::instance().saveHandle(mHandle, this);
         mpRouteElement->setID(connectionID);
         mpRouteElement->setState(CS_CONNECTING);
         result = E_WAIT_FOR_CHILD_COMPLETION;
     }
+
     return result;
 }
 
@@ -98,16 +101,17 @@ int CAmRouteActionDisconnect::_update(const int result)
             mpRouteElement->setState(CS_CONNECTED);
         }
     }
-    //unregister the observer
-    CAmControlReceive* pControlReceive = mpRouteElement->getControlReceive();
-    pControlReceive->unregisterObserver(this);
+
+    // unregister the observer
+    CAmHandleStore::instance().clearHandle(mHandle);
+
     return E_OK;
 }
 
 void CAmRouteActionDisconnect::_timeout(void)
 {
-    CAmControlReceive* pControlReceive = mpRouteElement->getControlReceive();
-    pControlReceive->abortAction();
+    mpRouteElement->getControlReceive()->abortAction(mHandle);
 }
-}/* namespace gc */
-}/* namespace am */
+
+} /* namespace gc */
+} /* namespace am */

@@ -20,48 +20,33 @@
 #include <algorithm>
 #include <map>
 #include "CAmElement.h"
-#include "CAmControlReceive.h"
 #include "CAmLogger.h"
 
 namespace am {
 namespace gc {
 
-CAmElement::CAmElement(const std::string& name, CAmControlReceive* pControReceive) :
-                                mpControlRecieve(pControReceive),
-                                mName(name),
-                                mID(0),
-                                mType(ET_UNKNOWN),
-                                mPriority(0),
-                                mVolume(0),
-                                mMainVolume(0),
-                                mMuteState(MS_UNKNOWN),
-                                mInterruptState(IS_UNKNOWN),
-                                mState(0)
+CAmElement::CAmElement(gc_Element_e type, const std::string &name, IAmControlReceive *pControReceive)
+    : mpControlReceive(pControReceive)
+    , mName(name)
+    , mID(0)
+    , mType(type)
 {
-    mLimitVolume.limitType = LT_UNKNOWN;
-    mLimitVolume.limitVolume = 0;
-    mAvailability.availability = A_UNKNOWN;
-    mAvailability.availabilityReason = AR_UNKNOWN;
+    LOG_FN_DEBUG(__FILENAME__, mType, mName, "established");
 }
 
 CAmElement::~CAmElement()
 {
-    mName = "";
+    LOG_FN_DEBUG(__FILENAME__, mType, mName, "removed");
 }
 
-CAmControlReceive* CAmElement::getControlReceive(void)
+IAmControlReceive *CAmElement::getControlReceive(void)
 {
-    return mpControlRecieve;
+    return mpControlReceive;
 }
 
 std::string CAmElement::getName(void) const
 {
     return mName;
-}
-
-int CAmElement::setType(const gc_Element_e type)
-{
-    mType = type;
 }
 
 gc_Element_e CAmElement::getType(void) const
@@ -79,103 +64,365 @@ uint16_t CAmElement::getID(void) const
     return mID;
 }
 
-am_Error_e CAmElement::setPriority(const int32_t priority)
+int32_t CAmElement::getPriority() const
 {
-    mPriority = priority;
-    return E_OK;
+    // default implementation for elements which do not support dedicated priority
+
+    return 0;
 }
 
-am_Error_e CAmElement::getPriority(int32_t & priority) const
+am_Error_e CAmElement::_register(std::shared_ptr<CAmElement > pObserver)
 {
-    priority =  mPriority;
-    return E_OK;
+    am_Error_e                                           result = E_UNKNOWN;
+    std::vector<std::shared_ptr<CAmElement > >::iterator itListObservers;
+
+    if (pObserver != nullptr)
+    {
+        itListObservers = std::find(mListObservers.begin(), mListObservers.end(), pObserver);
+        if (itListObservers == mListObservers.end())
+        {
+            LOG_FN_DEBUG(__FILENAME__, __func__, mType, mName, "observer attached:"
+                    , pObserver->getType(), pObserver->getName());
+
+            /*element not found so push it to the list*/
+            mListObservers.push_back(pObserver);
+            result = E_OK;
+        }
+        else
+        {
+            LOG_FN_WARN(__FILENAME__, __func__, mType, mName, "observer is already registered:"
+                    , (*itListObservers)->getType(), (*itListObservers)->getName());
+            result = E_ALREADY_EXISTS;
+        }
+    }
+    else
+    {
+        // Null pointer
+        LOG_FN_ERROR(__FILENAME__, __func__, getName(), "observer is nullptr");
+        result = E_NOT_POSSIBLE;
+    }
+
+    return result;
 }
 
-am_Error_e CAmElement::setVolume(const am_volume_t volume)
+am_Error_e CAmElement::_deregister(std::shared_ptr<CAmElement > pObserver)
 {
-    LOG_FN_ENTRY(volume);
-    mVolume = volume;
-    return E_OK;
+    am_Error_e                                           result = E_UNKNOWN;
+    std::vector<std::shared_ptr<CAmElement > >::iterator itListObservers;
+
+    /* handle the NULL pointer check */
+    if (pObserver != nullptr)
+    {
+        itListObservers = std::find(mListObservers.begin(), mListObservers.end(), pObserver);
+        if (itListObservers != mListObservers.end())
+        {
+            LOG_FN_DEBUG(__FILENAME__, __func__, mType, mName, "observer detached:"
+                    , (*itListObservers)->getType(), (*itListObservers)->getName());
+
+            mListObservers.erase(itListObservers);
+            result = E_OK;
+        }
+        else
+        {
+            result = E_OK;
+        }
+    }
+    else
+    {
+        result = E_OK;
+    }
+
+    return result;
 }
 
-am_Error_e CAmElement::getVolume(am_volume_t& volume) const
+am_Error_e CAmElement::attach(std::shared_ptr<CAmElement > pSubject)
 {
-    volume = mVolume;
-    return E_OK;
+    am_Error_e result = E_UNKNOWN;
+
+    if (pSubject != nullptr)
+    {
+        result = pSubject->_register(this->getElement());
+        if (result == E_OK)
+        {
+            mListSubjects.push_back(pSubject);
+        }
+        else if (result == E_ALREADY_EXISTS)
+        {
+            /*if observer is already registered then check if subject also registered*/
+            std::vector<std::shared_ptr<CAmElement > >::iterator itListSubjects;
+            itListSubjects = std::find(mListSubjects.begin(), mListSubjects.end(), pSubject);
+            if (itListSubjects != mListSubjects.end())
+            {
+                LOG_FN_INFO(__FILENAME__, __func__, "subject is already registered");
+                result = E_ALREADY_EXISTS;
+            }
+            else
+            {
+                /*element not found so push it to the list*/
+                mListSubjects.push_back(pSubject);
+                result = E_OK;
+            }
+        }
+        else
+        {
+            // error E_NOT_POSSIBLE
+        }
+    }
+    else
+    {
+        LOG_FN_ERROR(__FILENAME__, __func__, "subject is nullptr");
+        result = E_NOT_POSSIBLE;
+    }
+
+    return result;
 }
 
-am_Error_e CAmElement::setMainVolume(const am_mainVolume_t volume)
+am_Error_e CAmElement::detach(std::shared_ptr<CAmElement > pSubject)
 {
-    mMainVolume = volume;
-    return E_OK;
+    am_Error_e                                           result = E_UNKNOWN;
+    std::vector<std::shared_ptr<CAmElement > >::iterator itListSubjects;
+
+    if (pSubject != nullptr)
+    {
+        itListSubjects = std::find(mListSubjects.begin(), mListSubjects.end(), pSubject);
+        if (itListSubjects != mListSubjects.end())
+        {
+            mListSubjects.erase(itListSubjects);                /* remove subject from the observer list */
+            result = pSubject->_deregister(this->getElement()); /* remove observer from the subject list */
+        }
+        else
+        {
+            // element not found
+            result = E_OK;
+        }
+    }
+    else
+    {
+        // Null pointer
+        result = E_NOT_POSSIBLE;
+    }
+
+    return result;
 }
 
-am_Error_e CAmElement::getMainVolume(am_mainVolume_t& mainVolume) const
+void CAmElement::_detachAll()
 {
-    mainVolume = mMainVolume;
-    return E_UNKNOWN;
+    std::vector<std::shared_ptr<CAmElement > >::iterator itListSubjects;
+
+    itListSubjects = mListSubjects.begin();
+    while (itListSubjects != mListSubjects.end())
+    {
+        (*itListSubjects)->_deregister(this->getElement());
+        itListSubjects = mListSubjects.erase(itListSubjects);
+    }
 }
 
-am_Error_e CAmElement::setLimitVolume(const gc_LimitVolume_s& limitVolume)
+int CAmElement::getObserverCount(void) const
 {
-    LOG_FN_ENTRY("limitType", limitVolume.limitType, "limitVolume", limitVolume.limitVolume);
-    mLimitVolume = limitVolume;
-    return E_OK;
+    return mListObservers.size();
 }
 
-am_Error_e CAmElement::getLimitVolume(gc_LimitVolume_s& limitVolume) const
+int CAmElement::getObserverCount(gc_Element_e type, std::vector<std::shared_ptr<CAmElement > > *pListElements) const
 {
-    limitVolume = mLimitVolume;
-    return E_OK;
+    int numObservers = 0;
+    for (auto it : mListObservers)
+    {
+        if (it->getType() == type)
+        {
+            numObservers++;
+            if (pListElements != nullptr)
+            {
+                pListElements->push_back(it);
+            }
+        }
+    }
+
+    return numObservers;
 }
 
-am_Error_e CAmElement::setMuteState(const am_MuteState_e muteState)
+int CAmElement::getSubjectCount(void) const
 {
-    mMuteState = muteState;
-    return E_OK;
+    return mListSubjects.size();
 }
 
-am_Error_e CAmElement::getMuteState(am_MuteState_e& muteState) const
+int CAmElement::update(std::shared_ptr<CAmElement > pNotifierElement,
+    const am_mainVolume_t &mainVolume)
 {
-    muteState = mMuteState;
-    return E_UNKNOWN;
+    return 0;
 }
 
-am_Error_e CAmElement::setInterruptState(const am_InterruptState_e interruptState)
+void CAmElement::removeObservers()
 {
-    mInterruptState = interruptState;
-    return E_OK;
+    if (mListObservers.empty())
+    {
+        LOG_FN_DEBUG(__FILENAME__, __func__, mType, mName, "No observers to remove");
+    }
+
+    std::vector<std::shared_ptr<CAmElement > >::iterator itListObservers;
+    itListObservers = mListObservers.begin();
+    while (!mListObservers.empty())
+    {
+        itListObservers = mListObservers.begin();
+        _deregister((*itListObservers));
+    }
 }
 
-am_Error_e CAmElement::getInterruptState(am_InterruptState_e& interruptState) const
+bool CAmElement::_isFilterMatch(std::shared_ptr<CAmElement > pAmElement,
+    const gc_Element_e &elementType) const
 {
-    interruptState = mInterruptState;
-    return E_OK;
+    if (pAmElement->getType() == elementType)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }
 
-am_Error_e CAmElement::setState(int state)
+bool CAmElement::_isFilterMatch(std::shared_ptr<CAmElement > pAmElement,
+    const std::string &elementName) const
 {
-    mState = state;
-    return E_OK;
+    if (pAmElement->getName() == elementName)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }
 
-am_Error_e CAmElement::getState(int& state) const
+bool CAmElement::_isFilterMatch(std::shared_ptr<CAmElement > pAmElement,
+    const int &elementPriority) const
 {
-    state = mState;
-    return E_OK;
+    int priority = pAmElement->getPriority();
+    if (priority == elementPriority)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }
 
-am_Error_e CAmElement::setAvailability(const am_Availability_s& availability)
+bool CAmElement::_isFilterMatch(std::shared_ptr<CAmElement > pAmElement,
+    const struct gc_ElementTypeName_s &elementTypeName) const
 {
-    mAvailability = availability;
-    return E_NOT_POSSIBLE;
+    if ((pAmElement->getType() == elementTypeName.elementType) &&
+        (pAmElement->getName() == elementTypeName.elementName))
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }
 
-am_Error_e CAmElement::getAvailability(am_Availability_s& availability) const
+bool CAmElement::_isFilterMatch(std::shared_ptr<CAmElement > pAmElement,
+    const struct gc_ElementTypeID_s &elementTypeID) const
 {
-    availability = mAvailability;
-    return E_UNKNOWN;
+    if ((pAmElement->getType() == elementTypeID.elementType) && (pAmElement->getID()
+                                                                 == elementTypeID.elementID))
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }
+
+std::shared_ptr<CAmElement > CAmElement::getElement()
+{
+    return nullptr;
+}
+
+// *****************************************************************************
+//                  class   L i m i t - M a p - F e a t u r e
+//
+// Add-On to support multiple independent volume limits
+//
+
+CAmLimitableElement::CAmLimitableElement(gc_Element_e type, const std::string &name, IAmControlReceive *pControlReceive)
+    : CAmElement(type, name, pControlReceive)
+{
+    
+}
+
+void CAmLimitableElement::setLimitState(gc_LimitState_e limitState
+        , const gc_LimitVolume_s &limitVolume, uint32_t pattern)
+{
+    std::ostringstream hexPattern;
+    hexPattern << "0x" << std::hex << pattern << std::dec;
+
+    if (LS_LIMITED == limitState)
+    {
+        // Add the volume limit in the map. In case if the same pattern is already present
+        // overwrite the limit.
+        mMapLimitVolumes[pattern] = limitVolume;
+
+        LOG_FN_DEBUG(__FILENAME__, mType, mName, __func__
+                , "ADDED", hexPattern.str(), limitVolume.limitType, limitVolume.limitVolume);
+    }
+    else if (LS_UNLIMITED == limitState)
+    {
+        // remove all limits whose pattern have only the bits defined in given pattern
+        for (auto it = mMapLimitVolumes.begin(); it != mMapLimitVolumes.end(); )
+        {
+            if (0 == (it->first & (~pattern)))
+            {
+                LOG_FN_DEBUG(__FILENAME__, mType, mName, __func__
+                        , "ERASED", hexPattern.str(), it->second.limitType, it->second.limitVolume);
+
+                it = mMapLimitVolumes.erase(it);
+            }
+            else
+            {
+                ++it;
+            }
+        }
+    }
+}
+
+gc_LimitState_e CAmLimitableElement::getLimit(uint32_t pattern, gc_LimitVolume_s &limit) const
+{
+    const auto &it = mMapLimitVolumes.find(pattern);
+    if (it == mMapLimitVolumes.end())
+    {
+        limit.limitType = LT_ABSOLUTE;
+        limit.limitVolume = AM_VOLUME_NO_LIMIT;
+        return LS_UNLIMITED;
+    }
+
+    limit = it->second;
+    return LS_LIMITED;
+}
+
+void CAmLimitableElement::getLimits(std::list<gc_LimitVolume_s > &limits) const
+{
+    // copy direct limits
+    for (const auto &limit : mMapLimitVolumes)
+    {
+        limits.push_back(limit.second);
+    }
+}
+
+am_MuteState_e CAmLimitableElement::getMuteState() const
+{
+    for (const auto &limit : mMapLimitVolumes)
+    {
+        if ((LT_ABSOLUTE == limit.second.limitType) && (AM_MUTE == limit.second.limitVolume))
+        {
+            return MS_MUTED;
+        }
+    }
+
+    return MS_UNMUTED;
+}
+
 
 } /* namespace gc */
 } /* namespace am */

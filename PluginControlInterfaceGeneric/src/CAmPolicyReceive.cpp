@@ -10,8 +10,9 @@
  * @author: Toshiaki Isogai <tisogai@jp.adit-jv.com>
  *          Kapildev Patel  <kpatel@jp.adit-jv.com>
  *          Prashant Jain   <pjain@jp.adit-jv.com>
+ *          Martin Koch     <mkoch@de.adit-jv.com>
  *
- * @copyright (c) 2015 Advanced Driver Information Technology.
+ * @copyright (c) 2015 - 2019 Advanced Driver Information Technology.
  * This code is developed by Advanced Driver Information Technology.
  * Copyright of Advanced Driver Information Technology, Bosch, and DENSO.
  * All rights reserved.
@@ -34,142 +35,157 @@
 namespace am {
 namespace gc {
 
-CAmPolicyReceive::CAmPolicyReceive(CAmControlReceive* pControlReceive, IAmPolicySend* pPolicySend) :
-                                mpControlReceive(pControlReceive),
-                                mpPolicySend(pPolicySend)
+CAmPolicyReceive::CAmPolicyReceive(IAmControlReceive *pControlReceive, IAmPolicySend *pPolicySend)
+    : mpControlReceive(pControlReceive)
+    , mpPolicySend(pPolicySend)
 {
 }
 
-bool CAmPolicyReceive::isDomainRegistrationComplete(const std::string& domainName)
+bool CAmPolicyReceive::isDomainRegistrationComplete(const std::string &domainName)
 {
-    std::vector < am_Domain_s > listDomains;
-    std::vector<am_Domain_s >::iterator itListDomains;
-    if (E_OK == mpControlReceive->getListElements(listDomains))
+    am_Domain_s info;
+    auto        pDomainElement = CAmDomainFactory::getElement(domainName);
+    if ((pDomainElement != nullptr) && (E_OK == pDomainElement->getDomainInfo(info)))
     {
-        for (itListDomains = listDomains.begin(); itListDomains != listDomains.end();
-                        itListDomains++)
-        {
-            if ((*itListDomains).name == domainName)
-            {
-                LOG_FN_DEBUG("  domain found ", (*itListDomains).complete);
-                return (*itListDomains).complete;
-            }
-        }
+        LOG_FN_DEBUG(__FILENAME__, __func__, domainName, info.complete ? "true" : "false");
+        return info.complete;
     }
+
+    LOG_FN_ERROR(__FILENAME__, __func__, domainName, "FAILED getting info");
     return false;
 }
 
-bool CAmPolicyReceive::isRegistered(const gc_Element_e type, const std::string& name)
+bool CAmPolicyReceive::isRegistered(const gc_Element_e type, const std::string &name)
 {
-    return (_getElement(type, name) != NULL) ? true : false;
+    return (_getElement(type, name) != nullptr) ? true : false;
 }
 
-am_Error_e CAmPolicyReceive::getAvailability(const gc_Element_e type, const std::string& name,
-                                             am_Availability_s& availability)
+am_Error_e CAmPolicyReceive::getAvailability(const gc_Element_e type, const std::string &name,
+    am_Availability_s &availability)
 {
-    am_Error_e result(E_NOT_POSSIBLE);
-    CAmElement* pElement = _getElement(type, name);
-    if (pElement != NULL)
+    std::shared_ptr<CAmElement > pElement = _getElement(type, name);
+    if (pElement == nullptr)
     {
-        result = pElement->getAvailability(availability);
+        return E_NOT_POSSIBLE;
     }
-    return result;
+
+    switch (pElement->getType())
+    {
+        case ET_SOURCE:
+        case ET_SINK:
+            return (std::static_pointer_cast<CAmRoutePointElement>(pElement))->getAvailability(availability);
+        default:
+            availability = {A_UNKNOWN, AR_UNKNOWN};
+            return E_NON_EXISTENT;
+    }
 }
 
-am_Error_e CAmPolicyReceive::getState(const gc_Element_e type, const std::string& name, int& state)
+am_Error_e CAmPolicyReceive::getInterruptState(const gc_Element_e type, const std::string &name,
+    am_InterruptState_e &interruptState)
 {
-    am_Error_e result(E_NOT_POSSIBLE);
-    CAmElement* pElement = _getElement(type, name);
-    if (pElement != NULL)
+    std::shared_ptr<CAmElement > pElement = _getElement(type, name);
+    if (pElement == nullptr)
     {
-        result = pElement->getState(state);
+        return E_NOT_POSSIBLE;
     }
-    return result;
+
+    if (pElement->getType() == ET_SOURCE) // only defined for sources
+    {
+        interruptState = (static_pointer_cast<CAmSourceElement>(pElement))->getInterruptState();
+        return E_OK;
+    }
+
+    interruptState = IS_UNKNOWN;
+    return E_NON_EXISTENT;
 }
 
-am_Error_e CAmPolicyReceive::getInterruptState(const gc_Element_e type, const std::string& name,
-                                               am_InterruptState_e& interruptState)
+am_Error_e CAmPolicyReceive::getMuteState(const gc_Element_e type, const std::string &name,
+    am_MuteState_e &muteState)
 {
-    am_Error_e result(E_NOT_POSSIBLE);
-    CAmElement* pElement = _getElement(type, name);
-    if (pElement != NULL)
+    std::shared_ptr<CAmElement > pElement = _getElement(type, name);
+    if (pElement != nullptr)
     {
-        result = pElement->getInterruptState(interruptState);
-    }
-    return result;
-}
+        switch (pElement->getType())
+        {
+            case ET_CLASS:
+                muteState = (std::static_pointer_cast<CAmClassElement>(pElement))->getMuteState();
+                return E_OK;
 
-am_Error_e CAmPolicyReceive::getMuteState(const gc_Element_e type, const std::string& name,
-                                          am_MuteState_e& muteState)
-{
-    am_Error_e result(E_NOT_POSSIBLE);
-    CAmElement* pElement = _getElement(type, name);
-    if (pElement != NULL)
-    {
-        result = pElement->getMuteState(muteState);
+            case ET_CONNECTION:
+                muteState = (std::static_pointer_cast<CAmMainConnectionElement>(pElement))->getMuteState();
+                return E_OK;
+
+            case ET_SOURCE:
+            case ET_SINK:
+                muteState = (std::static_pointer_cast<CAmRoutePointElement>(pElement))->getMuteState();
+                return E_OK;
+        }
     }
-    return result;
+
+    return E_NOT_POSSIBLE;
 }
 
 am_Error_e CAmPolicyReceive::getSoundProperty(const gc_Element_e elementType,
-                                              const std::string& elementName,
-                                              const am_CustomSoundPropertyType_t propertyType,
-                                              int16_t &propertyValue)
+    const std::string &elementName,
+    const am_CustomSoundPropertyType_t propertyType,
+    int16_t &propertyValue)
 {
     am_Error_e result(E_NOT_POSSIBLE);
     if (elementType == ET_SOURCE)
     {
-        CAmSourceElement* pElement = CAmSourceFactory::getElement(elementName);
-        if (pElement != NULL)
+        std::shared_ptr<CAmSourceElement > pElement = CAmSourceFactory::getElement(elementName);
+        if (pElement != nullptr)
         {
             result = pElement->getSoundPropertyValue(propertyType, propertyValue);
         }
     }
     else if (elementType == ET_SINK)
     {
-        CAmSinkElement* pElement = CAmSinkFactory::getElement(elementName);
-        if (pElement != NULL)
+        std::shared_ptr<CAmSinkElement > pElement = CAmSinkFactory::getElement(elementName);
+        if (pElement != nullptr)
         {
             result = pElement->getSoundPropertyValue(propertyType, propertyValue);
         }
     }
+
     return result;
 }
 
 am_Error_e CAmPolicyReceive::getMainSoundProperty(const gc_Element_e elementType,
-                                                  const std::string& elementName,
-                                                  const am_CustomMainSoundPropertyType_t propertyType,
-                                                  int16_t& propertyValue)
+    const std::string &elementName,
+    const am_CustomMainSoundPropertyType_t propertyType,
+    int16_t &propertyValue)
 {
     am_Error_e result(E_NOT_POSSIBLE);
     if (elementType == ET_SOURCE)
     {
-        CAmSourceElement* pElement = CAmSourceFactory::getElement(elementName);
-        if (pElement != NULL)
+        std::shared_ptr<CAmSourceElement > pElement = CAmSourceFactory::getElement(elementName);
+        if (pElement != nullptr)
         {
             result = pElement->getMainSoundPropertyValue(propertyType, propertyValue);
         }
     }
     else if (elementType == ET_SINK)
     {
-        CAmSinkElement* pElement = CAmSinkFactory::getElement(elementName);
-        if (pElement != NULL)
+        std::shared_ptr<CAmSinkElement > pElement = CAmSinkFactory::getElement(elementName);
+        if (pElement != nullptr)
         {
             result = pElement->getMainSoundPropertyValue(propertyType, propertyValue);
         }
     }
+
     return result;
 }
 
 am_Error_e CAmPolicyReceive::getSystemProperty(const am_CustomSystemPropertyType_t systemPropertyType,
-                                               int16_t& value)
+    int16_t &value)
 {
-    std::vector<am_SystemProperty_s> listSystemProperties;
+    std::vector<am_SystemProperty_s>           listSystemProperties;
     std::vector<am_SystemProperty_s>::iterator itListSystemProperties;
-    //get the list of system properties from database
+    // get the list of system properties from database
     mpControlReceive->getListSystemProperties(listSystemProperties);
     for (itListSystemProperties = listSystemProperties.begin();
-                    itListSystemProperties != listSystemProperties.end(); itListSystemProperties++)
+         itListSystemProperties != listSystemProperties.end(); itListSystemProperties++)
     {
         if ((*itListSystemProperties).type == systemPropertyType)
         {
@@ -177,36 +193,53 @@ am_Error_e CAmPolicyReceive::getSystemProperty(const am_CustomSystemPropertyType
             return E_OK;
         }
     }
+
     return E_NOT_POSSIBLE;
 }
 
 am_Error_e CAmPolicyReceive::getVolume(const gc_Element_e elementType,
-                                       const std::string& elementName,
-                                       am_volume_t& volume)
+    const std::string &elementName,
+    am_volume_t &volume)
 {
-    am_Error_e result(E_NOT_POSSIBLE);
-    CAmElement* pElement = _getElement(elementType, elementName);
-    if (pElement != NULL)
+    const std::shared_ptr<CAmElement > &pElement = _getElement(elementType, elementName);
+    if (pElement != nullptr)
     {
-        result = pElement->getVolume(volume);
+        switch (pElement->getType())
+        {
+            case ET_CONNECTION:
+                volume = (std::static_pointer_cast<CAmMainConnectionElement>(pElement))->getVolume();
+                return E_OK;
+
+            case ET_SOURCE:
+            case ET_SINK:
+                volume = (std::static_pointer_cast<CAmRoutePointElement>(pElement))->getVolume();
+                return E_OK;
+        }
     }
-    return result;
+
+    return E_NOT_POSSIBLE;
 }
 
 am_Error_e CAmPolicyReceive::getMainVolume(const gc_Element_e elementType,
-                                           const std::string& elementName,
-                                           am_mainVolume_t& mainVolume)
+    const std::string &elementName,
+    am_mainVolume_t &mainVolume)
 {
-    am_Error_e result(E_NOT_POSSIBLE);
-    if(ET_SOURCE != elementType)
+    const std::shared_ptr<CAmElement > &pElement = _getElement(elementType, elementName);
+    if (pElement != nullptr)
     {
-        CAmElement* pElement = _getElement(elementType, elementName);
-        if (pElement != NULL)
+        switch (elementType)
         {
-            result = pElement->getMainVolume(mainVolume);
+            case ET_SINK:
+                mainVolume = (std::static_pointer_cast<CAmSinkElement>(pElement))->getMainVolume();
+                return E_OK;
+    
+            case ET_CONNECTION:
+                mainVolume = (std::static_pointer_cast<CAmMainConnectionElement>(pElement))->getMainVolume();
+                return E_OK;
         }
     }
-    return result;
+
+    return E_NOT_POSSIBLE;
 }
 
 bool CAmPolicyReceive::_sortingLowest(gc_ConnectionInfo_s i, gc_ConnectionInfo_s j)
@@ -219,16 +252,16 @@ bool CAmPolicyReceive::_sortingHighest(gc_ConnectionInfo_s i, gc_ConnectionInfo_
     return (i.priority < j.priority);
 }
 
-am_Error_e CAmPolicyReceive::getListMainConnections(const std::string& name,
-                                                    std::vector<gc_ConnectionInfo_s >& listConnectionInfos,gc_Order_e order)
+am_Error_e CAmPolicyReceive::getListMainConnections(const std::string &name,
+    std::vector<gc_ConnectionInfo_s > &listConnectionInfos, gc_Order_e order)
 {
-    am_Error_e result = E_NOT_POSSIBLE;
-    CAmClassElement* pClassElement;
+    am_Error_e                        result        = E_NOT_POSSIBLE;
+    std::shared_ptr<CAmClassElement > pClassElement = nullptr;
     pClassElement = CAmClassFactory::getElement(name);
-    if (NULL != pClassElement)
+    if (nullptr != pClassElement)
     {
         _getConnectionInfo(pClassElement, listConnectionInfos);
-        switch(order)
+        switch (order)
         {
         case O_HIGH_PRIORITY:
             std::stable_sort(listConnectionInfos.begin(), listConnectionInfos.end(), _sortingHighest);
@@ -240,17 +273,18 @@ am_Error_e CAmPolicyReceive::getListMainConnections(const std::string& name,
             break;
         case O_NEWEST:
         {
-            std::vector<gc_ConnectionInfo_s > listTempConnectionInfos;
+            std::vector<gc_ConnectionInfo_s >                   listTempConnectionInfos;
             std::vector<gc_ConnectionInfo_s >::reverse_iterator itListRevTempConnectionInfos;
             listTempConnectionInfos = listConnectionInfos;
             listConnectionInfos.clear();
-            for(itListRevTempConnectionInfos = listTempConnectionInfos.rbegin();itListRevTempConnectionInfos!= listTempConnectionInfos.rend();itListRevTempConnectionInfos++)
+            for (itListRevTempConnectionInfos = listTempConnectionInfos.rbegin(); itListRevTempConnectionInfos != listTempConnectionInfos.rend(); itListRevTempConnectionInfos++)
             {
                 listConnectionInfos.push_back(*itListRevTempConnectionInfos);
             }
+
             result = E_OK;
+            break;
         }
-        break;
         case O_OLDEST:
             result = E_OK;
             break;
@@ -258,96 +292,105 @@ am_Error_e CAmPolicyReceive::getListMainConnections(const std::string& name,
             break;
         }
     }
+
     return result;
 }
 
 am_Error_e CAmPolicyReceive::getListNotificationConfigurations(
-                const gc_Element_e elementType, const std::string& name,
-                std::vector<am_NotificationConfiguration_s >& listNotificationConfigurations)
+    const gc_Element_e elementType, const std::string &name,
+    std::vector<am_NotificationConfiguration_s > &listNotificationConfigurations)
 {
     am_Error_e result(E_NOT_POSSIBLE);
-    switch(elementType)
+    switch (elementType)
     {
     case ET_SOURCE:
     {
-        CAmSourceElement* pElement = (CAmSourceElement*)_getElement(elementType, name);
-        if (pElement != NULL)
+        std::shared_ptr<CAmSourceElement > pElement = CAmSourceFactory::getElement(name);
+        if (pElement != nullptr)
         {
             result = pElement->getListNotificationConfigurations(listNotificationConfigurations);
         }
+
+        break;
     }
-    break;
     case ET_SINK:
     {
-        CAmSinkElement* pElement = (CAmSinkElement*)_getElement(elementType, name);
-        if (pElement != NULL)
+        std::shared_ptr<CAmSinkElement > pElement = CAmSinkFactory::getElement(name);
+        if (pElement != nullptr)
         {
             result = pElement->getListNotificationConfigurations(listNotificationConfigurations);
         }
+
+        break;
     }
-    break;
     default:
         break;
     }
+
     return result;
 }
 
 am_Error_e CAmPolicyReceive::getListMainNotificationConfigurations(
-                const gc_Element_e elementType, const std::string& name,
-                std::vector<am_NotificationConfiguration_s >& listMainNotificationConfigurations)
+    const gc_Element_e elementType, const std::string &name,
+    std::vector<am_NotificationConfiguration_s > &listMainNotificationConfigurations)
 {
     am_Error_e result(E_NOT_POSSIBLE);
-    switch(elementType)
+    switch (elementType)
     {
     case ET_SOURCE:
     {
-        CAmSourceElement* pElement = (CAmSourceElement*)_getElement(elementType, name);
-        if (pElement != NULL)
+        std::shared_ptr<CAmSourceElement > pElement = CAmSourceFactory::getElement(name);
+        if (pElement != nullptr)
         {
             result = pElement->getListMainNotificationConfigurations(listMainNotificationConfigurations);
         }
+
+        break;
     }
-    break;
     case ET_SINK:
     {
-        CAmSinkElement* pElement = (CAmSinkElement*)_getElement(elementType, name);
-        if (pElement != NULL)
+        std::shared_ptr<CAmSinkElement > pElement = CAmSinkFactory::getElement(name);
+        if (pElement != nullptr)
         {
             result = pElement->getListMainNotificationConfigurations(listMainNotificationConfigurations);
         }
+
+        break;
     }
-    break;
     default:
         break;
     }
+
     return result;
 }
 
 am_Error_e CAmPolicyReceive::getListMainConnections(
-                const gc_Element_e elementType, const std::string& elementName,
-                std::vector<gc_ConnectionInfo_s >& listConnectionInfos)
+    const gc_Element_e elementType, const std::string &elementName,
+    std::vector<gc_ConnectionInfo_s > &listConnectionInfos)
 {
-    CAmClassElement* pClassElement;
-    std::vector<CAmClassElement* > listClasses;
-    std::vector<CAmClassElement* >::iterator itListClasses;
-    am_Error_e result = E_NOT_POSSIBLE;
-    CAmElement* pElement;
+    std::shared_ptr<CAmClassElement >                         pClassElement = nullptr;
+    std::vector<std::shared_ptr<CAmClassElement > >           listClasses;
+    std::vector<std::shared_ptr<CAmClassElement > >::iterator itListClasses;
+    am_Error_e                                                result   = E_NOT_POSSIBLE;
+    std::shared_ptr<CAmElement >                              pElement = nullptr;
 
-    LOG_FN_ENTRY(elementType);
+    LOG_FN_ENTRY(__FILENAME__, __func__, elementType);
     switch (elementType)
     {
     case ET_CLASS:
         pClassElement = CAmClassFactory::getElement(elementName);
-        if (NULL != pClassElement)
+        if (nullptr != pClassElement)
         {
             _getConnectionInfo(pClassElement, listConnectionInfos);
             result = E_OK;
         }
+
         break;
     case ET_SOURCE:
     case ET_SINK:
         pElement = _getElement(elementType, elementName);
-        if (NULL != pElement)
+        LOG_FN_INFO(__FILENAME__, __func__, "_getElement element name:", elementName);
+        if (nullptr != pElement)
         {
             if (ET_SOURCE == elementType)
             {
@@ -357,105 +400,92 @@ am_Error_e CAmPolicyReceive::getListMainConnections(
             {
                 CAmClassFactory::getElementsBySink(pElement->getName(), listClasses);
             }
+
             for (itListClasses = listClasses.begin(); itListClasses != listClasses.end();
-                            itListClasses++)
+                 itListClasses++)
             {
                 _getConnectionInfo(*itListClasses, listConnectionInfos);
             }
+
             result = E_OK;
         }
+
         break;
     case ET_CONNECTION:
     {
-        std::vector<CAmMainConnectionElement* > listConnections;
-        std::vector<CAmMainConnectionElement* >::iterator itListMainConnections;
-        pClassElement = CAmClassFactory::getElementByConnection(elementName);
-        if (NULL != pClassElement)
+        std::shared_ptr<CAmMainConnectionElement > pMainConnection = CAmMainConnectionFactory::getElement(elementName);
+        if (pMainConnection != nullptr)
         {
-            pClassElement->getListMainConnections(listConnections);
-            for (itListMainConnections = listConnections.begin();
-                            itListMainConnections != listConnections.end(); itListMainConnections++)
-            {
-                //compare all the connection with given connection name
-                if ((*itListMainConnections)->getName() == elementName)
-                {
-                    gc_ConnectionInfo_s connection;
-                    am_volume_t volume;
-                    int32_t priority;
-                    int state;
-                    connection.sinkName = (*itListMainConnections)->getMainSinkName();
-                    connection.sourceName = (*itListMainConnections)->getMainSourceName();
-                    (*itListMainConnections)->getPriority(priority);
-                    connection.priority = priority;
-                    (*itListMainConnections)->getState(state);
-                    connection.connectionState = (am_ConnectionState_e)state;
-                    (*itListMainConnections)->getVolume(volume);
-                    connection.volume = volume;
-                    listConnectionInfos.push_back(connection);
-                    result = E_OK;
-                    break;
-                }
-            }
+            gc_ConnectionInfo_s connection(elementType, pMainConnection->getMainSourceName(),
+                    pMainConnection->getMainSinkName());
+            connection.priority = pMainConnection->getPriority();
+            connection.connectionState = pMainConnection->getState();
+            connection.volume = pMainConnection->getVolume();
+            listConnectionInfos.push_back(connection);
+            result = E_OK;
         }
-    }
+
         break;
+    }
     default:
-        LOG_FN_DEBUG("  class not found with given element type: ", elementType);
+        LOG_FN_WARN(__FILENAME__, __func__, "  class not found with given element type: ", elementType);
         break;
     }
-    LOG_FN_EXIT(result);
+
+    LOG_FN_EXIT(__FILENAME__, __func__, result);
     return result;
 }
 
-void CAmPolicyReceive::_getConnectionInfo(CAmClassElement* pClass,
-                                          std::vector<gc_ConnectionInfo_s >& listConnectionInfo)
+void CAmPolicyReceive::_getConnectionInfo(std::shared_ptr<CAmClassElement > pClass,
+    std::vector<gc_ConnectionInfo_s > &listConnectionInfo)
 {
-    std::vector<CAmMainConnectionElement* > listConnections;
-    std::vector<CAmMainConnectionElement* >::iterator itListMainConnections;
-    gc_ConnectionInfo_s connection;
-    am_volume_t volume;
-    int32_t priority;
-    int state;
-    pClass->getListMainConnections(listConnections);
-    for (itListMainConnections = listConnections.begin();
-                    itListMainConnections != listConnections.end(); itListMainConnections++)
+    if (pClass == nullptr)
     {
+        return;
+    }
 
-        connection.sinkName = (*itListMainConnections)->getMainSinkName();
-        connection.sourceName = (*itListMainConnections)->getMainSourceName();
-        (*itListMainConnections)->getPriority(priority);
-        connection.priority = priority;
-        (*itListMainConnections)->getState(state);
-        connection.connectionState = (am_ConnectionState_e)state;
-        (*itListMainConnections)->getVolume(volume);
-        connection.volume = volume;
+    std::vector<std::shared_ptr<CAmMainConnectionElement > >           listConnections;
+    CAmConnectionListFilter filter;
+    filter.setClassName(pClass->getName());
+    CAmMainConnectionFactory::getListElements(listConnections, filter);
+
+    for (auto pMainConnection : listConnections)
+    {
+        gc_ConnectionInfo_s connection(ET_CONNECTION, pMainConnection->getMainSourceName(),
+                pMainConnection->getMainSinkName());
+        connection.priority = pMainConnection->getPriority();
+        connection.connectionState = pMainConnection->getState();
+        connection.volume = pMainConnection->getVolume();
         listConnectionInfo.push_back(connection);
     }
 }
 
-am_Error_e CAmPolicyReceive::setListActions(std::vector<gc_Action_s >& listActions,
-                                            gc_ActionList_e actionListType)
+am_Error_e CAmPolicyReceive::setListActions(std::vector<gc_Action_s > &listActions,
+    gc_ActionList_e actionListType)
 {
     if (listActions.empty())
     {
         return E_NO_CHANGE;
     }
-    CAmRootAction* pRootAction = CAmRootAction::getInstance();
-    CAmPolicyAction* pPolicyAction = new CAmPolicyAction(listActions, mpPolicySend,
-                                                         mpControlReceive);
+
+    CAmRootAction   *pRootAction   = CAmRootAction::getInstance();
+    CAmPolicyAction *pPolicyAction = new CAmPolicyAction(listActions, mpPolicySend,
+            mpControlReceive);
     if (NULL == pPolicyAction)
     {
-        LOG_FN_ERROR("  bad memory state");
+        LOG_FN_ERROR(__FILENAME__, __func__, "  bad memory state");
         return E_NOT_POSSIBLE;
     }
-//attach the dynamic action pointer to root
+
+// attach the dynamic action pointer to root
     pRootAction->append(pPolicyAction);
     return E_OK;
 }
 
-CAmElement* CAmPolicyReceive::_getElement(const gc_Element_e type, const std::string& name)
+std::shared_ptr<CAmElement > CAmPolicyReceive::_getElement(const gc_Element_e type,
+    const std::string &name)
 {
-    CAmElement* pElement(NULL);
+    std::shared_ptr<CAmElement > pElement = nullptr;
     if (type == ET_SINK)
     {
         pElement = CAmSinkFactory::getElement(name);
@@ -480,7 +510,37 @@ CAmElement* CAmPolicyReceive::_getElement(const gc_Element_e type, const std::st
     {
         pElement = CAmDomainFactory::getElement(name);
     }
+
     return pElement;
+}
+
+am_Error_e CAmPolicyReceive::getDomainInfoByID(const am_domainID_t domainID, am_Domain_s &domainInfo)
+{
+    auto pDomain = CAmDomainFactory::getElement(domainID);
+    if (pDomain != nullptr)
+    {
+        return pDomain->getDomainInfo(domainInfo);
+    }
+
+    return E_UNKNOWN;
+}
+
+am_Error_e CAmPolicyReceive::getListGatewaysOfDomain(
+    const am_domainID_t domainID, std::vector<am_gatewayID_t > &listGatewaysIDs) const
+{
+    return mpControlReceive->getListGatewaysOfDomain(domainID, listGatewaysIDs);
+}
+
+am_Error_e CAmPolicyReceive::getListSinksOfDomain(const am_domainID_t domainID,
+    std::vector<am_sinkID_t > &listSinkIDs) const
+{
+    return mpControlReceive->getListSinksOfDomain(domainID, listSinkIDs);
+}
+
+am_Error_e CAmPolicyReceive::getListSourcesOfDomain(
+    const am_domainID_t domainID, std::vector<am_sourceID_t > &listSourceIDs) const
+{
+    return mpControlReceive->getListSourcesOfDomain(domainID, listSourceIDs);
 }
 
 }

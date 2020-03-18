@@ -19,52 +19,53 @@
  *****************************************************************************/
 
 #include "CAmSystemActionRegister.h"
-#include "CAmControlReceive.h"
 #include "CAmSourceElement.h"
 #include "CAmSinkElement.h"
 #include "CAmGatewayElement.h"
 #include "CAmClassElement.h"
 
+#include "limits.h"
 #include <algorithm>
 namespace am {
 namespace gc {
 
-CAmSystemActionRegister::CAmSystemActionRegister(CAmControlReceive* pControlReceive) :
-                                CAmActionCommand(std::string("CAmSystemActionRegister")),
-                                mpControlReceive(pControlReceive)
-
+CAmSystemActionRegister::CAmSystemActionRegister(std::shared_ptr<CAmSystemElement > pSystem)
+    : CAmActionCommand(std::string("CAmSystemActionRegister"))
+    , mpControlReceive(pSystem->getControlReceive())
 {
-    LOG_FN_DEBUG("  object created");
     _registerParam(ACTION_PARAM_SOURCE_INFO, &mListSources);
     _registerParam(ACTION_PARAM_SINK_INFO, &mListSinks);
     _registerParam(ACTION_PARAM_GATEWAY_INFO, &mListGateways);
 }
+
 CAmSystemActionRegister::~CAmSystemActionRegister(void)
 {
 }
 
 int CAmSystemActionRegister::_execute(void)
 {
-    std::vector<gc_Sink_s > listSinks;
-    std::vector<gc_Sink_s >::iterator itListSinks;
-    std::vector<gc_Source_s > listSources;
-    std::vector<gc_Source_s >::iterator itListSources;
-    std::vector<gc_Gateway_s > listGateways;
-    std::vector<gc_Gateway_s >::iterator itListGateways;
-    am_domainID_t domainID;
-    std::map<std::string, am_domainID_t > mapDomainIDs;
+    am_Error_e                                      result = E_NOT_POSSIBLE;
+    std::vector<gc_Sink_s >                         listSinks;
+    std::vector<gc_Sink_s >::iterator               itListSinks;
+    std::vector<gc_Source_s >                       listSources;
+    std::vector<gc_Source_s >::iterator             itListSources;
+    std::vector<gc_Gateway_s >                      listGateways;
+    std::vector<gc_Gateway_s >::iterator            itListGateways;
+    am_domainID_t                                   domainID;
+    std::map<std::string, am_domainID_t >           mapDomainIDs;
     std::map<std::string, am_domainID_t >::iterator itmapDomainIDs;
     mListSinks.getParam(listSinks);
     mListSources.getParam(listSources);
     mListGateways.getParam(listGateways);
-    CAmClassElement *klass;
+    std::shared_ptr<CAmClassElement > klass;
 
     for (itListSinks = listSinks.begin(); itListSinks != listSinks.end(); ++itListSinks)
     {
         klass = CAmClassFactory::getElement((*itListSinks).className);
 
-        if (klass) {
-          (*itListSinks).sinkClassID = klass->getID();
+        if (klass)
+        {
+            (*itListSinks).sinkClassID = klass->getID();
         }
 
         itmapDomainIDs = mapDomainIDs.find((*itListSinks).domainName);
@@ -83,14 +84,63 @@ int CAmSystemActionRegister::_execute(void)
                 return E_NOT_POSSIBLE;
             }
         }
-        CAmSinkFactory::createElement((*itListSinks), mpControlReceive);
+
+        {
+            std::vector<std::shared_ptr<CAmClassElement > >::iterator itListClassElements;
+            std::vector<std::shared_ptr<CAmClassElement > >           listClassElements;
+            CAmClassFactory::getListElements(listClassElements);
+            itListClassElements = listClassElements.begin();
+            for (; itListClassElements != listClassElements.end(); ++itListClassElements)
+            {
+                am_mainVolume_t mainVolume = (*itListSinks).mainVolume;
+                if ((true == (*itListClassElements)->isPerSinkClassVolumeEnabled()) &&
+                    (E_OK == (*itListClassElements)->getLastVolume((*itListSinks).name, mainVolume)))
+                {
+                    gc_MainSoundProperty_s mainSoundProperty;
+                    mainSoundProperty.type     = MSP_SINK_PER_CLASS_VOLUME_TYPE((*itListClassElements)->getID());
+                    mainSoundProperty.value    = mainVolume;
+                    mainSoundProperty.minValue = SHRT_MIN;
+                    mainSoundProperty.maxValue = SHRT_MAX;
+                    (*itListSinks).listGCMainSoundProperties.push_back(mainSoundProperty);
+                    (*itListSinks).listMainSoundProperties.push_back(mainSoundProperty);
+                }
+            }
+        }
+        std::shared_ptr<CAmElement > pElement = nullptr;
+        pElement = CAmSinkFactory::createElement((*itListSinks), mpControlReceive);
+        if (nullptr != pElement)
+        {
+            std::shared_ptr<CAmElement > pClassElement = nullptr;
+            pClassElement = CAmClassFactory::getElement((*itListSinks).className);
+            if (nullptr != pClassElement)
+            {
+                result = pClassElement->attach(pElement);
+                if (result != E_OK)
+                {
+                    /*its an error need to decide */
+                    LOG_FN_ERROR("element attach failed, result is:", result);
+                }
+            }
+            else
+            {
+                LOG_FN_INFO(" Not able to get class element", (*itListSinks).className);
+                result = E_NOT_POSSIBLE;
+            }
+        }
+        else
+        {
+            LOG_FN_INFO(" Not able to create sink element");
+            result = E_NOT_POSSIBLE;
+        }
     }
+
     for (itListSources = listSources.begin(); itListSources != listSources.end(); ++itListSources)
     {
         klass = CAmClassFactory::getElement((*itListSources).className);
 
-        if (klass) {
-          (*itListSources).sourceClassID = klass->getID();
+        if (klass)
+        {
+            (*itListSources).sourceClassID = klass->getID();
         }
 
         itmapDomainIDs = mapDomainIDs.find((*itListSources).domainName);
@@ -109,31 +159,102 @@ int CAmSystemActionRegister::_execute(void)
                 return E_NOT_POSSIBLE;
             }
         }
-        CAmSourceFactory::createElement((*itListSources), mpControlReceive);
+
+        std::shared_ptr<CAmElement > pElement = nullptr;
+        pElement = CAmSourceFactory::createElement((*itListSources), mpControlReceive);
+        if (nullptr != pElement)
+        {
+            std::shared_ptr<CAmElement > pClassElement = nullptr;
+            pClassElement = CAmClassFactory::getElement((*itListSources).className);
+            if (nullptr != pClassElement)
+            {
+                result = pClassElement->attach(pElement);
+                if (result != E_OK)
+                {
+                    /*its an error need to decide */
+                    LOG_FN_ERROR("element attach failed, result is:", result);
+                }
+            }
+            else
+            {
+                LOG_FN_INFO(" Not able to get class element", (*itListSources).className);
+                result = E_NOT_POSSIBLE;
+            }
+        }
+        else
+        {
+            LOG_FN_INFO(" Not able to create sink element");
+            result = E_NOT_POSSIBLE;
+        }
     }
+
     for (itListGateways = listGateways.begin(); itListGateways != listGateways.end();
-                    ++itListGateways)
+         ++itListGateways)
     {
-        LOG_FN_INFO("Registering gateway");
+        LOG_FN_INFO(__FILENAME__, __func__, "Registering gateway");
+        std::shared_ptr<CAmElement > pElement = nullptr;
         if (E_OK == _populateGatewayStruct(*itListGateways))
         {
-            CAmGatewayFactory::createElement(*itListGateways, mpControlReceive);
+            pElement = CAmGatewayFactory::createElement(*itListGateways, mpControlReceive);
+
+            if (nullptr != pElement)
+            {
+                std::shared_ptr<CAmElement > pSourceElement = nullptr;
+                pSourceElement = CAmSourceFactory::getElement(
+                        ((gc_Gateway_s) * itListGateways).sourceName);
+                if (nullptr != pSourceElement)
+                {
+                    result = pElement->attach(pSourceElement);
+                    if (result != E_OK)
+                    {
+                        /*its an error need to decide */
+                        LOG_FN_ERROR("element attach failed, result is:", result);
+                    }
+                }
+                else
+                {
+                    LOG_FN_INFO(" Not able to get source element", ((gc_Gateway_s) * itListGateways).sourceName);
+                    result = E_NOT_POSSIBLE;
+                }
+
+                std::shared_ptr<CAmElement > pSinkElement = nullptr;
+                pSinkElement = CAmSinkFactory::getElement(((gc_Gateway_s) * itListGateways).sinkName);
+                if (nullptr != pSinkElement)
+                {
+                    result = pElement->attach(pSinkElement);
+                    if (result != E_OK)
+                    {
+                        /*its an error need to decide */
+                        LOG_FN_ERROR("element attach failed, result is:", result);
+                    }
+                }
+                else
+                {
+                    LOG_FN_INFO(" Not able to get sink element", ((gc_Gateway_s) * itListGateways).sinkName);
+                    result = E_NOT_POSSIBLE;
+                }
+            }
+            else
+            {
+                LOG_FN_INFO(" Not able to create gateway element");
+                result = E_NOT_POSSIBLE;
+            }
         }
         else
         {
             return E_NOT_POSSIBLE;
         }
-
     }
+
     return E_OK;
 }
 
-int CAmSystemActionRegister::_populateGatewayStruct(gc_Gateway_s& gatewayData)
+int CAmSystemActionRegister::_populateGatewayStruct(gc_Gateway_s &gatewayData)
 {
-    CAmSourceElement* pSource;
-    CAmSinkElement* pSink;
-    am_Error_e result = E_OK;
-    bool DomainRegistered = false;
+    std::shared_ptr<CAmSourceElement> pSource          = nullptr;
+    std::shared_ptr<CAmSinkElement>   pSink            = nullptr;
+    am_Error_e                        result           = E_OK;
+    bool                              DomainRegistered = false;
 
     do
     {
@@ -141,32 +262,34 @@ int CAmSystemActionRegister::_populateGatewayStruct(gc_Gateway_s& gatewayData)
         {
             DomainRegistered = true;
         }
+
         pSource = CAmSourceFactory::getElement(gatewayData.sourceName);
-        pSink = CAmSinkFactory::getElement(gatewayData.sinkName);
-        if (!(DomainRegistered && (pSource != NULL) && (pSink != NULL)))
+        pSink   = CAmSinkFactory::getElement(gatewayData.sinkName);
+        if (!(DomainRegistered && (pSource != nullptr) && (pSink != nullptr)))
         {
             result = E_NOT_POSSIBLE;
             break;
         }
-        gatewayData.sinkID = pSink->getID();
+
+        gatewayData.sinkID       = pSink->getID();
         gatewayData.domainSinkID = pSink->getDomainID();
         pSink->getListConnectionFormats(gatewayData.listSinkFormats);
-        gatewayData.sourceID = pSource->getID();
+        gatewayData.sourceID       = pSource->getID();
         gatewayData.domainSourceID = pSource->getDomainID();
         pSource->getListConnectionFormats(gatewayData.listSourceFormats);
         gatewayData.convertionMatrix.clear();
-        unsigned int SinkCounter, SourceCounter;
-        std::pair<am_CustomConnectionFormat_t, am_CustomConnectionFormat_t > key;
+        unsigned int                                                                                 SinkCounter, SourceCounter;
+        std::pair<am_CustomConnectionFormat_t, am_CustomConnectionFormat_t >                         key;
         std::vector<std::pair<am_CustomConnectionFormat_t, am_CustomConnectionFormat_t > >::iterator itListConversionMatrix;
         for (SinkCounter = 0; SinkCounter < gatewayData.listSinkFormats.size(); ++SinkCounter)
         {
             for (SourceCounter = 0; SourceCounter < gatewayData.listSourceFormats.size();
-                            ++SourceCounter)
+                 ++SourceCounter)
             {
-                key.first = gatewayData.listSinkFormats[SinkCounter];
-                key.second = gatewayData.listSourceFormats[SourceCounter];
+                key.first              = gatewayData.listSinkFormats[SinkCounter];
+                key.second             = gatewayData.listSourceFormats[SourceCounter];
                 itListConversionMatrix = std::find(gatewayData.listConvertionmatrix.begin(),
-                                                   gatewayData.listConvertionmatrix.end(), key);
+                        gatewayData.listConvertionmatrix.end(), key);
                 if (itListConversionMatrix != gatewayData.listConvertionmatrix.end())
                 {
                     gatewayData.convertionMatrix.push_back(true);
@@ -178,18 +301,19 @@ int CAmSystemActionRegister::_populateGatewayStruct(gc_Gateway_s& gatewayData)
             }
         }
     } while (0);
+
     return result;
 }
 
-am_Error_e CAmSystemActionRegister::_getDomainID(const std::string& domainName,
-                                                 am_domainID_t& domainID)
+am_Error_e CAmSystemActionRegister::_getDomainID(const std::string &domainName,
+    am_domainID_t &domainID)
 {
-    std::vector<am_Domain_s > listDomains;
+    std::vector<am_Domain_s >           listDomains;
     std::vector<am_Domain_s >::iterator itListDomains;
-    if (E_OK == mpControlReceive->getListElements(listDomains))
+    if (E_OK == mpControlReceive->getListDomains(listDomains))
     {
         for (itListDomains = listDomains.begin(); itListDomains != listDomains.end();
-                        ++itListDomains)
+             ++itListDomains)
         {
             if (itListDomains->name == domainName)
             {
@@ -198,6 +322,7 @@ am_Error_e CAmSystemActionRegister::_getDomainID(const std::string& domainName,
             }
         }
     }
+
     return E_UNKNOWN;
 }
 

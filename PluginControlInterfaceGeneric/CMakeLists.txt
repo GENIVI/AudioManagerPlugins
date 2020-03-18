@@ -3,13 +3,13 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.0)
 INCLUDE(CMakeDependentOption)
 FIND_PACKAGE(PkgConfig)
 
-PROJECT(PluginControlInterfaceGeneric VERSION 7.4.0)
+PROJECT(PluginControlInterfaceGeneric VERSION 8.0.0)
 
 include(CMakeDependentOption)
 find_package(PkgConfig)
-find_package(AudioManager REQUIRED > 7.3.0)  
-find_package(AudioManagerUtilities REQUIRED > 7.3.0)   
-      
+find_package(AudioManager REQUIRED > 7.7.1)  
+find_package(AudioManagerUtilities REQUIRED > 7.7.1)
+
 OPTION (WITH_DOCUMENTATION
         "build plugins with documentation" OFF )
 OPTION (NSM_IFACE_PRESENT
@@ -48,7 +48,12 @@ INCLUDE_DIRECTORIES(
 
 LINK_DIRECTORIES(${AudioManagerUtilities_LIB_DIRECTORIES})
 
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11 -Wno-variadic-macro")
+# persistence data file
+IF(NOT DEFINED GENERIC_CONTROLLER_PERSISTENCE_FILE)
+    SET(GENERIC_CONTROLLER_PERSISTENCE_FILE "/var/persistence/gc_persistence_data.xml")
+ENDIF()
+add_definitions(-DGENERIC_CONTROLLER_PERSISTENCE_FILE="${GENERIC_CONTROLLER_PERSISTENCE_FILE}")
+MESSAGE("Generic Controller persistence data file: ${GENERIC_CONTROLLER_PERSISTENCE_FILE}")
 
 add_definitions(-DGENERIC_CONTROLLER_DEFAULT_CONF_ROOT="${CONF_ROOT}")
 

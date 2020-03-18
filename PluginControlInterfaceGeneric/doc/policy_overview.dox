@@ -1,14 +1,251 @@
 /*!
 \page pagePolicy Policy
 
-    Policy is very crucial part of the configuration, it is the brain of the generic controller. It 
+  The Generic Controller is a plug-in of the GenIVI AudioManager Daemon, it implements the am::IAmControlSend
+  and uses the am::IAmControlReceive interface defined by the AM. It runs in the single main execution thread
+  of the daemon and sequentially processes every incoming event.
+  Such events comprise:
+   - Requests forwarded from command interface (hookUser...() family of functions)
+   - Requests forwarded from routing interface ((un)register...() family of functions)
+   - Change notifications forwarded from routing side (hookSystem...() family of functions)
+   - Miscellaneous internal change notifications
+
+  On each of the above events a corresponding @ref pageTrigger "trigger object" is enqueued, which will
+  be processed according to configured policy rules once the policy engine becomes idle.
+
+  The diagram below shows the internals of the generic controller policy handling
+  \image html TriggerConcept.png
+
+  The Action framework manages two Queues, trigger queue and action queue. All the triggers are
+  first Queued by the action framework. Only when the action Queue is empty, single trigger is dequeued
+  and forwarded along with the trigger parameters to policy engine. policy engine evaluates the
+  policies and gives the set of actions which are added in action Queue. After which the action
+  framework executes the actions till all the actions are executed successfully. 
+
+Policy is very crucial part of the configuration, it is the brain of the generic controller. It 
 decides the action, which generic controller would execute in response to a trigger. 
 
 The high level structure of policy is as below
-- Trigger(s) 
+- @subpage pageTrigger
 - Process(es)
-    - Condition(s)  
-    - Action(s)
-<BR>
+  - @subpage cond
+  - @subpage pageActions
 
+The section @ref policyhandling shows and explains how a specific use-case 
+is translated into a valid configuration. An example can be found on page @ref policyexample.
+
+Strategies to keep the policiy configuration manageable are outlined on page @ref clsGrouping.
+
+\section policyConfig Policy Configuration
+\subsection polAttr XML Attributes
+<table>
+<tr>
+<td>
+<p>Name</p>
+</td>
+<td>
+<p>M/O</p>
+</td>
+<td>
+<p>Description</p>
+</td>
+<td>
+<p>Value</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>trigger</p>
+</td>
+<td>
+<p>M</p>
+</td>
+<td>
+<p>The trigger for which process present in the policy would be evaluated.</p>
+</td>
+<td>
+<p>String: semi-colon separated list of triggers</p>
+</td>
+</tr>
+</table>
+
+\subsection polElem XML Elements
+<table>
+<tr>
+<td>
+<p>Name</p>
+</td>
+<td>
+<p>M/O</p>
+</td>
+<td>
+<p>Description</p>
+</td>
+<td>
+<p>Value</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>Process</p>
+</td>
+<td>
+<p>O</p>
+</td>
+<td>
+<p>The process element contains conditions and actions</p>
+</td>
+<td>
+<p>Complex Type</p>
+</td>
+</tr>
+</table>
+
+\section processConfig Process Configuration
+\subsection proAttr XML Attributes
+<table>
+<tr>
+<td>
+<p>Name</p>
+</td>
+<td>
+<p>M/O</p>
+</td>
+<td>
+<p>Description</p>
+</td>
+<td>
+<p>Value</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>name</p>
+</td>
+<td>
+<p>O</p>
+</td>
+<td>
+<p>The user friendly name for the process. This would be present in the logs of policy engine. Helpful for debugging.</p>
+</td>
+<td>
+<p>String<br /> Default:&rdquo;&rdquo;</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>Priority</p>
+</td>
+<td>
+<p>O</p>
+</td>
+<td>
+<p>The priority for the process. Currently this is unused in GC.</p>
+</td>
+<td>
+<p>32 bit integer</p>
+<p>Default: 49</p>
+</td>
+</tr>
+</table>
+\subsection proElem XML Elements
+<table>
+<tr>
+<td>
+<p>Name</p>
+</td>
+<td>
+<p>C/O</p>
+</td>
+<td>
+<p>Description</p>
+</td>
+<td>
+<p>Value</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>condition</p>
+</td>
+<td>
+<p>O</p>
+</td>
+<td>
+<p>One or more condition to be evaluated</p>
+</td>
+<td>
+<p>String. Please refer to condition section for syntax</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>Action</p>
+</td>
+<td>
+<p>O</p>
+</td>
+<td>
+<p>Action to be executed</p>
+</td>
+<td>
+<p>Complex Type</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>break</p>
+</td>
+<td>
+<p>O</p>
+</td>
+<td>
+<p>Stop evaluation after current process</p>
+</td>
+<td>
+<p>Boolean</p>
+<p>Default: True</p>
+</td>
+</tr>
+</table>
+
+\section actionConfig Action Configuration
+\subsection actAttr XML Attributes
+All attributes can be assigned with 
+   - direct values, 
+   - macros (symbolic constants for predefined values, see @ref sectionmacroList) or 
+   - functions (same way as in conditions, see @ref functionTable)
+
+@note  As attribute values require enveloping double quotes ("), when using a function with parameters 
+       requiring quoted values themselves, you must use single quotes (') for the inner parameters, e.g.)
+       @code
+           <action type="ACTION_SET_VOLUME" className="name(CLASSOFSOURCE, 'MediaPlayer')"  volume= .... />
+       @endcode
+       When evaluating the function, single quotes are converted to double quotes.
+
+<br>
+<table>
+  <tr>
+    <th>Name</th>
+    <th>Required</th>
+    <th>Description</th>
+  </tr><tr>
+    <td>type</td>
+    <td><b>yes</b></td>
+    <td>The type of action. (see @ref actionTypeList)</td>
+  </tr><tr>
+    <td><i>actionParam1</i></td>
+    <td>no</td>
+    <td rowspan="3">Any parameters supported by the selected action. Refer to the dedicated action page.</td>
+  </tr><tr>
+    <td><i>actionParam2</i></td>
+    <td>no</td>
+  </tr><tr>
+    <td>...</td>
+    <td>no</td>
+  </tr>
+</table>
+
+\subsection actElem XML Child Elements
+Action has no elements
 */

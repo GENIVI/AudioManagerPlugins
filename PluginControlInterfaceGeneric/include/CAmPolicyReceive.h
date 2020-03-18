@@ -29,13 +29,12 @@
 namespace am {
 namespace gc {
 
-class CAmControlReceive;
 class IAmPolicySend;
 class CAmElement;
 class CAmMainConnectionElement;
 class CAmClassElement;
 
-typedef CAmElement* (*getElementFptr)(const std::string);
+typedef CAmElement * (*getElementFptr)(const std::string);
 
 class CAmPolicyReceive : public IAmPolicyReceive
 {
@@ -46,7 +45,7 @@ public:
      * @param pRoutingManager: pointer to routing manager class instance
      * @return none
      */
-    CAmPolicyReceive(CAmControlReceive* pControlReceive, IAmPolicySend* pPolicySend);
+    CAmPolicyReceive(IAmControlReceive *pControlReceive, IAmPolicySend *pPolicySend);
     /**
      * @brief It is the destructor of policy Engine receive class.
      * @param none
@@ -55,6 +54,7 @@ public:
     ~CAmPolicyReceive()
     {
     }
+
     /**
      * @brief It is the API providing the interface to policy engine to set the list of actions to
      * framework.
@@ -63,8 +63,9 @@ public:
      *         E_NOT_POSSIBLE on internal error
      *         E_OK on success
      */
-    am_Error_e setListActions(std::vector<gc_Action_s >& listActions,
-                              gc_ActionList_e actionListType);
+    am_Error_e setListActions(std::vector<gc_Action_s > &listActions,
+        gc_ActionList_e actionListType);
+
     /**
      * @brief It is the API providing the interface to policy engine to check if domain
      * registration is completed or not
@@ -72,7 +73,8 @@ public:
      * @return true if completed
      *         false if not completed
      */
-    bool isDomainRegistrationComplete(const std::string& domainName);
+    bool isDomainRegistrationComplete(const std::string &domainName);
+
     /**
      * @brief It is the API providing the interface to policy engine to check if element is
      * registered or not
@@ -81,7 +83,8 @@ public:
      * @return true if completed
      *         false if not completed
      */
-    bool isRegistered(const gc_Element_e elementType, const std::string& elementName);
+    bool isRegistered(const gc_Element_e elementType, const std::string &elementName);
+
     /**
      * @brief It is the API providing the interface to policy engine to get the availability of
      * element
@@ -91,18 +94,9 @@ public:
      * @return E_OK on success
      *         E_NOT_POSSIBLE on error
      */
-    am_Error_e getAvailability(const gc_Element_e elementType, const std::string& elementName,
-                               am_Availability_s& availabilityInstance);
-    /**
-     * @brief It is the API providing the interface to policy engine to get the state of domain or source
-     * @param elementType: element type. Possible values are ET_SOURCE or ET_DOMAIN
-     * 		  elementName: name of the element whose state is needed
-     *        elementState: state of the element
-     * @return E_OK on success
-     *         E_NOT_POSSIBLE on error
-     */
-    am_Error_e getState(const gc_Element_e elementType, const std::string& elementName,
-                        int& elementState);
+    am_Error_e getAvailability(const gc_Element_e elementType, const std::string &elementName,
+        am_Availability_s &availabilityInstance);
+
     /**
      * @brief It is the API providing the interface to policy engine to get the interrupt state of source
      * @param elementType: element type
@@ -111,8 +105,9 @@ public:
      * @return E_OK on success
      *         E_NOT_POSSIBLE on error
      */
-    am_Error_e getInterruptState(const gc_Element_e elementType, const std::string& elementName,
-                                 am_InterruptState_e& interruptState);
+    am_Error_e getInterruptState(const gc_Element_e elementType, const std::string &elementName,
+        am_InterruptState_e &interruptState);
+
     /**
      * @brief It is the API providing the interface to policy engine to get the mute state of element
      * @param elementType: element type
@@ -121,8 +116,9 @@ public:
      * @return E_OK on success
      *         E_NOT_POSSIBLE on error
      */
-    am_Error_e getMuteState(const gc_Element_e elementType, const std::string& Name,
-                            am_MuteState_e& muteState);
+    am_Error_e getMuteState(const gc_Element_e elementType, const std::string &Name,
+        am_MuteState_e &muteState);
+
     /**
      * @brief It is the API providing the interface to policy engine to get the sound property value of element
      * @param elementType: element type
@@ -132,8 +128,9 @@ public:
      * @return E_OK on success
      *         E_NOT_POSSIBLE on error
      */
-    am_Error_e getSoundProperty(const gc_Element_e elementType, const std::string& elementName,
-                                const am_CustomSoundPropertyType_t propertyType, int16_t &value);
+    am_Error_e getSoundProperty(const gc_Element_e elementType, const std::string &elementName,
+        const am_CustomSoundPropertyType_t propertyType, int16_t &value);
+
     /**
      * @brief It is the API providing the interface to policy engine to get the system property value
      * @param systempropertyType: type of property whose value is needed
@@ -142,7 +139,8 @@ public:
      *         E_NOT_POSSIBLE on error
      */
     am_Error_e getSystemProperty(const am_CustomSystemPropertyType_t systempropertyType,
-                                 int16_t& value);
+        int16_t &value);
+
     /**
      * @brief It is the API providing the interface to policy engine to get the main sound property
      * value of element
@@ -153,9 +151,10 @@ public:
      * @return E_OK on success
      *         E_NOT_POSSIBLE on error
      */
-    am_Error_e getMainSoundProperty(const gc_Element_e elementType, const std::string& elementName,
-                                    const am_CustomMainSoundPropertyType_t propertyType,
-                                    int16_t& value);
+    am_Error_e getMainSoundProperty(const gc_Element_e elementType, const std::string &elementName,
+        const am_CustomMainSoundPropertyType_t propertyType,
+        int16_t &value);
+
     /**
      * @brief It is the API providing the interface to policy engine to get the volume value of
      * element
@@ -165,8 +164,9 @@ public:
      * @return E_OK on success
      *         E_NOT_POSSIBLE on error
      */
-    am_Error_e getVolume(const gc_Element_e elementType, const std::string& elementName,
-                         am_volume_t& deviceVolume);
+    am_Error_e getVolume(const gc_Element_e elementType, const std::string &elementName,
+        am_volume_t &deviceVolume);
+
     /**
      * @brief It is the API providing the interface to policy engine to get the main volume value of
      * element
@@ -176,8 +176,9 @@ public:
      * @return E_OK on success
      *         E_NOT_POSSIBLE on error
      */
-    am_Error_e getMainVolume(const gc_Element_e elementType, const std::string& elementName,
-                             am_mainVolume_t& volume);
+    am_Error_e getMainVolume(const gc_Element_e elementType, const std::string &elementName,
+        am_mainVolume_t &volume);
+
     /**
      * @brief It is the API providing the interface to policy engine to get the list of main connection
      * involving the given element
@@ -188,17 +189,25 @@ public:
      *         E_NOT_POSSIBLE on error
      */
     am_Error_e getListMainConnections(const gc_Element_e elementType,
-                                      const std::string& elementName,
-                                      std::vector<gc_ConnectionInfo_s >& listConnectionInfos);
-    am_Error_e getListMainConnections(const std::string& name,
-                                      std::vector<gc_ConnectionInfo_s >& listConnectionInfos,gc_Order_e order);
+        const std::string &elementName,
+        std::vector<gc_ConnectionInfo_s > &listConnectionInfos);
+    am_Error_e getListMainConnections(const std::string &name,
+        std::vector<gc_ConnectionInfo_s > &listConnectionInfos, gc_Order_e order);
     am_Error_e getListNotificationConfigurations(
-                    const gc_Element_e elementType, const std::string& name,
-                    std::vector<am_NotificationConfiguration_s >& listNotificationConfigurations);
+        const gc_Element_e elementType, const std::string &name,
+        std::vector<am_NotificationConfiguration_s > &listNotificationConfigurations);
     am_Error_e getListMainNotificationConfigurations(
-                    const gc_Element_e elementType,
-                    const std::string& name,
-                    std::vector<am_NotificationConfiguration_s >& listMainNotificationConfigurations);
+        const gc_Element_e elementType,
+        const std::string &name,
+        std::vector<am_NotificationConfiguration_s > &listMainNotificationConfigurations);
+    am_Error_e getDomainInfoByID(const am_domainID_t domainID, am_Domain_s &domainInfo);
+    am_Error_e getListGatewaysOfDomain(const am_domainID_t domainID,
+        std::vector<am_gatewayID_t > &listGatewaysIDs) const;
+    am_Error_e getListSinksOfDomain(const am_domainID_t domainID,
+        std::vector<am_sinkID_t > &listSinkIDs) const;
+    am_Error_e getListSourcesOfDomain(const am_domainID_t domainID,
+        std::vector<am_sourceID_t > &listSourceIDs) const;
+
 private:
     /**
      * @brief It is the internal function used to store the list of connection belonging to class
@@ -206,8 +215,9 @@ private:
      *        listConnectionInfo: list of connection information
      * @return none
      */
-    void _getConnectionInfo(CAmClassElement* pClass,
-                            std::vector<gc_ConnectionInfo_s >& listConnectionInfo);
+    void _getConnectionInfo(std::shared_ptr<CAmClassElement > pClass,
+        std::vector<gc_ConnectionInfo_s > &listConnectionInfo);
+
     /**
      * @brief It is the template function used to find whether element is registered or not
      * @param listElements: list of elements
@@ -215,12 +225,14 @@ private:
      * @return none
      */
     template <class T>
-    bool _isElementRegistered(const std::vector<T >& listElements, const std::string& name);
-    CAmElement* _getElement(const gc_Element_e type, const std::string& name);
+    bool _isElementRegistered(const std::vector<T > &listElements, const std::string &name);
+
+    std::shared_ptr<CAmElement > _getElement(const gc_Element_e type, const std::string &name);
     static bool _sortingLowest(gc_ConnectionInfo_s i, gc_ConnectionInfo_s j);
     static bool _sortingHighest(gc_ConnectionInfo_s i, gc_ConnectionInfo_s j);
-    CAmControlReceive* mpControlReceive;
-    IAmPolicySend* mpPolicySend;
+
+    IAmControlReceive *mpControlReceive;
+    IAmPolicySend     *mpPolicySend;
 };
 
 } /* namespace gc */

@@ -1,21 +1,21 @@
-/******************************************************************************
- * @file: CAmElement.h
+/**************************************************************************//**
+ * @file CAmElement.h
  *
  * This file contains the declaration of element class (member functions and
  * data members) used as base class for source, sink & gateway element classes
  *
- * @component: AudioManager Generic Controller
+ * @component AudioManager Generic Controller
  *
- * @author: Toshiaki Isogai <tisogai@jp.adit-jv.com>
- *          Kapildev Patel  <kpatel@jp.adit-jv.com>
- *          Prashant Jain   <pjain@jp.adit-jv.com>
+ * @authors Toshiaki Isogai <tisogai@jp.adit-jv.com>,\n
+ *          Kapildev Patel  <kpatel@jp.adit-jv.com>,\n
+ *          Prashant Jain   <pjain@jp.adit-jv.com>,\n
+ *          Martin Koch     <mkoch@de.adit-jv.com>
  *
- * @copyright (c) 2015 Advanced Driver Information Technology.
- * This code is developed by Advanced Driver Information Technology.
- * Copyright of Advanced Driver Information Technology, Bosch, and DENSO.
+ * @copyright (c) 2015 - 2019 Advanced Driver Information Technology.\n
+ * This code is developed by Advanced Driver Information Technology.\n
+ * Copyright of Advanced Driver Information Technology, Bosch, and DENSO.\n
  * All rights reserved.
- *
- *****************************************************************************/
+ */
 
 #ifndef GC_ELEMENT_H_
 #define GC_ELEMENT_H_
@@ -23,115 +23,143 @@
 #include "CAmTypes.h"
 #include "IAmControlCommon.h"
 #include "CAmLogger.h"
-
+#include <algorithm>
+#include <vector>
+#include <set>
+using namespace std;
 namespace am {
 namespace gc {
 
-#define DEFAULT_ELEMENT_PRIORITY    (100)
-class CAmControlReceive;
+#define DEFAULT_ELEMENT_PRIORITY (100)
+
 class CAmElement;
 
-static am_Error_e Register(CAmElement* pElement);
-static am_Error_e UnRegister(CAmElement* pElement);
+static am_Error_e registerElement(std::shared_ptr<CAmElement > pElement);
+static am_Error_e unregisterElement(std::shared_ptr<CAmElement > pElement);
+
+#define SHARED_COUNT 1
+
+/***********************************************************************//**
+ * @class am::gc::CAmElement
+ * @copydoc  CAmElement.h
+ */
 
 class CAmElement
 {
+
+#ifndef UNIT_TEST
+protected:
+#else
+// we need this for the unit test
 public:
+#endif
+
     /**
      * @brief It is the constructor of element class. Initialize the member
      * variables with default value. It will be invoked during creation of any
      * element (gateway/source/sink).
-     * @param name: name of the element
-     *        pControlReceive: pointer to CAmControlReceive Class object
-     * @return none
+     * @param type: type of the derived class
+     *        name: name of the element
+     *        pControlReceive: pointer to IAmControlReceive interface provided by AM daemon
      */
-    CAmElement(const std::string& name, CAmControlReceive* pControlReceive);
+    CAmElement(gc_Element_e type, const std::string &name, IAmControlReceive *pControlReceive);
+
+public:
     /**
      * @brief It is the destructor of element class.
      * @param none
-     * @return none
      */
     virtual ~CAmElement();
-    virtual CAmControlReceive* getControlReceive(void);
-    /**
-     * @brief This API is used to set the type of element
-     * @return type of element
-     */
-    virtual int setType(const gc_Element_e type);
+
+    IAmControlReceive *getControlReceive(void);
+
     /**
      * @brief This API is used to get the type of element
      * @return type of element
      */
-    virtual gc_Element_e getType(void) const;
+    gc_Element_e getType(void) const;
+
     /**
      * @brief This API is used to get the name of element
      * @param none
      * @return element name
      */
-    virtual std::string getName(void) const;
+    std::string getName(void) const;
+
     /**
      * @brief This API is used to set the ID of element
      * @param ID: element ID as in DB
      * @return none
      */
-    virtual void setID(const uint16_t ID);
+    void setID(const uint16_t ID);
+
     /**
      * @brief This API is used to get the ID of element
      * @param none
      * @return element ID as in DB
      */
-    virtual uint16_t getID(void) const;
-    /**
-     * @brief This API is used to get the priority of element as defined in configuration file.
-     * @param[in] priority priority of element
-     * @return E_OK
-     */
-    virtual am_Error_e setPriority(const int32_t priority);
-    /**
-     * @brief This API is used to get the priority of element as defined in configuration file.
-     * @param priority: variable in which priority of element will be returned
-     * @return E_OK
-     */
-    virtual am_Error_e getPriority(int32_t& priority) const;
-    virtual am_Error_e setState(int state);
-    virtual am_Error_e getState(int& state) const;
-    virtual am_Error_e setVolume(const am_volume_t volume);
-    virtual am_Error_e getVolume(am_volume_t& volume) const;
-    virtual am_Error_e setMainVolume(const am_mainVolume_t volume);
-    virtual am_Error_e getMainVolume(am_mainVolume_t& mainVolume) const;
-    /**
-     * @brief This API is used to set the offset volume of element as needed for limit/unlimit action action.
-     * @param volume: offset volume of element
-     * @return none
-     */
-    virtual am_Error_e setLimitVolume(const gc_LimitVolume_s& limitVolume);
-    /**
-     * @brief This API is used to get the offset volume of element as needed for limit/unlimit volume action.
-     * @param none
-     * @return offset volume of element
-     */
-    virtual am_Error_e getLimitVolume(gc_LimitVolume_s& limitVolume) const;
-    virtual am_Error_e setMuteState(const am_MuteState_e muteState);
-    virtual am_Error_e getMuteState(am_MuteState_e& muteState) const;
-    virtual am_Error_e setInterruptState(const am_InterruptState_e interruptState);
-    virtual am_Error_e getInterruptState(am_InterruptState_e& interruptState) const;
-    /**
-     * @brief This API is used to update the availability of element as in database.
-     * It is just the dummy implementation and actual implementation will be provided by derived element class.
-     * @param availability: variable in which availability will be returned
-     * @return E_NOT_POSSIBLE because derived class should implement this interface as valid interface
-     */
-    virtual am_Error_e setAvailability(const am_Availability_s& availability);
-    /**
-     * @brief This API is used to get the availability of element as in database.
-     * It is just the dummy implementation and actual implementation will be provided by derived element class.
-     * @param availability: variable in which availability will be returned
-     * @return E_NOT_POSSIBLE because derived class should implement this interface as valid interface
-     */
-    virtual am_Error_e getAvailability(am_Availability_s& availability) const;
+    uint16_t getID(void) const;
 
-    friend am_Error_e Register(CAmElement* pElement);
-    friend am_Error_e UnRegister(CAmElement* pElement);
+    /**
+     * @brief This API is used to get the priority of element as defined in configuration file.
+     * @return priority
+     */
+    virtual int32_t getPriority(void) const;
+
+    virtual int update(std::shared_ptr<CAmElement > pNotifierElement,
+        const am_mainVolume_t &mainVolume);
+
+    am_Error_e attach(std::shared_ptr<CAmElement > pSubject);
+    am_Error_e detach(std::shared_ptr<CAmElement > pSubject);
+    int getObserverCount(void) const;
+
+    int getObserverCount(gc_Element_e, std::vector<std::shared_ptr<CAmElement > > * = NULL) const;
+    int getSubjectCount(void) const;
+
+    template <typename TupdateParam>
+    void notify(TupdateParam updateData)
+    {
+        std::vector<std::shared_ptr<CAmElement > >::iterator itListObservers = mListObservers.begin();
+        for (; itListObservers != mListObservers.end(); ++itListObservers)
+        {
+            LOG_FN_DEBUG(__FILENAME__, __func__, "notify update to element :",
+                (*itListObservers)->getName());
+            (*itListObservers)->update(this->getElement(), updateData);
+        }
+    }
+
+    /*Searching of elements*/
+    template <typename TelemntFilterType>
+    void getListElements(TelemntFilterType elementFilter,
+        std::vector<std::shared_ptr<CAmElement > > &listOfSubjects) const
+    {
+        std::vector<std::shared_ptr<CAmElement > >::const_iterator itListSubjects = mListSubjects.begin();
+        for (; itListSubjects != mListSubjects.end(); ++itListSubjects)
+        {
+            if (_isFilterMatch(*itListSubjects, elementFilter))
+            {
+                LOG_FN_DEBUG(__FILENAME__, __func__, "element found:",
+                    (*itListSubjects)->getType(), (*itListSubjects)->getName(), "in", mType, mName);
+                /*add element to the list*/
+                std::vector<std::shared_ptr<CAmElement > >::const_iterator it = std::find(
+                        listOfSubjects.begin(), listOfSubjects.end(),
+                        (std::static_pointer_cast<CAmElement >)(*itListSubjects));
+                if (it == listOfSubjects.end())
+                {
+                    listOfSubjects.push_back(*itListSubjects);
+                }
+            }
+
+            (*itListSubjects)->getListElements(elementFilter, listOfSubjects);
+        }
+    }
+
+    friend am_Error_e registerElement(std::shared_ptr<CAmElement > pElement);
+    friend am_Error_e unregisterElement(std::shared_ptr<CAmElement > pElement);
+
+    virtual std::shared_ptr<CAmElement > getElement();
+    void removeObservers();
+
 protected:
     /**
      * @brief This API is used to set the ID of element
@@ -142,35 +170,95 @@ protected:
     {
         return E_OK;
     }
+
     virtual am_Error_e _unregister(void)
     {
+        _detachAll();
         return E_OK;
     }
 
-private:
-    CAmControlReceive* mpControlRecieve;
-    std::string mName;
-    uint16_t mID;
-    gc_Element_e mType;
-    int32_t mPriority;
-    am_volume_t mVolume;
-    am_mainVolume_t mMainVolume;
-    gc_LimitVolume_s mLimitVolume;
-    am_MuteState_e mMuteState;
-    int mState;
-    am_InterruptState_e mInterruptState;
-    am_Availability_s mAvailability;
+    am_Error_e _deregister(std::shared_ptr<CAmElement > pObserver);
+    am_Error_e _register(std::shared_ptr<CAmElement > pObserver);
+    void _detachAll();
+    bool _isFilterMatch(std::shared_ptr<CAmElement > pAmElement,
+        const gc_Element_e &elementType) const;
+    bool _isFilterMatch(std::shared_ptr<CAmElement > pAmElement,
+        const std::string &elementName) const;
+    bool _isFilterMatch(std::shared_ptr<CAmElement > pAmElement, const int &elementPriority) const;
+    bool _isFilterMatch(std::shared_ptr<CAmElement > pAmElement,
+        const gc_ElementTypeName_s &elementTypeName) const;
+    bool _isFilterMatch(std::shared_ptr<CAmElement > pAmElement,
+        const struct gc_ElementTypeID_s &elementTypeID) const;
+
+    IAmControlReceive *const                   mpControlReceive;
+    const std::string                          mName;
+    uint16_t                                   mID;
+    const gc_Element_e                         mType;
+    /* List of the registered observer*/
+    std::vector<std::shared_ptr<CAmElement > > mListObservers;
+    /* List of the subjects*/
+    std::vector<std::shared_ptr<CAmElement > > mListSubjects;
 };
 
-static am_Error_e Register(CAmElement* pElement)
+/***************************************************************************//**
+ * @class am::gc::CAmLimitableElement
+ *
+ * Add-On to support multiple independent volume limits
+ */
+
+class CAmLimitableElement  : public CAmElement
+{
+public:
+    /** @brief Set or release any of arbitrary volume limit, distinguished by pattern information.
+     * 
+     *  @param state:   LS_LIMITIED or LS_UNLIMITED
+     *         limit:   LT_ABSOLUTE or LT_RELATIVE and maximum volume specification
+     *         pattern: bitfield to distinguish between multiple limits, defaults to 0xFFFFFFFF
+     */
+    void setLimitState(gc_LimitState_e state, const gc_LimitVolume_s &limit,
+        uint32_t pattern = DEFAULT_LIMIT_PATTERN);
+
+     /** @brief Request the state of a specific limit, identified by its pattern
+     * 
+     *   @param limits:  external pair LT_ABSOLUTE or LT_RELATIVE and maximum volume specification
+     *   @return Limit state: LS_LIMITED or LS_UNLIMITED
+     */
+    gc_LimitState_e  getLimit(uint32_t pattern, gc_LimitVolume_s &limit) const;
+
+     /** @brief Populate external list with stored limits.
+     * 
+     *   @param limits:  external list of pairs LT_ABSOLUTE or LT_RELATIVE and maximum volume specification
+     */
+    void getLimits(std::list<gc_LimitVolume_s > &limits) const;
+
+     /** @brief Determine if element is muted.
+     * 
+     *  @return MS_MUTED if any of the stored limits matches mute volume, MS_UNMUTED otherwise.
+     */
+    virtual am_MuteState_e getMuteState() const;
+
+protected:
+    CAmLimitableElement(gc_Element_e type, const std::string &name, IAmControlReceive *pControlReceive);
+    virtual ~CAmLimitableElement()  { }
+
+private:
+    // list to store the limit volume information, ordered by pattern
+    std::map<uint32_t, gc_LimitVolume_s > mMapLimitVolumes; 
+};
+
+// *****************************************************************************
+
+static am_Error_e registerElement(std::shared_ptr<CAmElement > pElement)
 {
     return pElement->_register();
 }
 
-static am_Error_e UnRegister(CAmElement* pElement)
+am_Error_e unregisterElement(std::shared_ptr<CAmElement > pElement)
 {
     return pElement->_unregister();
 }
+
+// *****************************************************************************
 
 template <typename TconstructorParam, typename Telement>
 class CAmFactory
@@ -186,12 +274,8 @@ public:
 
     static am_Error_e destroyElement(void)
     {
-        typename std::map<std::string, Telement* >::iterator itMapElements;
-        for (itMapElements = mMapElements.begin(); itMapElements != mMapElements.end();
-                        ++itMapElements)
-        {
-            delete itMapElements->second;
-        }
+        // no need to delete shared pointer as it get deleted when ref. count reaches to zero
+
         mMapElements.clear();
         return E_OK;
     }
@@ -203,15 +287,15 @@ public:
          * first search if the element with such a name
          * is present in the map
          */
-        Telement* pElement = getElement(name);
-        if (pElement != NULL)
+        std::shared_ptr<Telement > pElement = getElement(name);
+        if (pElement)
         {
-            if (E_OK == UnRegister(pElement))
+            if (E_OK == unregisterElement(pElement))
             {
                 mMapElements.erase(name);
-                delete pElement;
             }
         }
+
         return returnValue;
     }
 
@@ -222,94 +306,97 @@ public:
          * first search if the element with such a name
          * is present in the map
          */
-        Telement* pElement = getElement(ID);
-        if (pElement != NULL)
+        std::shared_ptr<Telement > pElement = getElement(ID);
+        if (pElement)
         {
-
-            if (E_OK == UnRegister(pElement))
+            if (E_OK == unregisterElement(pElement))
             {
                 mMapElements.erase(pElement->getName());
-                delete pElement;
             }
         }
+
         return returnValue;
     }
 
-    static Telement* getElement(std::string name)
+    static std::shared_ptr<Telement > getElement(std::string name)
     {
-        Telement* pElement = NULL;
-        typename std::map<std::string, Telement* >::iterator itMapElements;
+        std::shared_ptr<Telement >                                            pElement = nullptr;
+        typename std::map<std::string, std::shared_ptr<Telement > >::iterator itMapElements;
+
         itMapElements = mMapElements.find(name);
         if (itMapElements != mMapElements.end())
         {
             pElement = itMapElements->second;
         }
+
         return pElement;
     }
 
-    static Telement* getElement(uint16_t ID)
+    static std::shared_ptr<Telement > getElement(uint16_t ID)
     {
-        Telement* pElement = NULL;
-        if (ID != 0)
+        if (ID == 0)
         {
-            typename std::map<std::string, Telement* >::iterator itMapElements;
-            for (itMapElements = mMapElements.begin(); itMapElements != mMapElements.end();
-                            ++itMapElements)
+            return nullptr;
+        }
+
+        for (auto &itMapElements : mMapElements)
+        {
+            if (itMapElements.second->getID() == ID)
             {
-                if (itMapElements->second->getID() == ID)
-                {
-                    pElement = itMapElements->second;
-                    break;
-                }
+                return itMapElements.second;
             }
         }
-        return pElement;
+
+        return nullptr;
     }
 
-    static void getListElements(std::vector<Telement* >& listElements)
+    static void getListElements(std::vector<std::shared_ptr<Telement > > &listElements)
     {
-        typename std::map<std::string, Telement* >::iterator itMapElements;
+        typename std::map<std::string, std::shared_ptr<Telement > >::iterator itMapElements;
         for (itMapElements = mMapElements.begin(); itMapElements != mMapElements.end();
-                        ++itMapElements)
+             ++itMapElements)
         {
             listElements.push_back(itMapElements->second);
         }
     }
 
-    static Telement* createElement(const TconstructorParam& t, CAmControlReceive* pControlReceive)
+    static std::shared_ptr<Telement > createElement(const TconstructorParam &t,
+        IAmControlReceive *pControlReceive)
     {
-        int returnValue;
         /*
          * first search if the element with such a name
          * is present in the map
          */
-        Telement* pElement = getElement(t.name);
-        if (pElement == NULL)
+        std::shared_ptr<Telement > pElement = getElement(t.name);
+        if (pElement == nullptr)
         {
-            pElement = new Telement(t, pControlReceive);
-            if (pElement != NULL)
+            pElement = std::make_shared < Telement > (t, pControlReceive);
+            if (pElement != nullptr)
             {
-
-                if (E_OK != Register(pElement))
+                if (E_OK != registerElement(pElement))
                 {
-                    delete pElement;
-                    pElement = NULL;
+                    // TBD if element is not register in AM database then decide
+                    LOG_FN_ERROR(__FILENAME__, __func__,
+                        "element registration with Audio Manager failed", t.name);
+                    pElement = nullptr;
+                    return nullptr;
                 }
-            }
-            if (pElement)
-            {
-                LOG_FN_DEBUG(t.name);
+
                 mMapElements[t.name] = pElement;
             }
         }
+
         return pElement;
     }
 
-private:
-    static std::map<std::string, Telement* > mMapElements;
+protected:
+    static std::map<std::string, std::shared_ptr<Telement > > mMapElements;
 };
+
+// *****************************************************************************
+
 template <typename TconstructorParam, typename Telement>
-std::map<std::string, Telement* > CAmFactory<TconstructorParam, Telement >::mMapElements;
+std::map<std::string, std::shared_ptr<Telement > > CAmFactory<TconstructorParam, Telement >::mMapElements;
 
 } /* namespace gc */
 } /* namespace am */

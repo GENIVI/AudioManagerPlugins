@@ -37,6 +37,7 @@ print "\n";
 print "\#ifndef " . "_" . uc $outputfilename . "_H_\n";
 print "\#define " . "_" . uc $outputfilename . "_H_\n";
 print "\n";
+print "#include \"audiomanagertypes.h\"\n\n";
 $parser->parsefile($xmlfile);
 
 print "\n";
@@ -61,6 +62,10 @@ sub startElement
 		    if($simpletypename eq "am_SourceID_e")
 			{
 				$simpletypename = "am_sourceID_t";
+			}
+			if($simpletypename eq "am_ClassID_e")
+			{
+				$simpletypename = "uint16_t";
 			}
 		}
 		print "\n";

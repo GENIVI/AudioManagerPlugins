@@ -21,67 +21,39 @@
 #include "CAmRouteElement.h"
 #include "CAmSourceElement.h"
 #include "CAmSinkElement.h"
-#include "CAmControlReceive.h"
 #include "CAmLogger.h"
 
 namespace am {
 namespace gc {
 
-CAmRouteElement::CAmRouteElement(const gc_RoutingElement_s& routingElement,
-                                 CAmControlReceive* pControlReceive) :
-                CAmElement(routingElement.name, pControlReceive),
-                mRoutingElement(routingElement)
+CAmRouteElement::CAmRouteElement(const gc_RoutingElement_s &routingElement, IAmControlReceive *pControlReceive)
+    : CAmElement(ET_ROUTE, routingElement.name, pControlReceive)
+    , mRoutingElement(routingElement)
+    , mState(CS_DISCONNECTED)
+    , mpSinkElement(nullptr)
+    , mpSourceElement(nullptr)
 {
-    setType(ET_ROUTE);
-    setState(CS_DISCONNECTED);
+    mpSinkElement   = CAmSinkFactory::getElement(mRoutingElement.sinkID);
+    mpSourceElement = CAmSourceFactory::getElement(mRoutingElement.sourceID);
 }
 
 CAmRouteElement::~CAmRouteElement()
 {
 }
 
-std::string CAmRouteElement::getName(void) const
+int32_t CAmRouteElement::getPriority() const
 {
-    std::string name;
-    CAmElement* pSourceElement = getSource();
-    CAmElement* pSinkElement = getSink();
-    if ((pSourceElement != NULL) && (pSinkElement != NULL))
+    int32_t priority = 0;
+    if ((mpSourceElement != nullptr) && (mpSinkElement != nullptr))
     {
-        name = pSourceElement->getName() + pSinkElement->getName();
+        priority = mpSourceElement->getPriority() + mpSinkElement->getPriority();
     }
-    return name;
-}
+    else
+    {
+        LOG_FN_WARN(__FILENAME__, __func__, "End points invalid:", mName);
+    }
 
-am_Error_e CAmRouteElement::getPriority(int32_t& priority) const
-{
-    priority = 0;
-    int32_t sinkPriority(0);
-    int32_t sourcePriority(0);
-    CAmElement* pSourceElement = getSource();
-    CAmElement* pSinkElement = getSink();
-    if ((pSourceElement != NULL) && (pSinkElement != NULL))
-    {
-        pSourceElement->getPriority(sourcePriority);
-        pSinkElement->getPriority(sinkPriority);
-        priority = sourcePriority + sinkPriority;
-    }
-    return E_OK;
-}
-
-am_Error_e CAmRouteElement::getVolume(am_volume_t& volume) const
-{
-    volume=0;
-    am_volume_t sinkVolume = 0;
-    am_volume_t sourceVolume = 0;
-    CAmElement* pSourceElement = getSource();
-    CAmElement* pSinkElement = getSink();
-    if ((pSourceElement != NULL) && (pSinkElement != NULL))
-    {
-         pSourceElement->getVolume(sourceVolume);
-         pSinkElement->getVolume(sinkVolume);
-         volume = sourceVolume + sinkVolume;
-    }
-    return E_OK;
+    return priority;
 }
 
 am_sourceID_t CAmRouteElement::getSourceID(void) const
@@ -94,14 +66,24 @@ am_sinkID_t CAmRouteElement::getSinkID(void) const
     return mRoutingElement.sinkID;
 }
 
-CAmSourceElement* CAmRouteElement::getSource(void) const
+std::shared_ptr<CAmSourceElement > CAmRouteElement::getSource(void) const
 {
-    return CAmSourceFactory::getElement(mRoutingElement.sourceID);
+    return mpSourceElement;
 }
 
-CAmSinkElement* CAmRouteElement::getSink(void) const
+std::shared_ptr<CAmSinkElement > CAmRouteElement::getSink(void) const
 {
-    return CAmSinkFactory::getElement(mRoutingElement.sinkID);
+    return mpSinkElement;
+}
+
+void CAmRouteElement::setState(am_ConnectionState_e state)
+{
+    mState = state;
+}
+
+am_ConnectionState_e CAmRouteElement::getState() const
+{
+    return mState;
 }
 
 am_CustomConnectionFormat_t CAmRouteElement::getConnectionFormat(void) const
@@ -109,5 +91,20 @@ am_CustomConnectionFormat_t CAmRouteElement::getConnectionFormat(void) const
     return mRoutingElement.connectionFormat;
 }
 
-}/* namespace gc */
-}/* namespace am */
+std::shared_ptr<CAmElement > CAmRouteElement::getElement()
+{
+    return CAmRouteFactory::getElement(getName());
+}
+
+am_domainID_t CAmRouteElement::getDomainId(void) const
+{
+    return mRoutingElement.domainID;
+}
+
+void CAmRouteElement::setDomainId(am_domainID_t domainID)
+{
+    mRoutingElement.domainID = domainID;
+}
+
+} /* namespace gc */
+} /* namespace am */
