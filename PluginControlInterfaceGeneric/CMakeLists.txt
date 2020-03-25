@@ -9,6 +9,9 @@ include(CMakeDependentOption)
 find_package(PkgConfig)
 find_package(AudioManager REQUIRED > 7.7.1)  
 find_package(AudioManagerUtilities REQUIRED > 7.7.1)
+   
+#added for UT
+OPTION (WITH_TESTS "build plugins with test" OFF)
 
 OPTION (WITH_DOCUMENTATION
         "build plugins with documentation" OFF )
@@ -71,6 +74,26 @@ ELSE()
     SET_PROPERTY(SOURCE ${SRC_FILE_ABSOLUTE_PATH} PROPERTY COMPILE_DEFINITIONS "__FILENAME__=\"${SRC_FILE_NAME}\"")
 ENDIF(NSM_IFACE_PRESENT)
 ENDFOREACH()
+
+IF(WITH_TESTS)
+    MESSAGE("Building with unit test and adding test dir")
+
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUNIT_TEST=1")
+    set (CONTROLLER_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+    # prepare the test object as additional static library
+    set(LIB_CONTROLLER_UTEST     ${PLUGIN_LIB_NAME}_static)
+    ADD_LIBRARY(${LIB_CONTROLLER_UTEST} STATIC ${PLUGIN_CONTROL_GENERIC_SRCS_CXX})
+    TARGET_LINK_LIBRARIES(${LIB_CONTROLLER_UTEST}
+        ${AudioManagerUtilities_LIBRARIES}
+        ${LIBXML2_LIBRARIES}
+    )
+
+    # include test suite
+    add_subdirectory (test)
+ELSE(WITH_TESTS)
+    MESSAGE("Building without unit test")
+ENDIF(WITH_TESTS)
 
 ADD_LIBRARY(${PLUGIN_LIB_NAME} MODULE ${PLUGIN_CONTROL_GENERIC_SRCS_CXX})
 
