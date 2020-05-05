@@ -300,22 +300,23 @@ am_Error_e CAmRoutingSenderCAPI::setDomainState(const am_domainID_t domainID, co
 	});
 }
 
-am_Error_e CAmRoutingSenderCAPI::returnBusName(std::string& BusName) const
+am_Error_e CAmRoutingSenderCAPI::returnBusName(std::string& busName) const
 {
-    BusName = CAmLookupData::BUS_NAME;
+    busName = CAmLookupData::BUS_NAME;
     return (E_OK);
 }
 
 am_Error_e CAmRoutingSenderCAPI::asyncSetVolumes(const am_Handle_s handle, const std::vector<am_Volumes_s>& volumes)
 {
-	log(&GetDefaultRoutingDltContext(), DLT_LOG_INFO, "CAmRoutingSenderCAPI::asyncSetVolumes called");
-	return mLookupData.asyncSetVolumes(handle, volumes, [&, handle, volumes](const CommonAPI::CallStatus& callStatus){
-		log(&GetDefaultRoutingDltContext(), DLT_LOG_INFO, __PRETTY_FUNCTION__, "Response with call status:", (int16_t)callStatus);
-		if (callStatus != CommonAPI::CallStatus::SUCCESS)
-		{
-			mService->ackSetVolumes(handle, volumes, am_Error_e::E_NON_EXISTENT);
-		}
-	});
+    log(&GetDefaultRoutingDltContext(), DLT_LOG_INFO, "CAmRoutingSenderCAPI::asyncSetVolumes called");
+    return mLookupData.asyncSetVolumes(handle, volumes, [&, handle, volumes](const CommonAPI::CallStatus& callStatus)
+    {
+        log(&GetDefaultRoutingDltContext(), DLT_LOG_INFO, __PRETTY_FUNCTION__, "Response with call status:", (int16_t)callStatus);
+        if (callStatus != CommonAPI::CallStatus::SUCCESS)
+        {
+            mService->ackSetVolumes(handle, volumes, am_Error_e::E_NON_EXISTENT);
+        }
+    });
 }
 
 am_Error_e CAmRoutingSenderCAPI::asyncSetSinkNotificationConfiguration(const am_Handle_s handle, const am_sinkID_t sinkID, const am_NotificationConfiguration_s& nc)
