@@ -115,7 +115,7 @@ private:
     std::string mErrorName;
     std::string mErrorMsg;
     DBusMessage* mpDBusMessage;
-    DBusMessage* mpReveiveMessage;
+    DBusMessage* mpReceiveMessage;
     DBusConnection* mpDBusConnection;
 };
 

@@ -35,7 +35,7 @@ CAmDbusMessageHandler::CAmDbusMessageHandler() :
         mErrorName(""), //
         mErrorMsg(""), //
         mpDBusMessage(NULL), //
-        mpReveiveMessage(NULL), //
+        mpReceiveMessage(NULL), //
         mpDBusConnection(NULL)
 {
    // CAmDltWrapper::instance()->registerContext(commandDbus, "DBP", "DBus Plugin");
@@ -50,7 +50,7 @@ CAmDbusMessageHandler::~CAmDbusMessageHandler()
 void CAmDbusMessageHandler::initReceive(DBusMessage* msg)
 {
     assert(msg!=NULL);
-    mpReveiveMessage = msg;
+    mpReceiveMessage = msg;
     if (!dbus_message_iter_init(msg, &mDBusMessageIter))
     {
         log(&commandDbus, DLT_LOG_INFO, "DBusMessageHandler::initReceive DBus Message has no arguments!");
@@ -90,9 +90,9 @@ void CAmDbusMessageHandler::initSignal(std::string path, std::string signalName)
 void CAmDbusMessageHandler::sendMessage()
 {
     assert(mpDBusConnection!=NULL);
-    if (mpReveiveMessage != 0)
+    if (mpReceiveMessage != 0)
     {
-        mSerial = dbus_message_get_serial(mpReveiveMessage);
+        mSerial = dbus_message_get_serial(mpReceiveMessage);
     }
     else
     {
@@ -100,7 +100,7 @@ void CAmDbusMessageHandler::sendMessage()
     }
     if (!mErrorName.empty())
     {
-        mpDBusMessage = dbus_message_new_error(mpReveiveMessage, mErrorName.c_str(), mErrorMsg.c_str());
+        mpDBusMessage = dbus_message_new_error(mpReceiveMessage, mErrorName.c_str(), mErrorMsg.c_str());
     }
     if (!dbus_connection_send(mpDBusConnection, mpDBusMessage, &mSerial))
     {
@@ -109,7 +109,7 @@ void CAmDbusMessageHandler::sendMessage()
     dbus_connection_flush(mpDBusConnection);
     dbus_message_unref(mpDBusMessage);
     mpDBusMessage = NULL;
-    mpReveiveMessage = NULL;
+    mpReceiveMessage = NULL;
 }
 
 char* CAmDbusMessageHandler::getString()
