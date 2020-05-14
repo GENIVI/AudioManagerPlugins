@@ -85,7 +85,7 @@ class MockIAmControlReceive : public IAmControlReceive {
       am_Error_e(const am_mainVolume_t mainVolume, const am_sinkID_t sinkID));
   MOCK_METHOD2(changeSinkAvailabilityDB,
       am_Error_e(const am_Availability_s& availability, const am_sinkID_t sinkID));
-  MOCK_METHOD2(changDomainStateDB,
+  MOCK_METHOD2(changeDomainStateDB,
       am_Error_e(const am_DomainState_e domainState, const am_domainID_t domainID));
   MOCK_METHOD2(changeSinkMuteStateDB,
       am_Error_e(const am_MuteState_e muteState, const am_sinkID_t sinkID));

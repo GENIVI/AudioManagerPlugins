@@ -1621,7 +1621,7 @@ void CAmControllerPlugin::hookSystemDomainStateChange(const am_domainID_t domain
     NULL_CHECK_AND_RETURN(mpControlReceive);
 
     // update the domain state in DB
-    mpControlReceive->changDomainStateDB(state, domainID);
+    mpControlReceive->changeDomainStateDB(state, domainID);
 }
 
 void CAmControllerPlugin::hookSystemReceiveEarlyData(const std::vector<am_EarlyData_s > &listData)
