@@ -107,7 +107,7 @@ private:
     struct mainConnectionSet
     {
         am_mainConnectionID_t connectionID;
-        std::vector<handleStatus> listHandleStaus;
+        std::vector<handleStatus> listHandleStatus;
     };
 
     struct mainVolumeSet
