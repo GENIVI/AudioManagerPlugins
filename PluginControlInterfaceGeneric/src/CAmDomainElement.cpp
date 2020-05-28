@@ -65,7 +65,7 @@ am_Error_e CAmDomainElement::_unregister(void)
 
 am_Error_e CAmDomainElement::setState(const am_DomainState_e state)
 {
-    return mpControlReceive->changDomainStateDB(state, getID());
+    return mpControlReceive->changeDomainStateDB(state, getID());
 }
 
 am_Error_e CAmDomainElement::getState(int &state) const

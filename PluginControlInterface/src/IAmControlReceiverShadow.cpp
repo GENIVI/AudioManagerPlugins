@@ -343,10 +343,10 @@ am_Error_e IAmControlReceiverShadow::changeSinkAvailabilityDB(am_Availability_s&
     return (error);
 }
 
-am_Error_e IAmControlReceiverShadow::changDomainStateDB(am_DomainState_e domainState, am_domainID_t domainID)
+am_Error_e IAmControlReceiverShadow::changeDomainStateDB(am_DomainState_e domainState, am_domainID_t domainID)
 {
     am_Error_e error;
-    mCAmSerializer.syncCall<IAmControlReceive, am_Error_e, am_DomainState_e, const am_domainID_t, am_DomainState_e, am_domainID_t>(mpIAmControlReceiver, &IAmControlReceive::changDomainStateDB, error, domainState, domainID);
+    mCAmSerializer.syncCall<IAmControlReceive, am_Error_e, am_DomainState_e, const am_domainID_t, am_DomainState_e, am_domainID_t>(mpIAmControlReceiver, &IAmControlReceive::changeDomainStateDB, error, domainState, domainID);
     return (error);
 }
 

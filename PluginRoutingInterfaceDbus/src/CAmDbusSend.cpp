@@ -76,6 +76,26 @@ void CAmRoutingDbusSend::append(int16_t integer)
     }
 }
 
+void CAmRoutingDbusSend::append(const char* args, int16_t sizeOfArray)
+{
+    dbus_message_iter_init_append(mpDbusMessage, &mDbusMessageIter);
+    if(!dbus_message_append_args(mpDbusMessage, DBUS_TYPE_ARRAY, DBUS_TYPE_BYTE, &args, sizeOfArray, DBUS_TYPE_INVALID))
+    {
+        log(&routingDbus, DLT_LOG_ERROR, "CAmRoutingDbusSend::append no more memory");
+        this->~CAmRoutingDbusSend();
+    }
+}
+
+void CAmRoutingDbusSend::append(const unsigned char* args, int16_t sizeOfArray)
+{
+    dbus_message_iter_init_append(mpDbusMessage, &mDbusMessageIter);
+    if(!dbus_message_append_args(mpDbusMessage, DBUS_TYPE_ARRAY, DBUS_TYPE_BYTE, &args, sizeOfArray, DBUS_TYPE_INVALID))
+    {
+        log(&routingDbus, DLT_LOG_ERROR, "CAmRoutingDbusSend::append no more memory");
+        this->~CAmRoutingDbusSend();
+    }
+}
+
 void CAmRoutingDbusSend::append(std::vector<am_SoundProperty_s> listSoundProperties)
 {
     DBusMessageIter arrayIter;

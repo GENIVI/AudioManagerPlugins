@@ -458,11 +458,11 @@ void CAmControlSenderBase::cbAckConnect(const am_Handle_s handle, const am_Error
         handleStatus status;
         status.status = true;
         status.handle = handle;
-        hit = std::find_if(it->listHandleStaus.begin(), it->listHandleStaus.end(), findHandle(status));
-        if (hit == it->listHandleStaus.end())
+        hit = std::find_if(it->listHandleStatus.begin(), it->listHandleStatus.end(), findHandle(status));
+        if (hit == it->listHandleStatus.end())
             continue;
         hit->status = true;
-        if (it->listHandleStaus.end() == std::find_if(it->listHandleStaus.begin(), it->listHandleStaus.end(), checkHandle(status)))
+        if (it->listHandleStatus.end() == std::find_if(it->listHandleStatus.begin(), it->listHandleStatus.end(), checkHandle(status)))
         {
             mControlReceiveInterface->changeMainConnectionStateDB(it->connectionID, CS_CONNECTED);
             mListOpenConnections.erase(it);
@@ -483,11 +483,11 @@ void CAmControlSenderBase::cbAckDisconnect(const am_Handle_s handle, const am_Er
         handleStatus status;
         status.status = true;
         status.handle = handle;
-        hit = std::find_if(it->listHandleStaus.begin(), it->listHandleStaus.end(), findHandle(status));
-        if (hit == it->listHandleStaus.end())
+        hit = std::find_if(it->listHandleStatus.begin(), it->listHandleStatus.end(), findHandle(status));
+        if (hit == it->listHandleStatus.end())
             continue;
         hit->status = true;
-        if (it->listHandleStaus.end() == std::find_if(it->listHandleStaus.begin(), it->listHandleStaus.end(), checkHandle(status)))
+        if (it->listHandleStatus.end() == std::find_if(it->listHandleStatus.begin(), it->listHandleStatus.end(), checkHandle(status)))
         {
             mControlReceiveInterface->removeMainConnectionDB(it->connectionID);
             mListOpenDisconnections.erase(it);
@@ -608,7 +608,7 @@ void CAmControlSenderBase::disconnect(am_mainConnectionID_t connectionID)
     }
 
     std::vector<am_connectionID_t>::iterator it(mainConnection.listConnectionID.begin());
-    std::vector<handleStatus> listHandleStaus;
+    std::vector<handleStatus> listHandleStatus;
     for (; it != mainConnection.listConnectionID.end(); ++it)
     {
         handleStatus status;
@@ -617,11 +617,11 @@ void CAmControlSenderBase::disconnect(am_mainConnectionID_t connectionID)
         {
             logError("Could not disconnect, Error", error);
         }
-        listHandleStaus.push_back(status);
+        listHandleStatus.push_back(status);
     }
     mainConnectionSet set;
     set.connectionID = connectionID;
-    set.listHandleStaus = listHandleStaus;
+    set.listHandleStatus = listHandleStatus;
     mListOpenDisconnections.push_back(set);
 }
 
@@ -635,7 +635,7 @@ void CAmControlSenderBase::connect(am_sourceID_t sourceID, am_sinkID_t sinkID, a
     if (listRoutes.empty())
         logError("CAmControlSenderBase::connect not possible");
 
-    std::vector<handleStatus> listHandleStaus;
+    std::vector<handleStatus> listHandleStatus;
     std::vector<am_RoutingElement_s>::iterator it(listRoutes[0].route.begin());
     for (; it != listRoutes[0].route.end(); ++it)
     {
@@ -644,12 +644,12 @@ void CAmControlSenderBase::connect(am_sourceID_t sourceID, am_sinkID_t sinkID, a
         handleStatus status;
         status.handle = handle;
         status.status = false;
-        listHandleStaus.push_back(status);
+        listHandleStatus.push_back(status);
         listConnectionIDs.push_back(connectionID);
     }
     mainConnectionSet set;
     set.connectionID = mainConnectionID;
-    set.listHandleStaus = listHandleStaus;
+    set.listHandleStatus = listHandleStatus;
     mControlReceiveInterface->changeMainConnectionRouteDB(mainConnectionID,listConnectionIDs);
     mListOpenConnections.push_back(set);
 }

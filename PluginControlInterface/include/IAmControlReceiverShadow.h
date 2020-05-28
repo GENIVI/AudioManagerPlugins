@@ -62,7 +62,12 @@ public:
     am_Error_e changeMainConnectionStateDB(am_mainConnectionID_t mainconnectionID, am_ConnectionState_e connectionState);
     am_Error_e changeSinkMainVolumeDB(am_mainVolume_t mainVolume, am_sinkID_t sinkID);
     am_Error_e changeSinkAvailabilityDB(am_Availability_s& availability, am_sinkID_t sinkID);
-    am_Error_e changDomainStateDB(am_DomainState_e domainState, am_domainID_t domainID);
+    am_Error_e changeDomainStateDB(am_DomainState_e domainState, am_domainID_t domainID);
+    inline am_Error_e changDomainStateDB(am_DomainState_e domainState, am_domainID_t domainID)
+    {
+        //inline redirecetion (changDomainStateDB > changeDomainStateDB) for downward compatibility
+        return changeDomainStateDB(domainState, domainID);
+    }
     am_Error_e changeSinkMuteStateDB(am_MuteState_e muteState, am_sinkID_t sinkID);
     am_Error_e changeMainSinkSoundPropertyDB(am_MainSoundProperty_s& soundProperty, am_sinkID_t sinkID);
     am_Error_e changeMainSourceSoundPropertyDB(am_MainSoundProperty_s& soundProperty, am_sourceID_t sourceID);
