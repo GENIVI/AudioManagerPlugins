@@ -17,13 +17,13 @@
 
 cmake_minimum_required(VERSION 3.0)
 
-PROJECT(CAmCommandSenderDbusTests VERSION 7.4.0)
+PROJECT(CAmCommandSenderDbusTests VERSION 7.5.0)
 
 FIND_PACKAGE(Threads)
 FIND_PACKAGE(PkgConfig)
 FIND_PACKAGE(PythonLibs REQUIRED)
-find_package(AudioManager REQUIRED > 7.0.0)  
-find_package(AudioManagerUtilities REQUIRED > 7.0.0)
+find_package(AudioManager REQUIRED > 7.8.0)  
+find_package(AudioManagerUtilities REQUIRED > 7.8.0)
 pkg_check_modules (GTEST REQUIRED "gtest >= 1.6.0")
 pkg_check_modules (GMOCK REQUIRED "gmock >= 1.6.0")
 pkg_check_modules (DBUS "dbus-1 >= 1.4" REQUIRED)

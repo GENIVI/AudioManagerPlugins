@@ -3,12 +3,12 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.0)
 INCLUDE(CMakeDependentOption)
 FIND_PACKAGE(PkgConfig)
 
-PROJECT(PluginControlInterfaceGeneric VERSION 8.0.0)
+PROJECT(PluginControlInterfaceGeneric VERSION 8.1.0)
 
 include(CMakeDependentOption)
 find_package(PkgConfig)
-find_package(AudioManager REQUIRED > 7.7.1)  
-find_package(AudioManagerUtilities REQUIRED > 7.7.1)
+find_package(AudioManager REQUIRED > 7.8.0)  
+find_package(AudioManagerUtilities REQUIRED > 7.8.0)
 
 OPTION (WITH_DOCUMENTATION
         "build plugins with documentation" OFF )

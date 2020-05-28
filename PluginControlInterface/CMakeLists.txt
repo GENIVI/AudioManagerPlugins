@@ -16,12 +16,12 @@
 
 cmake_minimum_required(VERSION 3.0)
 
-PROJECT(PluginControlInterface VERSION 7.4.0)
+PROJECT(PluginControlInterface VERSION 7.5.0)
 
 include(CMakeDependentOption)
 find_package(PkgConfig)
-find_package(AudioManager REQUIRED > 7.3.0)  
-find_package(AudioManagerUtilities REQUIRED > 7.3.0)   
+find_package(AudioManager REQUIRED > 7.8.0)
+find_package(AudioManagerUtilities REQUIRED > 7.8.0)
 
 INCLUDE_DIRECTORIES(
 	${CMAKE_CURRENT_SOURCE_DIR}/include
