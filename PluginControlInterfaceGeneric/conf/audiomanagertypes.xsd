@@ -114,7 +114,7 @@
             </xsd:enumeration>
             <xsd:enumeration value="CF_GENIVI_AUTO">
                 <xsd:annotation>
-                    <xsd:documentation>THe connection format is AUTO.</xsd:documentation>
+                    <xsd:documentation>The connection format is AUTO.</xsd:documentation>
                 </xsd:annotation>
             </xsd:enumeration>
         </xsd:restriction>

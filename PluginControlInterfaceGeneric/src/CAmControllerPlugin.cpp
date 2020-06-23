@@ -160,7 +160,7 @@ am_Error_e CAmControllerPlugin::startupController(IAmControlReceive *controlRece
     }
 
     result = mpPolicySend->startupInterface(mpPolicyReceive);
-    if (E_OK != result)
+    if (result != E_OK)
     {
         _freeMemory();
         LOG_FN_ERROR(__FILENAME__, __func__, " failed to start policy interface");
@@ -646,7 +646,6 @@ am_Error_e CAmControllerPlugin::hookUserSetMainSourceSoundProperties(const am_so
 am_Error_e CAmControllerPlugin::hookUserSetSystemProperty(const am_SystemProperty_s &property)
 {
     LOG_FN_INFO(__FILENAME__, __func__, "type=", property.type, "value=", property.value);
-    am_Error_e result;
 
     std::shared_ptr<CAmSystemElement > pSystem = CAmSystemFactory::getElement(SYSTEM_ELEMENT_NAME);
     if (true == pSystem->isSystemPropertyReadOnly())
@@ -673,7 +672,6 @@ am_Error_e CAmControllerPlugin::hookUserSetSystemProperty(const am_SystemPropert
 
 am_Error_e CAmControllerPlugin::hookUserSetSystemProperties(const std::vector<am_SystemProperty_s> &listSystemProperty)
 {
-    am_Error_e result;
     LOG_FN_INFO(__FILENAME__, __func__, "size of listSystemProperty=", listSystemProperty.size());
     std::shared_ptr<CAmSystemElement > pSystem = CAmSystemFactory::getElement(SYSTEM_ELEMENT_NAME);
     if (true == pSystem->isSystemPropertyReadOnly())
@@ -699,8 +697,6 @@ am_Error_e CAmControllerPlugin::hookUserSetSystemProperties(const std::vector<am
 am_Error_e CAmControllerPlugin::hookUserVolumeChange(const am_sinkID_t sinkID,
     const am_mainVolume_t mainVolume)
 {
-    am_Error_e result(E_NOT_POSSIBLE);
-
     std::shared_ptr<CAmSinkElement > pElement = CAmSinkFactory::getElement(sinkID);
     if (nullptr == pElement)
     {
