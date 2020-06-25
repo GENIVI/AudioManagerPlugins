@@ -85,6 +85,48 @@ void IAmRoutingReceiverShadowDbus::registerDomain(DBusConnection *conn, DBusMess
     mpRoutingSenderDbus->addDomainLookup(domain.domainID, lookupData);
 }
 
+void IAmRoutingReceiverShadowDbus::registerEarlyConnection(DBusConnection */*conn*/, DBusMessage *msg)
+{
+    log(&routingDbus, DLT_LOG_INFO, "IAmRoutingReceiverShadow::registerEarlyConnection called");
+
+    assert(mRoutingReceiveInterface != NULL);
+    mDBUSMessageHandler.initReceive(msg);
+
+    am_domainID_t domainID = mDBUSMessageHandler.getUInt();
+    std::vector< am_Connection_s > route = mDBUSMessageHandler.getListConnections();
+    am_ConnectionState_e state = static_cast<am::am_ConnectionState_e>(mDBUSMessageHandler.getUInt());
+
+    am_Error_e returnCode = mRoutingReceiveInterface->registerEarlyConnection(domainID, route, state);
+
+    mDBUSMessageHandler.initReply(msg);
+    mDBUSMessageHandler.append(returnCode);
+    mDBUSMessageHandler.sendMessage();
+    if (returnCode != E_OK)
+    {
+        log(&routingDbus, DLT_LOG_INFO, "error registering connection");
+        return;
+    }
+}
+
+void IAmRoutingReceiverShadowDbus::ackTransferConnection(DBusConnection */*conn*/, DBusMessage *msg)
+{
+    log(&routingDbus, DLT_LOG_INFO, "IAmRoutingReceiverShadow::ackTransferConnection called");
+
+    assert(mRoutingReceiveInterface != NULL);
+    mDBUSMessageHandler.initReceive(msg);
+
+    uint16_t handle(mDBUSMessageHandler.getUInt());
+    mpRoutingSenderDbus->removeHandle(handle);
+
+    am_Handle_s myhandle = {H_TRANSFERCONNECTION, handle};
+    am_Error_e error(static_cast<am_Error_e>(mDBUSMessageHandler.getUInt()));
+
+    mRoutingReceiveInterface->ackTransferConnection(myhandle, error);
+
+    mDBUSMessageHandler.initReply(msg);
+    mDBUSMessageHandler.sendMessage();
+}
+
 void IAmRoutingReceiverShadowDbus::registerSource(DBusConnection* conn, DBusMessage* msg)
 {
     log(&routingDbus, DLT_LOG_INFO, "IAmRoutingReceiverShadow::RegisterSource called");

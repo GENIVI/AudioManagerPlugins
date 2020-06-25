@@ -40,6 +40,7 @@ public:
     void append(int integer);
     void append(const char* args, int16_t sizeOfArray);
     void append(const unsigned char* args, int16_t sizeOfArray);
+    void append(const std::vector<std::pair<std::string, std::string>> &route);
     void append(std::vector<am_SoundProperty_s> listSoundProperties);
     void append(am_SoundProperty_s soundProperty);
     am_Error_e send();

@@ -20,6 +20,12 @@
 		<arg name='handle' type='q' direction='in' />  
 		<arg name='connectionID' type='q' direction='in' />									    				
 	</method>											
+	<method name='asyncTransferConnection'>
+		<arg name='handle' type='q' direction='in' />
+		<arg name='domainID' type='q' direction='in' />
+		<arg name='route' type='a(ss)', direction='in' />
+		<arg name='state' type='q' direction='in' />
+	</method>
 	<method name='asyncSetSinkVolume'>									
 		<arg name='handle' type='q' direction='in' />      				
 		<arg name='sinkID' type='q' direction='in' />		

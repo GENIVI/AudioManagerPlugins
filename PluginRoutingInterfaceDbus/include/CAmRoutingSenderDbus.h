@@ -36,6 +36,9 @@ public:
     am_Error_e startupInterface(IAmRoutingReceive* pIAmRoutingReceive);
     void setRoutingReady(const uint16_t handle);
     void setRoutingRundown(const uint16_t handle);
+    am_Error_e asyncTransferConnection(const am_Handle_s handle, am_domainID_t domainID
+            , const std::vector<std::pair<std::string, std::string>>  &route
+            , am_ConnectionState_e state);
     am_Error_e asyncAbort(const am_Handle_s handle);
     am_Error_e asyncConnect(const am_Handle_s handle, const am_connectionID_t connectionID, const am_sourceID_t sourceID, const am_sinkID_t sinkID, const am_CustomAvailabilityReason_t connectionFormat);
     am_Error_e asyncDisconnect(const am_Handle_s handle, const am_connectionID_t connectionID);

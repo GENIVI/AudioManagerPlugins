@@ -99,6 +99,7 @@ public:
     am_Crossfader_s getCrossfaderData();
     am_SoundProperty_s getSoundProperty();
     am_MainSoundProperty_s getMainSoundProperty();
+    std::vector<am_Connection_s> getListConnections();
     std::vector<am_CustomAvailabilityReason_t> getListconnectionFormats();
     std::vector<bool> getListBool();
     std::vector<am_SoundProperty_s> getListSoundProperties();

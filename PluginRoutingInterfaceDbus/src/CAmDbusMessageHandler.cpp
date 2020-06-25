@@ -991,6 +991,36 @@ void CAmRoutingDbusMessageHandler::append(const std::vector<am::am_SinkClass_s>&
     }
 }
 
+std::vector<am_Connection_s> CAmRoutingDbusMessageHandler::getListConnections()
+{
+    std::vector<am_Connection_s> listConnections;
+    if (DBUS_TYPE_ARRAY != dbus_message_iter_get_arg_type(&mDBusMessageIter))
+    {
+        log(&routingDbus, DLT_LOG_ERROR, "CAmRoutingDbusMessageHandler::getListconnections DBUS handler argument is no array!");
+        mErrorName = std::string(DBUS_ERROR_INVALID_ARGS);
+        mErrorMsg = "DBus argument is no array";
+    }
+    else
+    {
+        DBusMessageIter arrayIter;
+        dbus_message_iter_recurse(&mDBusMessageIter, &arrayIter);
+        do
+        {
+            DBusMessageIter structIter;
+            dbus_message_iter_recurse(&arrayIter, &structIter);
+            am_Connection_s con;
+            con.connectionID = getUInt(structIter, true);
+            con.sourceID = getUInt(structIter, true);
+            con.sinkID = getUInt(structIter, true);
+            con.delay = getInt(structIter, true);
+            con.connectionFormat = getUInt(structIter, false);
+            listConnections.push_back(con);
+        } while (dbus_message_iter_next(&arrayIter));
+        dbus_message_iter_next(&mDBusMessageIter);
+    }
+    return listConnections;
+}
+
 std::vector<am_CustomAvailabilityReason_t> CAmRoutingDbusMessageHandler::getListconnectionFormats()
 {
     DBusMessageIter arrayIter;

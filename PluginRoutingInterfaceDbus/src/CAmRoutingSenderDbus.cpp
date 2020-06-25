@@ -91,6 +91,29 @@ void CAmRoutingSenderDbus::setRoutingRundown(const uint16_t handle)
     mIAmRoutingReceiverShadowDbus.gotRundown(mMapDomains.size(),handle);
 }
 
+am_Error_e CAmRoutingSenderDbus::asyncTransferConnection(const am_Handle_s handle, am_domainID_t domainID
+        , const std::vector<std::pair<std::string, std::string>>  &route
+        , am_ConnectionState_e state)
+{
+    auto iter = mMapDomains.find(domainID);
+    if (iter == mMapDomains.end())
+    {
+        log(&routingDbus, DLT_LOG_ERROR, "CAmRoutingSenderDbus::asyncTransferConnection could not domain with ID", domainID);
+        return (E_UNKNOWN);
+    }
+
+    log(&routingDbus, DLT_LOG_INFO, "CAmRoutingSenderDbus::asyncTransferConnection called");
+
+    CAmRoutingDbusSend send(mpDBusConnection, iter->second.busname, iter->second.path
+            , iter->second.interface, "asyncTransferConnection");
+    send.append(handle.handle);
+    send.append(domainID);
+    send.append(route);
+    send.append(state);
+    mMapHandles.insert(std::make_pair(+handle.handle, iter->second));
+    return send.sendAsync();
+}
+
 am_Error_e CAmRoutingSenderDbus::asyncAbort(const am_Handle_s handle)
 {
     log(&routingDbus, DLT_LOG_INFO, "CAmRoutingSenderDbus::asyncAbort called");

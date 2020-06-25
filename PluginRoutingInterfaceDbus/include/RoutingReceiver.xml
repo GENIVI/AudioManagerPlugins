@@ -15,6 +15,10 @@
 		<arg name="connectionID" type="q" direction="in" />
 		<arg name="error" type="q" direction="in" />
 	</method>
+	<method name="ackTransferConnection">
+		<arg name="handle" type="q" direction="in" />
+        	<arg name="error" type="q" direction="in" />
+	</method>
 	<method name="ackSetSinkVolume">
 		<arg name="handle" type="q" direction="in" />
 		<arg name="volume" type="n" direction="in" />
@@ -78,6 +82,12 @@
 		<arg name="handle" type="q" direction="in" />
 		<arg name="error" type="q" direction="in" />
 		<arg name="domainid" type="q" direction="in" />
+		<arg name="error" type="q" direction="out" />
+	</method>
+	<method name="registerEarlyConnection">
+		<arg name="domainid" type="q" direction="in" />
+		<arg name="route" type="a(qqqnq)" direction="in"/>
+		<arg name="state" type="q" direction="in" />
 		<arg name="error" type="q" direction="out" />
 	</method>
 	<method name="registerGateway">
