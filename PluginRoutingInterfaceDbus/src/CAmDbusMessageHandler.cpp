@@ -358,6 +358,37 @@ am_Domain_s CAmRoutingDbusMessageHandler::getDomainData()
     return (domainData);
 }
 
+am_Route_s CAmRoutingDbusMessageHandler::getRouteData()
+{
+    am_Route_s route;
+    route.sourceID = getUInt();
+    route.sinkID   = getUInt();
+    if (DBUS_TYPE_ARRAY != dbus_message_iter_get_arg_type(&mDBusMessageIter))
+    {
+        log(&routingDbus, DLT_LOG_ERROR, "CAmRoutingDbusMessageHandler::getRouteData DBUS handler argument is no array!");
+        mErrorName = std::string(DBUS_ERROR_INVALID_ARGS);
+        mErrorMsg = "DBus argument is no array";
+    }
+    else
+    {
+        DBusMessageIter arrayIter;
+        dbus_message_iter_recurse(&mDBusMessageIter, &arrayIter);
+        do
+        {
+            DBusMessageIter segmentIter;
+            dbus_message_iter_recurse(&arrayIter, &segmentIter);
+            am_RoutingElement_s segment;
+            segment.sourceID = getUInt(segmentIter, true);
+            segment.sinkID = getUInt(segmentIter, true);
+            segment.domainID = getUInt(segmentIter, true);
+            segment.connectionFormat = getUInt(segmentIter, false);
+            route.route.push_back(segment);
+        } while (dbus_message_iter_next(&arrayIter));
+        dbus_message_iter_next(&mDBusMessageIter);
+    }
+    return route;
+}
+
 am_Source_s CAmRoutingDbusMessageHandler::getSourceData()
 {
     am_Source_s sourceData;
@@ -989,36 +1020,6 @@ void CAmRoutingDbusMessageHandler::append(const std::vector<am::am_SinkClass_s>&
             mErrorMsg = "Cannot create reply!";
         }
     }
-}
-
-std::vector<am_Connection_s> CAmRoutingDbusMessageHandler::getListConnections()
-{
-    std::vector<am_Connection_s> listConnections;
-    if (DBUS_TYPE_ARRAY != dbus_message_iter_get_arg_type(&mDBusMessageIter))
-    {
-        log(&routingDbus, DLT_LOG_ERROR, "CAmRoutingDbusMessageHandler::getListconnections DBUS handler argument is no array!");
-        mErrorName = std::string(DBUS_ERROR_INVALID_ARGS);
-        mErrorMsg = "DBus argument is no array";
-    }
-    else
-    {
-        DBusMessageIter arrayIter;
-        dbus_message_iter_recurse(&mDBusMessageIter, &arrayIter);
-        do
-        {
-            DBusMessageIter structIter;
-            dbus_message_iter_recurse(&arrayIter, &structIter);
-            am_Connection_s con;
-            con.connectionID = getUInt(structIter, true);
-            con.sourceID = getUInt(structIter, true);
-            con.sinkID = getUInt(structIter, true);
-            con.delay = getInt(structIter, true);
-            con.connectionFormat = getUInt(structIter, false);
-            listConnections.push_back(con);
-        } while (dbus_message_iter_next(&arrayIter));
-        dbus_message_iter_next(&mDBusMessageIter);
-    }
-    return listConnections;
 }
 
 std::vector<am_CustomAvailabilityReason_t> CAmRoutingDbusMessageHandler::getListconnectionFormats()

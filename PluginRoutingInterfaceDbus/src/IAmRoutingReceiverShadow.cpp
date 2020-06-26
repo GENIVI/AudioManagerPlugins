@@ -93,7 +93,7 @@ void IAmRoutingReceiverShadowDbus::registerEarlyConnection(DBusConnection */*con
     mDBUSMessageHandler.initReceive(msg);
 
     am_domainID_t domainID = mDBUSMessageHandler.getUInt();
-    std::vector< am_Connection_s > route = mDBUSMessageHandler.getListConnections();
+    am_Route_s route = mDBUSMessageHandler.getRouteData();
     am_ConnectionState_e state = static_cast<am::am_ConnectionState_e>(mDBUSMessageHandler.getUInt());
 
     am_Error_e returnCode = mRoutingReceiveInterface->registerEarlyConnection(domainID, route, state);

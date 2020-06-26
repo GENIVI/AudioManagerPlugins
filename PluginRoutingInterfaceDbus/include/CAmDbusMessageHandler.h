@@ -92,6 +92,7 @@ public:
     am_Availability_s getAvailability();
     std::vector<am::am_EarlyData_s> getEarlyData();
     am_Domain_s getDomainData();
+    am_Route_s getRouteData();
     am_Source_s getSourceData();
     am_Sink_s getSinkData();
     am_Gateway_s getGatewayData();
@@ -99,7 +100,6 @@ public:
     am_Crossfader_s getCrossfaderData();
     am_SoundProperty_s getSoundProperty();
     am_MainSoundProperty_s getMainSoundProperty();
-    std::vector<am_Connection_s> getListConnections();
     std::vector<am_CustomAvailabilityReason_t> getListconnectionFormats();
     std::vector<bool> getListBool();
     std::vector<am_SoundProperty_s> getListSoundProperties();
