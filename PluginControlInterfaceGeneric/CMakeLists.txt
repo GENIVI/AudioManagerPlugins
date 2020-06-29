@@ -72,6 +72,8 @@ ELSE()
 ENDIF(NSM_IFACE_PRESENT)
 ENDFOREACH()
 
+add_compile_options(-std=c++11 -pedantic -rdynamic -Wno-variadic-macros)
+
 ADD_LIBRARY(${PLUGIN_LIB_NAME} MODULE ${PLUGIN_CONTROL_GENERIC_SRCS_CXX})
 
 TARGET_LINK_LIBRARIES(${PLUGIN_LIB_NAME}
@@ -92,7 +94,7 @@ INSTALL(DIRECTORY conf/
 
 set(DOXY_FILE ${CMAKE_CURRENT_BINARY_DIR}/PluginControlGeneric.doxyfile)
 set(DOC_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/doc
-    CACHE STRINGS "The doxygen documentation will be placed here")  
+    CACHE STRING "The doxygen documentation will be placed here")
 
 if(WITH_DOCUMENTATION)
     find_package(Doxygen)
