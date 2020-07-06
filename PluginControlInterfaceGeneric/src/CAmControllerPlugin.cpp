@@ -32,10 +32,13 @@
 #include "IAmPolicySend.h"
 #include "CAmPolicyReceive.h"
 #include "CAmHandleStore.h"
+#include "CAmActionRundown.h"
 #include "CAmConfigurationReader.h"
 #include "limits.h"
 #include "CAmPersistenceWrapper.h"
 #include "CAmCommonUtility.h"
+
+#include <functional>
 
 namespace am {
 namespace gc {
@@ -295,6 +298,18 @@ void CAmControllerPlugin::setControllerRundown(const int16_t amSignal)
 {
     LOG_FN_ENTRY(__FILENAME__, __func__, "setControllerRundown with signal", amSignal);
 
+    NULL_CHECK_AND_RETURN(mpControlReceive);
+
+    // encapsulate rundown completion in a lambda function launched by
+    // the CAmRundown action once the transfer of active connections
+    // is completed
+    auto funct = std::function<void()>([this, amSignal] () { finalizeRundown(amSignal); });
+    auto *pRundownAction = new CAmActionRundown(funct);
+    pRundownAction->execute();
+}
+
+void CAmControllerPlugin::finalizeRundown(const int16_t amSignal)
+{
     _storeMainConnectionVolumetoPersistency();
     _storeVolumetoPersistency();
     _storeMainConnectiontoPersistency();
@@ -969,6 +984,61 @@ am_Error_e CAmControllerPlugin::hookSystemDeregisterDomain(const am_domainID_t d
     LOG_FN_INFO(__FILENAME__, __func__, "  unregistered domain =", domainID);
 
     return result;
+}
+
+am_Error_e CAmControllerPlugin::hookSystemRegisterEarlyMainConnection(am_domainID_t domainID
+            , const am_MainConnection_s &mainConnectionData, const am_Route_s &route)
+{
+    NULL_CHECK_AND_RETURN_ERROR(mpControlReceive);
+
+    // validate end points
+    am_Source_s sourceData;
+    am_Sink_s sinkData;
+    am_Error_e sourceOK = mpControlReceive->getSourceInfoDB(mainConnectionData.sourceID, sourceData);
+    am_Error_e sinkOK = mpControlReceive->getSinkInfoDB(mainConnectionData.sinkID, sinkData);
+    if ((sourceOK != E_OK) && (sourceOK != E_UNKNOWN))
+    {
+        LOG_FN_ERROR(__FILENAME__, __func__, "source", mainConnectionData.sourceID, sourceOK);
+        return sourceOK;
+    }
+    else if ((sinkOK != E_OK) && (sinkOK != E_UNKNOWN))
+    {
+        LOG_FN_ERROR(__FILENAME__, __func__, "sink", mainConnectionData.sinkID, sinkOK);
+        return sinkOK;
+    }
+
+    // validate segments
+    gc_Route_s gcroute;
+    static_cast<am_Route_s>(gcroute) = route;
+    gcroute.name = sourceData.name + ":" + sinkData.name;
+    for (const auto &segmentID : mainConnectionData.listConnectionID)
+    {
+        am_Connection_s segment;
+        am_Error_e routeOK = mpControlReceive->getConnectionInfoDB(segmentID, segment);
+        if (routeOK != E_OK)
+        {
+            LOG_FN_ERROR(__FILENAME__, __func__, "segment", segmentID, "NOT found for connection"
+                    , gcroute.name);
+            return routeOK;
+        }
+    }
+
+    // mirror pre-announced main connection in system topology
+    auto pConnection = CAmMainConnectionFactory::createElement(gcroute, mpControlReceive);
+
+    // append trigger to queue so policy engine can react on this event
+    auto *pTrigger = new gc_RegisterElementTrigger_s;
+    if (nullptr == pTrigger)
+    {
+        LOG_FN_ERROR(__FILENAME__, __func__, "  bad memory state:");
+        return E_NOT_POSSIBLE;
+    }
+    pTrigger->elementName = gcroute.name;
+    pTrigger->RegisterationStatus = E_OK;
+    CAmTriggerQueue::getInstance()->queue(SYSTEM_REGISTER_EARLY_CONNECTION, pTrigger);
+
+    iterateActions();
+    return E_OK;
 }
 
 void CAmControllerPlugin::hookSystemDomainRegistrationComplete(const am_domainID_t domainID)
@@ -1650,6 +1720,15 @@ void CAmControllerPlugin::cbAckConnect(const am_Handle_s handle, const am_Error_
 }
 
 void CAmControllerPlugin::cbAckDisconnect(const am_Handle_s handle, const am_Error_e errorID)
+{
+    LOG_FN_INFO(__FILENAME__, __func__, "  IN  handle.Type=", (int)handle.handleType, " handle.handle=", (int)handle.handle,
+        " errorID=", errorID);
+
+    CAmHandleStore::instance().notifyAsyncResult(handle, errorID);
+    iterateActions();
+}
+
+void CAmControllerPlugin::cbAckTransferConnection(const am_Handle_s handle, const am_Error_e errorID)
 {
     LOG_FN_INFO(__FILENAME__, __func__, "  IN  handle.Type=", (int)handle.handleType, " handle.handle=", (int)handle.handle,
         " errorID=", errorID);

@@ -340,7 +340,8 @@ am_Error_e CAmMainConnectionElement::_register(void)
     mainConnection.connectionState  = CS_UNKNOWN;
     mainConnection.mainConnectionID = 0;
     // register the connection with database
-    if (E_OK == mpControlReceive->enterMainConnectionDB(mainConnection, mainConnectionID))
+    am_Error_e dbSuccess = mpControlReceive->enterMainConnectionDB(mainConnection, mainConnectionID);
+    if ((E_OK == dbSuccess) || (E_ALREADY_EXISTS == dbSuccess))
     {
         setID(mainConnectionID);
         result = E_OK;
