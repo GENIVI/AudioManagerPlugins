@@ -16,11 +16,11 @@
 #
 cmake_minimum_required(VERSION 3.0)
 
-PROJECT(PluginRoutingInterfaceDbus VERSION 7.5.0)
+PROJECT(PluginRoutingInterfaceDbus VERSION 8.0.0)
 
-find_package(AudioManager REQUIRED > 7.8.0)  
-find_package(AudioManagerUtilities REQUIRED > 7.8.0)   
-pkg_check_modules (DBUS "dbus-1 >= 1.4" REQUIRED)    
+find_package(AudioManager REQUIRED > 8.0.0)
+find_package(AudioManagerUtilities REQUIRED > 8.0.0)
+pkg_check_modules (DBUS "dbus-1 >= 1.4" REQUIRED)
 
 
 IF(NOT WITH_DBUS_WRAPPER)
