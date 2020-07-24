@@ -49,6 +49,7 @@ public:
     am_Error_e startupController(IAmControlReceive *controlreceiveinterface);
     void setControllerReady();
     void setControllerRundown(const int16_t signal);
+    void finalizeRundown(const int16_t signal);  ///< asynchronous completion of the Rundown sequence
     am_Error_e hookUserConnectionRequest(const am_sourceID_t sourceID, const am_sinkID_t sinkID,
         am_mainConnectionID_t &mainConnectionID);
     am_Error_e hookUserDisconnectionRequest(const am_mainConnectionID_t connectionID);
@@ -69,6 +70,8 @@ public:
     am_Error_e hookUserSetSinkMuteState(const am_sinkID_t sinkID, const am_MuteState_e muteState);
     am_Error_e hookSystemRegisterDomain(const am_Domain_s &domainData, am_domainID_t &domainID);
     am_Error_e hookSystemDeregisterDomain(const am_domainID_t domainID);
+    am_Error_e hookSystemRegisterEarlyMainConnection(am_domainID_t domainID
+                , const am_MainConnection_s &mainConnectionData, const am_Route_s &route);
     void hookSystemDomainRegistrationComplete(const am_domainID_t domainID);
     am_Error_e hookSystemRegisterSink(const am_Sink_s &sinkData, am_sinkID_t &sinkID);
     am_Error_e hookSystemDeregisterSink(const am_sinkID_t sinkID);
@@ -105,6 +108,7 @@ public:
         const am_timeSync_t time);
     void cbAckConnect(const am_Handle_s handle, const am_Error_e errorID);
     void cbAckDisconnect(const am_Handle_s handle, const am_Error_e errorID);
+    void cbAckTransferConnection(const am_Handle_s handle, const am_Error_e errorID);
     void cbAckCrossFade(const am_Handle_s handle, const am_HotSink_e hotSink,
         const am_Error_e error);
     void cbAckSetSinkVolumeChange(const am_Handle_s handle, const am_volume_t volume,

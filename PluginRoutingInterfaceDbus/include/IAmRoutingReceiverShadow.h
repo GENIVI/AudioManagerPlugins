@@ -52,6 +52,8 @@ public:
     void ackSetSourceSoundProperties(DBusConnection *conn, DBusMessage *msg);
     void ackCrossFading(DBusConnection *conn, DBusMessage *msg);
     void registerDomain(DBusConnection *conn, DBusMessage *msg);
+    void registerEarlyConnection(DBusConnection *conn, DBusMessage *msg);
+    void ackTransferConnection(DBusConnection *conn, DBusMessage *msg);
     void registerSource(DBusConnection *conn, DBusMessage *msg);
     void registerSink(DBusConnection *conn, DBusMessage *msg);
     void registerGateway(DBusConnection *conn, DBusMessage *msg);

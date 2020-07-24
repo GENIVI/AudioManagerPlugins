@@ -10,6 +10,9 @@ find_package(PkgConfig)
 find_package(AudioManager REQUIRED > 7.8.0)  
 find_package(AudioManagerUtilities REQUIRED > 7.8.0)
 
+#added for UT
+OPTION (WITH_TESTS "build plugins with test" OFF)
+
 OPTION (WITH_DOCUMENTATION
         "build plugins with documentation" OFF )
 OPTION (NSM_IFACE_PRESENT
@@ -19,7 +22,7 @@ SET(PLUGIN_LIB_NAME PluginControlInterfaceGeneric)
 
 SET(INCLUDE_FOLDER "include")
 
-SET(CONF_ROOT "${PLUGINS_CONFIG_PATH}/controller")
+SET(CONF_ROOT "${PLUGINS_CONFIG_PATH}/controller" CACHE PATH "directory hosting configuration and schema")
 
 IF(NSM_IFACE_PRESENT)
     FIND_PACKAGE(NSM REQUIRED)
@@ -56,6 +59,7 @@ add_definitions(-DGENERIC_CONTROLLER_PERSISTENCE_FILE="${GENERIC_CONTROLLER_PERS
 MESSAGE("Generic Controller persistence data file: ${GENERIC_CONTROLLER_PERSISTENCE_FILE}")
 
 add_definitions(-DGENERIC_CONTROLLER_DEFAULT_CONF_ROOT="${CONF_ROOT}")
+MESSAGE("Generic Controller configuration directory: ${CONF_ROOT}")
 
 ENDIF(NSM_IFACE_PRESENT)
 # all source files go here
@@ -73,6 +77,26 @@ ENDIF(NSM_IFACE_PRESENT)
 ENDFOREACH()
 
 add_compile_options(-std=c++11 -pedantic -rdynamic -Wno-variadic-macros)
+
+IF(WITH_TESTS)
+    MESSAGE("Building with unit test and adding test dir")
+
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUNIT_TEST=1")
+    set (CONTROLLER_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+    # prepare the test object as additional static library
+    set(LIB_CONTROLLER_UTEST     ${PLUGIN_LIB_NAME}_static)
+    ADD_LIBRARY(${LIB_CONTROLLER_UTEST} STATIC ${PLUGIN_CONTROL_GENERIC_SRCS_CXX})
+    TARGET_LINK_LIBRARIES(${LIB_CONTROLLER_UTEST}
+        ${AudioManagerUtilities_LIBRARIES}
+        ${LIBXML2_LIBRARIES}
+    )
+
+    # include test suite
+    add_subdirectory (test)
+ELSE(WITH_TESTS)
+    MESSAGE("Building without unit test")
+ENDIF(WITH_TESTS)
 
 ADD_LIBRARY(${PLUGIN_LIB_NAME} MODULE ${PLUGIN_CONTROL_GENERIC_SRCS_CXX})
 

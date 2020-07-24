@@ -92,6 +92,7 @@ public:
     am_Availability_s getAvailability();
     std::vector<am::am_EarlyData_s> getEarlyData();
     am_Domain_s getDomainData();
+    am_Route_s getRouteData();
     am_Source_s getSourceData();
     am_Sink_s getSinkData();
     am_Gateway_s getGatewayData();

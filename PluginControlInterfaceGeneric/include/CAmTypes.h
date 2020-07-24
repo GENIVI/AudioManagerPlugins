@@ -152,6 +152,7 @@ enum gc_Action_e
     ACTION_UNKNOWN,
     ACTION_CONNECT,                      ///< Establish a new or reactivate an existing connection 
     ACTION_DISCONNECT,                   ///< Disconnect source from sink and destroy route segments
+    ACTION_TRANSFER,                     ///< Offer active main connections to surviving domains
     ACTION_SET_VOLUME,                   ///< Adjust nominal sound level to given value.
     ACTION_LIMIT,                        ///< Install a maximum value which the sound level may not exceed 
     ACTION_UNLIMIT,                      ///< Release previously installed sound level limitations 
@@ -371,6 +372,7 @@ enum gc_Trigger_e
     SYSTEM_REGISTER_SOURCE,                          ///< announced a source to database
     SYSTEM_REGISTER_SINK,                            ///< announced a sink to database
     SYSTEM_REGISTER_GATEWAY,                         ///< announced a gateway to database
+    SYSTEM_REGISTER_EARLY_CONNECTION,                ///< announced a main connection pre-established from routing side
     SYSTEM_DEREGISTER_DOMAIN,                        ///< removed a domain from database
     SYSTEM_DEREGISTER_SOURCE,                        ///< removed a source from database
     SYSTEM_DEREGISTER_SINK,                          ///< removed a sink from database

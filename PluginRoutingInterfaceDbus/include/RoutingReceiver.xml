@@ -15,6 +15,10 @@
 		<arg name="connectionID" type="q" direction="in" />
 		<arg name="error" type="q" direction="in" />
 	</method>
+	<method name="ackTransferConnection">
+		<arg name="handle" type="q" direction="in" />
+        	<arg name="error" type="q" direction="in" />
+	</method>
 	<method name="ackSetSinkVolume">
 		<arg name="handle" type="q" direction="in" />
 		<arg name="volume" type="n" direction="in" />
@@ -79,6 +83,12 @@
 		<arg name="error" type="q" direction="in" />
 		<arg name="domainid" type="q" direction="in" />
 		<arg name="error" type="q" direction="out" />
+	</method>
+	<method name="registerEarlyConnection">
+		<arg name="domainid" type="q" direction="in" />       <!-- am_domainID_t -->
+		<arg name="route" type="qqa(qqqq)" direction="in"/>   <!-- am_Route_s -->
+		<arg name="state" type="q" direction="in" />          <!-- am_connectionState_e -->
+		<arg name="error" type="q" direction="out" />         <!-- am_Error_e -->
 	</method>
 	<method name="registerGateway">
 		<arg name="gatewayData" type="(qsqqqqqaiaiab)" direction="in" /> <!-- am_gatewayID_t gatewayID; std::string name; am_sinkID_t sinkID; am_sourceID_t sourceID; am_domainID_t domainSinkID; am_domainID_t domainSourceID; am_domainID_t controlDomainID; std::vector<am_CustomAvailabilityReason_t> listSourceFormats; std::vector<am_CustomAvailabilityReason_t> listSinkFormats; std::vector<bool> convertionMatrix; -->

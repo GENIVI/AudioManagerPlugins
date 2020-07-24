@@ -119,6 +119,28 @@ void CAmRoutingDbusSend::append(std::vector<am_SoundProperty_s> listSoundPropert
     }
 }
 
+void CAmRoutingDbusSend::append(const std::vector<std::pair<std::string, std::string>> &route)
+{
+    DBusMessageIter arrayIter;
+    dbus_bool_t success = dbus_message_iter_open_container(&mDbusMessageIter, DBUS_TYPE_ARRAY, "a(ss)", &arrayIter);
+    for (auto &routeSegment : route)
+    {
+        DBusMessageIter structIter;
+        const char *srcName = routeSegment.first.c_str();
+        const char *snkName = routeSegment.second.c_str();
+        success &= dbus_message_iter_open_container(&arrayIter, DBUS_TYPE_STRUCT, NULL, &structIter);
+        success &= dbus_message_iter_append_basic(&structIter, DBUS_TYPE_STRING, &srcName);
+        success &= dbus_message_iter_append_basic(&structIter, DBUS_TYPE_STRING, &snkName);
+        success &= dbus_message_iter_close_container(&arrayIter, &structIter);
+    }
+    success &= dbus_message_iter_close_container(&mDbusMessageIter, &arrayIter);
+
+    if (!success)
+    {
+        log(&routingDbus, DLT_LOG_ERROR, "DBusMessageHandler::append(route) error", mDBusError.message);
+    }
+}
+
 void CAmRoutingDbusSend::append(am_SoundProperty_s soundProperty)
 {
     DBusMessageIter structIter;
