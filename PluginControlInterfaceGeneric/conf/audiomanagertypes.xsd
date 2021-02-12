@@ -500,6 +500,11 @@
                     <xsd:documentation>This trigger occurs when a new gateway registration request is received.</xsd:documentation>
                 </xsd:annotation>
             </xsd:enumeration>
+            <xsd:enumeration value="SYSTEM_REGISTER_EARLY_CONNECTION">
+                <xsd:annotation>
+                    <xsd:documentation>This trigger occurs when a pre-established main-connection is announced from routing side.</xsd:documentation>
+                </xsd:annotation>
+            </xsd:enumeration>
             <xsd:enumeration value="SYSTEM_DEREGISTER_DOMAIN">
                 <xsd:annotation>
                     <xsd:documentation>This trigger occurs when domain is unregistered</xsd:documentation>
@@ -608,6 +613,11 @@
             <xsd:enumeration value="ACTION_DISCONNECT">
                 <xsd:annotation>
                     <xsd:documentation>disconnect action.</xsd:documentation>
+                </xsd:annotation>
+            </xsd:enumeration>
+            <xsd:enumeration value="ACTION_TRANSFER">
+                <xsd:annotation>
+                    <xsd:documentation>Offer active main connections to surviving domains.</xsd:documentation>
                 </xsd:annotation>
             </xsd:enumeration>
             <xsd:enumeration value="ACTION_SET_VOLUME">
